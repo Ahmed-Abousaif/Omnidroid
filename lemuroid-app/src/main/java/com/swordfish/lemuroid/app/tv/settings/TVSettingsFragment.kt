@@ -9,9 +9,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreference
 import com.swordfish.lemuroid.R
 import com.swordfish.lemuroid.app.shared.input.InputDeviceManager
 import com.swordfish.lemuroid.app.shared.library.PendingOperationsMonitor
+import com.swordfish.lemuroid.app.shared.settings.HdModeBatteryMonitor
 import com.swordfish.lemuroid.app.shared.settings.SaveSyncPreferences
 import com.swordfish.lemuroid.app.shared.settings.SettingsInteractor
 import com.swordfish.lemuroid.common.coroutines.launchOnState
@@ -81,6 +83,11 @@ class TVSettingsFragment : LeanbackPreferenceFragmentCompat() {
         }
 
         launchOnState(Lifecycle.State.RESUMED) {
+            HdModeBatteryMonitor.allowedFlow(requireContext())
+                .safeCollect { refreshHdModePreference(it) }
+        }
+
+        launchOnState(Lifecycle.State.RESUMED) {
             getSaveSyncScreen()?.let { screen ->
                 PendingOperationsMonitor(requireContext())
                     .anySaveOperationInProgress()
@@ -122,6 +129,7 @@ class TVSettingsFragment : LeanbackPreferenceFragmentCompat() {
     override fun onResume() {
         super.onResume()
         refreshSaveSyncScreen()
+        refreshHdModePreference(HdModeBatteryMonitor.isAllowed(requireContext()))
     }
 
     private fun getGamePadPreferenceScreen(): PreferenceScreen? {
@@ -169,6 +177,24 @@ class TVSettingsFragment : LeanbackPreferenceFragmentCompat() {
         }
     }
 
+    private fun refreshHdModePreference(allowed: Boolean) {
+        val preference =
+            findPreference<SwitchPreference>(getString(R.string.pref_key_hd_mode)) ?: return
+        if (!allowed) {
+            preference.isChecked = false
+            HdModeBatteryMonitor.apply(requireContext())
+        }
+        preference.isEnabled = allowed
+        preference.summary =
+            getString(
+                if (allowed) {
+                    R.string.settings_description_hd_mode
+                } else {
+                    R.string.settings_description_hd_mode_battery
+                },
+            )
+    }
+
     private fun refreshSaveSyncScreen() {
         getSaveSyncScreen()?.let {
             saveSyncPreferences.updatePreferences(it, false)
@@ -188,6 +214,16 @@ class TVSettingsFragment : LeanbackPreferenceFragmentCompat() {
             getString(R.string.pref_key_reset_settings) -> handleResetSettings()
         }
         return super.onPreferenceTreeClick(preference)
+    }
+
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: android.content.Intent?,
+    ) {
+        super.onActivityResult(requestCode, resultCode, data)
+        saveSyncPreferences.handleActivityResult(requireContext(), requestCode, resultCode, data)
+        refreshSaveSyncScreen()
     }
 
     private suspend fun handleResetGamePadBindings() {

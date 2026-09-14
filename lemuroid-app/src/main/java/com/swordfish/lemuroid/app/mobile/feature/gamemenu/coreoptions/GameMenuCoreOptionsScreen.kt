@@ -1,24 +1,21 @@
 package com.swordfish.lemuroid.app.mobile.feature.gamemenu.coreoptions
 
 import android.content.Context
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.material3.Text
 import com.swordfish.lemuroid.R
 import com.swordfish.lemuroid.app.mobile.feature.gamemenu.GameMenuActivity
 import com.swordfish.lemuroid.app.shared.coreoptions.CoreOptionsPreferenceHelper
 import com.swordfish.lemuroid.app.shared.coreoptions.LemuroidCoreOption
 import com.swordfish.lemuroid.app.shared.settings.ControllerConfigsManager
-import com.swordfish.lemuroid.app.utils.android.settings.LemuroidSettingsGroup
+import com.swordfish.lemuroid.app.utils.android.settings.LemuroidCardSettingsGroup
 import com.swordfish.lemuroid.app.utils.android.settings.LemuroidSettingsList
+import com.swordfish.lemuroid.app.utils.android.settings.LemuroidSettingsPage
 import com.swordfish.lemuroid.app.utils.android.settings.LemuroidSettingsSwitch
 import com.swordfish.lemuroid.app.utils.android.settings.booleanPreferenceState
 import com.swordfish.lemuroid.app.utils.android.settings.indexPreferenceState
@@ -38,8 +35,12 @@ fun GameMenuCoreOptionsScreen(
             gameMenuRequest.coreOptions + gameMenuRequest.advancedCoreOptions
         }
 
-    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-        CoreOptions(gameMenuRequest.game.systemId, allOptions, context)
+    LemuroidSettingsPage {
+        if (allOptions.isNotEmpty()) {
+            LemuroidCardSettingsGroup {
+                CoreOptions(gameMenuRequest.game.systemId, allOptions, context)
+            }
+        }
         ControllersOptions(gameMenuRequest, maxOf(1, connectedGamePads), context)
     }
 }
@@ -50,10 +51,6 @@ private fun CoreOptions(
     coreOptions: List<LemuroidCoreOption>,
     context: Context,
 ) {
-    if (coreOptions.isEmpty()) {
-        return
-    }
-
     for (coreOption in coreOptions) {
         if (coreOption.getEntriesValues().toSet() == CoreOptionsPreferenceHelper.BOOLEAN_SET) {
             LemuroidSettingsSwitch(
@@ -96,7 +93,7 @@ private fun ControllersOptions(
         return
     }
 
-    LemuroidSettingsGroup(
+    LemuroidCardSettingsGroup(
         title = { Text(text = stringResource(R.string.core_settings_category_controllers)) },
     ) {
         visibleControllers.forEach { (port, controllerConfigs) ->

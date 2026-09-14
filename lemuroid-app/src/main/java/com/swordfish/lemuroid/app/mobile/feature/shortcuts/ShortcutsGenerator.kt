@@ -38,8 +38,8 @@ class ShortcutsGenerator(
 
         val shortcutInfo =
             ShortcutInfo.Builder(appContext, "game_${game.id}")
-                .setShortLabel(game.title)
-                .setLongLabel(game.title)
+                .setShortLabel(game.displayName)
+                .setLongLabel(game.displayName)
                 .setIntent(DeepLink.launchIntentForGame(appContext, game))
                 .setIcon(Icon.createWithBitmap(bitmap))
                 .build()
@@ -49,12 +49,12 @@ class ShortcutsGenerator(
 
     private suspend fun retrieveBitmap(game: Game): Bitmap =
         withContext(Dispatchers.IO) {
-            val result =
-                runCatching {
-                    val response = thumbnailsApi.downloadThumbnail(game.coverFrontUrl!!)
-                    BitmapFactory.decodeStream(response.body()).cropToSquare()
-                }
-            result.getOrElse { retrieveFallbackBitmap(game) }
+            CoverUtils.resolveCustomCoverFile(game)?.let { file ->
+                BitmapFactory.decodeFile(file.absolutePath)?.cropToSquare()
+            } ?: runCatching {
+                val response = thumbnailsApi.downloadThumbnail(game.coverFrontUrl!!)
+                BitmapFactory.decodeStream(response.body()).cropToSquare()
+            }.getOrElse { retrieveFallbackBitmap(game) }
         }
 
     private fun retrieveFallbackBitmap(game: Game): Bitmap {

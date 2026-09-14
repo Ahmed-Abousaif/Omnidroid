@@ -24,8 +24,7 @@ class ActivateGoogleDriveActivity : Activity() {
         if (errorCode == ConnectionResult.SUCCESS) {
             authenticateGoogle()
         } else {
-            val message = getString(R.string.gdrive_missing_play_services)
-            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+            Toast.makeText(this, R.string.gdrive_missing_play_services, Toast.LENGTH_LONG).show()
             finish()
         }
     }
@@ -40,42 +39,28 @@ class ActivateGoogleDriveActivity : Activity() {
             val completedTask = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
                 val account = completedTask.getResult(ApiException::class.java)
-                val message = getString(R.string.gdrive_sign_in_success, account?.email)
-                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-                finish()
+                Toast.makeText(
+                    this,
+                    getString(R.string.gdrive_sign_in_success, account?.email),
+                    Toast.LENGTH_SHORT,
+                ).show()
             } catch (e: ApiException) {
-                val message =
-                    getString(
-                        R.string.gdrive_sign_in_failed,
-                        e.message,
-                        e.statusCode.toString(),
-                    )
+                val message = getString(R.string.gdrive_sign_in_failed, e.message, e.statusCode.toString())
                 Timber.e(e, message)
                 Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-                finish()
             }
+            finish()
         }
     }
 
     private fun authenticateGoogle() {
         val lastSignedInAccount = GoogleSignIn.getLastSignedInAccount(this)
         val scope = Scope(DriveScopes.DRIVE_APPDATA)
-
-        if (!GoogleSignIn.hasPermissions(lastSignedInAccount, scope)) {
-            val signInClient = googleSignInClient()
-            startActivityForResult(signInClient.signInIntent, REQUEST_GOOGLE_SIGN_IN)
-        } else {
-            disableGoogleDriveIntegration()
+        if (GoogleSignIn.hasPermissions(lastSignedInAccount, scope)) {
             finish()
+            return
         }
-    }
-
-    private fun disableGoogleDriveIntegration() {
-        val signInClient = googleSignInClient()
-        signInClient.signOut().addOnSuccessListener {
-            Toast.makeText(this, R.string.gdrive_sign_out_success, Toast.LENGTH_SHORT).show()
-            finish()
-        }
+        startActivityForResult(googleSignInClient().signInIntent, REQUEST_GOOGLE_SIGN_IN)
     }
 
     private fun googleSignInClient(): GoogleSignInClient {

@@ -25,6 +25,33 @@
     <string name="pref_key_save_sync_enable" translatable="false">save_sync_enable</string>
     <string name="pref_key_save_sync_configure" translatable="false">save_sync_configure</string>
     <string name="pref_key_save_sync_cores" translatable="false">save_sync_cores</string>
+    <string name="pref_key_save_sync_before_game" translatable="false">save_sync_before_game</string>
+    <string name="pref_key_save_sync_interval" translatable="false">save_sync_interval</string>
+    <string name="pref_key_save_sync_sign_out" translatable="false">save_sync_sign_out</string>
+    <string name="pref_key_save_sync_conflicts" translatable="false">save_sync_conflicts</string>
+    <string name="pref_key_save_sync_export" translatable="false">save_sync_export</string>
+    <string name="pref_key_save_sync_import" translatable="false">save_sync_import</string>
+    <string-array translatable="false" name="pref_key_save_sync_interval_values">
+        <item>1h</item>
+        <item>3h</item>
+        <item>daily</item>
+    </string-array>
+    <string-array translatable="false" name="game_cloud_save_values">
+        <item>inherit</item>
+        <item>always</item>
+        <item>never</item>
+    </string-array>
+    <string-array name="game_cloud_save_entries">
+        <item>@string/game_cloud_save_inherit</item>
+        <item>@string/game_cloud_save_always</item>
+        <item>@string/game_cloud_save_never</item>
+    </string-array>
+
+    <string-array translatable="false" name="pref_key_save_sync_interval_display_names">
+        <item>@string/settings_save_sync_interval_1h</item>
+        <item>@string/settings_save_sync_interval_3h</item>
+        <item>@string/settings_save_sync_interval_daily</item>
+    </string-array>
 
     <string name="pref_key_shader_filter" translatable="false">shader_filter_0</string>
     <string name="pref_key_hd_mode" translatable="false">hd_mode</string>
@@ -55,5 +82,20 @@
         <item>@string/shader_filter_names_smooth</item>
         <item>@string/shader_filter_names_crt</item>
         <item>@string/shader_filter_names_lcd</item>
+    </string-array>
+
+    <string-array name="game_menu_fast_forward_speeds">
+        <item>1x</item>
+        <item>2x</item>
+        <item>4x</item>
+        <item>8x</item>
+        <item>16x</item>
+    </string-array>
+    <string-array translatable="false" name="game_menu_fast_forward_speed_values">
+        <item>1</item>
+        <item>2</item>
+        <item>4</item>
+        <item>8</item>
+        <item>16</item>
     </string-array>
 </resources>

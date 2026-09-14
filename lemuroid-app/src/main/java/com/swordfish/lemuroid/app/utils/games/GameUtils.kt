@@ -10,7 +10,7 @@ class GameUtils {
             context: Context,
             game: Game,
         ): String {
-            val systemName = getSystemNameForGame(context, game)
+            val systemName = getSystemShortName(context, game)
             val developerName =
                 if (game.developer?.isNotBlank() == true) {
                     "- ${game.developer}"
@@ -20,12 +20,13 @@ class GameUtils {
             return "$systemName $developerName"
         }
 
-        private fun getSystemNameForGame(
+        fun getSystemShortName(
             context: Context,
             game: Game,
         ): String {
-            val systemTitleResource = GameSystem.findById(game.systemId).shortTitleResId
-            return context.getString(systemTitleResource)
+            return runCatching {
+                context.getString(GameSystem.findById(game.systemId).shortTitleResId)
+            }.getOrDefault(game.systemId)
         }
     }
 }

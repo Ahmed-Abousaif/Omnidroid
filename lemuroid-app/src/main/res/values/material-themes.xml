@@ -35,6 +35,13 @@
         <item name="elevationOverlayColor">?attr/colorOnSurface</item>
     </style>
 
+    <style name="LemuroidMaterialTheme.Launcher" parent="LemuroidMaterialTheme">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
+    </style>
+
     <style name="LemuroidMaterialTheme.Invisible" parent="LemuroidMaterialTheme">
         <item name="android:background">#00000000</item>
         <item name="android:windowNoTitle">true</item>
@@ -47,13 +54,18 @@
     </style>
 
     <style name="LemuroidMaterialTheme.Menu" parent="LemuroidMaterialTheme">
-        <item name="android:statusBarColor">@android:color/black</item>
-        <item name="android:navigationBarColor">@android:color/black</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
         <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:backgroundDimEnabled">true</item>
-        <item name="android:backgroundDimAmount">0.75</item>
-        <item name="android:fitsSystemWindows">true</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
         <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:enforceStatusBarContrast" tools:targetApi="q">false</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
     </style>
 
     <style name="LemuroidMaterialTheme.Game" parent="LemuroidMaterialTheme">

@@ -2,6 +2,8 @@ package com.swordfish.lemuroid.app.mobile.feature.main
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -24,13 +26,30 @@ import com.swordfish.lemuroid.R
 
 fun NavGraphBuilder.composable(
     route: MainRoute,
+    instant: Boolean = false,
     content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit,
 ) {
-    this.composable(route = route.route, arguments = route.arguments, content = content)
+    if (instant) {
+        this.composable(
+            route = route.route,
+            arguments = route.arguments,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None },
+            content = content,
+        )
+    } else {
+        this.composable(route = route.route, arguments = route.arguments, content = content)
+    }
 }
 
 fun NavController.navigateToRoute(route: MainRoute) {
     this.navigate(route.route)
+}
+
+fun NavController.navigateToGameDetails(gameId: Int) {
+    this.navigate("games/$gameId")
 }
 
 enum class MainRoute(
@@ -61,6 +80,19 @@ enum class MainRoute(
         titleId = R.string.title_games,
         parent = SYSTEMS,
         listOf(navArgument("metaSystemId") { type = NavType.StringType }),
+    ),
+    GAME_DETAILS(
+        route = "games/{gameId}",
+        titleId = R.string.title_game,
+        parent = HOME,
+        arguments = listOf(navArgument("gameId") { type = NavType.IntType }),
+        showBottomNavigation = false,
+    ),
+    ADD_CONSOLES(
+        route = "systems/add",
+        titleId = R.string.title_add_console,
+        parent = HOME,
+        showBottomNavigation = false,
     ),
     SETTINGS(
         route = "settings/home",

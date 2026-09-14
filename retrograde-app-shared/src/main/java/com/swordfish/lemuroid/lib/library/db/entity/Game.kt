@@ -21,6 +21,7 @@ package com.swordfish.lemuroid.lib.library.db.entity
 
 import androidx.recyclerview.widget.DiffUtil
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.io.Serializable
@@ -49,7 +50,13 @@ data class Game(
     val lastIndexedAt: Long,
     val lastPlayedAt: Long? = null,
     val isFavorite: Boolean = false,
+    val customCoverPath: String? = null,
+    val customName: String? = null,
 ) : Serializable {
+    @get:Ignore
+    val displayName: String
+        get() = customName?.trim()?.takeIf { it.isNotEmpty() } ?: title
+
     companion object {
         val DIFF_CALLBACK =
             object : DiffUtil.ItemCallback<Game>() {

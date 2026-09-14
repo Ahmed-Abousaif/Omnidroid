@@ -30,6 +30,7 @@ import com.swordfish.lemuroid.app.mobile.feature.input.GamePadShortcutBindingAct
 import com.swordfish.lemuroid.app.mobile.feature.main.MainActivity
 import com.swordfish.lemuroid.app.mobile.feature.settings.SettingsManager
 import com.swordfish.lemuroid.app.mobile.feature.shortcuts.ShortcutsGenerator
+import com.swordfish.lemuroid.app.shared.cast.CastDisplayManager
 import com.swordfish.lemuroid.app.shared.game.ExternalGameLauncherActivity
 import com.swordfish.lemuroid.app.shared.game.GameLauncher
 import com.swordfish.lemuroid.app.shared.input.InputDeviceManager
@@ -61,6 +62,7 @@ import com.swordfish.lemuroid.lib.saves.SavesCoherencyEngine
 import com.swordfish.lemuroid.lib.saves.SavesManager
 import com.swordfish.lemuroid.lib.saves.StatesManager
 import com.swordfish.lemuroid.lib.saves.StatesPreviewManager
+import com.swordfish.lemuroid.lib.savesync.GameCloudSyncPreferences
 import com.swordfish.lemuroid.lib.savesync.SaveSyncManager
 import com.swordfish.lemuroid.lib.storage.DirectoriesManager
 import com.swordfish.lemuroid.lib.storage.StorageProvider
@@ -102,6 +104,10 @@ abstract class LemuroidApplicationModule {
 
     @PerActivity
     @ContributesAndroidInjector
+    abstract fun preGameSyncActivity(): com.swordfish.lemuroid.app.shared.savesync.PreGameSyncActivity
+
+    @PerActivity
+    @ContributesAndroidInjector
     abstract fun gameActivity(): GameActivity
 
     @ContributesAndroidInjector
@@ -136,7 +142,12 @@ abstract class LemuroidApplicationModule {
         fun retrogradeDb(app: LemuroidApplication) =
             Room.databaseBuilder(app, RetrogradeDatabase::class.java, RetrogradeDatabase.DB_NAME)
                 .addCallback(GameSearchDao.CALLBACK)
-                .addMigrations(GameSearchDao.MIGRATION, Migrations.VERSION_8_9)
+                .addMigrations(
+                    GameSearchDao.MIGRATION,
+                    Migrations.VERSION_8_9,
+                    Migrations.VERSION_9_10,
+                    Migrations.VERSION_10_11,
+                )
                 .fallbackToDestructiveMigration()
                 .build()
 
@@ -263,6 +274,7 @@ abstract class LemuroidApplicationModule {
             directoriesManager: DirectoriesManager,
             biosManager: BiosManager,
             desmumeMigrationHandler: DesmumeMigrationHandler,
+            coreUpdater: CoreUpdater,
         ) = GameLoader(
             lemuroidLibrary,
             statesManager,
@@ -273,6 +285,7 @@ abstract class LemuroidApplicationModule {
             directoriesManager,
             biosManager,
             desmumeMigrationHandler,
+            coreUpdater,
         )
 
         @Provides
@@ -373,10 +386,33 @@ abstract class LemuroidApplicationModule {
         @Provides
         @PerApp
         @JvmStatic
+        fun gameCloudSyncPreferences(context: Context) = GameCloudSyncPreferences(context)
+
+        @Provides
+        @PerApp
+        @JvmStatic
+        fun castDisplayManager(context: Context) = CastDisplayManager(context)
+
+        @Provides
+        @PerApp
+        @JvmStatic
         fun gameLauncher(
             coresSelection: CoresSelection,
             gameLaunchTaskHandler: GameLaunchTaskHandler,
-        ) = GameLauncher(coresSelection, gameLaunchTaskHandler)
+            saveSyncManager: SaveSyncManager,
+            settingsManager: SettingsManager,
+            gameCloudSyncPreferences: GameCloudSyncPreferences,
+            castDisplayManager: CastDisplayManager,
+            inputDeviceManager: InputDeviceManager,
+        ) = GameLauncher(
+            coresSelection,
+            gameLaunchTaskHandler,
+            saveSyncManager,
+            settingsManager,
+            gameCloudSyncPreferences,
+            castDisplayManager,
+            inputDeviceManager,
+        )
 
         @Provides
         @PerApp

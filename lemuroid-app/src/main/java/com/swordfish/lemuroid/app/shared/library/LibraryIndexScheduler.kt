@@ -16,6 +16,7 @@ object LibraryIndexScheduler {
                 ExistingWorkPolicy.APPEND_OR_REPLACE,
                 OneTimeWorkRequestBuilder<LibraryIndexWork>().build(),
             )
+            .then(OneTimeWorkRequestBuilder<CoreUpdateWork>().build())
             .enqueue()
     }
 

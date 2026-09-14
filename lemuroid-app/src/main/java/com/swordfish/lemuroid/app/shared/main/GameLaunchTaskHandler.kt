@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import com.swordfish.lemuroid.R
+import com.swordfish.lemuroid.app.mobile.feature.gamedetails.PlayTimeStore
 import com.swordfish.lemuroid.app.shared.game.BaseGameActivity
 import com.swordfish.lemuroid.app.shared.gamecrash.GameCrashActivity
 import com.swordfish.lemuroid.app.shared.savesync.SaveSyncWork
@@ -27,7 +28,9 @@ class GameLaunchTaskHandler(
         resultCode: Int,
         data: Intent?,
     ) {
-        rescheduleBackgroundWork(activity.applicationContext)
+        val finishedGame =
+            data?.extras?.getSerializable(BaseGameActivity.PLAY_GAME_RESULT_GAME) as Game?
+        rescheduleBackgroundWork(activity.applicationContext, finishedGame)
         when (resultCode) {
             Activity.RESULT_OK -> handleSuccessfulGameFinish(activity, enableRatingFlow, data)
             BaseGameActivity.RESULT_ERROR ->
@@ -51,8 +54,13 @@ class GameLaunchTaskHandler(
         CacheCleanerWork.cancelCleanCacheLRU(context)
     }
 
-    private fun rescheduleBackgroundWork(context: Context) {
-        // Let's slightly delay the sync. Maybe the user wants to play another game.
+    private fun rescheduleBackgroundWork(
+        context: Context,
+        game: Game? = null,
+    ) {
+        if (game != null) {
+            SaveSyncWork.enqueueGameWork(context, game.fileName)
+        }
         SaveSyncWork.enqueueAutoWork(context, 5)
         CacheCleanerWork.enqueueCleanCacheLRU(context)
     }
@@ -76,6 +84,7 @@ class GameLaunchTaskHandler(
         val game = data?.extras?.getSerializable(BaseGameActivity.PLAY_GAME_RESULT_GAME) as Game
 
         updateGamePlayedTimestamp(game)
+        PlayTimeStore(activity).add(game.id, duration)
         if (enableRatingFlow) {
             displayReviewRequest(activity, duration)
         }

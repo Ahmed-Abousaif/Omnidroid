@@ -18,6 +18,9 @@ import com.swordfish.lemuroid.lib.library.db.entity.Game
 import com.swordfish.lemuroid.lib.preferences.SharedPreferencesHelper
 import com.swordfish.lemuroid.lib.saves.StatesManager
 import com.swordfish.lemuroid.lib.saves.StatesPreviewManager
+import com.swordfish.lemuroid.lib.savesync.GameCloudSyncOverride
+import com.swordfish.lemuroid.lib.savesync.GameCloudSyncPreferences
+import androidx.preference.ListPreference
 
 class TVGameMenuFragment(
     private val statesManager: StatesManager,
@@ -30,8 +33,9 @@ class TVGameMenuFragment(
     private val numDisks: Int,
     private val currentDisk: Int,
     private val audioEnabled: Boolean,
-    private val fastForwardEnabled: Boolean,
+    private val frameSpeed: Int,
     private val fastForwardSupported: Boolean,
+    private val saveSyncSupported: Boolean = false,
 ) : LeanbackPreferenceFragmentCompat() {
     override fun onCreatePreferences(
         savedInstanceState: Bundle?,
@@ -48,8 +52,10 @@ class TVGameMenuFragment(
     ) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupCloudSaveOption()
+
         GameMenuHelper.setupAudioOption(preferenceScreen, audioEnabled)
-        GameMenuHelper.setupFastForwardOption(preferenceScreen, fastForwardEnabled, fastForwardSupported)
+        GameMenuHelper.setupFastForwardOption(activity, preferenceScreen, frameSpeed, fastForwardSupported)
         GameMenuHelper.setupSaveOption(preferenceScreen, systemCoreConfig)
 
         if (numDisks > 1) {
@@ -62,6 +68,23 @@ class TVGameMenuFragment(
 
         launchOnState(Lifecycle.State.CREATED) {
             initializeControllers()
+        }
+    }
+
+    private fun setupCloudSaveOption() {
+        val preference = findPreference<ListPreference>("pref_game_cloud_save")
+        if (!saveSyncSupported) {
+            preference?.isVisible = false
+            return
+        }
+        val prefs = GameCloudSyncPreferences(requireContext())
+        preference?.value = prefs.getOverride(game.id).name.lowercase()
+        preference?.setOnPreferenceChangeListener { _, newValue ->
+            val override =
+                runCatching { GameCloudSyncOverride.valueOf((newValue as String).uppercase()) }
+                    .getOrDefault(GameCloudSyncOverride.INHERIT)
+            prefs.setOverride(game.id, override)
+            true
         }
     }
 

@@ -33,6 +33,12 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE id = :id")
     suspend fun selectById(id: Int): Game?
 
+    @Query("SELECT * FROM games WHERE id = :id")
+    fun observeById(id: Int): Flow<Game?>
+
+    @Query("SELECT * FROM games")
+    suspend fun selectAll(): List<Game>
+
     @Query("SELECT * FROM games WHERE fileUri = :fileUri")
     fun selectByFileUri(fileUri: String): Game?
 
@@ -66,6 +72,43 @@ interface GameDao {
 
     @Query("SELECT * FROM games WHERE systemId IN (:systemIds) ORDER BY title ASC, id DESC")
     fun selectBySystems(systemIds: List<String>): PagingSource<Int, Game>
+
+    @Query("SELECT * FROM games ORDER BY title ASC, id DESC")
+    fun selectAllPaged(): PagingSource<Int, Game>
+
+    @Query("SELECT * FROM games WHERE lastPlayedAt IS NOT NULL ORDER BY lastPlayedAt DESC LIMIT 1")
+    fun selectLastPlayed(): Flow<List<Game>>
+
+    @Query(
+        """
+        SELECT * FROM games
+        WHERE title LIKE '%' || :query || '%' OR customName LIKE '%' || :query || '%'
+        ORDER BY title ASC, id DESC
+        """,
+    )
+    fun searchByTitle(query: String): PagingSource<Int, Game>
+
+    @Query(
+        """
+        SELECT * FROM games
+        WHERE isFavorite = 1 AND (title LIKE '%' || :query || '%' OR customName LIKE '%' || :query || '%')
+        ORDER BY title ASC
+        """,
+    )
+    fun searchFavoritesByTitle(query: String): PagingSource<Int, Game>
+
+    @Query(
+        """
+        SELECT * FROM games
+        WHERE systemId IN (:systemIds)
+            AND (title LIKE '%' || :query || '%' OR customName LIKE '%' || :query || '%')
+        ORDER BY title ASC, id DESC
+        """,
+    )
+    fun searchBySystemsAndTitle(
+        systemIds: List<String>,
+        query: String,
+    ): PagingSource<Int, Game>
 
     @Query("SELECT DISTINCT systemId FROM games ORDER BY systemId ASC")
     suspend fun selectSystems(): List<String>

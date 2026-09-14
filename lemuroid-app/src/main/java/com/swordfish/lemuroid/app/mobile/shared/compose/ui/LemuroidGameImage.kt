@@ -1,14 +1,15 @@
 package com.swordfish.lemuroid.app.mobile.shared.compose.ui
 
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.geometry.Rect
 import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.swordfish.lemuroid.app.shared.covers.CoverUtils
 import com.swordfish.lemuroid.lib.library.db.entity.Game
@@ -17,6 +18,8 @@ import com.swordfish.lemuroid.lib.library.db.entity.Game
 fun LemuroidGameImage(
     modifier: Modifier = Modifier,
     game: Game,
+    aspectRatio: Float? = LibraryGameCardAspectRatio,
+    onCoverPositioned: ((Rect) -> Unit)? = null,
 ) {
     val fallbackDrawable =
         remember(game) {
@@ -27,14 +30,26 @@ fun LemuroidGameImage(
 
     AsyncImage(
         model =
-            ImageRequest.Builder(LocalContext.current)
-                .data(game.coverFrontUrl)
-                .build(),
-        contentDescription = game.title,
+            CoverUtils.coverRequest(LocalContext.current, game),
+        contentDescription = game.displayName,
         modifier =
             modifier
-                .fillMaxWidth()
-                .aspectRatio(1.0f),
+                .then(
+                    if (aspectRatio != null) {
+                        Modifier.aspectRatio(aspectRatio)
+                    } else {
+                        Modifier
+                    },
+                )
+                .then(
+                    if (onCoverPositioned != null) {
+                        Modifier.onGloballyPositioned { coords ->
+                            onCoverPositioned(coords.boundsInRoot())
+                        }
+                    } else {
+                        Modifier
+                    },
+                ),
         fallback = fallbackPainter,
         error = fallbackPainter,
         contentScale = ContentScale.Crop,

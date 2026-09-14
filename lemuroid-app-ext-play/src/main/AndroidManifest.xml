@@ -6,5 +6,35 @@
         <activity
             android:name="com.swordfish.lemuroid.ext.feature.savesync.ActivateGoogleDriveActivity"
             android:theme="@style/InvisibleTheme"/>
+
+        <activity
+            android:name="com.swordfish.lemuroid.ext.feature.savesync.ActivateDropboxActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@style/InvisibleTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="oauth-dropbox"
+                    android:scheme="com.swordfish.lemuroid" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.swordfish.lemuroid.ext.feature.savesync.ActivateOneDriveActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@style/InvisibleTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="oauth-onedrive"
+                    android:scheme="com.swordfish.lemuroid" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

@@ -43,6 +43,7 @@ import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
 import timber.log.Timber
+import java.io.File
 
 class LemuroidLibrary(
     private val retrogradedb: RetrogradeDatabase,
@@ -315,6 +316,11 @@ class LemuroidLibrary(
     private fun removeDeletedGames(startedAtMs: Long) {
         Timber.d("Deleting games from db before: $startedAtMs")
         val games = retrogradedb.gameDao().selectByLastIndexedAtLessThan(startedAtMs)
+        games.forEach { game ->
+            game.customCoverPath?.let { path ->
+                runCatching { File(path.substringBefore('?')).delete() }
+            }
+        }
         retrogradedb.gameDao().delete(games)
     }
 

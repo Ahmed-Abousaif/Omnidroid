@@ -28,7 +28,7 @@
         android:title="@string/game_menu_mute_audio"
         app:icon="@drawable/ic_menu_mute"/>
 
-    <SwitchPreference
+    <ListPreference
         android:key="pref_game_fast_forward"
         android:title="@string/game_menu_fast_forward"
         app:icon="@drawable/ic_menu_fast_forward"/>
@@ -43,5 +43,12 @@
         android:key="pref_game_section_core_options"
         android:title="@string/game_menu_settings"
         app:icon="@drawable/ic_menu_settings"/>
+
+    <ListPreference
+        android:key="pref_game_cloud_save"
+        android:title="@string/game_cloud_save"
+        android:entries="@array/game_cloud_save_entries"
+        android:entryValues="@array/game_cloud_save_values"
+        android:defaultValue="inherit"/>
 
 </PreferenceScreen>

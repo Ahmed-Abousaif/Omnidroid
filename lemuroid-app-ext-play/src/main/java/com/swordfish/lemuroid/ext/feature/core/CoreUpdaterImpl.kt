@@ -1,6 +1,7 @@
 package com.swordfish.lemuroid.ext.feature.core
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import com.google.android.play.core.ktx.hasTerminalStatus
 import com.google.android.play.core.ktx.requestCancelInstall
@@ -11,7 +12,9 @@ import com.google.android.play.core.ktx.sessionId
 import com.google.android.play.core.splitinstall.SplitInstallManager
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.swordfish.lemuroid.common.coroutines.retry
+import com.swordfish.lemuroid.lib.core.CoreLibraryLocator
 import com.swordfish.lemuroid.lib.core.CoreUpdater
+import com.swordfish.lemuroid.lib.core.GithubCoreDownloader
 import com.swordfish.lemuroid.lib.library.CoreID
 import com.swordfish.lemuroid.lib.preferences.SharedPreferencesHelper
 import com.swordfish.lemuroid.lib.storage.DirectoriesManager
@@ -31,18 +34,36 @@ class CoreUpdaterImpl(
     retrofit: Retrofit,
 ) : CoreUpdater {
     private val api = retrofit.create(CoreUpdater.CoreManagerApi::class.java)
+    private val githubCoreDownloader = GithubCoreDownloader(directoriesManager, api)
 
     override suspend fun downloadCores(
         context: Context,
         coreIDs: List<CoreID>,
     ) {
-        val installManager = SplitInstallManagerFactory.create(context)
-        val installSession = installCores(installManager, coreIDs, context)
+        val missing = coreIDs.filter { CoreLibraryLocator.find(context, it) == null }
+
+        if (missing.isNotEmpty() && isInstalledFromPlayStore(context)) {
+            val installManager = SplitInstallManagerFactory.create(context)
+            val installSession = installCores(installManager, missing, context)
+
+            try {
+                cancelPendingInstalls(installManager, installSession)
+            } catch (e: Throwable) {
+                log("Error while canceling pending installs: ${e.message}")
+            }
+        }
+
+        coreIDs
+            .filter { CoreLibraryLocator.find(context, it) == null }
+            .forEach { coreID ->
+                log("Falling back to GitHub download for ${coreID.coreName}")
+                githubCoreDownloader.retrieve(coreID)
+            }
 
         try {
-            cancelPendingInstalls(installManager, installSession)
+            installAssets(context, coreIDs)
         } catch (e: Throwable) {
-            log("Error while canceling pending installs: ${e.message}")
+            log("Error while installing assets: ${e.message}")
         }
 
         log("downloadCores has terminated")
@@ -59,12 +80,6 @@ class CoreUpdaterImpl(
             waitForCompletion(installSession, installManager)
         } catch (e: Throwable) {
             log("Error while waiting for core install: ${e.message}")
-        }
-
-        try {
-            installAssets(context, coreIDs)
-        } catch (e: Throwable) {
-            log("Error while installing assets: ${e.message}")
         }
 
         return installSession
@@ -151,6 +166,19 @@ class CoreUpdaterImpl(
         log("Terminated cancel for session: $sessionId")
     }
 
+    private fun isInstalledFromPlayStore(context: Context): Boolean {
+        val installer =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                runCatching {
+                    context.packageManager.getInstallSourceInfo(context.packageName).installingPackageName
+                }.getOrNull()
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getInstallerPackageName(context.packageName)
+            }
+        return installer == PLAY_STORE_PACKAGE
+    }
+
     private fun log(message: String) {
         if (VERBOSE) {
             Log.i(TAG_LOG, message)
@@ -158,10 +186,10 @@ class CoreUpdaterImpl(
     }
 
     companion object {
-        // Sadly dynamic features need to be tested directly on GooglePlay. Let's leave logging on.
         private const val TAG_LOG = "CoreUpdaterImpl"
         private const val VERBOSE = true
         private const val RETRY_ATTEMPTS = 5
         private val RETRY_DELAY = 2.seconds
+        private const val PLAY_STORE_PACKAGE = "com.android.vending"
     }
 }

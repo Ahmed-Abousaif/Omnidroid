@@ -17,9 +17,12 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.alorma.compose.settings.storage.base.SettingValueState
+import com.swordfish.lemuroid.app.mobile.shared.controller.controllerFocusGlow
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSlider
 import com.alorma.compose.settings.ui.SettingsSwitch
@@ -52,6 +55,7 @@ fun LemuroidSettingsSwitch(
     onCheckedChange: (Boolean) -> Unit = {},
 ) {
     SettingsSwitch(
+        modifier = Modifier.controllerFocusGlow(RoundedCornerShape(8.dp)),
         enabled = enabled,
         state = state.value,
         icon = icon,
@@ -75,6 +79,7 @@ fun LemuroidSettingsMenuLink(
     onClick: () -> Unit,
 ) {
     SettingsMenuLink(
+        modifier = Modifier.controllerFocusGlow(RoundedCornerShape(8.dp)),
         enabled = enabled,
         icon = icon,
         title = title,
@@ -109,7 +114,7 @@ fun LemuroidCardSettingsGroup(
     title: @Composable (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Surface {
+    Surface(color = Color.Transparent, tonalElevation = 0.dp) {
         Column(
             modifier =
                 modifier
@@ -146,7 +151,7 @@ fun LemuroidSettingsSlider(
         )
 
     SettingsSlider(
-        modifier = modifier,
+        modifier = modifier.controllerFocusGlow(RoundedCornerShape(8.dp)),
         steps = steps,
         value = state.value.toFloat(),
         onValueChange = { state.value = it.roundToInt() },

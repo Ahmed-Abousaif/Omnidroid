@@ -12,7 +12,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.swordfish.lemuroid.app.shared.covers.CoverUtils
 import com.swordfish.lemuroid.lib.library.db.entity.Game
@@ -31,10 +30,8 @@ fun LemuroidSmallGameImage(
 
     AsyncImage(
         model =
-            ImageRequest.Builder(LocalContext.current)
-                .data(game.coverFrontUrl)
-                .build(),
-        contentDescription = game.title,
+            CoverUtils.coverRequest(LocalContext.current, game),
+        contentDescription = game.displayName,
         modifier =
             modifier
                 .fillMaxWidth()

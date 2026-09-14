@@ -2,332 +2,420 @@ package com.swordfish.lemuroid.ext.feature.savesync
 
 import android.app.Activity
 import android.content.Context
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.api.client.http.FileContent
-import com.google.api.client.util.DateTime
-import com.google.api.services.drive.Drive
-import com.swordfish.lemuroid.common.kotlin.SharedPreferencesDelegates
+import android.os.Build
 import com.swordfish.lemuroid.common.kotlin.calculateMd5
 import com.swordfish.lemuroid.ext.R
 import com.swordfish.lemuroid.lib.library.CoreID
-import com.swordfish.lemuroid.lib.preferences.SharedPreferencesHelper
+import com.swordfish.lemuroid.lib.savesync.CloudSaveFolder
+import com.swordfish.lemuroid.lib.savesync.CloudSaveProviderInfo
+import com.swordfish.lemuroid.lib.savesync.ConflictResolution
+import com.swordfish.lemuroid.lib.savesync.ConflictStore
+import com.swordfish.lemuroid.lib.savesync.ProviderSyncStateStore
+import com.swordfish.lemuroid.lib.savesync.RemoteSaveFile
+import com.swordfish.lemuroid.lib.savesync.SaveConflict
+import com.swordfish.lemuroid.lib.savesync.SaveSyncFileMatcher
 import com.swordfish.lemuroid.lib.savesync.SaveSyncManager
+import com.swordfish.lemuroid.lib.savesync.SaveSyncRequest
+import com.swordfish.lemuroid.lib.savesync.SaveSyncResult
+import com.swordfish.lemuroid.lib.savesync.SnapshotEntry
+import com.swordfish.lemuroid.lib.savesync.SyncSnapshotStore
 import com.swordfish.lemuroid.lib.storage.DirectoriesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
 import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.UUID
 
 class SaveSyncManagerImpl(
     private val appContext: Context,
     private val directoriesManager: DirectoriesManager,
 ) : SaveSyncManager() {
-    private var lastSyncTimestamp: Long by SharedPreferencesDelegates.LongDelegate(
-        SharedPreferencesHelper.getSharedPreferences(appContext),
-        appContext.getString(com.swordfish.lemuroid.lib.R.string.pref_key_last_save_sync),
-        0L,
-    )
+    private val snapshotStore = SyncSnapshotStore(appContext)
+    private val conflictStore = ConflictStore(appContext)
+    private val stateStore = ProviderSyncStateStore(appContext)
+    private val providers: List<CloudSaveProvider> =
+        listOf(
+            GoogleDriveCloudSaveProvider(appContext),
+            OneDriveCloudSaveProvider(appContext),
+            DropboxCloudSaveProvider(appContext),
+        )
 
-    override fun getProvider(): String = "Google Drive"
+    override fun getProvider(): String =
+        providers.filter { it.isConfigured() }.joinToString(", ") { it.displayName }
+            .ifEmpty { appContext.getString(R.string.gdrive_connected_none_summary) }
 
-    override fun getSettingsActivity(): Class<out Activity>? = ActivateGoogleDriveActivity::class.java
+    override fun getSettingsActivity(): Class<out Activity>? = null
 
     override fun isSupported(): Boolean = true
 
-    override fun isConfigured(): Boolean = GoogleSignIn.getLastSignedInAccount(appContext) != null
+    override fun isConfigured(): Boolean = providers.any { it.isConfigured() }
 
     override fun getLastSyncInfo(): String {
+        val latest = providers.maxOfOrNull { stateStore.getLastSync(it.id) } ?: 0L
         val dateString =
-            if (lastSyncTimestamp > 0) {
-                SimpleDateFormat.getDateTimeInstance().format(lastSyncTimestamp)
+            if (latest > 0) {
+                SimpleDateFormat.getDateTimeInstance().format(latest)
             } else {
                 "-"
             }
         return appContext.getString(R.string.gdrive_last_sync_completed, dateString)
     }
 
-    override fun getConfigInfo(): String {
-        val email = GoogleSignIn.getLastSignedInAccount(appContext)?.email
-        return if (email != null) {
-            appContext.getString(R.string.gdrive_connected_summary, email)
-        } else {
-            appContext.getString(R.string.gdrive_connected_none_summary)
-        }
+    override fun getConfigInfo(): String =
+        providers.filter { it.isConfigured() }.joinToString("\n") { it.getAccountLabel() }
+            .ifEmpty { appContext.getString(R.string.gdrive_connected_none_summary) }
+
+    override suspend fun sync(cores: Set<CoreID>) {
+        sync(SaveSyncRequest(cores = cores))
     }
 
-    override suspend fun sync(cores: Set<CoreID>): Unit =
+    override suspend fun sync(request: SaveSyncRequest): SaveSyncResult =
         withContext(Dispatchers.IO) {
             synchronized(SYNC_LOCK) {
-                val saveSyncResult =
-                    runCatching {
-                        performSaveSyncForCores(cores)
-                    }
-
-                saveSyncResult.onFailure {
-                    Timber.e(it, "Error while performing save sync.")
-                }
+                performSync(request)
             }
         }
 
-    private fun performSaveSyncForCores(cores: Set<CoreID>) {
-        val drive = DriveFactory(appContext).create() ?: return
-
-        syncLocalAndRemoteFolder(
-            drive,
-            getOrCreateAppDataFolder("saves"),
-            directoriesManager.getSavesDirectory(),
-            null,
-        )
-
-        if (cores.isNotEmpty()) {
-            syncLocalAndRemoteFolder(
-                drive,
-                getOrCreateAppDataFolder("states"),
-                directoriesManager.getStatesDirectory(),
-                cores.map { it.coreName }.toSet(),
-            )
-            syncLocalAndRemoteFolder(
-                drive,
-                getOrCreateAppDataFolder("state-previews"),
-                directoriesManager.getStatesPreviewDirectory(),
-                cores.map { it.coreName }.toSet(),
-            )
-        }
-
-        lastSyncTimestamp = System.currentTimeMillis()
-    }
-
-    override fun computeSavesSpace() = getSizeHumanReadable(directoriesManager.getSavesDirectory())
+    override fun computeSavesSpace() = formatSize(directoriesManager.getSavesDirectory())
 
     override fun computeStatesSpace(core: CoreID) =
-        getSizeHumanReadable(File(directoriesManager.getStatesDirectory(), core.coreName))
+        formatSize(File(directoriesManager.getStatesDirectory(), core.coreName))
 
-    private fun getSizeHumanReadable(directory: File): String {
-        val size =
-            directory.walkBottomUp()
-                .fold(0L) { acc, file -> acc + file.length() }
-        return android.text.format.Formatter.formatShortFileSize(appContext, size)
+    override fun getProviders(): List<CloudSaveProviderInfo> = providers.map { toInfo(it) }
+
+    override fun signOut(providerId: String) {
+        providers.firstOrNull { it.id == providerId }?.signOut()
+        stateStore.clear(providerId)
     }
 
-    private fun syncLocalAndRemoteFolder(
-        drive: Drive,
-        remoteFolderId: String,
-        localFolder: File,
-        prefixes: Set<String>?,
-    ) {
-        val remoteFiles = getRemoteFiles(drive, remoteFolderId)
-        val remoteFilesMap = buildRemoteFileMap(remoteFiles)
-        val localFilesMap = buildLocalFileMap(localFolder)
+    override fun getConflicts(): List<SaveConflict> = conflictStore.load()
 
-        getFilteredKeys(remoteFilesMap.keys + localFilesMap.keys, prefixes).forEach {
-            handleFileSync(drive, remoteFolderId, localFolder, remoteFilesMap[it], localFilesMap[it])
+    override fun resolveConflict(
+        conflictId: String,
+        resolution: ConflictResolution,
+    ) {
+        val conflict = conflictStore.find(conflictId) ?: return
+        val local = File(conflict.localPath)
+        val remoteCopy = conflict.remoteCopyPath?.let { File(it) }
+        when (resolution) {
+            ConflictResolution.USE_LOCAL -> remoteCopy?.delete()
+            ConflictResolution.USE_CLOUD -> {
+                if (remoteCopy != null && remoteCopy.exists()) {
+                    remoteCopy.copyTo(local, overwrite = true)
+                    local.setLastModified(remoteCopy.lastModified())
+                    remoteCopy.delete()
+                }
+            }
+            ConflictResolution.KEEP_BOTH -> Unit
         }
+        conflictStore.remove(conflictId)
     }
 
-    private fun getFilteredKeys(
-        keys: Set<String>,
-        prefixes: Set<String>?,
-    ): Set<String> {
-        if (prefixes == null) return keys
-        return keys.filter { key -> prefixes.any { key.startsWith(it) } }.toSet()
+    override fun computeRemoteUsage(providerId: String): String {
+        val provider = providers.firstOrNull { it.id == providerId } ?: return ""
+        if (!provider.isConfigured()) return ""
+        return runCatching { formatUsage(provider.computeRemoteUsage()) }.getOrDefault("")
     }
 
-    private fun handleFileSync(
-        drive: Drive,
-        remoteParentFolderId: String,
-        localParentFolder: File,
-        remoteFile: com.google.api.services.drive.model.File?,
-        localFile: File?,
-    ) {
-        Timber.i("Handling file pair: $localFile $remoteFile")
+    private fun performSync(request: SaveSyncRequest): SaveSyncResult {
+        val configured = providers.filter { it.isConfigured() }
+        if (configured.isEmpty()) return SaveSyncResult()
 
-        runCatching {
-            if (remoteFile != null && localFile == null) {
-                onRemoteOnly(localParentFolder, remoteFile, drive)
-            } else if (remoteFile == null && localFile != null) {
-                onLocalOnly(remoteParentFolderId, localFile, localParentFolder, drive)
-            } else if (remoteFile != null && localFile != null) {
-                if (areFileDifferent(remoteFile, localFile)) {
-                    if (remoteFile.modifiedTime.value < localFile.lastModified()) {
-                        onLocalUpdated(localFile, drive, remoteFile)
-                    } else if (remoteFile.modifiedTime.value > localFile.lastModified()) {
-                        onRemoteUpdated(drive, remoteFile, localFile)
+        val folders = foldersFor(request)
+        val results = mutableListOf<com.swordfish.lemuroid.lib.savesync.ProviderSyncResult>()
+        val conflicts = mutableListOf<SaveConflict>()
+
+        configured.forEach { provider ->
+            val providerResult =
+                runCatching {
+                    syncProvider(provider, request, folders)
+                }
+            providerResult.fold(
+                onSuccess = { created ->
+                    conflicts += created
+                    stateStore.setLastError(provider.id, null)
+                    stateStore.setLastSync(provider.id, System.currentTimeMillis())
+                    runCatching { formatUsage(provider.computeRemoteUsage()) }
+                        .onSuccess { stateStore.setLastUsage(provider.id, it) }
+                    results +=
+                        com.swordfish.lemuroid.lib.savesync.ProviderSyncResult(
+                            provider.id,
+                            true,
+                        )
+                },
+                onFailure = { error ->
+                    Timber.e(error, "Error syncing ${provider.id}")
+                    val message = error.message ?: error.javaClass.simpleName
+                    stateStore.setLastError(provider.id, message)
+                    results +=
+                        com.swordfish.lemuroid.lib.savesync.ProviderSyncResult(
+                            provider.id,
+                            false,
+                            message,
+                        )
+                },
+            )
+        }
+
+        return SaveSyncResult(results, conflicts)
+    }
+
+    private fun syncProvider(
+        provider: CloudSaveProvider,
+        request: SaveSyncRequest,
+        folders: List<CloudSaveFolder>,
+    ): List<SaveConflict> {
+        val snapshot = snapshotStore.load(provider.id)
+        val createdConflicts = mutableListOf<SaveConflict>()
+        val uploads = mutableListOf<PendingUpload>()
+
+        folders.forEach { folder ->
+            val localRoot = localRoot(folder)
+            val remoteMap = provider.listRemote(folder).associateBy { it.relativePath }
+            val localMap = buildLocalFileMap(localRoot)
+            val keys =
+                (remoteMap.keys + localMap.keys)
+                    .filter { shouldInclude(it, folder, request) }
+                    .toSet()
+
+            keys.forEach { relativePath ->
+                val local = localMap[relativePath]
+                val remote = remoteMap[relativePath]
+                val snap = snapshot[snapshotKey(folder, relativePath)]
+                when {
+                    remote != null && local == null -> {
+                        val dest = File(localRoot, relativePath)
+                        provider.download(remote, dest)
+                        snapshot[snapshotKey(folder, relativePath)] = snapshotFrom(dest, remote)
+                    }
+                    remote == null && local != null -> {
+                        uploads += PendingUpload(folder, local, relativePath, null)
+                    }
+                    remote != null && local != null -> {
+                        val localChanged = snap == null || !localMatches(local, snap)
+                        val remoteChanged = snap == null || !remoteMatches(remote, snap)
+                        when {
+                            !localChanged && !remoteChanged -> Unit
+                            localChanged && !remoteChanged ->
+                                uploads += PendingUpload(folder, local, relativePath, remote)
+                            !localChanged && remoteChanged -> {
+                                provider.download(remote, local)
+                                snapshot[snapshotKey(folder, relativePath)] = snapshotFrom(local, remote)
+                            }
+                            snap == null -> {
+                                if (areDifferent(local, remote)) {
+                                    if (remote.modifiedTime < local.lastModified()) {
+                                        uploads += PendingUpload(folder, local, relativePath, remote)
+                                    } else if (remote.modifiedTime > local.lastModified()) {
+                                        provider.download(remote, local)
+                                        snapshot[snapshotKey(folder, relativePath)] = snapshotFrom(local, remote)
+                                    } else {
+                                        snapshot[snapshotKey(folder, relativePath)] = snapshotFrom(local, remote)
+                                    }
+                                } else {
+                                    snapshot[snapshotKey(folder, relativePath)] = snapshotFrom(local, remote)
+                                }
+                            }
+                            else -> {
+                                createdConflicts += keepBoth(provider, folder, localRoot, local, remote)
+                                snapshot[snapshotKey(folder, relativePath)] = snapshotFrom(local, remote)
+                            }
+                        }
                     }
                 }
             }
         }
+
+        uploads.forEach { upload ->
+            val uploaded = provider.upload(upload.folder, upload.local, upload.relativePath, upload.existing)
+            snapshot[snapshotKey(upload.folder, upload.relativePath)] = snapshotFrom(upload.local, uploaded)
+        }
+
+        snapshotStore.save(provider.id, snapshot)
+        return createdConflicts
     }
 
-    private fun areFileDifferent(
-        remoteFile: com.google.api.services.drive.model.File,
-        localFile: File,
+    private fun keepBoth(
+        provider: CloudSaveProvider,
+        folder: CloudSaveFolder,
+        localRoot: File,
+        local: File,
+        remote: RemoteSaveFile,
+    ): SaveConflict {
+        val copyPath = conflictCopyPath(remote.relativePath)
+        val dest = File(localRoot, copyPath)
+        provider.download(remote, dest)
+        val conflict =
+            SaveConflict(
+                id = UUID.randomUUID().toString(),
+                providerId = provider.id,
+                folder = folder.remoteName,
+                relativePath = remote.relativePath,
+                localPath = local.absolutePath,
+                remoteCopyPath = dest.absolutePath,
+            )
+        conflictStore.add(conflict)
+        return conflict
+    }
+
+    private fun shouldInclude(
+        relativePath: String,
+        folder: CloudSaveFolder,
+        request: SaveSyncRequest,
     ): Boolean {
-        if (remoteFile.modifiedTime.value == localFile.lastModified()) {
+        if (SaveSyncFileMatcher.matchesAnyGame(relativePath, request.excludedFileNames)) {
             return false
         }
-
-        if (remoteFile.size.toLong() != localFile.length()) {
-            return true
+        val gameFileName = request.gameFileName
+        if (gameFileName != null) {
+            return SaveSyncFileMatcher.matchesGame(relativePath, gameFileName)
         }
-
-        return remoteFile.md5Checksum != localFile.calculateMd5()
-    }
-
-    private fun onLocalUpdated(
-        localFile: File,
-        drive: Drive,
-        remoteFile: com.google.api.services.drive.model.File,
-    ) {
-        Timber.i("Local file updated $localFile")
-
-        val mediaContent = FileContent("application/x-binary", localFile)
-        val metadata = com.google.api.services.drive.model.File()
-        metadata.modifiedTime = DateTime(localFile.lastModified())
-        drive.files().update(remoteFile.id, metadata, mediaContent)
-            .execute()
-    }
-
-    private fun onLocalOnly(
-        remoteParentFolderId: String,
-        localFile: File,
-        localParentFolder: File,
-        drive: Drive,
-    ) {
-        Timber.i("Local-only file detected $localFile")
-
-        val metadata = com.google.api.services.drive.model.File()
-        metadata.parents = listOf(remoteParentFolderId)
-        metadata.name = localFile.name
-        metadata.appProperties =
-            mapOf(
-                GDRIVE_PROPERTY_LOCAL_PATH to
-                    localFile.toRelativeString(
-                        localParentFolder,
-                    ),
-            )
-        metadata.modifiedTime = DateTime(localFile.lastModified())
-        val mediaContent = FileContent("application/x-binary", localFile)
-        drive.files().create(metadata, mediaContent)
-            .setFields("id")
-            .execute()
-    }
-
-    private fun onRemoteOnly(
-        localParentFolder: File,
-        remoteFile: com.google.api.services.drive.model.File,
-        drive: Drive,
-    ) {
-        Timber.i("Remote only file detected $remoteFile")
-        val outputFile =
-            File(
-                localParentFolder,
-                remoteFile.appProperties[GDRIVE_PROPERTY_LOCAL_PATH]!!,
-            ).apply {
-                parentFile?.mkdirs()
+        val always = SaveSyncFileMatcher.matchesAnyGame(relativePath, request.alwaysFileNames)
+        return when (folder) {
+            CloudSaveFolder.SAVES -> request.includeSaves || always
+            CloudSaveFolder.STATES,
+            CloudSaveFolder.STATE_PREVIEWS,
+            -> {
+                val prefixes = request.cores.map { it.coreName }.toSet()
+                val matchesCore = prefixes.isEmpty() || prefixes.any { relativePath.startsWith("$it/") || relativePath.startsWith(it) }
+                (request.includeStates || always) && matchesCore
             }
-        downloadToLocal(drive, remoteFile, outputFile)
+        }
     }
 
-    private fun onRemoteUpdated(
-        drive: Drive,
-        remoteFile: com.google.api.services.drive.model.File,
-        localFile: File,
-    ) {
-        Timber.i("Remote file updated $remoteFile")
-        downloadToLocal(drive, remoteFile, localFile)
+    private fun foldersFor(request: SaveSyncRequest): List<CloudSaveFolder> {
+        val folders = mutableListOf<CloudSaveFolder>()
+        if (request.includeSaves || request.alwaysFileNames.isNotEmpty() || request.gameFileName != null) {
+            folders += CloudSaveFolder.SAVES
+        }
+        if (request.includeStates || request.includePreviews || request.alwaysFileNames.isNotEmpty() || request.gameFileName != null) {
+            if (request.includeStates || request.alwaysFileNames.isNotEmpty() || request.gameFileName != null) {
+                folders += CloudSaveFolder.STATES
+            }
+            if (request.includePreviews || request.gameFileName != null) {
+                folders += CloudSaveFolder.STATE_PREVIEWS
+            }
+        }
+        return folders.distinct()
     }
 
-    private fun downloadToLocal(
-        drive: Drive,
-        remoteFile: com.google.api.services.drive.model.File,
-        localFile: File,
-    ) {
-        if (remoteFile.size == 0) return
-        Timber.i("Downloading file to $localFile")
-        drive.files()
-            .get(remoteFile.id)
-            .executeMediaAndDownloadTo(localFile.outputStream())
-        localFile.setLastModified(remoteFile.modifiedTime.value)
-    }
-
-    private fun buildRemoteFileMap(
-        remoteFiles: Sequence<com.google.api.services.drive.model.File>,
-    ): Map<String, com.google.api.services.drive.model.File> {
-        return remoteFiles
-            .filter { it.appProperties?.get(GDRIVE_PROPERTY_LOCAL_PATH) != null }
-            .map { it.appProperties?.get(GDRIVE_PROPERTY_LOCAL_PATH)!! to it }
-            .toMap()
-    }
+    private fun localRoot(folder: CloudSaveFolder): File =
+        when (folder) {
+            CloudSaveFolder.SAVES -> directoriesManager.getSavesDirectory()
+            CloudSaveFolder.STATES -> directoriesManager.getStatesDirectory()
+            CloudSaveFolder.STATE_PREVIEWS -> directoriesManager.getStatesPreviewDirectory()
+        }
 
     private fun buildLocalFileMap(folder: File): Map<String, File> {
         return folder
             .walkBottomUp()
             .filter { it.exists() && !it.isDirectory && it.length() > 0 }
-            .map { it.toRelativeString(folder) to it }
-            .toMap()
+            .associate { it.toRelativeString(folder) to it }
     }
 
-    private fun getOrCreateAppDataFolder(folderName: String): String {
-        val drive =
-            DriveFactory(appContext).create()
-                ?: throw UnsupportedOperationException()
-
-        val query =
-            drive.files().list()
-                .setSpaces("appDataFolder")
-                .setQ("name = '$folderName' and mimeType = 'application/vnd.google-apps.folder'")
-                .setFields("files(id)")
-                .execute()
-
-        if (query.files.size > 0) {
-            return query.files[0].id
-        }
-
-        val metadata = com.google.api.services.drive.model.File()
-        metadata.parents = listOf("appDataFolder")
-        metadata.name = folderName
-        metadata.mimeType = "application/vnd.google-apps.folder"
-
-        val file =
-            drive.files().create(metadata)
-                .setFields("id")
-                .execute()
-
-        return file.id
+    private fun localMatches(
+        local: File,
+        snap: SnapshotEntry,
+    ): Boolean {
+        if (local.length() == snap.localSize && local.lastModified() == snap.localMtime) return true
+        return local.calculateMd5() == snap.localMd5
     }
 
-    private fun getRemoteFiles(
-        drive: Drive,
-        folderId: String,
-    ): Sequence<com.google.api.services.drive.model.File> {
-        var pageToken: String? = null
-        return sequence {
-            do {
-                val query =
-                    "'$folderId' in parents and trashed = false and mimeType = 'application/x-binary'"
-
-                val fields =
-                    "nextPageToken, " +
-                        "files(id, name, size, appProperties, modifiedTime, parents, md5Checksum)"
-
-                val result =
-                    drive.files().list()
-                        .setPageSize(500)
-                        .setSpaces("appDataFolder")
-                        .setQ(query)
-                        .setFields(fields)
-                        .setPageToken(pageToken)
-                        .execute()
-
-                yieldAll(result.files)
-                pageToken = result.nextPageToken
-            } while (pageToken != null)
-        }
+    private fun remoteMatches(
+        remote: RemoteSaveFile,
+        snap: SnapshotEntry,
+    ): Boolean {
+        if (remote.size != snap.remoteSize) return false
+        if (remote.modifiedTime != snap.remoteMtime) return false
+        if (remote.hash != null && snap.remoteHash != null) return remote.hash == snap.remoteHash
+        return true
     }
+
+    private fun areDifferent(
+        local: File,
+        remote: RemoteSaveFile,
+    ): Boolean {
+        if (remote.modifiedTime == local.lastModified() && remote.size == local.length()) return false
+        if (remote.size != local.length()) return true
+        return remote.hash != null && remote.hash != local.calculateMd5()
+    }
+
+    private fun snapshotFrom(
+        local: File,
+        remote: RemoteSaveFile,
+    ) = SnapshotEntry(
+        localMd5 = runCatching { local.calculateMd5() }.getOrDefault(""),
+        localSize = local.length(),
+        localMtime = local.lastModified(),
+        remoteHash = remote.hash,
+        remoteSize = remote.size,
+        remoteMtime = remote.modifiedTime,
+    )
+
+    private fun snapshotKey(
+        folder: CloudSaveFolder,
+        relativePath: String,
+    ) = "${folder.remoteName}/$relativePath"
+
+    private fun conflictCopyPath(relativePath: String): String {
+        val slash = relativePath.lastIndexOf('/')
+        val dir = if (slash >= 0) relativePath.substring(0, slash + 1) else ""
+        val name = if (slash >= 0) relativePath.substring(slash + 1) else relativePath
+        val dot = name.lastIndexOf('.')
+        val base = if (dot >= 0) name.substring(0, dot) else name
+        val ext = if (dot >= 0) name.substring(dot) else ""
+        val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        return "$dir$base (${deviceName()}, $date)$ext"
+    }
+
+    private fun deviceName(): String =
+        Build.MODEL.replace(Regex("""[\\/:*?"<>|]"""), "_").ifBlank { "device" }
+
+    private fun toInfo(provider: CloudSaveProvider): CloudSaveProviderInfo {
+        val lastSync = stateStore.getLastSync(provider.id)
+        val lastSyncLabel =
+            if (lastSync > 0) {
+                appContext.getString(
+                    R.string.gdrive_last_sync_completed,
+                    SimpleDateFormat.getDateTimeInstance().format(lastSync),
+                )
+            } else {
+                appContext.getString(R.string.gdrive_last_sync_completed, "-")
+            }
+        val usage = stateStore.getLastUsage(provider.id).orEmpty()
+        return CloudSaveProviderInfo(
+            id = provider.id,
+            displayName = provider.displayName,
+            configured = provider.isConfigured(),
+            accountLabel = provider.getAccountLabel(),
+            remoteUsage = usage,
+            lastSync = lastSyncLabel,
+            lastError = stateStore.getLastError(provider.id),
+            signInActivity = provider.getSignInActivity(),
+        )
+    }
+
+    private fun formatSize(directory: File): String {
+        val size = directory.walkBottomUp().fold(0L) { acc, file -> acc + file.length() }
+        return android.text.format.Formatter.formatShortFileSize(appContext, size)
+    }
+
+    private fun formatUsage(usage: RemoteUsage): String {
+        val size = android.text.format.Formatter.formatShortFileSize(appContext, usage.bytes)
+        return appContext.getString(R.string.save_sync_remote_usage, size, usage.fileCount)
+    }
+
+    private data class PendingUpload(
+        val folder: CloudSaveFolder,
+        val local: File,
+        val relativePath: String,
+        val existing: RemoteSaveFile?,
+    )
 
     companion object {
-        const val GDRIVE_PROPERTY_LOCAL_PATH = "localPath"
         private val SYNC_LOCK = Object()
     }
 }

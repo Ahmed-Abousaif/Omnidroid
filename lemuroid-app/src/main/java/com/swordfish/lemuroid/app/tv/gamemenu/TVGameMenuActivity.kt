@@ -10,6 +10,7 @@ import com.swordfish.lemuroid.lib.library.SystemCoreConfig
 import com.swordfish.lemuroid.lib.library.db.entity.Game
 import com.swordfish.lemuroid.lib.saves.StatesManager
 import com.swordfish.lemuroid.lib.saves.StatesPreviewManager
+import com.swordfish.lemuroid.lib.savesync.SaveSyncManager
 import java.security.InvalidParameterException
 import javax.inject.Inject
 
@@ -22,6 +23,9 @@ class TVGameMenuActivity : TVBaseSettingsActivity() {
 
     @Inject
     lateinit var inputDeviceManager: InputDeviceManager
+
+    @Inject
+    lateinit var saveSyncManager: SaveSyncManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,9 +64,12 @@ class TVGameMenuActivity : TVBaseSettingsActivity() {
                 intent.extras?.getBoolean(GameMenuContract.EXTRA_AUDIO_ENABLED)
                     ?: throw InvalidParameterException("Missing EXTRA_AUDIO_ENABLED")
 
-            val fastForwardEnabled =
-                intent.extras?.getBoolean(GameMenuContract.EXTRA_FAST_FORWARD)
-                    ?: throw InvalidParameterException("Missing EXTRA_FAST_FORWARD")
+            val legacyFastForwardEnabled = intent.extras?.getBoolean(GameMenuContract.EXTRA_FAST_FORWARD, false) ?: false
+            val frameSpeed =
+                intent.extras?.getInt(
+                    GameMenuContract.EXTRA_FRAME_SPEED,
+                    if (legacyFastForwardEnabled) 2 else 1,
+                ) ?: 1
 
             val fastForwardSupported =
                 intent.extras?.getBoolean(GameMenuContract.EXTRA_FAST_FORWARD_SUPPORTED)
@@ -80,8 +87,9 @@ class TVGameMenuActivity : TVBaseSettingsActivity() {
                     numDisks,
                     currentDisk,
                     audioEnabled,
-                    fastForwardEnabled,
+                    frameSpeed,
                     fastForwardSupported,
+                    saveSyncManager.isSupported(),
                 )
             supportFragmentManager.beginTransaction().replace(android.R.id.content, fragment)
                 .commit()
@@ -104,8 +112,9 @@ class TVGameMenuActivity : TVBaseSettingsActivity() {
         private val numDisks: Int,
         private val currentDisk: Int,
         private val audioEnabled: Boolean,
-        private val fastForwardEnabled: Boolean,
+        private val frameSpeed: Int,
         private val fastForwardSupported: Boolean,
+        private val saveSyncSupported: Boolean,
     ) : BaseSettingsFragmentWrapper() {
         override fun createFragment(): Fragment {
             return TVGameMenuFragment(
@@ -119,8 +128,9 @@ class TVGameMenuActivity : TVBaseSettingsActivity() {
                 numDisks,
                 currentDisk,
                 audioEnabled,
-                fastForwardEnabled,
+                frameSpeed,
                 fastForwardSupported,
+                saveSyncSupported,
             )
         }
     }

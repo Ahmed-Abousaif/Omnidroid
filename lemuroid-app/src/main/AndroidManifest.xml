@@ -23,6 +23,8 @@
     <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.READ_BASIC_PHONE_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
@@ -40,10 +42,29 @@
         android:theme="@style/LemuroidMaterialTheme">
         <activity
             android:name="com.swordfish.lemuroid.app.mobile.feature.main.MainActivity"
-            android:exported="true">
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="sensorLandscape"
+            android:stateNotNeeded="true"
+            android:theme="@style/LemuroidMaterialTheme.Launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data
+                    android:host="${applicationId}"
+                    android:pathPattern="/open-leanback"
+                    android:scheme="lemuroid" />
             </intent-filter>
         </activity>
 
@@ -64,8 +85,10 @@
 
         <activity
             android:name="com.swordfish.lemuroid.app.mobile.feature.game.GameActivity"
+            android:allowEmbedded="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
             android:process=":game"
+            android:resizeableActivity="true"
             android:theme="@style/LemuroidMaterialTheme.Game" />
 
         <service
@@ -80,6 +103,7 @@
 
         <activity
             android:name="com.swordfish.lemuroid.app.mobile.feature.gamemenu.GameMenuActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|smallestScreenSize"
             android:process=":game"
             android:theme="@style/LemuroidMaterialTheme.Menu" />
 
@@ -95,53 +119,20 @@
             android:name="com.swordfish.lemuroid.app.shared.settings.StorageFrameworkPickerLauncher"
             android:theme="@style/LemuroidMaterialTheme.Invisible" />
 
-        <!-- Leanback activities -->
+        <activity
+            android:name="com.swordfish.lemuroid.app.shared.savesync.PreGameSyncActivity"
+            android:theme="@style/LemuroidMaterialTheme" />
+
+        <!-- Android TV platform fallbacks (no SAF DocumentsUI on many TVs) -->
         <activity
             android:name=".app.tv.main.MainTVActivity"
             android:exported="true"
-            android:theme="@style/LemuroidLeanbackTheme">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data
-                    android:host="${applicationId}"
-                    android:pathPattern="/open-leanback"
-                    android:scheme="lemuroid" />
-            </intent-filter>
-        </activity>
-
-        <activity
-            android:name=".app.tv.settings.TVSettingsActivity"
-            android:theme="@style/LemuroidLeanbackPreferencesTheme" />
+            android:theme="@style/LemuroidMaterialTheme.Launcher" />
 
         <activity
             android:name=".app.tv.folderpicker.TVFolderPickerActivity"
             android:theme="@style/Theme.Leanback.GuidedStep" />
         <activity android:name=".app.tv.folderpicker.TVFolderPickerLauncher" />
-
-        <activity
-            android:name=".app.tv.input.TVGamePadBindingActivity"
-            android:theme="@style/Theme.Leanback.GuidedStep" />
-
-        <activity
-            android:name=".app.tv.game.TVGameActivity"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
-            android:process=":game"
-            android:theme="@style/LemuroidMaterialTheme.Game" />
-
-        <activity
-            android:name=".app.tv.gamemenu.TVGameMenuActivity"
-            android:process=":game"
-            android:theme="@style/LemuroidLeanbackPreferencesTheme" />
-
-        <activity
-            android:name=".app.tv.input.TVGamePadShortcutBindingActivity"
-            android:process=":game"
-            android:theme="@style/LemuroidLeanbackPreferencesTheme" />
 
         <activity
             android:name=".app.shared.gamecrash.GameCrashActivity"

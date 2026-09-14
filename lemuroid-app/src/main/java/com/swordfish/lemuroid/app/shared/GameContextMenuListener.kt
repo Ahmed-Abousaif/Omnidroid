@@ -4,6 +4,7 @@ import android.view.ContextMenu
 import android.view.View
 import com.swordfish.lemuroid.R
 import com.swordfish.lemuroid.lib.library.db.entity.Game
+import com.swordfish.lemuroid.lib.savesync.GameCloudSyncOverride
 
 class GameContextMenuListener(
     private val gameInteractor: GameInteractor,
@@ -39,6 +40,26 @@ class GameContextMenuListener(
         if (gameInteractor.supportShortcuts()) {
             menu.add(R.string.game_context_menu_create_shortcut).setOnMenuItemClickListener {
                 gameInteractor.onCreateShortcut(game)
+                true
+            }
+        }
+
+        if (gameInteractor.isSaveSyncSupported()) {
+            val submenu = menu.addSubMenu(R.string.game_cloud_save)
+            GameCloudSyncOverride.values().forEach { override ->
+                val label =
+                    when (override) {
+                        GameCloudSyncOverride.INHERIT -> R.string.game_cloud_save_inherit
+                        GameCloudSyncOverride.ALWAYS -> R.string.game_cloud_save_always
+                        GameCloudSyncOverride.NEVER -> R.string.game_cloud_save_never
+                    }
+                submenu.add(label).setOnMenuItemClickListener {
+                    gameInteractor.setCloudOverride(game, override)
+                    true
+                }
+            }
+            menu.add(R.string.game_cloud_save_sync_now).setOnMenuItemClickListener {
+                gameInteractor.syncGameNow(game)
                 true
             }
         }
