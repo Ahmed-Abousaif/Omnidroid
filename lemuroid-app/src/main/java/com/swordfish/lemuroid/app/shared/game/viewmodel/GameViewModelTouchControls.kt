@@ -1,5 +1,6 @@
 package com.swordfish.lemuroid.app.shared.game.viewmodel
 
+import android.content.Context
 import android.view.KeyEvent
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.ui.unit.Density
@@ -8,6 +9,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import com.swordfish.lemuroid.app.mobile.feature.settings.SettingsManager
 import com.swordfish.lemuroid.app.shared.settings.HapticFeedbackMode
+import com.swordfish.lemuroid.app.tv.shared.TVHelper
 import com.swordfish.lemuroid.common.coroutines.launchOnState
 import com.swordfish.lemuroid.common.coroutines.safeCollect
 import com.swordfish.lemuroid.lib.controller.ControllerConfig
@@ -30,12 +32,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GameViewModelTouchControls(
+    private val appContext: Context,
     private val settingsManager: SettingsManager,
     private val touchControllerSettingsManager: TouchControllerSettingsManager,
     private val retroGameView: GameViewModelRetroGameView,
@@ -106,6 +110,9 @@ class GameViewModelTouchControls(
     }
 
     fun isTouchControllerVisible(): Flow<Boolean> {
+        if (TVHelper.isTV(appContext)) {
+            return flowOf(false)
+        }
         return inputs.getEnabledInputDevices()
             .map { it.isEmpty() }
     }

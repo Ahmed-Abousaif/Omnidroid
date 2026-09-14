@@ -12,6 +12,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import com.swordfish.lemuroid.R
 import com.swordfish.lemuroid.app.mobile.feature.game.GameActivity
 import com.swordfish.lemuroid.app.mobile.feature.game.GameService
 import com.swordfish.lemuroid.app.mobile.feature.settings.SettingsManager
@@ -24,7 +25,8 @@ import com.swordfish.lemuroid.app.shared.game.viewmodel.GameViewModelSideEffects
 import com.swordfish.lemuroid.app.shared.input.InputDeviceManager
 import com.swordfish.lemuroid.app.shared.rumble.RumbleManager
 import com.swordfish.lemuroid.app.shared.settings.ControllerConfigsManager
-import com.swordfish.lemuroid.app.tv.game.TVGameActivity
+import com.swordfish.lemuroid.app.tv.shared.TVHelper
+import com.swordfish.lemuroid.common.coroutines.safeCollect
 import com.swordfish.lemuroid.common.animationDuration
 import com.swordfish.lemuroid.common.coroutines.launchOnState
 import com.swordfish.lemuroid.common.displayToast
@@ -37,6 +39,7 @@ import com.swordfish.lemuroid.lib.library.GameSystem
 import com.swordfish.lemuroid.lib.library.SystemCoreConfig
 import com.swordfish.lemuroid.lib.library.db.entity.Game
 import com.swordfish.lemuroid.lib.saves.SavesManager
+import com.swordfish.lemuroid.lib.savesync.GameFrameSpeedPreferences
 import com.swordfish.lemuroid.lib.saves.StatesManager
 import com.swordfish.lemuroid.lib.saves.StatesPreviewManager
 import com.swordfish.touchinput.radial.sensors.TiltConfiguration
@@ -44,6 +47,7 @@ import dagger.Lazy
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -156,6 +160,16 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         launchOnState(Lifecycle.State.CREATED) {
             initializeViewModelsEffectsFlow()
         }
+        if (TVHelper.isTV(this)) {
+            launchOnState(Lifecycle.State.CREATED) {
+                inputDeviceManager
+                    .getEnabledInputsObservable()
+                    .filter { it.isEmpty() }
+                    .safeCollect {
+                        displayToast(R.string.tv_game_message_missing_gamepad)
+                    }
+            }
+        }
     }
 
     private fun setUpExceptionsHandler() {
@@ -209,17 +223,19 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                     GameMenuContract.EXTRA_AUDIO_ENABLED,
                     baseGameScreenViewModel.retroGameView.retroGameView?.audioEnabled,
                 )
+                val currentFrameSpeed = baseGameScreenViewModel.retroGameView.retroGameView?.frameSpeed ?: 1
                 this.putExtra(GameMenuContract.EXTRA_FAST_FORWARD_SUPPORTED, system.fastForwardSupport)
+                this.putExtra(GameMenuContract.EXTRA_FRAME_SPEED, currentFrameSpeed)
                 this.putExtra(
                     GameMenuContract.EXTRA_FAST_FORWARD,
-                    (baseGameScreenViewModel.retroGameView.retroGameView?.frameSpeed ?: 1) > 1,
+                    currentFrameSpeed > 1,
                 )
                 this.putExtra(GameMenuContract.EXTRA_CURRENT_TILT_CONFIG, currentTiltConfiguration)
                 // TODO PADS... Make sure to avoid passing this if a physical pad is connected.
                 this.putExtra(GameMenuContract.EXTRA_TILT_ALL_CONFIGS, tiltConfigurations.toTypedArray())
             }
         startActivityForResult(intent, DIALOG_REQUEST)
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+        overridePendingTransition(0, 0)
     }
 
     protected abstract fun getDialogClass(): Class<out Activity>
@@ -396,7 +412,18 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                         )
                 }
             }
-            if (data?.hasExtra(GameMenuContract.RESULT_ENABLE_FAST_FORWARD) == true) {
+            val frameSpeedResult =
+                data?.takeIf { it.hasExtra(GameMenuContract.RESULT_SET_FRAME_SPEED) }
+            if (frameSpeedResult != null) {
+                val frameSpeed =
+                    frameSpeedResult.getIntExtra(
+                        GameMenuContract.RESULT_SET_FRAME_SPEED,
+                        1,
+                    )
+                baseGameScreenViewModel.retroGameView.retroGameView?.frameSpeed = frameSpeed
+                GameFrameSpeedPreferences(applicationContext).set(game.id, frameSpeed)
+            }
+            if (frameSpeedResult == null && data?.hasExtra(GameMenuContract.RESULT_ENABLE_FAST_FORWARD) == true) {
                 baseGameScreenViewModel.retroGameView.retroGameView?.apply {
                     val fastForwardEnabled =
                         data.getBooleanExtra(
@@ -439,22 +466,19 @@ abstract class BaseGameActivity : ImmersiveActivity() {
             game: Game,
             loadSave: Boolean,
             useLeanback: Boolean,
+            activityOptions: android.os.Bundle? = null,
         ) {
-            val gameActivity =
-                if (useLeanback) {
-                    TVGameActivity::class.java
-                } else {
-                    GameActivity::class.java
-                }
-            activity.startActivityForResult(
-                Intent(activity, gameActivity).apply {
+            val intent =
+                Intent(activity, GameActivity::class.java).apply {
                     putExtra(EXTRA_GAME, game)
                     putExtra(EXTRA_LOAD_SAVE, loadSave)
                     putExtra(EXTRA_LEANBACK, useLeanback)
                     putExtra(EXTRA_SYSTEM_CORE_CONFIG, systemCoreConfig)
-                },
-                REQUEST_PLAY_GAME,
-            )
+                    if (activityOptions != null) {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                    }
+                }
+            activity.startActivityForResult(intent, REQUEST_PLAY_GAME, activityOptions)
             activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
     }

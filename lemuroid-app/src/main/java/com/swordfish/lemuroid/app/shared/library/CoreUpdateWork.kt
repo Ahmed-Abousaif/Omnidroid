@@ -4,20 +4,20 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
+import com.swordfish.lemuroid.app.mobile.feature.library.RegisteredSystemsStore
 import com.swordfish.lemuroid.app.mobile.shared.NotificationsManager
 import com.swordfish.lemuroid.app.utils.android.createSyncForegroundInfo
+import com.swordfish.lemuroid.lib.core.CoreLibraryLocator
 import com.swordfish.lemuroid.lib.core.CoreUpdater
 import com.swordfish.lemuroid.lib.core.CoresSelection
 import com.swordfish.lemuroid.lib.injection.AndroidWorkerInjection
 import com.swordfish.lemuroid.lib.injection.WorkerKey
+import com.swordfish.lemuroid.lib.library.CoreID
 import com.swordfish.lemuroid.lib.library.GameSystem
 import com.swordfish.lemuroid.lib.library.db.RetrogradeDatabase
 import dagger.Binds
 import dagger.android.AndroidInjector
 import dagger.multibindings.IntoMap
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -35,7 +35,7 @@ class CoreUpdateWork(context: Context, workerParams: WorkerParameters) :
     override suspend fun doWork(): Result {
         AndroidWorkerInjection.inject(this)
 
-        Timber.i("Starting core update/install work")
+        Timber.i("Checking core existence for scanned games")
 
         val notificationsManager = NotificationsManager(applicationContext)
 
@@ -48,20 +48,40 @@ class CoreUpdateWork(context: Context, workerParams: WorkerParameters) :
         setForegroundAsync(foregroundInfo)
 
         try {
-            val cores =
-                retrogradeDatabase.gameDao().selectSystems()
-                    .asFlow()
-                    .map { GameSystem.findById(it) }
-                    .map { coresSelection.getCoreConfigForSystem(it) }
-                    .map { it.coreID }
-                    .toList()
+            val requiredCores = requiredCores()
+            val missingCores =
+                requiredCores.filter { coreID ->
+                    CoreLibraryLocator.find(applicationContext, coreID) == null
+                }
 
-            coreUpdater.downloadCores(applicationContext, cores)
+            Timber.i(
+                "Cores required=${requiredCores.map { it.coreName }}, missing=${missingCores.map { it.coreName }}",
+            )
+
+            if (missingCores.isNotEmpty()) {
+                coreUpdater.downloadCores(applicationContext, missingCores)
+            }
         } catch (e: Throwable) {
             Timber.e(e, "Core update work failed with exception: ${e.message}")
         }
 
         return Result.success()
+    }
+
+    private suspend fun requiredCores(): List<CoreID> {
+        val systemsWithGames =
+            retrogradeDatabase.gameDao().selectSystems()
+                .mapNotNull { systemId -> runCatching { GameSystem.findById(systemId) }.getOrNull() }
+
+        val registeredSystems =
+            RegisteredSystemsStore(applicationContext).get()
+                .flatMap { it.systemIDs }
+                .mapNotNull { systemId -> runCatching { GameSystem.findById(systemId.dbname) }.getOrNull() }
+
+        return (systemsWithGames + registeredSystems)
+            .distinctBy { it.id }
+            .map { coresSelection.getCoreConfigForSystem(it).coreID }
+            .distinct()
     }
 
     @dagger.Module(subcomponents = [Subcomponent::class])

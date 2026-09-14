@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.fredporciuncula.flow.preferences.FlowSharedPreferences
 import com.swordfish.lemuroid.R
 import com.swordfish.lemuroid.app.shared.settings.HDModeQuality
+import com.swordfish.lemuroid.app.shared.settings.HdModeBatteryMonitor
 import com.swordfish.lemuroid.common.math.Fraction
 import com.swordfish.lemuroid.lib.storage.cache.CacheCleaner
 import dagger.Lazy
@@ -30,7 +31,10 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
             context.resources.getStringArray(R.array.pref_key_shader_filter_values).first(),
         )
 
-    suspend fun hdMode() = booleanPreference(R.string.pref_key_hd_mode, false)
+    suspend fun hdMode(): Boolean {
+        if (!HdModeBatteryMonitor.isAllowed(context)) return false
+        return booleanPreference(R.string.pref_key_hd_mode, false)
+    }
 
     suspend fun hdModeQuality() = HDModeQuality.parse(intPreference(R.string.pref_key_hd_mode_quality, 1))
 
@@ -38,9 +42,13 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
 
     suspend fun autoSaveSync() = booleanPreference(R.string.pref_key_save_sync_auto, false)
 
-    suspend fun syncSaves() = booleanPreference(R.string.pref_key_save_sync_enable, true)
+    suspend fun syncSaves() = booleanPreference(R.string.pref_key_save_sync_enable, false)
 
     suspend fun syncStatesCores() = stringSetPreference(R.string.pref_key_save_sync_cores, setOf())
+
+    suspend fun syncBeforeGame() = booleanPreference(R.string.pref_key_save_sync_before_game, true)
+
+    suspend fun autoSaveSyncInterval() = stringPreference(R.string.pref_key_save_sync_interval, "3h")
 
     suspend fun enableRumble() = booleanPreference(R.string.pref_key_enable_rumble, false)
 

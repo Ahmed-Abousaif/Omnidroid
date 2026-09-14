@@ -24,6 +24,24 @@ abstract class SaveSyncManager {
 
     abstract fun computeStatesSpace(core: CoreID): String
 
+    open fun getProviders(): List<CloudSaveProviderInfo> = emptyList()
+
+    open suspend fun sync(request: SaveSyncRequest): SaveSyncResult {
+        sync(request.cores)
+        return SaveSyncResult()
+    }
+
+    open fun signOut(providerId: String) {}
+
+    open fun getConflicts(): List<SaveConflict> = emptyList()
+
+    open fun resolveConflict(
+        conflictId: String,
+        resolution: ConflictResolution,
+    ) {}
+
+    open fun computeRemoteUsage(providerId: String): String = ""
+
     fun getDisplayNameForCore(
         context: Context,
         coreID: CoreID,

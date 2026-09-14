@@ -201,6 +201,13 @@ class InputDeviceManager(
             .map { device -> device.distinctBy { it.descriptor } }
     }
 
+    fun hasEnabledGamePad(): Boolean {
+        return getAllGamePads().any { device ->
+            val defaultValue = device.getLemuroidInputDevice().isEnabledByDefault(context)
+            sharedPreferences.getBoolean(computeEnabledGamePadPreference(device), defaultValue)
+        }
+    }
+
     fun getEnabledInputsObservable(): Flow<List<InputDevice>> {
         return getGamePadsObservable()
             .flatMapLatest { devices ->

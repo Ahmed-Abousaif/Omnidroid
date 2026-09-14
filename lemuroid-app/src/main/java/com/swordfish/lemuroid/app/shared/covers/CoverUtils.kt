@@ -8,11 +8,13 @@ import coil.imageLoader
 import coil.load
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.swordfish.lemuroid.common.drawable.TextDrawable
 import com.swordfish.lemuroid.common.graphics.ColorUtils
 import com.swordfish.lemuroid.lib.library.db.entity.Game
 import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
+import java.io.File
 
 object CoverUtils {
     fun loadCover(
@@ -21,12 +23,41 @@ object CoverUtils {
     ) {
         if (imageView == null) return
 
-        imageView.load(game.coverFrontUrl, imageView.context.imageLoader) {
+        imageView.load(coverData(game), imageView.context.imageLoader) {
             val fallbackDrawable = getFallbackDrawable(game)
             fallback(fallbackDrawable)
             error(fallbackDrawable)
+            customCoverCacheKey(game)?.let { key ->
+                memoryCacheKey(key)
+                diskCacheKey(key)
+            }
         }
     }
+
+    fun coverRequest(
+        context: Context,
+        game: Game,
+    ): ImageRequest {
+        return ImageRequest.Builder(context)
+            .data(coverData(game))
+            .apply {
+                customCoverCacheKey(game)?.let { key ->
+                    memoryCacheKey(key)
+                    diskCacheKey(key)
+                }
+            }
+            .build()
+    }
+
+    fun hasCustomCover(game: Game): Boolean = resolveCustomCoverFile(game) != null
+
+    fun resolveCustomCoverFile(game: Game): File? {
+        return game.customCoverPath
+            ?.let(CustomCoverManager::fileForStoredPath)
+            ?.takeIf { it.isFile && it.length() > 0L }
+    }
+
+    fun coverData(game: Game): Any? = resolveCustomCoverFile(game) ?: game.coverFrontUrl
 
     fun buildImageLoader(applicationContext: Context): ImageLoader {
         return ImageLoader.Builder(applicationContext)
@@ -77,5 +108,10 @@ object CoverUtils {
 
     private fun computeColor(game: Game): Int {
         return ColorUtils.randomColor(game.title)
+    }
+
+    private fun customCoverCacheKey(game: Game): String? {
+        val file = resolveCustomCoverFile(game) ?: return null
+        return "${file.absolutePath}:${file.lastModified()}"
     }
 }

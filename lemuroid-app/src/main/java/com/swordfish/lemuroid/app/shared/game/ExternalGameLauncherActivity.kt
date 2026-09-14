@@ -49,6 +49,9 @@ class ExternalGameLauncherActivity : ImmersiveActivity() {
     @Inject
     lateinit var gameLauncher: GameLauncher
 
+    @Inject
+    lateinit var castDisplayManager: com.swordfish.lemuroid.app.shared.cast.CastDisplayManager
+
     private val loadingState = MutableStateFlow(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -134,6 +137,7 @@ class ExternalGameLauncherActivity : ImmersiveActivity() {
                         ChannelUpdateWork.enqueue(applicationContext)
                     }
                     gameLaunchTaskHandler.handleGameFinish(false, this@ExternalGameLauncherActivity, resultCode, data)
+                    castDisplayManager.allowIdle()
                     finish()
                 }
             }

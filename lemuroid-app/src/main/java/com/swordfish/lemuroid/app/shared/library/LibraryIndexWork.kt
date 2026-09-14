@@ -46,8 +46,6 @@ class LibraryIndexWork(context: Context, workerParams: WorkerParameters) :
             Timber.e("Library indexing work terminated with an exception:", it)
         }
 
-        LibraryIndexScheduler.scheduleCoreUpdate(applicationContext)
-
         return Result.success()
     }
 

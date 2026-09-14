@@ -120,6 +120,7 @@ class BaseGameScreenViewModel(
         )
     private val touchControls =
         GameViewModelTouchControls(
+            appContext,
             settingsManager,
             TouchControllerSettingsManager(sharedPreferences),
             retroGameView,
@@ -268,9 +269,10 @@ class BaseGameScreenViewModel(
     }
 
     fun toggleFastForward() {
-        Timber.d("Loading quick save")
         retroGameView.retroGameView?.apply {
-            frameSpeed = if (frameSpeed == 1) 2 else 1
+            val cycle = listOf(1, 2, 4)
+            val index = cycle.indexOf(frameSpeed)
+            frameSpeed = if (index >= 0) cycle[(index + 1) % cycle.size] else 1
         }
     }
 

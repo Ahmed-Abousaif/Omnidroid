@@ -23,6 +23,7 @@ import com.swordfish.lemuroid.lib.game.GameLoaderException
 import com.swordfish.lemuroid.lib.library.GameSystem
 import com.swordfish.lemuroid.lib.library.SystemCoreConfig
 import com.swordfish.lemuroid.lib.library.db.entity.Game
+import com.swordfish.lemuroid.lib.savesync.GameFrameSpeedPreferences
 import com.swordfish.lemuroid.lib.storage.RomFiles
 import com.swordfish.libretrodroid.GLRetroView
 import com.swordfish.libretrodroid.GLRetroViewData
@@ -73,6 +74,7 @@ class GameViewModelRetroGameView(
 
     private val retroGameViewFlow = MutableStateFlow<GLRetroView?>(null)
     var retroGameView: GLRetroView? by MutableStateProperty(retroGameViewFlow)
+    private val frameSpeedPreferences = GameFrameSpeedPreferences(appContext)
 
     fun getGameState(): Flow<GameState> {
         return gameState.debounce(200)
@@ -169,6 +171,10 @@ class GameViewModelRetroGameView(
 
         if (!system.hasTouchScreen) {
             result.disableTouchEvents()
+        }
+
+        if (system.fastForwardSupport) {
+            result.frameSpeed = frameSpeedPreferences.get(currentState.gameData.game.id)
         }
 
         lifecycle.lifecycle.addObserver(result)

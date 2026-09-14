@@ -22,6 +22,8 @@ package com.swordfish.lemuroid.lib.game
 import android.content.Context
 import android.os.Build
 import com.swordfish.lemuroid.lib.bios.BiosManager
+import com.swordfish.lemuroid.lib.core.CoreLibraryLocator
+import com.swordfish.lemuroid.lib.core.CoreUpdater
 import com.swordfish.lemuroid.lib.core.CoreVariable
 import com.swordfish.lemuroid.lib.core.CoreVariablesManager
 import com.swordfish.lemuroid.lib.library.CoreID
@@ -52,6 +54,7 @@ class GameLoader(
     private val directoriesManager: DirectoriesManager,
     private val biosManager: BiosManager,
     private val desmumeMigrationHandler: DesmumeMigrationHandler,
+    private val coreUpdater: CoreUpdater,
 ) {
     sealed class LoadingState {
         object LoadingCore : LoadingState()
@@ -80,7 +83,7 @@ class GameLoader(
 
                 val coreLibrary =
                     runCatching {
-                        findLibrary(appContext, systemCoreConfig.coreID)!!.absolutePath
+                        resolveCoreLibrary(appContext, systemCoreConfig.coreID)
                     }.getOrElse { throw GameLoaderException(GameLoaderError.LoadCore) }
 
                 emit(LoadingState.LoadingGame)
@@ -155,19 +158,17 @@ class GameLoader(
         return Build.SUPPORTED_ABIS.toSet().intersect(supportedOnlyArchitectures).isNotEmpty()
     }
 
-    private fun findLibrary(
+    private suspend fun resolveCoreLibrary(
         context: Context,
         coreID: CoreID,
-    ): File? {
-        val files =
-            sequenceOf(
-                File(context.applicationInfo.nativeLibraryDir),
-                context.filesDir,
-            )
+    ): String {
+        CoreLibraryLocator.find(context, coreID)?.let { return it.absolutePath }
 
-        return files
-            .flatMap { it.walkBottomUp() }
-            .firstOrNull { it.name == coreID.libretroFileName }
+        Timber.i("Core ${coreID.coreName} is missing, downloading")
+        coreUpdater.downloadCores(context, listOf(coreID))
+
+        return CoreLibraryLocator.find(context, coreID)?.absolutePath
+            ?: throw GameLoaderException(GameLoaderError.LoadCore)
     }
 
     @Suppress("ArrayInDataClass")
