@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.swordfish.lemuroid.baselineprofile"
+    namespace = "com.omnidroid.baselineprofile"
     compileSdk = deps.android.compileSdkVersion
 
     compileOptions {
@@ -20,7 +20,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    targetProjectPath = ":lemuroid-app"
+    targetProjectPath = ":omnidroid-app"
 
     flavorDimensions += listOf("opensource", "cores")
     productFlavors {

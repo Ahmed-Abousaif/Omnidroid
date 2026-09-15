@@ -7,7 +7,7 @@ plugins {
 
 dependencies {
     implementation(project(":retrograde-util"))
-    implementation(project(":lemuroid-touchinput"))
+    implementation(project(":omnidroid-touchinput"))
 
     api(deps.libs.androidx.lifecycle.commonJava8)
 
@@ -52,5 +52,5 @@ android {
             }
         }
     }
-    namespace = "com.swordfish.lemuroid.lib"
+    namespace = "com.omnidroid.lib"
 }
