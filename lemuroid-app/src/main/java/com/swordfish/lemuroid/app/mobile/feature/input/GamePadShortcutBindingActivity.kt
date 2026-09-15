@@ -15,11 +15,13 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import com.swordfish.lemuroid.app.mobile.shared.compose.ui.AppTheme
 import com.swordfish.lemuroid.app.shared.input.InputDeviceManager
 import com.swordfish.lemuroid.app.shared.input.ShortcutBindingUpdater
-import com.swordfish.lemuroid.lib.android.RetrogradeActivity
+import com.swordfish.lemuroid.lib.android.RetrogradeComponentActivity
 import timber.log.Timber
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-class GamePadShortcutBindingActivity : RetrogradeActivity() {
+@AndroidEntryPoint
+class GamePadShortcutBindingActivity : RetrogradeComponentActivity() {
     @Inject
     lateinit var inputDeviceManager: InputDeviceManager
 
@@ -60,7 +62,4 @@ class GamePadShortcutBindingActivity : RetrogradeActivity() {
 
         return result
     }
-
-    @dagger.Module
-    abstract class Module
 }

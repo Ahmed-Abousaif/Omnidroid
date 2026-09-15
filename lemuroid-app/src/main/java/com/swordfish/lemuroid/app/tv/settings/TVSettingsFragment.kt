@@ -21,13 +21,14 @@ import com.swordfish.lemuroid.common.coroutines.safeCollect
 import com.swordfish.lemuroid.common.kotlin.NTuple2
 import com.swordfish.lemuroid.lib.preferences.SharedPreferencesHelper
 import com.swordfish.lemuroid.lib.savesync.SaveSyncManager
-import dagger.android.support.AndroidSupportInjection
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class TVSettingsFragment : LeanbackPreferenceFragmentCompat() {
     @Inject
     lateinit var settingsInteractor: SettingsInteractor
@@ -50,11 +51,9 @@ class TVSettingsFragment : LeanbackPreferenceFragmentCompat() {
     lateinit var saveSyncPreferences: SaveSyncPreferences
 
     override fun onAttach(context: Context) {
-        AndroidSupportInjection.inject(this)
+        super.onAttach(context)
 
         saveSyncPreferences = SaveSyncPreferences(saveSyncManager)
-
-        super.onAttach(context)
     }
 
     override fun onViewCreated(
@@ -235,7 +234,4 @@ class TVSettingsFragment : LeanbackPreferenceFragmentCompat() {
         settingsInteractor.resetAllSettings()
         activity?.finish()
     }
-
-    @dagger.Module
-    class Module
 }

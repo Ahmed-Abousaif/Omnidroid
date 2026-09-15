@@ -109,7 +109,6 @@ import com.swordfish.lemuroid.lib.android.RetrogradeComponentActivity
 import com.swordfish.lemuroid.lib.bios.BiosManager
 import com.swordfish.lemuroid.lib.core.CoreUpdater
 import com.swordfish.lemuroid.lib.core.CoresSelection
-import com.swordfish.lemuroid.lib.injection.PerActivity
 import com.swordfish.lemuroid.lib.library.MetaSystemID
 import com.swordfish.lemuroid.lib.library.SystemID
 import com.swordfish.lemuroid.lib.library.db.RetrogradeDatabase
@@ -117,7 +116,7 @@ import com.swordfish.lemuroid.lib.library.db.entity.Game
 import com.swordfish.lemuroid.lib.preferences.SharedPreferencesHelper
 import com.swordfish.lemuroid.lib.savesync.SaveSyncManager
 import com.swordfish.lemuroid.lib.storage.DirectoriesManager
-import dagger.Provides
+import dagger.hilt.android.AndroidEntryPoint
 import de.charlex.compose.material3.HtmlText
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -125,6 +124,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@AndroidEntryPoint
 @OptIn(DelicateCoroutinesApi::class)
 class MainActivity : RetrogradeComponentActivity(), BusyActivity {
     @Inject
@@ -979,39 +979,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     }
                 }
             }
-        }
-    }
-
-    @dagger.Module
-    abstract class Module {
-        @dagger.Module
-        companion object {
-            @Provides
-            @PerActivity
-            @JvmStatic
-            fun settingsInteractor(
-                activity: MainActivity,
-                directoriesManager: DirectoriesManager,
-            ) = SettingsInteractor(activity, directoriesManager)
-
-            @Provides
-            @PerActivity
-            @JvmStatic
-            fun gameInteractor(
-                activity: MainActivity,
-                retrogradeDb: RetrogradeDatabase,
-                shortcutsGenerator: ShortcutsGenerator,
-                gameLauncher: GameLauncher,
-                saveSyncManager: SaveSyncManager,
-            ) = GameInteractor(
-                activity,
-                retrogradeDb,
-                TVHelper.isTV(activity),
-                shortcutsGenerator,
-                gameLauncher,
-                saveSyncManager,
-                activity::requestNotificationPermission,
-            )
         }
     }
 }

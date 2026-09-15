@@ -7,6 +7,7 @@ import com.swordfish.lemuroid.lib.library.CoreID
 import com.swordfish.lemuroid.lib.storage.DirectoriesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.ResponseBody
 import retrofit2.Response
 import timber.log.Timber
 import java.io.File
@@ -36,29 +37,37 @@ class PPSSPPAssetsManager : CoreID.AssetsManager {
 
     private suspend fun handleSuccess(
         directoriesManager: DirectoriesManager,
-        response: Response<ZipInputStream>,
+        response: Response<ResponseBody>,
         sharedPreferences: SharedPreferences,
     ) {
+        if (!response.isSuccessful) {
+            throw Exception(response.errorBody()?.use { it.string() } ?: "PPSSPP assets download failed")
+        }
+
         val coreAssetsDirectory = getAssetsDirectory(directoriesManager)
         coreAssetsDirectory.deleteRecursively()
         coreAssetsDirectory.mkdirs()
 
-        response.body()?.use { zipInputStream ->
-            while (true) {
-                val entry = zipInputStream.nextEntry ?: break
-                Timber.d("Writing file: ${entry.name}")
-                val destFile =
-                    File(
-                        coreAssetsDirectory,
-                        entry.name,
-                    )
-                if (entry.isDirectory) {
-                    destFile.mkdirs()
-                } else {
-                    zipInputStream.copyTo(destFile.outputStream())
+        response.body()?.use { responseBody ->
+            ZipInputStream(responseBody.byteStream()).use { zipInputStream ->
+                while (true) {
+                    val entry = zipInputStream.nextEntry ?: break
+                    Timber.d("Writing file: ${entry.name}")
+                    val destFile =
+                        File(
+                            coreAssetsDirectory,
+                            entry.name,
+                        )
+                    if (entry.isDirectory) {
+                        destFile.mkdirs()
+                    } else {
+                        destFile.outputStream().use { output ->
+                            zipInputStream.copyTo(output)
+                        }
+                    }
                 }
             }
-        }
+        } ?: throw Exception("Empty PPSSPP assets body")
 
         sharedPreferences.edit()
             .putString(PPSSPP_ASSETS_VERSION_KEY, PPSSPP_ASSETS_VERSION)
@@ -88,9 +97,9 @@ class PPSSPPAssetsManager : CoreID.AssetsManager {
         const val PPSSPP_ASSETS_VERSION = "1.15"
 
         val PPSSPP_ASSETS_URL: Uri =
-            Uri.parse("https://github.com/Swordfish90/LemuroidCores/")
+            Uri.parse("https://raw.githubusercontent.com/Swordfish90/LemuroidCores/")
                 .buildUpon()
-                .appendEncodedPath("raw/$PPSSPP_ASSETS_VERSION/assets/ppsspp.zip")
+                .appendEncodedPath("$PPSSPP_ASSETS_VERSION/assets/ppsspp.zip")
                 .build()
 
         const val PPSSPP_ASSETS_VERSION_KEY = "ppsspp_assets_version_key"

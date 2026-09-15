@@ -132,3 +132,67 @@ These are issues from Lemuroid’s original flow, or regressions found while bui
 You can help translate the original Lemuroid strings here: https://crowdin.com/project/lemuroid
 
 Omnidroid-specific strings (library, cast, cloud providers, controller hints, game details) are currently English-first.
+
+## System changes and package upgrades
+
+Toolchain and library upgrades applied on top of the Lemuroid baseline.
+
+### Build system
+
+- Android Gradle Plugin: **8.4.0 → 9.0.0**
+- Kotlin: **2.0.21 → 2.2.10**
+- Annotation processing: **kapt → KSP** (`2.2.10-2.0.2`) for Room and Hilt
+- Dependency injection: **Dagger-Android 2.19 → Hilt 2.60.1**
+- Jetifier: **removed** (`android.enableJetifier` off)
+- Global Play Services force to `17.0.0`: **removed**
+- Pre-AndroidX `android.arch.lifecycle:reactivestreams`: **removed**
+- Optional ABI filtering via `-PabiFilters=` (default still ships all four ABIs)
+- Android support unchanged: **minSdk 23**, **targetSdk / compileSdk 35**, Java **17**
+
+### UI and AndroidX
+
+- Compose BOM: **2024.02.02 → 2026.08.00**
+- Navigation: **2.5.2 → 2.8.8**
+- Lifecycle: **2.6.1 → 2.9.0** (ViewModel Compose aligned to the same version)
+- Room: **2.6.1 → 2.8.4**
+- WorkManager: **2.9.0 → 2.10.0**
+- Paging: **3.2.1 → 3.3.6**
+- Core KTX: **1.8.0 → 1.16.0**
+- AppCompat: **1.4.2 → 1.7.0**
+- Fragment: **1.5.1 → 1.8.6**
+- Activity: **1.7.2 → 1.10.1**
+- Material Components: **1.6.1 → 1.12.0**
+- ProfileInstaller: **1.3.1 → 1.4.1**
+- Startup runtime: **1.1.1 → 1.2.0**
+- DocumentFile: **1.0.1 → 1.1.0**
+- Preference KTX: **1.1.1 → 1.2.1**
+- RecyclerView: **1.2.1 → 1.4.0**
+- ConstraintLayout: **2.1.4 → 2.2.1**
+- ConstraintLayout Compose: **1.1.0 → 1.1.1**
+- Collection KTX: **1.1.0 → 1.4.5**
+- Accompanist: **0.34.0 → 0.36.0** (still used; APIs remain deprecated)
+
+### Networking and utilities
+
+- OkHttp: **4.9.1 → 5.5.0**
+- Okio: **2.10.0 → 3.18.2**
+- Retrofit: **2.9.0 → 3.0.0**
+- Kotlin coroutines: **1.6.4 → 1.10.2**
+- kotlinx-serialization: **1.2.2 → 1.8.1**
+- Coil: **2.6.0 → 2.7.0**
+- Guava: **30.1.1-android → 33.4.0-android**
+
+### Play / cloud
+
+- Play Services Auth: **17.0.0 → 21.6.0**
+- Play In-App Review: **2.0.0 → 2.0.2**
+- Play Feature Delivery: **2.1.0** (unchanged)
+- Google API Client / Drive: **1.32.1** (still pending a newer client)
+
+### Unchanged pins
+
+- LibretroDroid **0.13.2**
+- PadKit **1.0.0-beta1**
+- Leanback **1.1.0-rc01**
+- Build tools **34.0.0**
+

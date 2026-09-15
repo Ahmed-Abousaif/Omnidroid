@@ -1,16 +1,8 @@
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
-
 plugins {
     id("com.android.library")
     id("kotlin-android")
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp")
     id("kotlinx-serialization")
-}
-
-android {
-    kotlinOptions {
-        jvmTarget = "17"
-    }
 }
 
 dependencies {
@@ -38,8 +30,7 @@ dependencies {
     implementation(deps.libs.androidx.room.ktx)
     implementation(deps.libs.androidx.room.paging)
     implementation(deps.libs.androidx.documentfile)
-    implementation(deps.libs.dagger.android.core)
-    implementation(deps.libs.dagger.android.support)
+    implementation(deps.libs.hilt.android)
     implementation(deps.libs.okHttp3)
     implementation(deps.libs.okio)
     implementation(deps.libs.retrofit)
@@ -50,7 +41,7 @@ dependencies {
     implementation(deps.libs.kotlinxCoroutinesAndroid)
     implementation(deps.libs.flowPreferences)
 
-    kapt(deps.libs.androidx.room.compiler)
+    ksp(deps.libs.androidx.room.compiler)
 }
 
 android {
@@ -62,8 +53,4 @@ android {
         }
     }
     namespace = "com.swordfish.lemuroid.lib"
-    kotlinOptions {
-        this as KotlinJvmOptions
-        jvmTarget = "17"
-    }
 }

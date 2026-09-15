@@ -22,22 +22,14 @@ package com.swordfish.lemuroid.app
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.room.Room
-import com.swordfish.lemuroid.app.mobile.feature.game.GameActivity
-import com.swordfish.lemuroid.app.mobile.feature.game.GameService
-import com.swordfish.lemuroid.app.mobile.feature.gamemenu.GameMenuActivity
-import com.swordfish.lemuroid.app.mobile.feature.input.GamePadBindingActivity
-import com.swordfish.lemuroid.app.mobile.feature.input.GamePadShortcutBindingActivity
-import com.swordfish.lemuroid.app.mobile.feature.main.MainActivity
 import com.swordfish.lemuroid.app.mobile.feature.settings.SettingsManager
 import com.swordfish.lemuroid.app.mobile.feature.shortcuts.ShortcutsGenerator
 import com.swordfish.lemuroid.app.shared.cast.CastDisplayManager
-import com.swordfish.lemuroid.app.shared.game.ExternalGameLauncherActivity
 import com.swordfish.lemuroid.app.shared.game.GameLauncher
 import com.swordfish.lemuroid.app.shared.input.InputDeviceManager
 import com.swordfish.lemuroid.app.shared.main.GameLaunchTaskHandler
 import com.swordfish.lemuroid.app.shared.rumble.RumbleManager
 import com.swordfish.lemuroid.app.shared.settings.ControllerConfigsManager
-import com.swordfish.lemuroid.app.shared.settings.StorageFrameworkPickerLauncher
 import com.swordfish.lemuroid.app.tv.channel.ChannelHandler
 import com.swordfish.lemuroid.app.tv.settings.BiosPreferences
 import com.swordfish.lemuroid.app.tv.settings.CoresSelectionPreferences
@@ -49,8 +41,6 @@ import com.swordfish.lemuroid.lib.core.CoreUpdater
 import com.swordfish.lemuroid.lib.core.CoreVariablesManager
 import com.swordfish.lemuroid.lib.core.CoresSelection
 import com.swordfish.lemuroid.lib.game.GameLoader
-import com.swordfish.lemuroid.lib.injection.PerActivity
-import com.swordfish.lemuroid.lib.injection.PerApp
 import com.swordfish.lemuroid.lib.library.LemuroidLibrary
 import com.swordfish.lemuroid.lib.library.db.RetrogradeDatabase
 import com.swordfish.lemuroid.lib.library.db.dao.GameSearchDao
@@ -71,356 +61,315 @@ import com.swordfish.lemuroid.lib.storage.local.LocalStorageProvider
 import com.swordfish.lemuroid.lib.storage.local.StorageAccessFrameworkProvider
 import com.swordfish.lemuroid.metadata.libretrodb.LibretroDBMetadataProvider
 import com.swordfish.lemuroid.metadata.libretrodb.db.LibretroDBManager
-import dagger.Binds
 import dagger.Lazy
+import android.app.Activity
+import com.swordfish.lemuroid.app.mobile.feature.main.MainActivity
+import com.swordfish.lemuroid.app.shared.GameInteractor
+import com.swordfish.lemuroid.app.shared.settings.SettingsInteractor
+import com.swordfish.lemuroid.app.tv.shared.TVHelper
 import dagger.Module
 import dagger.Provides
-import dagger.android.ContributesAndroidInjector
+import dagger.hilt.InstallIn
+import dagger.hilt.android.components.ActivityComponent
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.android.scopes.ActivityScoped
+import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.IntoSet
 import okhttp3.OkHttpClient
-import okhttp3.ResponseBody
-import retrofit2.Converter
 import retrofit2.Retrofit
-import java.io.InputStream
-import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
-import java.util.zip.ZipInputStream
+import javax.inject.Singleton
 
 @Module
-abstract class LemuroidApplicationModule {
-    @Binds
-    abstract fun context(app: LemuroidApplication): Context
-
-    @Binds
+@InstallIn(SingletonComponent::class)
+abstract class LemuroidApplicationBindsModule {
+    @dagger.Binds
     abstract fun saveSyncManager(saveSyncManagerImpl: SaveSyncManagerImpl): SaveSyncManager
+}
 
-    @PerActivity
-    @ContributesAndroidInjector(modules = [MainActivity.Module::class])
-    abstract fun mainActivity(): MainActivity
+@Module
+@InstallIn(ActivityComponent::class)
+object LemuroidActivityModule {
+    @Provides
+    @ActivityScoped
+    fun settingsInteractor(
+        activity: Activity,
+        directoriesManager: DirectoriesManager,
+    ) = SettingsInteractor(activity, directoriesManager)
 
-    @PerActivity
-    @ContributesAndroidInjector
-    abstract fun externalGameLauncherActivity(): ExternalGameLauncherActivity
-
-    @PerActivity
-    @ContributesAndroidInjector
-    abstract fun preGameSyncActivity(): com.swordfish.lemuroid.app.shared.savesync.PreGameSyncActivity
-
-    @PerActivity
-    @ContributesAndroidInjector
-    abstract fun gameActivity(): GameActivity
-
-    @ContributesAndroidInjector
-    abstract fun gameService(): GameService
-
-    @PerActivity
-    @ContributesAndroidInjector(modules = [GameMenuActivity.Module::class])
-    abstract fun gameMenuActivity(): GameMenuActivity
-
-    @PerActivity
-    @ContributesAndroidInjector
-    abstract fun storageFrameworkPickerLauncher(): StorageFrameworkPickerLauncher
-
-    @PerActivity
-    @ContributesAndroidInjector(modules = [GamePadBindingActivity.Module::class])
-    abstract fun gamepadBindingActivity(): GamePadBindingActivity
-
-    @PerActivity
-    @ContributesAndroidInjector(modules = [GamePadShortcutBindingActivity.Module::class])
-    abstract fun gamepadShortcutBindingActivity(): GamePadShortcutBindingActivity
-
-    @Module
-    companion object {
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun libretroDBManager(app: LemuroidApplication) = LibretroDBManager(app)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun retrogradeDb(app: LemuroidApplication) =
-            Room.databaseBuilder(app, RetrogradeDatabase::class.java, RetrogradeDatabase.DB_NAME)
-                .addCallback(GameSearchDao.CALLBACK)
-                .addMigrations(
-                    GameSearchDao.MIGRATION,
-                    Migrations.VERSION_8_9,
-                    Migrations.VERSION_9_10,
-                    Migrations.VERSION_10_11,
-                )
-                .fallbackToDestructiveMigration()
-                .build()
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun gameMetadataProvider(libretroDBManager: LibretroDBManager): GameMetadataProvider =
-            LibretroDBMetadataProvider(libretroDBManager)
-
-        @Provides
-        @PerApp
-        @IntoSet
-        @JvmStatic
-        fun localSAFStorageProvider(context: Context): StorageProvider = StorageAccessFrameworkProvider(context)
-
-        @Provides
-        @PerApp
-        @IntoSet
-        @JvmStatic
-        fun localGameStorageProvider(
-            context: Context,
-            directoriesManager: DirectoriesManager,
-        ): StorageProvider = LocalStorageProvider(context, directoriesManager)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun gameStorageProviderRegistry(
-            context: Context,
-            providers: Set<@JvmSuppressWildcards StorageProvider>,
-        ) = StorageProviderRegistry(context, providers)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun lemuroidLibrary(
-            db: RetrogradeDatabase,
-            storageProviderRegistry: Lazy<StorageProviderRegistry>,
-            gameMetadataProvider: Lazy<GameMetadataProvider>,
-            biosManager: BiosManager,
-        ) = LemuroidLibrary(db, storageProviderRegistry, gameMetadataProvider, biosManager)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun okHttpClient(): OkHttpClient =
-            OkHttpClient.Builder()
-                .connectTimeout(1, TimeUnit.MINUTES)
-                .readTimeout(1, TimeUnit.MINUTES)
-                .build()
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun retrofit(): Retrofit =
-            Retrofit.Builder()
-                .baseUrl("https://example.com")
-                .addConverterFactory(
-                    object : Converter.Factory() {
-                        override fun responseBodyConverter(
-                            type: Type,
-                            annotations: Array<out Annotation>,
-                            retrofit: Retrofit,
-                        ): Converter<ResponseBody, *>? {
-                            if (type == ZipInputStream::class.java) {
-                                return Converter<ResponseBody, ZipInputStream> { responseBody ->
-                                    ZipInputStream(responseBody.byteStream())
-                                }
-                            }
-                            if (type == InputStream::class.java) {
-                                return Converter<ResponseBody, InputStream> { responseBody ->
-                                    responseBody.byteStream()
-                                }
-                            }
-                            return null
-                        }
-                    },
-                )
-                .build()
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun directoriesManager(context: Context) = DirectoriesManager(context)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun statesManager(directoriesManager: DirectoriesManager) = StatesManager(directoriesManager)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun savesManager(directoriesManager: DirectoriesManager) = SavesManager(directoriesManager)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun statesPreviewManager(directoriesManager: DirectoriesManager) = StatesPreviewManager(directoriesManager)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun coreManager(
-            directoriesManager: DirectoriesManager,
-            retrofit: Retrofit,
-        ): CoreUpdater = CoreUpdaterImpl(directoriesManager, retrofit)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun coreVariablesManager(sharedPreferences: Lazy<SharedPreferences>) = CoreVariablesManager(sharedPreferences)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun gameLoader(
-            lemuroidLibrary: LemuroidLibrary,
-            statesManager: StatesManager,
-            savesManager: SavesManager,
-            coreVariablesManager: CoreVariablesManager,
-            retrogradeDatabase: RetrogradeDatabase,
-            savesCoherencyEngine: SavesCoherencyEngine,
-            directoriesManager: DirectoriesManager,
-            biosManager: BiosManager,
-            desmumeMigrationHandler: DesmumeMigrationHandler,
-            coreUpdater: CoreUpdater,
-        ) = GameLoader(
-            lemuroidLibrary,
-            statesManager,
-            savesManager,
-            coreVariablesManager,
-            retrogradeDatabase,
-            savesCoherencyEngine,
-            directoriesManager,
-            biosManager,
-            desmumeMigrationHandler,
-            coreUpdater,
-        )
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun inputDeviceManager(
-            context: Context,
-            sharedPreferences: Lazy<SharedPreferences>,
-        ) = InputDeviceManager(context, sharedPreferences)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun biosManager(directoriesManager: DirectoriesManager) = BiosManager(directoriesManager)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun biosPreferences(biosManager: BiosManager) = BiosPreferences(biosManager)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun coresSelection(
-            sharedPreferences: Lazy<SharedPreferences>,
-            desmumeMigrationHandler: DesmumeMigrationHandler,
-        ) = CoresSelection(sharedPreferences, desmumeMigrationHandler)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun coreSelectionPreferences() = CoresSelectionPreferences()
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun savesCoherencyEngine(
-            savesManager: SavesManager,
-            statesManager: StatesManager,
-        ) = SavesCoherencyEngine(savesManager, statesManager)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun saveSyncManagerImpl(
-            context: Context,
-            directoriesManager: DirectoriesManager,
-        ) = SaveSyncManagerImpl(context, directoriesManager)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun desmumeMigrationHandler(directoriesManager: DirectoriesManager) =
-            DesmumeMigrationHandler(directoriesManager)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun postGameHandler(retrogradeDatabase: RetrogradeDatabase) =
-            GameLaunchTaskHandler(ReviewManager(), retrogradeDatabase)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun shortcutsGenerator(
-            context: Context,
-            retrofit: Retrofit,
-        ) = ShortcutsGenerator(context, retrofit)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun channelHandler(
-            context: Context,
-            retrogradeDatabase: RetrogradeDatabase,
-            retrofit: Retrofit,
-        ) = ChannelHandler(context, retrogradeDatabase, retrofit)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun retroControllerManager(sharedPreferences: Lazy<SharedPreferences>) =
-            ControllerConfigsManager(sharedPreferences)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun settingsManager(
-            context: Context,
-            sharedPreferences: Lazy<SharedPreferences>,
-        ) = SettingsManager(context, sharedPreferences)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun sharedPreferences(context: Context) = SharedPreferencesHelper.getSharedPreferences(context)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun gameCloudSyncPreferences(context: Context) = GameCloudSyncPreferences(context)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun castDisplayManager(context: Context) = CastDisplayManager(context)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun gameLauncher(
-            coresSelection: CoresSelection,
-            gameLaunchTaskHandler: GameLaunchTaskHandler,
-            saveSyncManager: SaveSyncManager,
-            settingsManager: SettingsManager,
-            gameCloudSyncPreferences: GameCloudSyncPreferences,
-            castDisplayManager: CastDisplayManager,
-            inputDeviceManager: InputDeviceManager,
-        ) = GameLauncher(
-            coresSelection,
-            gameLaunchTaskHandler,
+    @Provides
+    @ActivityScoped
+    fun gameInteractor(
+        activity: Activity,
+        retrogradeDb: RetrogradeDatabase,
+        shortcutsGenerator: ShortcutsGenerator,
+        gameLauncher: GameLauncher,
+        saveSyncManager: SaveSyncManager,
+    ): GameInteractor {
+        val mainActivity = activity as MainActivity
+        return GameInteractor(
+            mainActivity,
+            retrogradeDb,
+            TVHelper.isTV(activity),
+            shortcutsGenerator,
+            gameLauncher,
             saveSyncManager,
-            settingsManager,
-            gameCloudSyncPreferences,
-            castDisplayManager,
-            inputDeviceManager,
+            mainActivity::requestNotificationPermission,
         )
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun rumbleManager(
-            context: Context,
-            settingsManager: SettingsManager,
-            inputDeviceManager: InputDeviceManager,
-        ) = RumbleManager(context, settingsManager, inputDeviceManager)
     }
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+object LemuroidApplicationModule {
+    @Provides
+    @Singleton
+    fun libretroDBManager(
+        @ApplicationContext context: Context,
+    ) = LibretroDBManager(context)
+
+    @Provides
+    @Singleton
+    fun retrogradeDb(
+        @ApplicationContext context: Context,
+    ) = Room.databaseBuilder(context, RetrogradeDatabase::class.java, RetrogradeDatabase.DB_NAME)
+            .addCallback(GameSearchDao.CALLBACK)
+            .addMigrations(
+                GameSearchDao.MIGRATION,
+                Migrations.VERSION_8_9,
+                Migrations.VERSION_9_10,
+                Migrations.VERSION_10_11,
+            )
+            .fallbackToDestructiveMigration()
+            .build()
+
+    @Provides
+    @Singleton
+    fun gameMetadataProvider(libretroDBManager: LibretroDBManager): GameMetadataProvider =
+        LibretroDBMetadataProvider(libretroDBManager)
+
+    @Provides
+    @Singleton
+    @IntoSet
+    fun localSAFStorageProvider(
+        @ApplicationContext context: Context,
+    ): StorageProvider = StorageAccessFrameworkProvider(context)
+
+    @Provides
+    @Singleton
+    @IntoSet
+    fun localGameStorageProvider(
+        @ApplicationContext context: Context,
+        directoriesManager: DirectoriesManager,
+    ): StorageProvider = LocalStorageProvider(context, directoriesManager)
+
+    @Provides
+    @Singleton
+    fun gameStorageProviderRegistry(
+        @ApplicationContext context: Context,
+        providers: Set<@JvmSuppressWildcards StorageProvider>,
+    ) = StorageProviderRegistry(context, providers)
+
+    @Provides
+    @Singleton
+    fun lemuroidLibrary(
+        db: RetrogradeDatabase,
+        storageProviderRegistry: Lazy<StorageProviderRegistry>,
+        gameMetadataProvider: Lazy<GameMetadataProvider>,
+        biosManager: BiosManager,
+    ) = LemuroidLibrary(db, storageProviderRegistry, gameMetadataProvider, biosManager)
+
+    @Provides
+    @Singleton
+    fun okHttpClient(): OkHttpClient =
+        OkHttpClient.Builder()
+            .connectTimeout(1, TimeUnit.MINUTES)
+            .readTimeout(1, TimeUnit.MINUTES)
+            .build()
+
+    @Provides
+    @Singleton
+    fun retrofit(okHttpClient: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .client(okHttpClient)
+            .baseUrl("https://example.com/")
+            .build()
+
+    @Provides
+    @Singleton
+    fun directoriesManager(
+        @ApplicationContext context: Context,
+    ) = DirectoriesManager(context)
+
+    @Provides
+    @Singleton
+    fun statesManager(directoriesManager: DirectoriesManager) = StatesManager(directoriesManager)
+
+    @Provides
+    @Singleton
+    fun savesManager(directoriesManager: DirectoriesManager) = SavesManager(directoriesManager)
+
+    @Provides
+    @Singleton
+    fun statesPreviewManager(directoriesManager: DirectoriesManager) = StatesPreviewManager(directoriesManager)
+
+    @Provides
+    @Singleton
+    fun coreManager(
+        directoriesManager: DirectoriesManager,
+        retrofit: Retrofit,
+    ): CoreUpdater = CoreUpdaterImpl(directoriesManager, retrofit)
+
+    @Provides
+    @Singleton
+    fun coreVariablesManager(sharedPreferences: Lazy<SharedPreferences>) = CoreVariablesManager(sharedPreferences)
+
+    @Provides
+    @Singleton
+    fun gameLoader(
+        lemuroidLibrary: LemuroidLibrary,
+        statesManager: StatesManager,
+        savesManager: SavesManager,
+        coreVariablesManager: CoreVariablesManager,
+        retrogradeDatabase: RetrogradeDatabase,
+        savesCoherencyEngine: SavesCoherencyEngine,
+        directoriesManager: DirectoriesManager,
+        biosManager: BiosManager,
+        desmumeMigrationHandler: DesmumeMigrationHandler,
+        coreUpdater: CoreUpdater,
+    ) = GameLoader(
+        lemuroidLibrary,
+        statesManager,
+        savesManager,
+        coreVariablesManager,
+        retrogradeDatabase,
+        savesCoherencyEngine,
+        directoriesManager,
+        biosManager,
+        desmumeMigrationHandler,
+        coreUpdater,
+    )
+
+    @Provides
+    @Singleton
+    fun inputDeviceManager(
+        @ApplicationContext context: Context,
+        sharedPreferences: Lazy<SharedPreferences>,
+    ) = InputDeviceManager(context, sharedPreferences)
+
+    @Provides
+    @Singleton
+    fun biosManager(directoriesManager: DirectoriesManager) = BiosManager(directoriesManager)
+
+    @Provides
+    @Singleton
+    fun biosPreferences(biosManager: BiosManager) = BiosPreferences(biosManager)
+
+    @Provides
+    @Singleton
+    fun coresSelection(
+        sharedPreferences: Lazy<SharedPreferences>,
+        desmumeMigrationHandler: DesmumeMigrationHandler,
+    ) = CoresSelection(sharedPreferences, desmumeMigrationHandler)
+
+    @Provides
+    @Singleton
+    fun coreSelectionPreferences() = CoresSelectionPreferences()
+
+    @Provides
+    @Singleton
+    fun savesCoherencyEngine(
+        savesManager: SavesManager,
+        statesManager: StatesManager,
+    ) = SavesCoherencyEngine(savesManager, statesManager)
+
+    @Provides
+    @Singleton
+    fun saveSyncManagerImpl(
+        @ApplicationContext context: Context,
+        directoriesManager: DirectoriesManager,
+    ) = SaveSyncManagerImpl(context, directoriesManager)
+
+    @Provides
+    @Singleton
+    fun desmumeMigrationHandler(directoriesManager: DirectoriesManager) =
+        DesmumeMigrationHandler(directoriesManager)
+
+    @Provides
+    @Singleton
+    fun postGameHandler(retrogradeDatabase: RetrogradeDatabase) =
+        GameLaunchTaskHandler(ReviewManager(), retrogradeDatabase)
+
+    @Provides
+    @Singleton
+    fun shortcutsGenerator(
+        @ApplicationContext context: Context,
+        retrofit: Retrofit,
+    ) = ShortcutsGenerator(context, retrofit)
+
+    @Provides
+    @Singleton
+    fun channelHandler(
+        @ApplicationContext context: Context,
+        retrogradeDatabase: RetrogradeDatabase,
+        retrofit: Retrofit,
+    ) = ChannelHandler(context, retrogradeDatabase, retrofit)
+
+    @Provides
+    @Singleton
+    fun retroControllerManager(sharedPreferences: Lazy<SharedPreferences>) =
+        ControllerConfigsManager(sharedPreferences)
+
+    @Provides
+    @Singleton
+    fun settingsManager(
+        @ApplicationContext context: Context,
+        sharedPreferences: Lazy<SharedPreferences>,
+    ) = SettingsManager(context, sharedPreferences)
+
+    @Provides
+    @Singleton
+    fun sharedPreferences(
+        @ApplicationContext context: Context,
+    ) = SharedPreferencesHelper.getSharedPreferences(context)
+
+    @Provides
+    @Singleton
+    fun gameCloudSyncPreferences(
+        @ApplicationContext context: Context,
+    ) = GameCloudSyncPreferences(context)
+
+    @Provides
+    @Singleton
+    fun castDisplayManager(
+        @ApplicationContext context: Context,
+    ) = CastDisplayManager(context)
+
+    @Provides
+    @Singleton
+    fun gameLauncher(
+        coresSelection: CoresSelection,
+        gameLaunchTaskHandler: GameLaunchTaskHandler,
+        saveSyncManager: SaveSyncManager,
+        settingsManager: SettingsManager,
+        gameCloudSyncPreferences: GameCloudSyncPreferences,
+        castDisplayManager: CastDisplayManager,
+        inputDeviceManager: InputDeviceManager,
+    ) = GameLauncher(
+        coresSelection,
+        gameLaunchTaskHandler,
+        saveSyncManager,
+        settingsManager,
+        gameCloudSyncPreferences,
+        castDisplayManager,
+        inputDeviceManager,
+    )
+
+    @Provides
+    @Singleton
+    fun rumbleManager(
+        @ApplicationContext context: Context,
+        settingsManager: SettingsManager,
+        inputDeviceManager: InputDeviceManager,
+    ) = RumbleManager(context, settingsManager, inputDeviceManager)
 }
