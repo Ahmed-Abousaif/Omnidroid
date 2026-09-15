@@ -97,8 +97,10 @@ import com.swordfish.lemuroid.lib.savesync.SaveSyncManager
 import com.swordfish.touchinput.radial.sensors.TiltConfiguration
 import kotlinx.coroutines.yield
 import java.security.InvalidParameterException
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class GameMenuActivity : RetrogradeComponentActivity() {
     @Inject
     lateinit var inputDeviceManager: InputDeviceManager
@@ -501,7 +503,4 @@ class GameMenuActivity : RetrogradeComponentActivity() {
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         controller.hide(WindowInsetsCompat.Type.systemBars())
     }
-
-    @dagger.Module
-    abstract class Module
 }

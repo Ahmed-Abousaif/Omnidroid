@@ -1,7 +1,8 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp")
+    id("com.google.dagger.hilt.android")
     id("androidx.navigation.safeargs.kotlin")
     id("kotlinx-serialization")
     id("androidx.baselineprofile")
@@ -13,6 +14,16 @@ android {
         versionCode = 253
         versionName = "1.18.0" // Always remember to update Cores Tag!
         applicationId = "com.swordfish.lemuroid"
+        // Optional: ./gradlew ... -PabiFilters=armeabi-v7a,arm64-v8a
+        val abiFiltersProp = rootProject.findProperty("abiFilters") as String?
+        if (!abiFiltersProp.isNullOrBlank()) {
+            ndk {
+                abiFilters.clear()
+                abiFilters.addAll(
+                    abiFiltersProp.split(",").map { it.trim() }.filter { it.isNotEmpty() },
+                )
+            }
+        }
     }
     flavorDimensions += listOf("opensource", "cores")
 
@@ -84,10 +95,18 @@ android {
         }
 
         maybeCreate("release").apply {
-            storeFile = file("$rootDir/release.jks")
-            keyAlias = "lemuroid"
-            storePassword = "lemuroid"
-            keyPassword = "lemuroid"
+            if (file("$rootDir/release.jks").exists()) {
+                storeFile = file("$rootDir/release.jks")
+                keyAlias = "lemuroid"
+                storePassword = "lemuroid"
+                keyPassword = "lemuroid"
+            } else {
+                // No release.jks — sign with the local debug keystore
+                storeFile = file("$rootDir/debug.keystore")
+                keyAlias = "androiddebugkey"
+                storePassword = "android"
+                keyPassword = "android"
+            }
         }
     }
 
@@ -95,7 +114,7 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             signingConfig = signingConfigs["release"]
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             resValue("string", "lemuroid_name", "Lemuroid")
         }
         getByName("debug") {
@@ -107,16 +126,16 @@ android {
 
     lint {
         disable += setOf("MissingTranslation", "ExtraTranslation", "EnsureInitializerMetadata")
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 
     buildFeatures {
         compose = true
         buildConfig = true
+        resValues = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = deps.versions.kotlinExtension
-    }
 
     kotlinOptions {
         jvmTarget = "17"
@@ -153,9 +172,6 @@ dependencies {
     implementation(deps.libs.arch.work.runtime)
     implementation(deps.libs.arch.work.runtimeKtx)
     implementation(deps.libs.androidx.lifecycle.commonJava8)
-    implementation(deps.libs.androidx.lifecycle.reactiveStreams)
-
-    kapt(deps.libs.androidx.lifecycle.processor)
 
     implementation(deps.libs.androidx.leanback.leanback)
     implementation(deps.libs.androidx.leanback.leanbackPreference)
@@ -167,9 +183,7 @@ dependencies {
     implementation(deps.libs.androidx.room.common)
     implementation(deps.libs.androidx.room.runtime)
     implementation(deps.libs.androidx.room.ktx)
-    implementation(deps.libs.dagger.android.core)
-    implementation(deps.libs.dagger.android.support)
-    implementation(deps.libs.dagger.core)
+    implementation(deps.libs.hilt.android)
     implementation(deps.libs.kotlinxCoroutinesAndroid)
     implementation(deps.libs.okHttp3)
     implementation(deps.libs.okio)
@@ -189,8 +203,6 @@ dependencies {
     debugImplementation(deps.libs.androidx.compose.tooling)
     implementation(deps.libs.androidx.compose.toolingPreview)
     implementation(deps.libs.androidx.compose.extendedIcons)
-    implementation(deps.libs.androidx.compose.accompanist.systemUiController)
-    implementation(deps.libs.androidx.compose.accompanist.navigationMaterial)
     implementation(deps.libs.androidx.compose.accompanist.drawablePainter)
     implementation(deps.libs.androidx.paging.compose)
     implementation(deps.libs.androidx.lifecycle.viewModelCompose)
@@ -204,10 +216,10 @@ dependencies {
     implementation(deps.libs.libretrodroid)
 
     // Uncomment this when using a local aar file.
-    // implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
+    implementation(deps.libs.hilt.work)
 
-    kapt(deps.libs.dagger.android.processor)
-    kapt(deps.libs.dagger.compiler)
+    ksp(deps.libs.hilt.compiler)
+    ksp(deps.libs.hilt.workCompiler)
 }
 
 fun usePlayDynamicFeatures(): Boolean {

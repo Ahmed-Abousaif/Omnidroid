@@ -32,9 +32,10 @@ import com.swordfish.lemuroid.common.coroutines.launchOnState
 import com.swordfish.lemuroid.lib.library.db.RetrogradeDatabase
 import com.swordfish.lemuroid.lib.library.db.entity.Game
 import com.swordfish.lemuroid.lib.savesync.SaveSyncManager
-import dagger.android.support.AndroidSupportInjection
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class TVHomeFragment : BrowseSupportFragment() {
     @Inject
     lateinit var retrogradeDb: RetrogradeDatabase
@@ -44,11 +45,6 @@ class TVHomeFragment : BrowseSupportFragment() {
 
     @Inject
     lateinit var saveSyncManager: SaveSyncManager
-
-    override fun onAttach(context: Context) {
-        AndroidSupportInjection.inject(this)
-        super.onAttach(context)
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -338,7 +334,4 @@ class TVHomeFragment : BrowseSupportFragment() {
                 }
             }
     }
-
-    @dagger.Module
-    class Module
 }

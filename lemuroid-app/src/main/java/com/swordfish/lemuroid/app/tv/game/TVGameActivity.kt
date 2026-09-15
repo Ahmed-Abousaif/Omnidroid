@@ -7,11 +7,13 @@ import com.swordfish.lemuroid.R
 import com.swordfish.lemuroid.app.shared.game.BaseGameActivity
 import com.swordfish.lemuroid.app.shared.game.BaseGameScreenViewModel
 import com.swordfish.lemuroid.app.tv.gamemenu.TVGameMenuActivity
+import dagger.hilt.android.AndroidEntryPoint
 import com.swordfish.lemuroid.common.coroutines.launchOnState
 import com.swordfish.lemuroid.common.coroutines.safeCollect
 import com.swordfish.lemuroid.common.displayToast
 import kotlinx.coroutines.flow.filter
 
+@AndroidEntryPoint
 class TVGameActivity : BaseGameActivity() {
     override fun getDialogClass() = TVGameMenuActivity::class.java
 

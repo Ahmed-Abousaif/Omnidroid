@@ -18,8 +18,11 @@ import com.swordfish.lemuroid.app.shared.input.lemuroiddevice.getLemuroidInputDe
 import com.swordfish.lemuroid.app.shared.settings.GameShortcutType
 import com.swordfish.lemuroid.app.tv.input.TVGamePadBindingActivity
 import com.swordfish.lemuroid.app.tv.input.TVGamePadShortcutBindingActivity
+import javax.inject.Inject
 
-class GamePadPreferencesHelper(private val inputDeviceManager: InputDeviceManager) {
+class GamePadPreferencesHelper
+    @Inject
+    constructor(private val inputDeviceManager: InputDeviceManager) {
     suspend fun addGamePadsPreferencesToScreen(
         context: Context,
         preferenceScreen: PreferenceScreen,
@@ -219,7 +222,4 @@ class GamePadPreferencesHelper(private val inputDeviceManager: InputDeviceManage
             }
         context.startActivity(intent)
     }
-
-    @dagger.Module
-    class Module
 }

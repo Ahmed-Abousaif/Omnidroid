@@ -1,7 +1,6 @@
 plugins {
     id("com.android.library")
     id("kotlin-android")
-    id("kotlin-kapt")
     id("kotlinx-serialization")
     id("kotlin-parcelize")
     id("org.jetbrains.kotlin.plugin.compose")
@@ -21,9 +20,6 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = deps.versions.kotlinExtension
-    }
 }
 
 dependencies {
@@ -33,6 +29,7 @@ dependencies {
     implementation(deps.libs.androidx.compose.geometry)
     implementation(deps.libs.androidx.compose.runtime)
     implementation(deps.libs.androidx.compose.material3)
+    implementation(deps.libs.androidx.compose.extendedIcons)
 
     implementation(deps.libs.androidx.appcompat.constraintLayout)
     implementation(deps.libs.androidx.appcompat.appcompat)
@@ -47,6 +44,4 @@ dependencies {
     api(deps.libs.collectionsImmutable)
 
     implementation(kotlin(deps.libs.kotlin.stdlib))
-
-    kapt(deps.libs.androidx.lifecycle.processor)
 }
