@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 /**
@@ -35,6 +36,7 @@ import javax.inject.Inject
  * still runs in the main process so it can peek into background job status and wait for them to
  * complete.
  */
+@AndroidEntryPoint
 @OptIn(FlowPreview::class)
 class ExternalGameLauncherActivity : ImmersiveActivity() {
     @Inject

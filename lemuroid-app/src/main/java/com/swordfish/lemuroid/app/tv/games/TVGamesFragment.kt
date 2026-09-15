@@ -17,9 +17,10 @@ import com.swordfish.lemuroid.common.coroutines.launchOnState
 import com.swordfish.lemuroid.lib.library.MetaSystemID
 import com.swordfish.lemuroid.lib.library.db.RetrogradeDatabase
 import com.swordfish.lemuroid.lib.library.db.entity.Game
-import dagger.android.support.AndroidSupportInjection
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class TVGamesFragment : VerticalGridSupportFragment() {
     @Inject
     lateinit var retrogradeDb: RetrogradeDatabase
@@ -69,12 +70,4 @@ class TVGamesFragment : VerticalGridSupportFragment() {
                 }
             }
     }
-
-    override fun onAttach(context: Context) {
-        AndroidSupportInjection.inject(this)
-        super.onAttach(context)
-    }
-
-    @dagger.Module
-    class Module
 }

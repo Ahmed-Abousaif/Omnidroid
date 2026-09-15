@@ -18,12 +18,13 @@ import com.swordfish.lemuroid.app.tv.shared.GamePresenter
 import com.swordfish.lemuroid.common.coroutines.launchOnState
 import com.swordfish.lemuroid.lib.library.db.RetrogradeDatabase
 import com.swordfish.lemuroid.lib.library.db.entity.Game
-import dagger.android.support.AndroidSupportInjection
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import javax.inject.Inject
 
+@AndroidEntryPoint
 @OptIn(FlowPreview::class)
 class TVSearchFragment : SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
     @Inject
@@ -36,11 +37,6 @@ class TVSearchFragment : SearchSupportFragment(), SearchSupportFragment.SearchRe
 
     private lateinit var rowsAdapter: ArrayObjectAdapter
     private lateinit var searchViewModel: TVSearchViewModel
-
-    override fun onAttach(context: Context) {
-        AndroidSupportInjection.inject(this)
-        super.onAttach(context)
-    }
 
     override fun onViewCreated(
         view: View,
@@ -108,7 +104,4 @@ class TVSearchFragment : SearchSupportFragment(), SearchSupportFragment.SearchRe
         searchDebounce.value = query
         return true
     }
-
-    @dagger.Module
-    class Module
 }

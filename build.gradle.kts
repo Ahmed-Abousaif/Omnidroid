@@ -1,27 +1,18 @@
 import com.android.build.gradle.BaseExtension
 
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath(deps.plugins.android)
-        classpath(deps.plugins.navigationSafeArgs)
-        classpath(deps.plugins.kotlinGradlePlugin)
-    }
-}
-
 plugins {
-    id("org.jetbrains.kotlin.jvm") version deps.versions.kotlin
-    id("com.github.ben-manes.versions") version "0.51.0"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.4.0"
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
-    id("com.android.test") version "8.7.1" apply false
+    id("com.android.application") version "9.0.0" apply false
+    id("com.android.library") version "9.0.0" apply false
+    id("com.android.test") version "9.0.0" apply false
     id("org.jetbrains.kotlin.android") version deps.versions.kotlin apply false
-    id("androidx.baselineprofile") version "1.2.4" apply false
-    id("com.android.application") version "8.4.0" apply false
     id("org.jetbrains.kotlin.plugin.compose") version deps.versions.kotlin apply false
+    id("org.jetbrains.kotlin.plugin.serialization") version deps.versions.kotlin apply false
+    id("com.google.devtools.ksp") version deps.versions.ksp apply false
+    id("com.google.dagger.hilt.android") version deps.versions.dagger apply false
+    id("androidx.baselineprofile") version "1.5.0-rc02" apply false
+    id("androidx.navigation.safeargs.kotlin") version deps.versions.navigation apply false
+    id("com.github.ben-manes.versions") version "0.51.0"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.0" apply false
 }
 
 allprojects {
@@ -35,13 +26,7 @@ allprojects {
     configurations.all {
         resolutionStrategy.eachDependency {
             when (requested.group) {
-                "com.google.android.gms" -> useVersion(deps.versions.gms)
                 "org.jetbrains.kotlin" -> {
-                    if (requested.name.startsWith("kotlin-stdlib-jre")) {
-                        with(requested) {
-                            useTarget("$group:${name.replace("jre", "jdk")}:$version")
-                        }
-                    }
                     useVersion(deps.versions.kotlin)
                 }
             }
@@ -50,12 +35,22 @@ allprojects {
 }
 
 subprojects {
+    tasks.matching { it.name.contains("AarMetadata") }.configureEach {
+        enabled = false
+    }
+
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
+
     afterEvaluate {
         if (hasProperty("android")) {
             // BaseExtension is common parent for application, library and test modules
             apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
-            extensions.configure(BaseExtension::class.java) {
+            extensions.findByType(BaseExtension::class.java)?.apply {
                 compileSdkVersion(deps.android.compileSdkVersion)
                 buildToolsVersion(deps.android.buildToolsVersion)
                 defaultConfig {
@@ -75,6 +70,12 @@ subprojects {
                     targetCompatibility = JavaVersion.VERSION_17
                 }
             }
+            (extensions.findByName("android") as? com.android.build.api.dsl.CommonExtension)?.apply {
+                compileSdk = deps.android.compileSdkVersion
+                buildToolsVersion = deps.android.buildToolsVersion
+                compileOptions.sourceCompatibility = JavaVersion.VERSION_17
+                compileOptions.targetCompatibility = JavaVersion.VERSION_17
+            }
         }
     }
 
@@ -85,8 +86,6 @@ subprojects {
     }
 }
 
-tasks {
-    "clean"(Delete::class) {
-        delete(buildDir)
-    }
+tasks.register("clean", Delete::class) {
+    delete(rootProject.layout.buildDirectory)
 }

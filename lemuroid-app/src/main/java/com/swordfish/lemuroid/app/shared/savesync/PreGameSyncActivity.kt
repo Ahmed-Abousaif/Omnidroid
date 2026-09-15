@@ -21,8 +21,10 @@ import com.swordfish.lemuroid.lib.savesync.SaveSyncRequest
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class PreGameSyncActivity : RetrogradeComponentActivity() {
     @Inject
     lateinit var saveSyncManager: SaveSyncManager
