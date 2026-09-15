@@ -6,8 +6,10 @@ import androidx.leanback.app.GuidedStepSupportFragment
 import com.swordfish.lemuroid.app.shared.input.InputBindingUpdater
 import com.swordfish.lemuroid.app.shared.input.InputDeviceManager
 import com.swordfish.lemuroid.app.tv.shared.BaseTVActivity
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class TVGamePadBindingActivity : BaseTVActivity() {
     @Inject
     lateinit var inputDeviceManager: InputDeviceManager

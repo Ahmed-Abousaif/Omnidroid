@@ -15,12 +15,12 @@ import com.swordfish.lemuroid.common.bitmap.toBitmap
 import com.swordfish.lemuroid.lib.library.db.entity.Game
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.http.GET
 import retrofit2.http.Streaming
 import retrofit2.http.Url
-import java.io.InputStream
 
 class ShortcutsGenerator(
     private val appContext: Context,
@@ -53,7 +53,9 @@ class ShortcutsGenerator(
                 BitmapFactory.decodeFile(file.absolutePath)?.cropToSquare()
             } ?: runCatching {
                 val response = thumbnailsApi.downloadThumbnail(game.coverFrontUrl!!)
-                BitmapFactory.decodeStream(response.body()).cropToSquare()
+                response.body()?.use { body ->
+                    BitmapFactory.decodeStream(body.byteStream()).cropToSquare()
+                } ?: retrieveFallbackBitmap(game)
             }.getOrElse { retrieveFallbackBitmap(game) }
         }
 
@@ -81,6 +83,6 @@ class ShortcutsGenerator(
         @Streaming
         suspend fun downloadThumbnail(
             @Url url: String,
-        ): Response<InputStream>
+        ): Response<ResponseBody>
     }
 }

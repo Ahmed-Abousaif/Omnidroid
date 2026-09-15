@@ -5,9 +5,6 @@
 -keepattributes SourceFile,LineNumberTable,Signature,JavascriptInterface,Exceptions
 -verbose
 
-## Arch Components
--keep class * implements android.arch.lifecycle.GeneratedAdapter {<init>(...);}
-
 ## Fabric
 -dontnote com.google.android.gms.**
 -dontnote com.google.firebase.crash.FirebaseCrash
@@ -17,7 +14,6 @@
 -dontnote kotlin.**
 -dontwarn org.jetbrains.annotations.**
 -keep class kotlin.Metadata { *; }
--keep class android.arch.lifecycle.**
 -dontwarn kotlinx.coroutines.flow.**
 -keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
 
@@ -34,7 +30,6 @@
 -dontnote org.conscrypt.ConscryptEngineSocket
 
 ## Retrofit
--dontwarn retrofit2.Platform$Java8
 -keep,allowobfuscation,allowshrinking interface retrofit2.Call
 -keep,allowobfuscation,allowshrinking class retrofit2.Response
 

@@ -1,12 +1,13 @@
 package com.swordfish.lemuroid.app.mobile.feature.game
 
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import com.swordfish.lemuroid.app.mobile.shared.NotificationsManager
-import dagger.android.DaggerService
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,7 +18,8 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import kotlin.system.exitProcess
 
-class GameService : DaggerService() {
+@AndroidEntryPoint
+class GameService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onBind(intent: Intent?) = null

@@ -23,9 +23,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -40,15 +42,17 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -60,14 +64,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.swordfish.lemuroid.R
+import com.swordfish.lemuroid.app.mobile.shared.compose.ui.HomeChromeBackground
 import com.swordfish.lemuroid.app.mobile.shared.compose.ui.LemuroidGameTexts
 import com.swordfish.lemuroid.app.mobile.shared.compose.ui.LemuroidSmallGameImage
+import com.swordfish.lemuroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.swordfish.lemuroid.app.mobile.shared.controller.controllerFocusGlow
 import com.swordfish.lemuroid.app.shared.covers.CoverUtils
 import com.swordfish.lemuroid.lib.library.GameSystem
@@ -76,8 +84,8 @@ import com.swordfish.lemuroid.lib.library.db.entity.Game
 import com.swordfish.lemuroid.lib.savesync.GameCloudSyncOverride
 
 private val GameSettingsOverlayWidth = 380.dp
-private val GameSettingsPanelShape = RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)
-private val GameSettingsPanelFill = Color(0xFF141414)
+private val PanelMutedWhite = Color.White.copy(alpha = 0.72f)
+private val PanelDivider = Color.White.copy(alpha = 0.08f)
 
 @Composable
 fun MainGameContextActions(
@@ -132,12 +140,12 @@ fun MainGameContextActions(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.54f))
+                        .background(Color.Black.copy(alpha = 0.58f))
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                         ) { selectedGameState.value = null },
-            )
+                    )
         }
         AnimatedVisibility(
             visible = visible && panelGame != null,
@@ -245,159 +253,231 @@ private fun GameSettingsPanel(
             Modifier
                 .fillMaxHeight()
                 .width(GameSettingsOverlayWidth),
-        shape = GameSettingsPanelShape,
-        color = GameSettingsPanelFill,
-        tonalElevation = 6.dp,
+        shape = RectangleShape,
+        color = HomeChromeBackground,
+        contentColor = Color.White,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
     ) {
-        Column(
+        CompositionLocalProvider(LocalContentColor provides Color.White) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier =
+                        Modifier
+                            .width(3.dp)
+                            .fillMaxHeight()
+                            .background(LibraryNeonGreen),
+                )
+                Column(
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .fillMaxSize()
+                            .windowInsetsPadding(
+                                WindowInsets.safeContent.only(
+                                    WindowInsetsSides.Top + WindowInsetsSides.End + WindowInsetsSides.Bottom,
+                                ),
+                            ),
+                ) {
+                    GameSettingsHeader(onClose = onDismiss)
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(PanelDivider),
+                    )
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(bottom = 16.dp),
+                    ) {
+                        ContextActionHeader(game = game)
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp)
+                                    .height(1.dp)
+                                    .background(PanelDivider),
+                        )
+                        ContextActionEntry(
+                            label = stringResource(id = R.string.game_context_menu_resume),
+                            icon = Icons.Default.PlayArrow,
+                            onClick = {
+                                onGamePlay(game)
+                                onDismiss()
+                            },
+                        )
+                        ContextActionEntry(
+                            label = stringResource(id = R.string.game_context_menu_restart),
+                            icon = Icons.Default.RestartAlt,
+                            onClick = {
+                                onGameRestart(game)
+                                onDismiss()
+                            },
+                        )
+                        if (game.isFavorite) {
+                            ContextActionEntry(
+                                label = stringResource(id = R.string.game_context_menu_remove_from_favorites),
+                                icon = Icons.Default.FavoriteBorder,
+                                onClick = { onFavoriteToggle(game, false) },
+                            )
+                        } else {
+                            ContextActionEntry(
+                                label = stringResource(id = R.string.game_context_menu_add_to_favorites),
+                                icon = Icons.Default.Favorite,
+                                onClick = { onFavoriteToggle(game, true) },
+                            )
+                        }
+                        if (shortcutSupported) {
+                            ContextActionEntry(
+                                label = stringResource(id = R.string.game_context_menu_create_shortcut),
+                                icon = Icons.Default.AppShortcut,
+                                onClick = { onCreateShortcut(game) },
+                            )
+                        }
+
+                        if (fastForwardSupported) {
+                            SectionLabel(text = stringResource(R.string.game_menu_fast_forward))
+                            speedLabels.forEachIndexed { index, label ->
+                                ChoiceRow(
+                                    selected = frameSpeed == speedValues[index],
+                                    label = label,
+                                    onClick = {
+                                        frameSpeed = speedValues[index]
+                                        onFrameSpeed(game, speedValues[index])
+                                    },
+                                )
+                            }
+                            Text(
+                                text = stringResource(R.string.game_menu_fast_forward_note),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = PanelMutedWhite,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                            )
+                        }
+
+                        if (saveSyncSupported) {
+                            SectionLabel(text = stringResource(R.string.game_cloud_save))
+                            ChoiceRow(
+                                selected = cloudOverride == GameCloudSyncOverride.INHERIT,
+                                label = stringResource(R.string.game_cloud_save_inherit),
+                                onClick = {
+                                    cloudOverride = GameCloudSyncOverride.INHERIT
+                                    onCloudOverride(game, GameCloudSyncOverride.INHERIT)
+                                },
+                            )
+                            ChoiceRow(
+                                selected = cloudOverride == GameCloudSyncOverride.ALWAYS,
+                                label = stringResource(R.string.game_cloud_save_always),
+                                onClick = {
+                                    cloudOverride = GameCloudSyncOverride.ALWAYS
+                                    onCloudOverride(game, GameCloudSyncOverride.ALWAYS)
+                                },
+                            )
+                            ChoiceRow(
+                                selected = cloudOverride == GameCloudSyncOverride.NEVER,
+                                label = stringResource(R.string.game_cloud_save_never),
+                                onClick = {
+                                    cloudOverride = GameCloudSyncOverride.NEVER
+                                    onCloudOverride(game, GameCloudSyncOverride.NEVER)
+                                },
+                            )
+                            ContextActionEntry(
+                                label = stringResource(id = R.string.game_cloud_save_sync_now),
+                                icon = Icons.Outlined.CloudSync,
+                                onClick = { onSyncGameNow(game) },
+                            )
+                        }
+
+                        SectionLabel(text = stringResource(R.string.game_context_menu_set_custom_thumbnail))
+                        ContextActionEntry(
+                            label =
+                                stringResource(
+                                    if (hasCustomCover) {
+                                        R.string.game_context_menu_change_thumbnail
+                                    } else {
+                                        R.string.game_context_menu_set_custom_thumbnail
+                                    },
+                                ),
+                            icon = Icons.Outlined.Image,
+                            onClick = onSetCustomThumbnail,
+                        )
+                        if (hasCustomCover) {
+                            ContextActionEntry(
+                                label = stringResource(id = R.string.game_context_menu_remove_thumbnail),
+                                icon = Icons.Outlined.HideImage,
+                                onClick = onRemoveCustomThumbnail,
+                            )
+                        }
+
+                        SectionLabel(text = stringResource(R.string.game_context_menu_set_custom_name))
+                        ContextActionEntry(
+                            label =
+                                stringResource(
+                                    if (hasCustomName) {
+                                        R.string.game_context_menu_change_name
+                                    } else {
+                                        R.string.game_context_menu_set_custom_name
+                                    },
+                                ),
+                            icon = Icons.Outlined.Edit,
+                            onClick = onSetCustomName,
+                        )
+                        if (hasCustomName) {
+                            ContextActionEntry(
+                                label = stringResource(id = R.string.game_context_menu_remove_name),
+                                icon = Icons.Default.Close,
+                                onClick = onRemoveCustomName,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GameSettingsHeader(onClose: () -> Unit) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Surface(
+            onClick = onClose,
             modifier =
                 Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(
-                        WindowInsets.safeContent.only(WindowInsetsSides.Top + WindowInsetsSides.End + WindowInsetsSides.Bottom),
-                    )
-                    .verticalScroll(rememberScrollState())
-                    .padding(bottom = 16.dp),
+                    .size(40.dp)
+                    .controllerFocusGlow(CircleShape),
+            shape = CircleShape,
+            color = Color.Transparent,
+            contentColor = Color.White,
         ) {
-            Text(
-                text = stringResource(R.string.game_settings),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 8.dp),
-            )
-            ContextActionHeader(game = game)
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
-            ContextActionEntry(
-                label = stringResource(id = R.string.game_context_menu_resume),
-                icon = Icons.Default.PlayArrow,
-                onClick = {
-                    onGamePlay(game)
-                    onDismiss()
-                },
-            )
-            ContextActionEntry(
-                label = stringResource(id = R.string.game_context_menu_restart),
-                icon = Icons.Default.RestartAlt,
-                onClick = {
-                    onGameRestart(game)
-                    onDismiss()
-                },
-            )
-            if (game.isFavorite) {
-                ContextActionEntry(
-                    label = stringResource(id = R.string.game_context_menu_remove_from_favorites),
-                    icon = Icons.Default.FavoriteBorder,
-                    onClick = { onFavoriteToggle(game, false) },
-                )
-            } else {
-                ContextActionEntry(
-                    label = stringResource(id = R.string.game_context_menu_add_to_favorites),
-                    icon = Icons.Default.Favorite,
-                    onClick = { onFavoriteToggle(game, true) },
-                )
-            }
-            if (shortcutSupported) {
-                ContextActionEntry(
-                    label = stringResource(id = R.string.game_context_menu_create_shortcut),
-                    icon = Icons.Default.AppShortcut,
-                    onClick = { onCreateShortcut(game) },
-                )
-            }
-
-            if (fastForwardSupported) {
-                SectionLabel(text = stringResource(R.string.game_menu_fast_forward))
-                speedLabels.forEachIndexed { index, label ->
-                    ChoiceRow(
-                        selected = frameSpeed == speedValues[index],
-                        label = label,
-                        onClick = {
-                            frameSpeed = speedValues[index]
-                            onFrameSpeed(game, speedValues[index])
-                        },
-                    )
-                }
-                Text(
-                    text = stringResource(R.string.game_menu_fast_forward_note),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-                )
-            }
-
-            if (saveSyncSupported) {
-                SectionLabel(text = stringResource(R.string.game_cloud_save))
-                ChoiceRow(
-                    selected = cloudOverride == GameCloudSyncOverride.INHERIT,
-                    label = stringResource(R.string.game_cloud_save_inherit),
-                    onClick = {
-                        cloudOverride = GameCloudSyncOverride.INHERIT
-                        onCloudOverride(game, GameCloudSyncOverride.INHERIT)
-                    },
-                )
-                ChoiceRow(
-                    selected = cloudOverride == GameCloudSyncOverride.ALWAYS,
-                    label = stringResource(R.string.game_cloud_save_always),
-                    onClick = {
-                        cloudOverride = GameCloudSyncOverride.ALWAYS
-                        onCloudOverride(game, GameCloudSyncOverride.ALWAYS)
-                    },
-                )
-                ChoiceRow(
-                    selected = cloudOverride == GameCloudSyncOverride.NEVER,
-                    label = stringResource(R.string.game_cloud_save_never),
-                    onClick = {
-                        cloudOverride = GameCloudSyncOverride.NEVER
-                        onCloudOverride(game, GameCloudSyncOverride.NEVER)
-                    },
-                )
-                ContextActionEntry(
-                    label = stringResource(id = R.string.game_cloud_save_sync_now),
-                    icon = Icons.Outlined.CloudSync,
-                    onClick = { onSyncGameNow(game) },
-                )
-            }
-
-            SectionLabel(text = stringResource(R.string.game_context_menu_set_custom_thumbnail))
-            ContextActionEntry(
-                label =
-                    stringResource(
-                        if (hasCustomCover) {
-                            R.string.game_context_menu_change_thumbnail
-                        } else {
-                            R.string.game_context_menu_set_custom_thumbnail
-                        },
-                    ),
-                icon = Icons.Outlined.Image,
-                onClick = onSetCustomThumbnail,
-            )
-            if (hasCustomCover) {
-                ContextActionEntry(
-                    label = stringResource(id = R.string.game_context_menu_remove_thumbnail),
-                    icon = Icons.Outlined.HideImage,
-                    onClick = onRemoveCustomThumbnail,
-                )
-            }
-
-            SectionLabel(text = stringResource(R.string.game_context_menu_set_custom_name))
-            ContextActionEntry(
-                label =
-                    stringResource(
-                        if (hasCustomName) {
-                            R.string.game_context_menu_change_name
-                        } else {
-                            R.string.game_context_menu_set_custom_name
-                        },
-                    ),
-                icon = Icons.Outlined.Edit,
-                onClick = onSetCustomName,
-            )
-            if (hasCustomName) {
-                ContextActionEntry(
-                    label = stringResource(id = R.string.game_context_menu_remove_name),
-                    icon = Icons.Default.Close,
-                    onClick = onRemoveCustomName,
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.close),
                 )
             }
         }
+        Text(
+            text = stringResource(R.string.game_settings),
+            style =
+                MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                ),
+            color = Color.White,
+            modifier = Modifier.padding(start = 8.dp),
+            maxLines = 1,
+        )
     }
 }
 
@@ -406,6 +486,7 @@ private fun SectionLabel(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelLarge,
+        color = PanelMutedWhite,
         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 4.dp),
     )
 }
@@ -459,10 +540,12 @@ private fun ContextActionEntry(
             modifier = Modifier.padding(start = 16.dp),
             imageVector = icon,
             contentDescription = label,
+            tint = Color.White,
         )
         Text(
             modifier = Modifier.padding(start = 16.dp),
             text = label,
+            color = Color.White,
         )
     }
 }
@@ -482,7 +565,15 @@ private fun ChoiceRow(
                 .padding(horizontal = 8.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RadioButton(selected = selected, onClick = onClick)
-        Text(text = label)
+        RadioButton(
+            selected = selected,
+            onClick = onClick,
+            colors =
+                RadioButtonDefaults.colors(
+                    selectedColor = LibraryNeonGreen,
+                    unselectedColor = PanelMutedWhite,
+                ),
+        )
+        Text(text = label, color = Color.White)
     }
 }

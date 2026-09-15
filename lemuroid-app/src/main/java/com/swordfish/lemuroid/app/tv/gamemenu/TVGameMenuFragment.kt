@@ -152,7 +152,4 @@ class TVGameMenuFragment(
         }
         return super.onPreferenceTreeClick(preference)
     }
-
-    @dagger.Module
-    class Module
 }

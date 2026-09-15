@@ -12,8 +12,10 @@ import com.swordfish.lemuroid.lib.saves.StatesManager
 import com.swordfish.lemuroid.lib.saves.StatesPreviewManager
 import com.swordfish.lemuroid.lib.savesync.SaveSyncManager
 import java.security.InvalidParameterException
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class TVGameMenuActivity : TVBaseSettingsActivity() {
     @Inject
     lateinit var statesManager: StatesManager

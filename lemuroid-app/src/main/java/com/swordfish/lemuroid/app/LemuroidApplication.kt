@@ -2,8 +2,10 @@ package com.swordfish.lemuroid.app
 
 import android.annotation.SuppressLint
 import android.content.Context
+import androidx.hilt.work.HiltWorkerFactory
 import androidx.startup.AppInitializer
-import androidx.work.ListenableWorker
+import androidx.work.Configuration
+import androidx.work.WorkManager
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import com.google.android.material.color.DynamicColors
@@ -12,19 +14,26 @@ import com.swordfish.lemuroid.app.shared.startup.GameProcessInitializer
 import com.swordfish.lemuroid.app.shared.startup.MainProcessInitializer
 import com.swordfish.lemuroid.app.utils.android.isMainProcess
 import com.swordfish.lemuroid.ext.feature.context.ContextHandler
-import com.swordfish.lemuroid.lib.injection.HasWorkerInjector
-import dagger.android.AndroidInjector
-import dagger.android.DispatchingAndroidInjector
-import dagger.android.support.DaggerApplication
+import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
-class LemuroidApplication : DaggerApplication(), HasWorkerInjector, ImageLoaderFactory {
+@HiltAndroidApp
+class LemuroidApplication : android.app.Application(), ImageLoaderFactory, Configuration.Provider {
     @Inject
-    lateinit var workerInjector: DispatchingAndroidInjector<ListenableWorker>
+    lateinit var workerFactory: HiltWorkerFactory
+
+    override val workManagerConfiguration: Configuration
+        get() =
+            Configuration.Builder()
+                .setWorkerFactory(workerFactory)
+                .build()
 
     @SuppressLint("CheckResult")
     override fun onCreate() {
         super.onCreate()
+
+        // Initialize WorkManager with HiltWorkerFactory before App Startup enqueues any @HiltWorker.
+        WorkManager.getInstance(this)
 
         val initializeComponent =
             if (isMainProcess()) {
@@ -42,12 +51,6 @@ class LemuroidApplication : DaggerApplication(), HasWorkerInjector, ImageLoaderF
         super.attachBaseContext(base)
         ContextHandler.attachBaseContext(base)
     }
-
-    override fun applicationInjector(): AndroidInjector<out DaggerApplication> {
-        return DaggerLemuroidApplicationComponent.builder().create(this)
-    }
-
-    override fun workerInjector(): AndroidInjector<ListenableWorker> = workerInjector
 
     override fun newImageLoader(): ImageLoader {
         return CoverUtils.buildImageLoader(applicationContext)
