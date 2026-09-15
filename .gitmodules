@@ -1,4 +1,4 @@
-[submodule "lemuroid-cores"]
-	path = lemuroid-cores
-	url = https://github.com/Swordfish90/LemuroidCores
+[submodule "omnidroid-cores"]
+	path = omnidroid-cores
+	url = https://github.com/Ahmed-Abousaif/OmnidroidCores
 	branch = master
