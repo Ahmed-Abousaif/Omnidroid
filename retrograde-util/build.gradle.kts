@@ -8,7 +8,7 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-    namespace = "com.swordfish.lemuroid.common"
+    namespace = "com.omnidroid.common"
 
     buildFeatures {
         compose = true

@@ -5,7 +5,7 @@ This plan upgrades every stale dependency in the project across 6 sequenced phas
 ## User Review Required
 
 > [!IMPORTANT]
-> **Retrofit 2.9.0 → 3.0.0**: Retrofit 3.0 was rewritten in Kotlin and depends on OkHttp 4.12+. It maintains binary compatibility with 2.x converters, but you're currently using a **custom `Converter.Factory`** in [`LemuroidApplicationModule.kt`](file:///d:/Work/Omnidroid/lemuroid-app/src/main/java/com/swordfish/lemuroid/app/LemuroidApplicationModule.kt#L208-L229). This converter is simple (`ZipInputStream` / `InputStream` passthrough) and should work fine, but I want to confirm you're comfortable jumping to 3.x rather than doing a more conservative 2.11 bump.
+> **Retrofit 2.9.0 → 3.0.0**: Retrofit 3.0 was rewritten in Kotlin and depends on OkHttp 4.12+. It maintains binary compatibility with 2.x converters, but you're currently using a **custom `Converter.Factory`** in [`OmnidroidApplicationModule.kt`](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/swordfish/omnidroid/app/OmnidroidApplicationModule.kt#L208-L229). This converter is simple (`ZipInputStream` / `InputStream` passthrough) and should work fine, but I want to confirm you're comfortable jumping to 3.x rather than doing a more conservative 2.11 bump.
 
 > [!IMPORTANT]
 > **OkHttp 4.9.1 → 5.x**: OkHttp 5.x is stable (5.5.0). The jump from 4.x to 5.x is a major version bump. The OkHttp 5 API surface is backward-compatible for normal usage (builder patterns, interceptors), but internal changes around connection pooling and TLS are significant. If you'd rather stay on the 4.x line (latest 4.12.x), the networking improvements are still meaningful. Please confirm preference: **OkHttp 5.5.0** or **OkHttp 4.12.x**?
@@ -66,10 +66,10 @@ This plan upgrades every stale dependency in the project across 6 sequenced phas
 | `libs.lifecycle.viewModelCompose` | `2.5.1` (hardcoded) | Use `${versions.lifecycle}` | None |
 | `libs.lifecycle.processor` | `${versions.lifecycle}` (kapt) | Keep at `${versions.lifecycle}` (will be removed in Phase 4 KSP migration) | None |
 
-#### [MODIFY] [`lemuroid-app/build.gradle.kts`](file:///d:/Work/Omnidroid/lemuroid-app/build.gradle.kts)
+#### [MODIFY] [`omnidroid-app/build.gradle.kts`](file:///d:/Work/Omnidroid/omnidroid-app/build.gradle.kts)
 - Remove `implementation(deps.libs.androidx.lifecycle.reactiveStreams)` (line 156)
 
-#### [MODIFY] [`proguard-rules.pro`](file:///d:/Work/Omnidroid/lemuroid-app/proguard-rules.pro)
+#### [MODIFY] [`proguard-rules.pro`](file:///d:/Work/Omnidroid/omnidroid-app/proguard-rules.pro)
 - Remove/update rules referencing `android.arch.lifecycle` (lines 9, 20)
 
 ### Verification
@@ -91,7 +91,7 @@ This plan upgrades every stale dependency in the project across 6 sequenced phas
 | `libs.okio` | `2.10.0` | `3.18.2` | None |
 | `versions.retrofit` | `2.9.0` | `3.0.0` (or `2.11.0` — awaiting your preference) | None (API 21+) |
 
-#### [MODIFY] [`proguard-rules.pro`](file:///d:/Work/Omnidroid/lemuroid-app/proguard-rules.pro)
+#### [MODIFY] [`proguard-rules.pro`](file:///d:/Work/Omnidroid/omnidroid-app/proguard-rules.pro)
 - Update OkHttp/Retrofit proguard rules for the new versions
 - OkHttp 5.x ships its own consumer proguard rules; many existing suppressions become unnecessary
 
@@ -124,53 +124,53 @@ Modules using `kapt` and their processors:
 
 | Module | kapt processors | Action |
 |---|---|---|
-| `lemuroid-app` | `dagger-compiler`, `dagger-android-processor`, `lifecycle-compiler` | Switch to `ksp(hilt-compiler)`, remove lifecycle-compiler (use `DefaultLifecycleObserver` instead of `@OnLifecycleEvent`) |
+| `omnidroid-app` | `dagger-compiler`, `dagger-android-processor`, `lifecycle-compiler` | Switch to `ksp(hilt-compiler)`, remove lifecycle-compiler (use `DefaultLifecycleObserver` instead of `@OnLifecycleEvent`) |
 | `retrograde-app-shared` | `room-compiler` | Switch to `ksp(room-compiler)` |
-| `lemuroid-metadata-libretro-db` | `room-compiler`, `dagger-compiler` | Switch to `ksp(room-compiler)`, `ksp(hilt-compiler)` |
-| `lemuroid-touchinput` | `lifecycle-compiler` | Remove kapt entirely (migrate to `DefaultLifecycleObserver`) |
-| `lemuroid-app-ext-play` | `lifecycle-compiler` | Remove kapt entirely (migrate to `DefaultLifecycleObserver`) |
-| `lemuroid-app-ext-free` | No kapt usages | Remove `kotlin-kapt` plugin |
+| `omnidroid-metadata-libretro-db` | `room-compiler`, `dagger-compiler` | Switch to `ksp(room-compiler)`, `ksp(hilt-compiler)` |
+| `omnidroid-touchinput` | `lifecycle-compiler` | Remove kapt entirely (migrate to `DefaultLifecycleObserver`) |
+| `omnidroid-app-ext-play` | `lifecycle-compiler` | Remove kapt entirely (migrate to `DefaultLifecycleObserver`) |
+| `omnidroid-app-ext-free` | No kapt usages | Remove `kotlin-kapt` plugin |
 | `retrograde-util` | No kapt usages | Remove `kotlin-kapt` plugin |
-| `lemuroid-cores/*` (19 modules) | No kapt usages | Remove `kotlin-kapt` plugin |
+| `omnidroid-cores/*` (19 modules) | No kapt usages | Remove `kotlin-kapt` plugin |
 
 ### 4c — Migrate DI patterns
 
 **Files to change** (~32 files touched by Dagger imports):
 
-1. **Application class** — [`LemuroidApplication.kt`](file:///d:/Work/Omnidroid/lemuroid-app/src/main/java/com/swordfish/lemuroid/app/LemuroidApplication.kt)
+1. **Application class** — [`OmnidroidApplication.kt`](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/swordfish/omnidroid/app/OmnidroidApplication.kt)
    - `DaggerApplication` → plain `Application` with `@HiltAndroidApp`
    - Remove `applicationInjector()`, `workerInjector()`
    - Remove `HasWorkerInjector` implementation
 
-2. **Component** — [`LemuroidApplicationComponent.kt`](file:///d:/Work/Omnidroid/lemuroid-app/src/main/java/com/swordfish/lemuroid/app/LemuroidApplicationComponent.kt)
+2. **Component** — [`OmnidroidApplicationComponent.kt`](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/swordfish/omnidroid/app/OmnidroidApplicationComponent.kt)
    - **DELETE** this file entirely. Hilt generates the component.
 
-3. **Application Module** — [`LemuroidApplicationModule.kt`](file:///d:/Work/Omnidroid/lemuroid-app/src/main/java/com/swordfish/lemuroid/app/LemuroidApplicationModule.kt)
+3. **Application Module** — [`OmnidroidApplicationModule.kt`](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/swordfish/omnidroid/app/OmnidroidApplicationModule.kt)
    - Remove all `@ContributesAndroidInjector` methods (Activities get `@AndroidEntryPoint` instead)
    - Convert `@PerApp` scoped `@Provides` to `@Singleton` scoped `@Provides` inside `@Module @InstallIn(SingletonComponent::class)`
    - Remove `@JvmStatic` annotations (Hilt modules can be `object` instead of `companion object`)
    - Split `@Binds` methods into a separate abstract module if needed
 
-4. **TV Module** — [`LemuroidTVApplicationModule.kt`](file:///d:/Work/Omnidroid/lemuroid-app/src/main/java/com/swordfish/lemuroid/app/tv/LemuroidTVApplicationModule.kt)
+4. **TV Module** — [`OmnidroidTVApplicationModule.kt`](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/swordfish/omnidroid/app/tv/OmnidroidTVApplicationModule.kt)
    - Remove `@ContributesAndroidInjector`; Activities get `@AndroidEntryPoint`
 
 5. **Base Activities** (3 files in `retrograde-app-shared`):
-   - [`RetrogradeActivity.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/lemuroid/lib/android/RetrogradeActivity.kt) — Remove `AndroidInjection.inject(this)`, remove `HasFragmentInjector`/`HasSupportFragmentInjector`, remove injector fields
-   - [`RetrogradeAppCompatActivity.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/lemuroid/lib/android/RetrogradeAppCompatActivity.kt) — Same treatment
-   - [`RetrogradeComponentActivity.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/lemuroid/lib/android/RetrogradeComponentActivity.kt) — Same treatment
+   - [`RetrogradeActivity.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/omnidroid/lib/android/RetrogradeActivity.kt) — Remove `AndroidInjection.inject(this)`, remove `HasFragmentInjector`/`HasSupportFragmentInjector`, remove injector fields
+   - [`RetrogradeAppCompatActivity.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/omnidroid/lib/android/RetrogradeAppCompatActivity.kt) — Same treatment
+   - [`RetrogradeComponentActivity.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/omnidroid/lib/android/RetrogradeComponentActivity.kt) — Same treatment
 
 6. **Worker injection** (custom `AndroidWorkerInjection` system → `@HiltWorker`):
-   - **DELETE** [`AndroidWorkerInjection.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/lemuroid/lib/injection/AndroidWorkerInjection.kt)
-   - **DELETE** [`AndroidWorkerInjectionModule.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/lemuroid/lib/injection/AndroidWorkerInjectionModule.kt)
-   - **DELETE** [`HasWorkerInjector.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/lemuroid/lib/injection/HasWorkerInjector.kt)
-   - **DELETE** [`WorkerKey.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/lemuroid/lib/injection/WorkerKey.kt)
+   - **DELETE** [`AndroidWorkerInjection.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/omnidroid/lib/injection/AndroidWorkerInjection.kt)
+   - **DELETE** [`AndroidWorkerInjectionModule.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/omnidroid/lib/injection/AndroidWorkerInjectionModule.kt)
+   - **DELETE** [`HasWorkerInjector.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/omnidroid/lib/injection/HasWorkerInjector.kt)
+   - **DELETE** [`WorkerKey.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/omnidroid/lib/injection/WorkerKey.kt)
    - Convert all Workers (`LibraryIndexWork`, `SaveSyncWork`, `SaveBackupWork`, `ChannelUpdateWork`, `CoreUpdateWork`, `CacheCleanerWork`) to use `@HiltWorker` + `@AssistedInject`
 
 7. **Custom scopes** — **DELETE** or repurpose:
-   - [`PerApp.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/lemuroid/lib/injection/PerApp.kt) → replaced by `@Singleton`
-   - [`PerActivity.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/lemuroid/lib/injection/PerActivity.kt) → replaced by `@ActivityScoped`
-   - [`PerFragment.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/lemuroid/lib/injection/PerFragment.kt) → replaced by `@FragmentScoped`
-   - [`PerChildFragment.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/lemuroid/lib/injection/PerChildFragment.kt) → delete (unused or replaceable)
+   - [`PerApp.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/omnidroid/lib/injection/PerApp.kt) → replaced by `@Singleton`
+   - [`PerActivity.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/omnidroid/lib/injection/PerActivity.kt) → replaced by `@ActivityScoped`
+   - [`PerFragment.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/omnidroid/lib/injection/PerFragment.kt) → replaced by `@FragmentScoped`
+   - [`PerChildFragment.kt`](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/swordfish/omnidroid/lib/injection/PerChildFragment.kt) → delete (unused or replaceable)
 
 8. **All Activities/Fragments** that have `@Inject` fields (~20 files):
    - Add `@AndroidEntryPoint` annotation
@@ -216,7 +216,7 @@ Modules using `kapt` and their processors:
 | `libs.guava` | `30.1.1-android` | `33.4.0-android` | None |
 
 #### [MODIFY] All modules with `composeOptions { kotlinCompilerExtensionVersion = ... }`
-- **Remove** the `composeOptions` block from [`lemuroid-app/build.gradle.kts`](file:///d:/Work/Omnidroid/lemuroid-app/build.gradle.kts#L117-L119), [`retrograde-util/build.gradle.kts`](file:///d:/Work/Omnidroid/retrograde-util/build.gradle.kts#L18-L20), and [`lemuroid-touchinput/build.gradle.kts`](file:///d:/Work/Omnidroid/lemuroid-touchinput/build.gradle.kts#L24-L26)
+- **Remove** the `composeOptions` block from [`omnidroid-app/build.gradle.kts`](file:///d:/Work/Omnidroid/omnidroid-app/build.gradle.kts#L117-L119), [`retrograde-util/build.gradle.kts`](file:///d:/Work/Omnidroid/retrograde-util/build.gradle.kts#L18-L20), and [`omnidroid-touchinput/build.gradle.kts`](file:///d:/Work/Omnidroid/omnidroid-touchinput/build.gradle.kts#L24-L26)
 - The Kotlin 2.0 Compose compiler plugin (`org.jetbrains.kotlin.plugin.compose`) handles this automatically — the manual `kotlinCompilerExtensionVersion` override is both unnecessary and potentially conflicting
 
 ### Verification
@@ -234,7 +234,7 @@ Modules using `kapt` and their processors:
 - Remove `android.enableJetifier=true` (all dependencies are now AndroidX-native)
 - Remove `android.enableD8.desugaring=true` (D8 is the default desugarer since AGP 3.1; this flag is deprecated)
 
-#### [MODIFY] [`proguard-rules.pro`](file:///d:/Work/Omnidroid/lemuroid-app/proguard-rules.pro)
+#### [MODIFY] [`proguard-rules.pro`](file:///d:/Work/Omnidroid/omnidroid-app/proguard-rules.pro)
 - Clean up obsolete rules (`android.arch.lifecycle`, `Platform$Java8`, old OkHttp/Okio suppressions)
 - Add Hilt proguard rules (Hilt ships consumer rules, but custom rules may be needed for the `model` keep patterns)
 
