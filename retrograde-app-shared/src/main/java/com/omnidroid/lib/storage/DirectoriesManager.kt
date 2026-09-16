@@ -39,4 +39,10 @@ class DirectoriesManager(private val appContext: Context) {
         File(appContext.getExternalFilesDir(null), "roms").apply {
             mkdirs()
         }
+
+    /** Directory for profile metadata files (profile.json), included in cloud sync. */
+    fun getProfileDirectory(): File =
+        File(appContext.getExternalFilesDir(null), "profile").apply {
+            mkdirs()
+        }
 }

@@ -266,6 +266,8 @@ class SaveSyncManagerImpl(
         folder: CloudSaveFolder,
         request: SaveSyncRequest,
     ): Boolean {
+        // Profile files are always synced — never filtered by game name or exclusion lists
+        if (folder == CloudSaveFolder.PROFILE) return true
         if (SaveSyncFileMatcher.matchesAnyGame(relativePath, request.excludedFileNames)) {
             return false
         }
@@ -275,6 +277,7 @@ class SaveSyncManagerImpl(
         }
         val always = SaveSyncFileMatcher.matchesAnyGame(relativePath, request.alwaysFileNames)
         return when (folder) {
+            CloudSaveFolder.PROFILE -> true
             CloudSaveFolder.SAVES -> request.includeSaves || always
             CloudSaveFolder.STATES,
             CloudSaveFolder.STATE_PREVIEWS,
@@ -288,6 +291,8 @@ class SaveSyncManagerImpl(
 
     private fun foldersFor(request: SaveSyncRequest): List<CloudSaveFolder> {
         val folders = mutableListOf<CloudSaveFolder>()
+        // Profile is always synced when any sync occurs
+        folders += CloudSaveFolder.PROFILE
         if (request.includeSaves || request.alwaysFileNames.isNotEmpty() || request.gameFileName != null) {
             folders += CloudSaveFolder.SAVES
         }
@@ -307,6 +312,7 @@ class SaveSyncManagerImpl(
             CloudSaveFolder.SAVES -> directoriesManager.getSavesDirectory()
             CloudSaveFolder.STATES -> directoriesManager.getStatesDirectory()
             CloudSaveFolder.STATE_PREVIEWS -> directoriesManager.getStatesPreviewDirectory()
+            CloudSaveFolder.PROFILE -> directoriesManager.getProfileDirectory()
         }
 
     private fun buildLocalFileMap(folder: File): Map<String, File> {

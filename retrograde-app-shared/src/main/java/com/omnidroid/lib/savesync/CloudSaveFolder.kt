@@ -4,4 +4,6 @@ enum class CloudSaveFolder(val remoteName: String) {
     SAVES("saves"),
     STATES("states"),
     STATE_PREVIEWS("state-previews"),
+    /** Profile metadata (profile.json) — synced alongside game saves. */
+    PROFILE("profile"),
 }
