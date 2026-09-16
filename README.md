@@ -1,6 +1,7 @@
 # Omnidroid
 
 [![Buy Me A Coffee](https://buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/abousaif)
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/abousaif)
 
 Everything you loved about [Lemuroid](https://github.com/Swordfish90/Lemuroid), rebuilt into a faster, cleaner, more capable Android game launcher.
 
