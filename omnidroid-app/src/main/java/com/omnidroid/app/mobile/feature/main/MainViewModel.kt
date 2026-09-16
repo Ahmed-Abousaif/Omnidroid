@@ -25,7 +25,6 @@ class MainViewModel(appContext: Context, private val saveSyncManager: SaveSyncMa
     data class UiState(
         val operationInProgress: Boolean = false,
         val saveSyncEnabled: Boolean = false,
-        val displaySearch: Boolean = false,
         val searchQuery: String = "",
     )
 
@@ -43,11 +42,10 @@ class MainViewModel(appContext: Context, private val saveSyncManager: SaveSyncMa
                 saveSyncEnabledFlow,
                 operationInProgressFlow,
                 searchQueryFlow,
-            ) { currentRoute, saveSyncEnabled, operationInProgress, searchQuery ->
+            ) { _, saveSyncEnabled, operationInProgress, searchQuery ->
                 UiState(
                     operationInProgress = operationInProgress,
                     saveSyncEnabled = saveSyncEnabled,
-                    displaySearch = currentRoute == MainRoute.SEARCH,
                     searchQuery = searchQuery,
                 )
             }

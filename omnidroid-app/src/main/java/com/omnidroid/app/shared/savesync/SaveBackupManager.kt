@@ -101,6 +101,7 @@ class SaveBackupManager(
             CloudSaveFolder.SAVES to directoriesManager.getSavesDirectory(),
             CloudSaveFolder.STATES to directoriesManager.getStatesDirectory(),
             CloudSaveFolder.STATE_PREVIEWS to directoriesManager.getStatesPreviewDirectory(),
+            CloudSaveFolder.PROFILE to directoriesManager.getProfileDirectory(),
         )
 
     private fun manifest(): String {

@@ -59,4 +59,32 @@ object Migrations {
                 database.execSQL("ALTER TABLE `games` ADD COLUMN `customName` TEXT")
             }
         }
+
+    val VERSION_11_12: Migration =
+        object : Migration(11, 12) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `game_sessions` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `gameId` INTEGER NOT NULL,
+                        `durationMs` INTEGER NOT NULL,
+                        `playedAt` INTEGER NOT NULL,
+                        `xpEarned` INTEGER NOT NULL,
+                        `streakDay` INTEGER NOT NULL,
+                        FOREIGN KEY(`gameId`) REFERENCES `games`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                database.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_game_sessions_id` ON `game_sessions` (`id`)",
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_game_sessions_gameId` ON `game_sessions` (`gameId`)",
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_game_sessions_playedAt` ON `game_sessions` (`playedAt`)",
+                )
+            }
+        }
 }
