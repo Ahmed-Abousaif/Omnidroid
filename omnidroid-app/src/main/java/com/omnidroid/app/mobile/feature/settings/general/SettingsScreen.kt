@@ -21,9 +21,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudSync
-import androidx.compose.material.icons.outlined.DeveloperBoard
 import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Monitor
 import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.Tune
@@ -180,7 +178,6 @@ fun SettingsScreen(
                             section = it
                             pendingContentFocus = true
                         },
-                        navController = navController,
                     )
                 SettingsSection.LIBRARY ->
                     OmnidroidSettingsPage(modifier = paneModifier) {
@@ -274,7 +271,6 @@ private fun SettingsSidebar(
 private fun GeneralHub(
     modifier: Modifier = Modifier,
     onSelectSection: (SettingsSection) -> Unit,
-    navController: NavController,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -309,20 +305,6 @@ private fun GeneralHub(
                 title = stringResource(R.string.settings_category_saves),
                 icon = Icons.Outlined.CloudSync,
                 onClick = { onSelectSection(SettingsSection.SAVES) },
-            )
-        }
-        item {
-            SettingsHubCard(
-                title = stringResource(R.string.settings_title_open_cores_selection),
-                icon = Icons.Outlined.Memory,
-                onClick = { navController.navigateToRoute(MainRoute.SETTINGS_CORES_SELECTION) },
-            )
-        }
-        item {
-            SettingsHubCard(
-                title = stringResource(R.string.settings_title_display_bios_info),
-                icon = Icons.Outlined.DeveloperBoard,
-                onClick = { navController.navigateToRoute(MainRoute.SETTINGS_BIOS) },
             )
         }
         item {
@@ -399,6 +381,13 @@ private fun AdvancedLinks(
             },
             enabled = !indexingInProgress,
             onClick = { navController.navigateToRoute(MainRoute.SETTINGS_BIOS) },
+        )
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_device_profile)) },
+            subtitle = {
+                Text(text = stringResource(id = R.string.settings_description_device_profile))
+            },
+            onClick = { navController.navigateToRoute(MainRoute.SETTINGS_DEVICE_PROFILE) },
         )
         OmnidroidSettingsMenuLink(
             title = { Text(text = stringResource(id = R.string.settings_title_advanced_settings)) },

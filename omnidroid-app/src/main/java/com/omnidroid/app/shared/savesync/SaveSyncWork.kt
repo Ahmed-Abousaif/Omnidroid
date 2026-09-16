@@ -14,6 +14,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.omnidroid.R
+import com.omnidroid.app.mobile.feature.profile.ProfileSyncHelper
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.app.mobile.shared.NotificationsManager
 import com.omnidroid.app.utils.android.createSyncForegroundInfo
@@ -23,6 +24,7 @@ import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.savesync.GameCloudSyncPreferences
 import com.omnidroid.lib.savesync.SaveSyncManager
 import com.omnidroid.lib.savesync.SaveSyncRequest
+import com.omnidroid.lib.storage.DirectoriesManager
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.firstOrNull
@@ -39,6 +41,7 @@ class SaveSyncWork
         private val saveSyncManager: SaveSyncManager,
         private val settingsManager: SettingsManager,
         private val retrogradeDb: RetrogradeDatabase,
+        private val directoriesManager: DirectoriesManager,
     ) : CoroutineWorker(context, workerParams) {
         override suspend fun doWork(): Result {
             if (!shouldPerformSaveSync()) {
@@ -60,6 +63,9 @@ class SaveSyncWork
             val includeSaves = settingsManager.syncSaves() || gameFileName != null
             val includeStates = coresToSync.isNotEmpty() || gameFileName != null
 
+            val profileSync = ProfileSyncHelper(applicationContext, directoriesManager)
+            profileSync.exportBeforeSync()
+
             try {
                 saveSyncManager.sync(
                     SaveSyncRequest(
@@ -75,6 +81,8 @@ class SaveSyncWork
             } catch (e: Throwable) {
                 Timber.e(e, "Error in saves sync")
             }
+
+            profileSync.importAfterSync()
 
             return Result.success()
         }

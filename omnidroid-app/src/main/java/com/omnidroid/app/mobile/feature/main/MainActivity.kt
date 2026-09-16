@@ -56,24 +56,24 @@ import com.omnidroid.app.mobile.feature.addconsole.AddConsoleViewModel
 import com.omnidroid.app.mobile.feature.cast.CastPickerSheet
 import com.omnidroid.app.mobile.feature.gamedetails.GameDetailsScreen
 import com.omnidroid.app.mobile.feature.gamedetails.GameDetailsViewModel
-import com.omnidroid.app.mobile.feature.favorites.FavoritesScreen
-import com.omnidroid.app.mobile.feature.favorites.FavoritesViewModel
-import com.omnidroid.app.mobile.feature.games.GamesScreen
-import com.omnidroid.app.mobile.feature.games.GamesViewModel
 import com.omnidroid.app.mobile.feature.library.LibraryFilter
 import com.omnidroid.app.mobile.feature.library.LibraryScreen
 import com.omnidroid.app.mobile.feature.library.LibraryTopBar
 import com.omnidroid.app.mobile.feature.library.LibraryTopBarRowHeight
 import com.omnidroid.app.mobile.feature.library.LibraryViewModel
 import com.omnidroid.app.mobile.feature.library.RegisteredSystemsStore
-import com.omnidroid.app.mobile.feature.search.SearchScreen
-import com.omnidroid.app.mobile.feature.search.SearchViewModel
+import com.omnidroid.app.mobile.feature.profile.ProfileScreen
+import com.omnidroid.app.mobile.feature.profile.ProfileViewModel
 import com.omnidroid.app.mobile.feature.settings.advanced.AdvancedSettingsScreen
 import com.omnidroid.app.mobile.feature.settings.advanced.AdvancedSettingsViewModel
 import com.omnidroid.app.mobile.feature.settings.bios.BiosScreen
 import com.omnidroid.app.mobile.feature.settings.bios.BiosSettingsViewModel
 import com.omnidroid.app.mobile.feature.settings.coreselection.CoresSelectionScreen
 import com.omnidroid.app.mobile.feature.settings.coreselection.CoresSelectionViewModel
+import com.omnidroid.app.mobile.feature.settings.deviceprofile.DeviceProfileScreen
+import com.omnidroid.app.mobile.feature.settings.deviceprofile.DeviceProfileViewModel
+import com.omnidroid.app.mobile.feature.settings.deviceprofile.ExtendedBenchmarkProgressDialog
+import com.omnidroid.app.mobile.feature.settings.deviceprofile.WelcomeBenchmarkDialog
 import com.omnidroid.app.mobile.feature.settings.general.SettingsScreen
 import com.omnidroid.app.mobile.feature.settings.general.SettingsViewModel
 import com.omnidroid.app.mobile.feature.settings.inputdevices.InputDevicesSettingsScreen
@@ -81,8 +81,6 @@ import com.omnidroid.app.mobile.feature.settings.inputdevices.InputDevicesSettin
 import com.omnidroid.app.mobile.feature.settings.savesync.SaveSyncSettingsScreen
 import com.omnidroid.app.mobile.feature.settings.savesync.SaveSyncSettingsViewModel
 import com.omnidroid.app.mobile.feature.shortcuts.ShortcutsGenerator
-import com.omnidroid.app.mobile.feature.systems.MetaSystemsScreen
-import com.omnidroid.app.mobile.feature.systems.MetaSystemsViewModel
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
 import com.omnidroid.app.mobile.shared.compose.ui.GameHeroCover
 import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
@@ -95,6 +93,7 @@ import com.omnidroid.app.shared.input.omnidroiddevice.OmnidroidInputDeviceGamePa
 import com.omnidroid.app.shared.input.omnidroiddevice.getOmnidroidInputDevice
 import com.omnidroid.app.shared.GameInteractor
 import com.omnidroid.app.shared.cast.CastDisplayManager
+import com.omnidroid.app.shared.deviceprofile.DeviceProfileManager
 import com.omnidroid.app.shared.game.BaseGameActivity
 import com.omnidroid.app.shared.game.GameLauncher
 import com.omnidroid.app.shared.input.InputDeviceManager
@@ -119,6 +118,7 @@ import com.omnidroid.lib.storage.DirectoriesManager
 import dagger.hilt.android.AndroidEntryPoint
 import de.charlex.compose.material3.HtmlText
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -215,6 +215,22 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     mutableStateOf(false)
                 }
             val castState = castDisplayManager.state.collectAsState().value
+
+            val deviceProfileManager = remember { DeviceProfileManager.get(applicationContext) }
+            val showWelcomeBenchmark = remember { mutableStateOf(false) }
+            val showExtendedBenchmark = remember { mutableStateOf(false) }
+            val extendedBenchmarkProgress = remember { mutableStateOf(0f) }
+
+            LaunchedEffect(Unit) {
+                if (!deviceProfileManager.isInitialCaptureDone()) {
+                    launch(Dispatchers.Default) {
+                        deviceProfileManager.ensureInitialCapture()
+                    }
+                }
+                if (!deviceProfileManager.isBenchmarkPromptShown()) {
+                    showWelcomeBenchmark.value = true
+                }
+            }
 
             LaunchedEffect(currentRoute) {
                 mainViewModel.changeRoute(currentRoute)
@@ -453,16 +469,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 }
             }
 
-            val libraryChromeRoute =
-                currentRoute == MainRoute.HOME ||
-                    currentRoute == MainRoute.ADD_CONSOLES ||
-                    currentRoute == MainRoute.SETTINGS ||
-                    currentRoute == MainRoute.SETTINGS_ADVANCED ||
-                    currentRoute == MainRoute.SETTINGS_BIOS ||
-                    currentRoute == MainRoute.SETTINGS_CORES_SELECTION ||
-                    currentRoute == MainRoute.SETTINGS_INPUT_DEVICES ||
-                    currentRoute == MainRoute.SETTINGS_SAVE_SYNC
-
             CompositionLocalProvider(LocalControllerNavigation provides controllerNav) {
             Box(modifier = Modifier.fillMaxSize()) {
             Scaffold(
@@ -473,16 +479,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         ControllerHintBar(
                             visible = true,
                             hints = controllerNav.hints.value,
-                        )
-                    }
-                },
-                topBar = {
-                    if (!libraryChromeRoute && currentRoute != MainRoute.GAME_DETAILS) {
-                        MainTopBar(
-                            currentRoute = currentRoute,
-                            navController = navController,
-                            onHelpPressed = onHelpPressed,
-                            mainUIState = mainUIState,
                         )
                     }
                 },
@@ -518,13 +514,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         Modifier
                             .fillMaxSize()
                             .zIndex(if (currentRoute == MainRoute.HOME) 0f else 1f)
-                            .then(
-                                if (libraryChromeRoute) {
-                                    Modifier.padding(top = LibraryTopBarRowHeight)
-                                } else {
-                                    Modifier
-                                },
-                            ),
+                            .padding(top = LibraryTopBarRowHeight),
                     navController = navController,
                     startDestination = MainRoute.HOME.route,
                 ) {
@@ -587,62 +577,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                             coresSelection,
                                         ),
                                 ),
-                        )
-                    }
-                    composable(MainRoute.FAVORITES) {
-                        FavoritesScreen(
-                            modifier = Modifier.padding(padding),
-                            viewModel =
-                                viewModel(
-                                    factory = FavoritesViewModel.Factory(retrogradeDb),
-                                ),
-                            onGameClick = onGameClick,
-                            onGameLongClick = onGameLongClick,
-                        )
-                    }
-                    composable(MainRoute.SEARCH) {
-                        SearchScreen(
-                            modifier = Modifier.padding(padding),
-                            viewModel =
-                                viewModel(
-                                    factory = SearchViewModel.Factory(retrogradeDb),
-                                ),
-                            searchQuery = mainUIState.searchQuery,
-                            onGameClick = onGameClick,
-                            onGameLongClick = onGameLongClick,
-                            onGameFavoriteToggle = onGameFavoriteToggle,
-                            onResetSearchQuery = { mainViewModel.changeQueryString("") },
-                        )
-                    }
-                    composable(MainRoute.SYSTEMS) {
-                        MetaSystemsScreen(
-                            modifier = Modifier.padding(padding),
-                            navController = navController,
-                            viewModel =
-                                viewModel(
-                                    factory =
-                                        MetaSystemsViewModel.Factory(
-                                            retrogradeDb,
-                                            applicationContext,
-                                        ),
-                                ),
-                        )
-                    }
-                    composable(MainRoute.SYSTEM_GAMES) { entry ->
-                        val metaSystemId = entry.arguments?.getString("metaSystemId")
-                        GamesScreen(
-                            modifier = Modifier.padding(padding),
-                            viewModel =
-                                viewModel(
-                                    factory =
-                                        GamesViewModel.Factory(
-                                            retrogradeDb,
-                                            MetaSystemID.valueOf(metaSystemId!!),
-                                        ),
-                                ),
-                            onGameClick = onGameClick,
-                            onGameLongClick = onGameLongClick,
-                            onGameFavoriteToggle = onGameFavoriteToggle,
                         )
                     }
                     composable(MainRoute.SETTINGS) {
@@ -727,6 +661,29 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 ),
                         )
                     }
+                    composable(MainRoute.SETTINGS_DEVICE_PROFILE) {
+                        DeviceProfileScreen(
+                            modifier = Modifier.padding(padding),
+                            viewModel =
+                                viewModel(
+                                    factory = DeviceProfileViewModel.Factory(applicationContext),
+                                ),
+                        )
+                    }
+                    composable(MainRoute.PROFILE) {
+                        ProfileScreen(
+                            modifier = Modifier.padding(padding),
+                            viewModel =
+                                viewModel(
+                                    factory =
+                                        ProfileViewModel.Factory(
+                                            applicationContext,
+                                            retrogradeDb,
+                                            registeredSystemsStore,
+                                        ),
+                                ),
+                        )
+                    }
                 }
                 }
             }
@@ -794,46 +751,70 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 )
             }
 
-            if (libraryChromeRoute || currentRoute == MainRoute.GAME_DETAILS || heroGame.value != null) {
-                val compactProgress =
-                    when {
-                        currentRoute == MainRoute.GAME_DETAILS && heroGame.value != null ->
-                            heroProgress.value
-                        currentRoute == MainRoute.GAME_DETAILS -> 1f
-                        else -> 0f
-                    }
-                LibraryTopBar(
-                    modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(),
-                    operationInProgress =
-                        libraryState.operationInProgress || mainUIState.operationInProgress,
-                    gamepadConnected = gamepadConnected,
-                    onScanPressed = { libraryViewModel.syncLibrary(this@MainActivity) },
-                    onCastPressed = {
-                        castDisplayManager.refresh()
-                        showCastPicker.value = true
-                    },
-                    onSettingsPressed = { navController.navigateToRoute(MainRoute.SETTINGS) },
-                    overlayTitleId =
-                        currentRoute.takeIf {
-                            it != MainRoute.HOME && it != MainRoute.GAME_DETAILS
-                        }?.titleId,
-                    onBackPressed = {
-                        if (currentRoute == MainRoute.GAME_DETAILS) {
-                            closeGameDetails()
-                        } else {
-                            navController.popBackStack()
+            if (showWelcomeBenchmark.value) {
+                WelcomeBenchmarkDialog(
+                    onAgree = {
+                        showWelcomeBenchmark.value = false
+                        deviceProfileManager.markBenchmarkPromptShown()
+                        showExtendedBenchmark.value = true
+                        extendedBenchmarkProgress.value = 0f
+                        scope.launch {
+                            deviceProfileManager.runExtendedBenchmark { progress ->
+                                extendedBenchmarkProgress.value = progress
+                            }
+                            showExtendedBenchmark.value = false
                         }
                     },
-                    compactProgress = compactProgress,
-                    searchQuery = libraryState.searchQuery,
-                    onSearchQueryChange = { libraryViewModel.changeQueryString(it) },
-                    onClearSearch = { libraryViewModel.clearSearchQuery() },
-                    casting = castState.isCasting,
-                    consoleTitleId =
-                        (libraryState.filter as? LibraryFilter.System)?.metaSystemID?.titleResId,
-                    consoleGameCount = libraryState.selectedSystemGameCount,
+                    onDecline = {
+                        showWelcomeBenchmark.value = false
+                        deviceProfileManager.markBenchmarkPromptShown()
+                    },
                 )
             }
+
+            if (showExtendedBenchmark.value) {
+                ExtendedBenchmarkProgressDialog(progress = extendedBenchmarkProgress.value)
+            }
+
+            val compactProgress =
+                when {
+                    currentRoute == MainRoute.GAME_DETAILS && heroGame.value != null ->
+                        heroProgress.value
+                    currentRoute == MainRoute.GAME_DETAILS -> 1f
+                    else -> 0f
+                }
+            LibraryTopBar(
+                modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(),
+                operationInProgress =
+                    libraryState.operationInProgress || mainUIState.operationInProgress,
+                gamepadConnected = gamepadConnected,
+                onScanPressed = { libraryViewModel.syncLibrary(this@MainActivity) },
+                onCastPressed = {
+                    castDisplayManager.refresh()
+                    showCastPicker.value = true
+                },
+                onSettingsPressed = { navController.navigateToRoute(MainRoute.SETTINGS) },
+                onProfilePressed = { navController.navigateToRoute(MainRoute.PROFILE) },
+                overlayTitleId =
+                    currentRoute.takeIf {
+                        it != MainRoute.HOME && it != MainRoute.GAME_DETAILS
+                    }?.titleId,
+                onBackPressed = {
+                    if (currentRoute == MainRoute.GAME_DETAILS) {
+                        closeGameDetails()
+                    } else {
+                        navController.popBackStack()
+                    }
+                },
+                compactProgress = compactProgress,
+                searchQuery = libraryState.searchQuery,
+                onSearchQueryChange = { libraryViewModel.changeQueryString(it) },
+                onClearSearch = { libraryViewModel.clearSearchQuery() },
+                casting = castState.isCasting,
+                consoleTitleId =
+                    (libraryState.filter as? LibraryFilter.System)?.metaSystemID?.titleResId,
+                consoleGameCount = libraryState.selectedSystemGameCount,
+            )
             val hero = heroGame.value
             if (hero != null && (heroProgress.value < 0.97f || closingDetails.value)) {
                 GameHeroCover(

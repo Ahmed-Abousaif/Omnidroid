@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.gamedetails.PlayTimeStore
+import com.omnidroid.app.mobile.feature.profile.UserProfileStore
+import com.omnidroid.app.mobile.feature.profile.XPCalculator
 import com.omnidroid.app.shared.game.BaseGameActivity
 import com.omnidroid.app.shared.gamecrash.GameCrashActivity
 import com.omnidroid.app.shared.savesync.SaveSyncWork
@@ -12,6 +14,7 @@ import com.omnidroid.app.shared.storage.cache.CacheCleanerWork
 import com.omnidroid.ext.feature.review.ReviewManager
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.library.db.entity.GameSession
 import kotlinx.coroutines.delay
 
 class GameLaunchTaskHandler(
@@ -84,7 +87,25 @@ class GameLaunchTaskHandler(
         val game = data?.extras?.getSerializable(BaseGameActivity.PLAY_GAME_RESULT_GAME) as Game
 
         updateGamePlayedTimestamp(game)
+        // Keep per-game playtime in SharedPreferences for quick reads on game detail screens
         PlayTimeStore(activity).add(game.id, duration)
+
+        // Record a session in Room — this is the source of truth for XP and total playtime
+        val profileStore = UserProfileStore(activity)
+        profileStore.recordSessionStreak()
+        val streak = profileStore.getCurrentStreak()
+        val baseXP = XPCalculator.baseXPFromSession(duration)
+        val xpEarned = (baseXP * XPCalculator.streakMultiplier(streak)).toLong()
+        retrogradeDb.gameSessionDao().insert(
+            GameSession(
+                gameId = game.id,
+                durationMs = duration,
+                playedAt = System.currentTimeMillis(),
+                xpEarned = xpEarned,
+                streakDay = streak,
+            ),
+        )
+
         if (enableRatingFlow) {
             displayReviewRequest(activity, duration)
         }

@@ -4,6 +4,7 @@
     <string name="pref_key_stop_rescan" translatable="false">stop_rescan</string>
     <string name="pref_key_display_bios_info" translatable="false">display_bios_info</string>
     <string name="pref_key_advanced_settings" translatable="false">advanced_settings</string>
+    <string name="pref_key_device_profile" translatable="false">device_profile</string>
     <string name="pref_key_open_cores_selection" translatable="false">open_cores_selection</string>
     <string name="pref_key_open_gamepad_settings" translatable="false">open_gamepad_settings</string>
     <string name="pref_key_open_save_sync_settings" translatable="false">open_save_sync_settings</string>

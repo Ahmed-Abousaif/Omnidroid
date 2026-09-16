@@ -125,11 +125,6 @@
 
         <!-- Android TV platform fallbacks (no SAF DocumentsUI on many TVs) -->
         <activity
-            android:name=".app.tv.main.MainTVActivity"
-            android:exported="true"
-            android:theme="@style/OmnidroidMaterialTheme.Launcher" />
-
-        <activity
             android:name=".app.tv.folderpicker.TVFolderPickerActivity"
             android:theme="@style/Theme.Leanback.GuidedStep" />
         <activity android:name=".app.tv.folderpicker.TVFolderPickerLauncher" />
