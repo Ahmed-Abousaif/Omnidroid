@@ -65,6 +65,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -93,6 +94,7 @@ fun LibraryTopBar(
     onScanPressed: () -> Unit,
     onCastPressed: () -> Unit,
     onSettingsPressed: () -> Unit,
+    onProfilePressed: () -> Unit = {},
     overlayTitleId: Int? = null,
     onBackPressed: () -> Unit = {},
     compactProgress: Float = 0f,
@@ -298,17 +300,12 @@ fun LibraryTopBar(
                                 )
                             }
                             Spacer(modifier = Modifier.width(8.dp))
-                            Surface(
-                                shape = CircleShape,
-                                color = Color.White,
-                                shadowElevation = 6.dp,
-                                modifier = Modifier.size(36.dp),
-                            ) {
+                            FloatingChromeButton(onClick = onProfilePressed) {
                                 Icon(
-                                    imageVector = Icons.Filled.Person,
-                                    contentDescription = null,
-                                    tint = Color(0xFF111111),
-                                    modifier = Modifier.padding(6.dp),
+                                    painter = painterResource(R.drawable.ic_profile_robot),
+                                    contentDescription = stringResource(R.string.title_profile),
+                                    tint = LibraryNeonGreen,
+                                    modifier = Modifier.size(18.dp),
                                 )
                             }
                         }

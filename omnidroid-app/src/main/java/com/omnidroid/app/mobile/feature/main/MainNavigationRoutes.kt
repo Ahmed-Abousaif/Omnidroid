@@ -4,17 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.VideogameAsset
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.VideogameAsset
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -62,24 +52,6 @@ enum class MainRoute(
     HOME(
         route = "home",
         titleId = R.string.title_home,
-    ),
-    FAVORITES(
-        route = "favorites",
-        titleId = R.string.favorites,
-    ),
-    SEARCH(
-        route = "search",
-        titleId = R.string.title_search,
-    ),
-    SYSTEMS(
-        route = "systems/home",
-        titleId = R.string.title_systems,
-    ),
-    SYSTEM_GAMES(
-        route = "systems/{metaSystemId}",
-        titleId = R.string.title_games,
-        parent = SYSTEMS,
-        listOf(navArgument("metaSystemId") { type = NavType.StringType }),
     ),
     GAME_DETAILS(
         route = "games/{gameId}",
@@ -129,6 +101,18 @@ enum class MainRoute(
         parent = SETTINGS,
         showBottomNavigation = false,
     ),
+    SETTINGS_DEVICE_PROFILE(
+        route = "settings/deviceprofile",
+        titleId = R.string.settings_title_device_profile,
+        parent = SETTINGS,
+        showBottomNavigation = false,
+    ),
+    PROFILE(
+        route = "profile",
+        titleId = R.string.title_profile,
+        parent = HOME,
+        showBottomNavigation = false,
+    ),
     ;
 
     val root = root()
@@ -142,16 +126,4 @@ enum class MainRoute(
             return values().first { it.route == route }
         }
     }
-}
-
-enum class MainNavigationRoutes(
-    val route: MainRoute,
-    @StringRes val titleId: Int,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector,
-) {
-    HOME(MainRoute.HOME, R.string.title_home, Icons.Filled.Home, Icons.Outlined.Home),
-    FAVORITES(MainRoute.FAVORITES, R.string.favorites, Icons.Filled.Favorite, Icons.Filled.FavoriteBorder),
-    SYSTEMS(MainRoute.SYSTEMS, R.string.title_systems, Icons.Filled.VideogameAsset, Icons.Outlined.VideogameAsset),
-    SEARCH(MainRoute.SEARCH, R.string.title_search, Icons.Filled.Search, Icons.Outlined.Search),
 }

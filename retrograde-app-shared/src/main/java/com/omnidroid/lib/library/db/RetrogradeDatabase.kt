@@ -24,12 +24,14 @@ import androidx.room.RoomDatabase
 import com.omnidroid.lib.library.db.dao.DataFileDao
 import com.omnidroid.lib.library.db.dao.GameDao
 import com.omnidroid.lib.library.db.dao.GameSearchDao
+import com.omnidroid.lib.library.db.dao.GameSessionDao
 import com.omnidroid.lib.library.db.entity.DataFile
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.library.db.entity.GameSession
 
 @Database(
-    entities = [Game::class, DataFile::class],
-    version = 11,
+    entities = [Game::class, DataFile::class, GameSession::class],
+    version = 12,
     exportSchema = true,
 )
 abstract class RetrogradeDatabase : RoomDatabase() {
@@ -40,6 +42,8 @@ abstract class RetrogradeDatabase : RoomDatabase() {
     abstract fun gameDao(): GameDao
 
     abstract fun dataFileDao(): DataFileDao
+
+    abstract fun gameSessionDao(): GameSessionDao
 
     fun gameSearchDao() = GameSearchDao(gameSearchDaoInternal())
 
