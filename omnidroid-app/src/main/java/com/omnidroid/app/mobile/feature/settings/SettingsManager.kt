@@ -58,6 +58,8 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
 
     suspend fun enableRawgMetadata() = booleanPreference(R.string.pref_key_enable_rawg_metadata, false)
 
+    suspend fun rawgApiKey() = stringPreference(R.string.pref_key_rawg_api_key, "").trim()
+
     suspend fun cacheSizeBytes() =
         stringPreference(
             R.string.pref_key_max_cache_size,

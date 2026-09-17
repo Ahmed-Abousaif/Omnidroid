@@ -6,6 +6,7 @@ import androidx.compose.ui.res.stringResource
 import com.omnidroid.app.utils.settings.rememberSafePreferenceBooleanSettingState
 import com.omnidroid.app.utils.settings.rememberSafePreferenceIndexSettingState
 import com.omnidroid.app.utils.settings.rememberSafePreferenceIntSettingState
+import com.omnidroid.app.utils.settings.rememberSafePreferenceStringSettingState
 import com.omnidroid.app.utils.settings.rememberSafePreferenceStringsSetSettingState
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
 
@@ -20,6 +21,22 @@ fun booleanPreferenceState(
     key: String,
     default: Boolean,
 ) = rememberSafePreferenceBooleanSettingState(
+    key = key,
+    defaultValue = default,
+    preferences = SharedPreferencesHelper.getSharedPreferences(LocalContext.current),
+)
+
+@Composable
+fun stringPreferenceState(
+    id: Int,
+    default: String = "",
+) = stringPreferenceState(stringResource(id = id), default)
+
+@Composable
+fun stringPreferenceState(
+    key: String,
+    default: String = "",
+) = rememberSafePreferenceStringSettingState(
     key = key,
     defaultValue = default,
     preferences = SharedPreferencesHelper.getSharedPreferences(LocalContext.current),
