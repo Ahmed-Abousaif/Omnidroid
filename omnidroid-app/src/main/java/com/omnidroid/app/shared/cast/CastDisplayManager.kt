@@ -6,6 +6,7 @@ import android.app.Presentation
 import android.content.Context
 import android.content.Intent
 import android.hardware.display.DisplayManager
+import android.media.MediaRouter
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
+import java.lang.ref.WeakReference
 
 data class CastTarget(
     val displayId: Int,
@@ -29,42 +31,71 @@ data class CastState(
     val isCasting: Boolean get() = selectedDisplayId != null
 }
 
+/**
+ * Result of [CastDisplayManager.stopCasting].
+ *
+ * [NeedsSystemDisconnect] means the app cleared its own cast target, but the OS still has an
+ * active remote live-video route (wireless display / Cast). The UI should open system Cast
+ * settings so the user can finish disconnecting — apps cannot silently kill every OEM session.
+ */
+sealed class StopCastResult {
+    data object Stopped : StopCastResult()
+
+    data object NeedsSystemDisconnect : StopCastResult()
+}
+
 class CastDisplayManager(
     context: Context,
 ) : DisplayManager.DisplayListener {
     private val appContext = context.applicationContext
     private val displayManager =
         appContext.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+    private val mediaRouter =
+        appContext.getSystemService(Context.MEDIA_ROUTER_SERVICE) as MediaRouter
 
     private val _state = MutableStateFlow(CastState())
     val state: StateFlow<CastState> = _state.asStateFlow()
 
     private var idlePresentation: Presentation? = null
     private var suppressIdle = false
+    private var hostActivityRef: WeakReference<Activity>? = null
 
     init {
         displayManager.registerDisplayListener(this, null)
         refresh()
     }
 
+    /** Keep a host Activity so idle Presentation and keep-screen-on can be maintained. */
+    fun attachHost(activity: Activity) {
+        hostActivityRef = WeakReference(activity)
+        applyHostKeepScreenOn(activity, _state.value.isCasting)
+        if (_state.value.isCasting && !suppressIdle) {
+            showIdle(activity)
+        }
+    }
+
     fun refresh() {
-        val targets =
-            presentationDisplays().map { display ->
-                CastTarget(
-                    displayId = display.displayId,
-                    name = display.name.ifBlank { "Display ${display.displayId}" },
-                )
-            }
+        val targets = presentationDisplays().map { it.toCastTarget() }
         val selectedId = _state.value.selectedDisplayId
-        val selectedStillThere = targets.any { it.displayId == selectedId }
+        val selectedDisplay = selectedId?.let { displayManager.getDisplay(it) }
+        // Keep the selection while the Display still exists, even if it briefly reports STATE_OFF
+        // and is omitted from the picker list. Only drop it when the display is gone.
+        val selectedStillExists = selectedDisplay != null
         _state.value =
             CastState(
                 targets = targets,
-                selectedDisplayId = selectedId.takeIf { selectedStillThere },
-                selectedName = targets.firstOrNull { it.displayId == selectedId }?.name,
+                selectedDisplayId = selectedId.takeIf { selectedStillExists },
+                selectedName =
+                    when {
+                        !selectedStillExists -> null
+                        else ->
+                            targets.firstOrNull { it.displayId == selectedId }?.name
+                                ?: selectedDisplay.name.ifBlank { "Display $selectedId" }
+                    },
             )
-        if (selectedId != null && !selectedStillThere) {
+        if (selectedId != null && !selectedStillExists) {
             hideIdle()
+            hostActivity()?.let { applyHostKeepScreenOn(it, false) }
         }
     }
 
@@ -75,15 +106,24 @@ class CastDisplayManager(
                 selectedDisplayId = target.displayId,
                 selectedName = target.name,
             )
+        hostActivity()?.let { applyHostKeepScreenOn(it, true) }
     }
 
-    fun stopCasting() {
+    fun stopCasting(): StopCastResult {
         hideIdle()
         _state.value =
             _state.value.copy(
                 selectedDisplayId = null,
                 selectedName = null,
             )
+        hostActivity()?.let { applyHostKeepScreenOn(it, false) }
+        disconnectSystemDisplayRoute()
+        refresh()
+        return if (hasActiveRemoteVideoRoute()) {
+            StopCastResult.NeedsSystemDisconnect
+        } else {
+            StopCastResult.Stopped
+        }
     }
 
     fun selectedDisplay(): Display? {
@@ -104,6 +144,7 @@ class CastDisplayManager(
 
     fun restoreIdle(activity: Activity) {
         suppressIdle = false
+        attachHost(activity)
         showIdle(activity)
     }
 
@@ -112,9 +153,15 @@ class CastDisplayManager(
     }
 
     fun showIdle(activity: Activity) {
+        hostActivityRef = WeakReference(activity)
+        applyHostKeepScreenOn(activity, _state.value.isCasting)
         if (suppressIdle) return
         val display = selectedDisplay() ?: run {
             hideIdle()
+            return
+        }
+        if (display.state == Display.STATE_OFF) {
+            // Display is parked (often while the source sleeps). Wait for onDisplayChanged.
             return
         }
         val current = idlePresentation
@@ -169,15 +216,71 @@ class CastDisplayManager(
         }
     }
 
-    override fun onDisplayAdded(displayId: Int) = refresh()
+    override fun onDisplayAdded(displayId: Int) {
+        refresh()
+        reattachIdleIfNeeded()
+    }
 
-    override fun onDisplayRemoved(displayId: Int) = refresh()
+    override fun onDisplayRemoved(displayId: Int) {
+        refresh()
+    }
 
-    override fun onDisplayChanged(displayId: Int) = refresh()
+    override fun onDisplayChanged(displayId: Int) {
+        refresh()
+        reattachIdleIfNeeded()
+    }
+
+    private fun reattachIdleIfNeeded() {
+        if (!_state.value.isCasting || suppressIdle) return
+        val activity = hostActivity() ?: return
+        if (activity.isFinishing || activity.isDestroyed) return
+        showIdle(activity)
+    }
+
+    private fun hostActivity(): Activity? = hostActivityRef?.get()
+
+    private fun applyHostKeepScreenOn(
+        activity: Activity,
+        enabled: Boolean,
+    ) {
+        val window = activity.window ?: return
+        if (enabled) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
+    /**
+     * Disconnect the platform MediaRouter live-video route (wireless display / Cast).
+     * This is the standard way to return the selected route to "this device".
+     */
+    private fun disconnectSystemDisplayRoute() {
+        try {
+            val selected = mediaRouter.getSelectedRoute(MediaRouter.ROUTE_TYPE_LIVE_VIDEO)
+            val defaultRoute = mediaRouter.defaultRoute
+            if (selected != defaultRoute) {
+                mediaRouter.selectRoute(MediaRouter.ROUTE_TYPE_LIVE_VIDEO, defaultRoute)
+            }
+        } catch (error: Exception) {
+            Timber.w(error, "Unable to disconnect system display route")
+        }
+    }
+
+    private fun hasActiveRemoteVideoRoute(): Boolean {
+        return try {
+            val selected = mediaRouter.getSelectedRoute(MediaRouter.ROUTE_TYPE_LIVE_VIDEO)
+            selected != mediaRouter.defaultRoute
+        } catch (_: Exception) {
+            false
+        }
+    }
 
     private fun presentationDisplays(): List<Display> {
         val category =
-            displayManager.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION).toList()
+            displayManager
+                .getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION)
+                .filter { it.state != Display.STATE_OFF }
         if (category.isNotEmpty()) return category
         val flagged =
             displayManager.displays.filter { display ->
@@ -191,4 +294,10 @@ class CastDisplayManager(
                 display.state != Display.STATE_OFF
         }
     }
+
+    private fun Display.toCastTarget(): CastTarget =
+        CastTarget(
+            displayId = displayId,
+            name = name.ifBlank { "Display $displayId" },
+        )
 }

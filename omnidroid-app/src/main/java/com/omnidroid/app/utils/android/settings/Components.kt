@@ -151,7 +151,7 @@ fun OmnidroidSettingsSlider(
         )
 
     SettingsSlider(
-        modifier = modifier.controllerFocusGlow(RoundedCornerShape(8.dp)),
+        modifier = modifier,
         steps = steps,
         value = state.value.toFloat(),
         onValueChange = { state.value = it.roundToInt() },

@@ -1,9 +1,17 @@
 package com.omnidroid.app.shared
 
+import android.os.Bundle
 import android.view.View
+import android.view.WindowManager
 import com.omnidroid.lib.android.RetrogradeActivity
 
 abstract class ImmersiveActivity : RetrogradeActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Games (and cast-launched sessions) must not let the display time out.
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) hideSystemUI()

@@ -51,6 +51,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,6 +59,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -65,6 +69,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -80,6 +85,7 @@ import com.omnidroid.app.mobile.feature.gamedetails.GameDetailsCoverWeight
 import com.omnidroid.app.mobile.feature.gamedetails.GameDetailsScreenPadding
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.SystemStatusIndicators
+import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 
 val LibraryTopBarRowHeight = 40.dp
@@ -109,6 +115,9 @@ fun LibraryTopBar(
     val compact = if (overlayMode) 0f else compactProgress.coerceIn(0f, 1f)
     val showBack = !overlayMode && compact > 0.5f
     val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val controllerNav = LocalControllerNavigation.current
+    val searchArmed = controllerNav?.searchArmed?.value == true
     var searchFocused by remember { mutableStateOf(false) }
     val searchExpanded = searchFocused || searchQuery.isNotEmpty()
     var displayedConsoleTitleId by remember { mutableStateOf<Int?>(null) }
@@ -123,7 +132,27 @@ fun LibraryTopBar(
     LaunchedEffect(showBack) {
         if (showBack) {
             searchFocused = false
+            controllerNav?.searchArmed?.value = false
+            controllerNav?.textInputActive = false
             focusManager.clearFocus()
+        }
+    }
+
+    LaunchedEffect(searchArmed) {
+        if (searchArmed) {
+            runCatching { controllerNav?.searchFocusRequester?.requestFocus() }
+            keyboardController?.show()
+        }
+    }
+
+    SideEffect {
+        controllerNav?.dismissSearch = {
+            controllerNav.searchArmed.value = false
+            controllerNav.textInputActive = false
+            searchFocused = false
+            keyboardController?.hide()
+            focusManager.clearFocus()
+            controllerNav.contentFocusRequester?.let { runCatching { it.requestFocus() } }
         }
     }
 
@@ -214,9 +243,23 @@ fun LibraryTopBar(
                                         onClear = {
                                             onClearSearch()
                                             searchFocused = false
+                                            controllerNav?.searchArmed?.value = false
+                                            controllerNav?.textInputActive = false
                                             focusManager.clearFocus()
                                         },
-                                        onFocusChange = { searchFocused = it },
+                                        onFocusChange = { focused ->
+                                            searchFocused = focused
+                                            controllerNav?.textInputActive = focused
+                                            if (!focused && controllerNav?.searchArmed?.value == true) {
+                                                controllerNav.searchArmed.value = false
+                                            }
+                                        },
+                                        onActivate = {
+                                            controllerNav?.searchArmed?.value = true
+                                        },
+                                        focusRequester = controllerNav?.searchFocusRequester,
+                                        // Controller D-pad skips search unless Y armed it.
+                                        canFocus = !gamepadConnected || searchArmed,
                                         modifier = Modifier.width(searchWidth),
                                     )
                                     AnimatedVisibility(
@@ -318,12 +361,27 @@ private fun LibrarySearchField(
     onClear: () -> Unit,
     onFocusChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    onActivate: (() -> Unit)? = null,
+    focusRequester: FocusRequester? = null,
+    canFocus: Boolean = true,
 ) {
     val focusManager = LocalFocusManager.current
     var focused by remember { mutableStateOf(false) }
     val active = focused || query.isNotEmpty()
     Surface(
-        modifier = modifier.height(LibrarySearchFieldHeight).controllerFocusGlow(CircleShape),
+        modifier =
+            modifier
+                .height(LibrarySearchFieldHeight)
+                .controllerFocusGlow(CircleShape)
+                .then(
+                    if (!canFocus && onActivate != null) {
+                        Modifier
+                            .focusProperties { this.canFocus = false }
+                            .clickable(onClick = onActivate)
+                    } else {
+                        Modifier
+                    },
+                ),
         shape = CircleShape,
         color = Color(0xFF161616),
         shadowElevation = 6.dp,
@@ -351,10 +409,19 @@ private fun LibrarySearchField(
             BasicTextField(
                 value = query,
                 onValueChange = onQueryChange,
+                enabled = canFocus,
                 modifier =
                     Modifier
                         .weight(1f)
                         .padding(horizontal = 8.dp)
+                        .then(
+                            if (focusRequester != null) {
+                                Modifier.focusRequester(focusRequester)
+                            } else {
+                                Modifier
+                            },
+                        )
+                        .focusProperties { this.canFocus = canFocus }
                         .onFocusChanged {
                             focused = it.isFocused
                             onFocusChange(it.isFocused)

@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -208,21 +207,8 @@ fun AddConsoleScreen(
                 onConfirm = { confirmSelection() },
             )
             selected?.let { console ->
-                val installing = state.installing == console.metaSystemID
-                Text(
-                    text = consoleStatus(console, installing),
-                    color = accent,
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center,
-                    modifier =
-                        Modifier
-                            .align(Alignment.Center)
-                            .offset(y = -(HeroSize / 2 + 22.dp))
-                            .padding(horizontal = 24.dp),
-                )
                 ConsoleDetails(
                     console = console,
-                    installing = installing,
                     accent = accent,
                     enabled = state.installing == null && !console.installed,
                     onInstall = { viewModel.install(console.metaSystemID) },
@@ -309,21 +295,8 @@ private fun ConsoleLine(
 }
 
 @Composable
-private fun consoleStatus(
-    console: ConsoleItem,
-    installing: Boolean,
-): String {
-    return when {
-        installing -> stringResource(R.string.library_scanning)
-        console.installed -> stringResource(R.string.console_installed)
-        else -> stringResource(R.string.console_not_added)
-    }
-}
-
-@Composable
 private fun ConsoleDetails(
     console: ConsoleItem,
-    installing: Boolean,
     accent: Color,
     enabled: Boolean,
     onInstall: () -> Unit,

@@ -244,8 +244,7 @@ private fun SettingsSidebar(
                     Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequesters.getValue(item))
-                        .onFocusChanged { if (it.isFocused) onFocused(item) }
-                        .controllerFocusGlow(RectangleShape),
+                        .onFocusChanged { if (it.isFocused) onFocused(item) },
                 shape = RectangleShape,
                 color = if (isSelected) Color.White.copy(alpha = 0.08f) else Color.Transparent,
             ) {

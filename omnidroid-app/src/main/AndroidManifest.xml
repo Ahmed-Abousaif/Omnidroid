@@ -31,6 +31,7 @@
     <application
         android:name="com.omnidroid.app.OmnidroidApplication"
         android:allowBackup="true"
+        android:appCategory="game"
         android:banner="@mipmap/ic_banner"
         android:icon="@mipmap/omnidroid_launcher"
         android:isGame="true"
@@ -52,11 +53,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.HOME" />
-                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
