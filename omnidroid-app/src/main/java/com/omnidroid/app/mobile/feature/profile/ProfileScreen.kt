@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -38,6 +39,8 @@ import androidx.compose.material.icons.outlined.Badge
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Gamepad
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.HourglassEmpty
@@ -137,12 +140,15 @@ fun ProfileScreen(
                 .background(HomeChromeBackground),
     ) {
         val isLandscape = maxWidth > maxHeight
+        val isLargeLandscape = isLandscape && (maxWidth >= 840.dp || maxHeight >= 500.dp)
+        val isTabletPortrait = !isLandscape && maxWidth >= 600.dp
+        val isLargeScreen = isLargeLandscape || isTabletPortrait
 
         if (isLandscape) {
             // ─────────────────────────────────────────────────────────────────
             // Landscape Layout:
-            // Left 1/3 (Weight 1f) — Fixed (No Scroll): Profile Header + Level Card
-            // Right 2/3 (Weight 2f) — Scrollable: Streaks + Achievements + Recent Sessions
+            // Left Column — Fixed (No Scroll): Profile Header + Level Card
+            // Right Column — Scrollable: Streaks + Achievements + Recent Sessions
             // ─────────────────────────────────────────────────────────────────
             val rightScrollState = rememberScrollState()
 
@@ -150,36 +156,41 @@ fun ProfileScreen(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        .padding(
+                            horizontal = if (isLargeScreen) 24.dp else 16.dp,
+                            vertical = if (isLargeScreen) 14.dp else 10.dp,
+                        ),
+                horizontalArrangement = Arrangement.spacedBy(if (isLargeScreen) 20.dp else 16.dp),
             ) {
-                // Left Column (Fixed, No Scroll, fills total height)
+                // Left Column (Scrolls if needed on short screens, natural height, never stretches)
+                val leftScrollState = rememberScrollState()
                 Column(
                     modifier =
                         Modifier
                             .weight(1f)
-                            .fillMaxHeight(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                            .fillMaxHeight()
+                            .verticalScroll(leftScrollState),
+                    verticalArrangement = Arrangement.spacedBy(if (isLargeScreen) 16.dp else 10.dp),
                 ) {
                     ProfileHeaderSection(
-                        modifier = Modifier.weight(1f),
                         tag = state.tag,
                         profilePicUri = state.profilePicUri,
                         milestoneBadge = state.milestoneBadge,
-                        compact = true,
+                        compact = !isLargeScreen,
+                        isLargeScreen = isLargeScreen,
                         onAvatarClick = { showPhotoOptionsDialog = true },
                         onEditTagClick = { showEditTagDialog = true },
                     )
 
                     ProfileLevelCard(
-                        modifier = Modifier.weight(1f),
                         level = state.level,
                         xpProgress = state.xpProgress,
                         xpCurrent = state.xpCurrent,
                         xpForNext = state.xpForNext,
                         xpToNext = state.xpToNext,
                         totalPlayTimeMs = state.totalPlayTimeMs,
-                        compact = true,
+                        compact = !isLargeScreen,
+                        isLargeScreen = isLargeScreen,
                     )
                 }
 
@@ -187,33 +198,100 @@ fun ProfileScreen(
                 Column(
                     modifier =
                         Modifier
-                            .weight(2f)
+                            .weight(if (isLargeScreen) 1.85f else 2f)
                             .fillMaxHeight()
                             .verticalScroll(rightScrollState),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(if (isLargeScreen) 16.dp else 12.dp),
                 ) {
                     ProfileStreakCard(
                         currentStreak = state.currentStreak,
                         bestStreak = state.bestStreak,
                         streakMultiplier = state.streakMultiplier,
+                        isLargeScreen = isLargeScreen,
                     )
 
                     ProfileAchievementsCard(
                         achievements = state.achievements,
                         unlockedConsoles = state.unlockedConsoles,
                         totalConsoles = state.totalConsoles,
+                        isLargeScreen = isLargeScreen,
                     )
 
                     ProfileRecentSessionsCard(
                         recentSessions = state.recentSessions,
+                        isLargeScreen = isLargeScreen,
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
+        } else if (isTabletPortrait) {
+            // ─────────────────────────────────────────────────────────────────
+            // Tablet Portrait Layout: 2-column scrollable dashboard
+            // ─────────────────────────────────────────────────────────────────
+            val tabletPortraitScrollState = rememberScrollState()
+
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(tabletPortraitScrollState)
+                        .padding(horizontal = 24.dp, vertical = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    ProfileHeaderSection(
+                        tag = state.tag,
+                        profilePicUri = state.profilePicUri,
+                        milestoneBadge = state.milestoneBadge,
+                        compact = false,
+                        isLargeScreen = true,
+                        onAvatarClick = { showPhotoOptionsDialog = true },
+                        onEditTagClick = { showEditTagDialog = true },
+                    )
+
+                    ProfileLevelCard(
+                        level = state.level,
+                        xpProgress = state.xpProgress,
+                        xpCurrent = state.xpCurrent,
+                        xpForNext = state.xpForNext,
+                        xpToNext = state.xpToNext,
+                        totalPlayTimeMs = state.totalPlayTimeMs,
+                        compact = false,
+                        isLargeScreen = true,
+                    )
+
+                    ProfileStreakCard(
+                        currentStreak = state.currentStreak,
+                        bestStreak = state.bestStreak,
+                        streakMultiplier = state.streakMultiplier,
+                        isLargeScreen = true,
+                    )
+                }
+
+                Column(
+                    modifier = Modifier.weight(1.2f),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    ProfileAchievementsCard(
+                        achievements = state.achievements,
+                        unlockedConsoles = state.unlockedConsoles,
+                        totalConsoles = state.totalConsoles,
+                        isLargeScreen = true,
+                    )
+
+                    ProfileRecentSessionsCard(
+                        recentSessions = state.recentSessions,
+                        isLargeScreen = true,
+                    )
+                }
+            }
         } else {
             // ─────────────────────────────────────────────────────────────────
-            // Portrait Layout: Single scrollable vertical list
+            // Phone Portrait Layout: Single scrollable vertical list
             // ─────────────────────────────────────────────────────────────────
             val portraitScrollState = rememberScrollState()
 
@@ -230,6 +308,7 @@ fun ProfileScreen(
                     profilePicUri = state.profilePicUri,
                     milestoneBadge = state.milestoneBadge,
                     compact = false,
+                    isLargeScreen = false,
                     onAvatarClick = { showPhotoOptionsDialog = true },
                     onEditTagClick = { showEditTagDialog = true },
                 )
@@ -242,22 +321,26 @@ fun ProfileScreen(
                     xpToNext = state.xpToNext,
                     totalPlayTimeMs = state.totalPlayTimeMs,
                     compact = false,
+                    isLargeScreen = false,
                 )
 
                 ProfileStreakCard(
                     currentStreak = state.currentStreak,
                     bestStreak = state.bestStreak,
                     streakMultiplier = state.streakMultiplier,
+                    isLargeScreen = false,
                 )
 
                 ProfileAchievementsCard(
                     achievements = state.achievements,
                     unlockedConsoles = state.unlockedConsoles,
                     totalConsoles = state.totalConsoles,
+                    isLargeScreen = false,
                 )
 
                 ProfileRecentSessionsCard(
                     recentSessions = state.recentSessions,
+                    isLargeScreen = false,
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -307,6 +390,7 @@ private fun ProfileHeaderSection(
     profilePicUri: String?,
     milestoneBadge: ConsoleAchievementsStore.MilestoneBadge?,
     compact: Boolean,
+    isLargeScreen: Boolean = false,
     onAvatarClick: () -> Unit,
     onEditTagClick: () -> Unit,
 ) {
@@ -320,12 +404,10 @@ private fun ProfileHeaderSection(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .then(if (compact) Modifier.fillMaxHeight() else Modifier)
-                    .padding(if (compact) 12.dp else 18.dp),
+                    .padding(if (isLargeScreen) 20.dp else if (compact) 12.dp else 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = if (compact) Arrangement.SpaceEvenly else Arrangement.Center,
         ) {
-            val avatarSize = if (compact) 96.dp else 128.dp
+            val avatarSize = if (isLargeScreen) 136.dp else if (compact) 96.dp else 120.dp
 
             // Avatar with edit badge
             Box(
@@ -338,7 +420,7 @@ private fun ProfileHeaderSection(
                             .size(avatarSize)
                             .clip(CircleShape)
                             .border(
-                                width = 2.dp,
+                                width = if (isLargeScreen) 2.5.dp else 2.dp,
                                 brush =
                                     Brush.linearGradient(
                                         listOf(LibraryNeonGreen, LibraryNeonGreen.copy(alpha = 0.4f)),
@@ -361,7 +443,7 @@ private fun ProfileHeaderSection(
                             painter = painterResource(R.drawable.ic_profile_robot),
                             contentDescription = stringResource(R.string.title_profile),
                             tint = LibraryNeonGreen,
-                            modifier = Modifier.size(if (compact) 52.dp else 72.dp),
+                            modifier = Modifier.size(if (isLargeScreen) 74.dp else if (compact) 52.dp else 68.dp),
                         )
                     }
                 }
@@ -370,7 +452,7 @@ private fun ProfileHeaderSection(
                 Box(
                     modifier =
                         Modifier
-                            .size(if (compact) 26.dp else 30.dp)
+                            .size(if (isLargeScreen) 34.dp else if (compact) 26.dp else 30.dp)
                             .clip(CircleShape)
                             .background(LibraryNeonGreen)
                             .clickable(onClick = onAvatarClick),
@@ -380,12 +462,12 @@ private fun ProfileHeaderSection(
                         Icons.Outlined.PhotoCamera,
                         contentDescription = stringResource(R.string.profile_change_picture),
                         tint = Color.Black,
-                        modifier = Modifier.size(if (compact) 14.dp else 16.dp),
+                        modifier = Modifier.size(if (isLargeScreen) 18.dp else if (compact) 14.dp else 16.dp),
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(if (compact) 4.dp else 6.dp))
+            Spacer(modifier = Modifier.height(if (isLargeScreen) 8.dp else if (compact) 4.dp else 6.dp))
 
             // Gamer Tag with inline edit pencil
             Row(
@@ -400,23 +482,23 @@ private fun ProfileHeaderSection(
                 Text(
                     text = tag,
                     color = Color.White,
-                    fontSize = if (compact) 17.sp else 21.sp,
+                    fontSize = if (isLargeScreen) 23.sp else if (compact) 17.sp else 21.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(modifier = Modifier.width(5.dp))
+                Spacer(modifier = Modifier.width(6.dp))
                 Icon(
                     Icons.Outlined.Edit,
                     contentDescription = stringResource(R.string.profile_change_tag),
                     tint = LibraryNeonGreen,
-                    modifier = Modifier.size(if (compact) 15.dp else 17.dp),
+                    modifier = Modifier.size(if (isLargeScreen) 18.dp else if (compact) 15.dp else 17.dp),
                 )
             }
 
             // Milestone Badge (if earned)
             if (milestoneBadge != null) {
-                Spacer(modifier = Modifier.height(if (compact) 4.dp else 6.dp))
+                Spacer(modifier = Modifier.height(if (isLargeScreen) 8.dp else if (compact) 4.dp else 6.dp))
                 val badgeText =
                     when (milestoneBadge) {
                         ConsoleAchievementsStore.MilestoneBadge.COLLECTOR -> stringResource(R.string.profile_badge_collector)
@@ -432,9 +514,13 @@ private fun ProfileHeaderSection(
                     Text(
                         text = badgeText,
                         color = LibraryNeonGreen,
-                        fontSize = if (compact) 11.sp else 12.sp,
+                        fontSize = if (isLargeScreen) 13.sp else if (compact) 11.sp else 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        modifier =
+                            Modifier.padding(
+                                horizontal = if (isLargeScreen) 10.dp else 8.dp,
+                                vertical = if (isLargeScreen) 4.dp else 3.dp,
+                            ),
                     )
                 }
             }
@@ -456,6 +542,7 @@ private fun ProfileLevelCard(
     xpToNext: Long,
     totalPlayTimeMs: Long,
     compact: Boolean,
+    isLargeScreen: Boolean = false,
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = xpProgress,
@@ -473,9 +560,7 @@ private fun ProfileLevelCard(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .then(if (compact) Modifier.fillMaxHeight() else Modifier)
-                    .padding(if (compact) 12.dp else 16.dp),
-            verticalArrangement = if (compact) Arrangement.SpaceEvenly else Arrangement.Top,
+                    .padding(if (isLargeScreen) 18.dp else if (compact) 12.dp else 16.dp),
         ) {
             // Level header row
             Row(
@@ -488,13 +573,13 @@ private fun ProfileLevelCard(
                         Icons.Outlined.Stars,
                         contentDescription = null,
                         tint = LibraryNeonGreen,
-                        modifier = Modifier.size(if (compact) 18.dp else 22.dp),
+                        modifier = Modifier.size(if (isLargeScreen) 24.dp else if (compact) 18.dp else 22.dp),
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = stringResource(R.string.profile_level, level),
                         color = Color.White,
-                        fontSize = if (compact) 15.sp else 18.sp,
+                        fontSize = if (isLargeScreen) 20.sp else if (compact) 15.sp else 18.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -502,11 +587,11 @@ private fun ProfileLevelCard(
                 Text(
                     text = stringResource(R.string.profile_xp_to_next, xpToNext),
                     color = SubtitleColor,
-                    fontSize = if (compact) 11.sp else 12.sp,
+                    fontSize = if (isLargeScreen) 13.sp else if (compact) 11.sp else 12.sp,
                 )
             }
 
-            Spacer(modifier = Modifier.height(if (compact) 6.dp else 10.dp))
+            Spacer(modifier = Modifier.height(if (isLargeScreen) 10.dp else if (compact) 6.dp else 10.dp))
 
             // Animated Progress bar
             LinearProgressIndicator(
@@ -514,13 +599,13 @@ private fun ProfileLevelCard(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(if (compact) 6.dp else 8.dp)
+                        .height(if (isLargeScreen) 9.dp else if (compact) 6.dp else 8.dp)
                         .clip(RoundedCornerShape(4.dp)),
                 color = LibraryNeonGreen,
                 trackColor = Color.White.copy(alpha = 0.1f),
             )
 
-            Spacer(modifier = Modifier.height(if (compact) 4.dp else 6.dp))
+            Spacer(modifier = Modifier.height(if (isLargeScreen) 6.dp else if (compact) 4.dp else 6.dp))
 
             // XP numbers
             Row(
@@ -534,19 +619,19 @@ private fun ProfileLevelCard(
                         String.format(Locale.US, "%,d", xpForNext),
                     ),
                     color = SubtitleColor,
-                    fontSize = if (compact) 10.sp else 12.sp,
+                    fontSize = if (isLargeScreen) 13.sp else if (compact) 10.sp else 12.sp,
                 )
                 Text(
                     text = "${(xpProgress * 100).toInt()}%",
                     color = LibraryNeonGreen,
-                    fontSize = if (compact) 10.sp else 12.sp,
+                    fontSize = if (isLargeScreen) 13.sp else if (compact) 10.sp else 12.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
             }
 
-            Spacer(modifier = Modifier.height(if (compact) 6.dp else 14.dp))
+            Spacer(modifier = Modifier.height(if (isLargeScreen) 12.dp else if (compact) 6.dp else 14.dp))
             Divider(color = PanelBorder, thickness = 1.dp)
-            Spacer(modifier = Modifier.height(if (compact) 6.dp else 12.dp))
+            Spacer(modifier = Modifier.height(if (isLargeScreen) 10.dp else if (compact) 6.dp else 12.dp))
 
             // Stats row: Playtime + Total XP
             Row(
@@ -558,12 +643,14 @@ private fun ProfileLevelCard(
                     title = stringResource(R.string.profile_total_playtime),
                     value = formatPlayTime(totalPlayTimeMs),
                     compact = compact,
+                    isLargeScreen = isLargeScreen,
                 )
                 ProfileStatColumn(
                     icon = Icons.Outlined.EmojiEvents,
                     title = "Total XP",
                     value = String.format(Locale.US, "%,d", xpCurrent),
                     compact = compact,
+                    isLargeScreen = isLargeScreen,
                 )
             }
         }
@@ -576,6 +663,7 @@ private fun ProfileStatColumn(
     title: String,
     value: String,
     compact: Boolean = false,
+    isLargeScreen: Boolean = false,
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -583,20 +671,20 @@ private fun ProfileStatColumn(
                 icon,
                 contentDescription = null,
                 tint = LibraryNeonGreen,
-                modifier = Modifier.size(if (compact) 13.dp else 16.dp),
+                modifier = Modifier.size(if (isLargeScreen) 18.dp else if (compact) 13.dp else 16.dp),
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = title,
                 color = SubtitleColor,
-                fontSize = if (compact) 10.sp else 12.sp,
+                fontSize = if (isLargeScreen) 13.sp else if (compact) 10.sp else 12.sp,
             )
         }
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = value,
             color = Color.White,
-            fontSize = if (compact) 13.sp else 16.sp,
+            fontSize = if (isLargeScreen) 18.sp else if (compact) 13.sp else 16.sp,
             fontWeight = FontWeight.Bold,
         )
     }
@@ -611,6 +699,7 @@ private fun ProfileStreakCard(
     currentStreak: Int,
     bestStreak: Int,
     streakMultiplier: Double,
+    isLargeScreen: Boolean = false,
 ) {
     Card(
         shape = PanelShape,
@@ -622,7 +711,7 @@ private fun ProfileStreakCard(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(if (isLargeScreen) 20.dp else 16.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -634,13 +723,13 @@ private fun ProfileStreakCard(
                         Icons.Outlined.LocalFireDepartment,
                         contentDescription = null,
                         tint = FireColor,
-                        modifier = Modifier.size(22.dp),
+                        modifier = Modifier.size(if (isLargeScreen) 26.dp else 22.dp),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = stringResource(R.string.profile_streak_current),
                         color = Color.White,
-                        fontSize = 15.sp,
+                        fontSize = if (isLargeScreen) 17.sp else 15.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -654,14 +743,18 @@ private fun ProfileStreakCard(
                     Text(
                         text = stringResource(R.string.profile_streak_multiplier, streakMultiplier),
                         color = FireColor,
-                        fontSize = 11.sp,
+                        fontSize = if (isLargeScreen) 13.sp else 11.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        modifier =
+                            Modifier.padding(
+                                horizontal = if (isLargeScreen) 10.dp else 8.dp,
+                                vertical = if (isLargeScreen) 4.dp else 3.dp,
+                            ),
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(if (isLargeScreen) 14.dp else 12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -672,19 +765,19 @@ private fun ProfileStreakCard(
                     Text(
                         text = stringResource(R.string.profile_streak_days, currentStreak),
                         color = Color.White,
-                        fontSize = 22.sp,
+                        fontSize = if (isLargeScreen) 26.sp else 22.sp,
                         fontWeight = FontWeight.ExtraBold,
                     )
                     Text(
                         text = "${stringResource(R.string.profile_streak_best)}: ${stringResource(R.string.profile_streak_days, bestStreak)}",
                         color = SubtitleColor,
-                        fontSize = 11.sp,
+                        fontSize = if (isLargeScreen) 13.sp else 11.sp,
                     )
                 }
 
                 // 7-day streak progress visual dots
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(if (isLargeScreen) 8.dp else 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     for (day in 1..7) {
@@ -693,7 +786,13 @@ private fun ProfileStreakCard(
                         Box(
                             modifier =
                                 Modifier
-                                    .size(if (isMaxBonus) 14.dp else 10.dp)
+                                    .size(
+                                        if (isLargeScreen) {
+                                            if (isMaxBonus) 16.dp else 12.dp
+                                        } else {
+                                            if (isMaxBonus) 14.dp else 10.dp
+                                        },
+                                    )
                                     .clip(CircleShape)
                                     .background(
                                         if (active) {
@@ -720,6 +819,7 @@ private fun ProfileAchievementsCard(
     achievements: List<ConsoleAchievement>,
     unlockedConsoles: Int,
     totalConsoles: Int,
+    isLargeScreen: Boolean = false,
 ) {
     Card(
         shape = PanelShape,
@@ -731,7 +831,7 @@ private fun ProfileAchievementsCard(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(if (isLargeScreen) 20.dp else 16.dp),
         ) {
             // Card Header
             Row(
@@ -744,13 +844,13 @@ private fun ProfileAchievementsCard(
                         Icons.Outlined.Gamepad,
                         contentDescription = null,
                         tint = LibraryNeonGreen,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(if (isLargeScreen) 24.dp else 20.dp),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = stringResource(R.string.profile_achievements),
                         color = Color.White,
-                        fontSize = 15.sp,
+                        fontSize = if (isLargeScreen) 17.sp else 15.sp,
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -758,16 +858,16 @@ private fun ProfileAchievementsCard(
                 Text(
                     text = stringResource(R.string.profile_consoles_unlocked, unlockedConsoles, totalConsoles),
                     color = SubtitleColor,
-                    fontSize = 12.sp,
+                    fontSize = if (isLargeScreen) 14.sp else 12.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(if (isLargeScreen) 14.dp else 12.dp))
 
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val spacing = 8.dp
-                val minCell = 64.dp
+                val spacing = if (isLargeScreen) 10.dp else 8.dp
+                val minCell = if (isLargeScreen) 78.dp else 64.dp
                 val columns =
                     maxOf(
                         1,
@@ -785,6 +885,7 @@ private fun ProfileAchievementsCard(
                         ConsoleAchievementItem(
                             achievement = achievement,
                             modifier = Modifier.width(cellWidth),
+                            isLargeScreen = isLargeScreen,
                         )
                     }
                 }
@@ -797,6 +898,7 @@ private fun ProfileAchievementsCard(
 private fun ConsoleAchievementItem(
     achievement: ConsoleAchievement,
     modifier: Modifier = Modifier,
+    isLargeScreen: Boolean = false,
 ) {
     val unlocked = achievement.unlocked
     Surface(
@@ -813,7 +915,7 @@ private fun ConsoleAchievementItem(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 4.dp, vertical = 6.dp),
+                    .padding(horizontal = 4.dp, vertical = if (isLargeScreen) 8.dp else 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -859,7 +961,7 @@ private fun ConsoleAchievementItem(
             Text(
                 text = stringResource(achievement.nameResId),
                 color = if (unlocked) Color.White else Color.White.copy(alpha = 0.4f),
-                fontSize = 9.sp,
+                fontSize = if (isLargeScreen) 10.sp else 9.sp,
                 fontWeight = if (unlocked) FontWeight.Bold else FontWeight.Normal,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -876,39 +978,56 @@ private fun ConsoleAchievementItem(
 @Composable
 private fun ProfileRecentSessionsCard(
     recentSessions: List<ProfileViewModel.RecentSessionItem>,
+    isLargeScreen: Boolean = false,
 ) {
+    var expanded by remember { mutableStateOf(false) }
+    val initialLimit = 5
+    val hasMore = recentSessions.size > initialLimit
+    val displayedSessions = if (expanded || !hasMore) recentSessions else recentSessions.take(initialLimit)
+
     Card(
         shape = PanelShape,
         colors = CardDefaults.cardColors(containerColor = PanelColor),
         border = BorderStroke(1.dp, PanelBorder),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
     ) {
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(if (isLargeScreen) 20.dp else 16.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Icon(
-                    Icons.Outlined.History,
-                    contentDescription = null,
-                    tint = LibraryNeonGreen,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.profile_recent_sessions),
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.History,
+                        contentDescription = null,
+                        tint = LibraryNeonGreen,
+                        modifier = Modifier.size(if (isLargeScreen) 22.dp else 18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.profile_recent_sessions),
+                        color = Color.White,
+                        fontSize = if (isLargeScreen) 17.sp else 15.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+
+                if (recentSessions.isNotEmpty()) {
+                    Text(
+                        text = "${recentSessions.size} total",
+                        color = SubtitleColor,
+                        fontSize = if (isLargeScreen) 13.sp else 11.sp,
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(if (isLargeScreen) 14.dp else 10.dp))
 
             if (recentSessions.isEmpty()) {
                 Box(
@@ -921,16 +1040,60 @@ private fun ProfileRecentSessionsCard(
                     Text(
                         text = stringResource(R.string.profile_no_sessions),
                         color = SubtitleColor,
-                        fontSize = 12.sp,
+                        fontSize = if (isLargeScreen) 14.sp else 12.sp,
                         textAlign = TextAlign.Center,
                     )
                 }
             } else {
-                recentSessions.forEachIndexed { index, item ->
+                displayedSessions.forEachIndexed { index, item ->
                     if (index > 0) {
-                        Divider(color = PanelBorder, thickness = 0.5.dp, modifier = Modifier.padding(vertical = 6.dp))
+                        Divider(
+                            color = PanelBorder,
+                            thickness = 0.5.dp,
+                            modifier = Modifier.padding(vertical = if (isLargeScreen) 8.dp else 6.dp),
+                        )
                     }
-                    RecentSessionRow(item = item)
+                    RecentSessionRow(item = item, isLargeScreen = isLargeScreen)
+                }
+
+                if (hasMore) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Divider(color = PanelBorder, thickness = 0.5.dp)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { expanded = !expanded }
+                                .padding(vertical = 8.dp, horizontal = 4.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text =
+                                if (expanded) {
+                                    stringResource(R.string.profile_show_less)
+                                } else {
+                                    stringResource(R.string.profile_view_all, recentSessions.size)
+                                },
+                            color = LibraryNeonGreen,
+                            fontSize = if (isLargeScreen) 14.sp else 12.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector =
+                                if (expanded) {
+                                    Icons.Outlined.ExpandLess
+                                } else {
+                                    Icons.Outlined.ExpandMore
+                                },
+                            contentDescription = null,
+                            tint = LibraryNeonGreen,
+                            modifier = Modifier.size(if (isLargeScreen) 18.dp else 16.dp),
+                        )
+                    }
                 }
             }
         }
@@ -938,7 +1101,10 @@ private fun ProfileRecentSessionsCard(
 }
 
 @Composable
-private fun RecentSessionRow(item: ProfileViewModel.RecentSessionItem) {
+private fun RecentSessionRow(
+    item: ProfileViewModel.RecentSessionItem,
+    isLargeScreen: Boolean = false,
+) {
     val session = item.session
     val durationMin = maxOf(1L, session.durationMs / 60_000L)
     val dateText = DateFormat.getDateInstance(DateFormat.SHORT).format(Date(session.playedAt))
@@ -952,7 +1118,7 @@ private fun RecentSessionRow(item: ProfileViewModel.RecentSessionItem) {
             Text(
                 text = item.gameTitle,
                 color = Color.White,
-                fontSize = 13.sp,
+                fontSize = if (isLargeScreen) 15.sp else 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -960,7 +1126,7 @@ private fun RecentSessionRow(item: ProfileViewModel.RecentSessionItem) {
             Text(
                 text = "$durationMin min • $dateText",
                 color = SubtitleColor,
-                fontSize = 11.sp,
+                fontSize = if (isLargeScreen) 12.sp else 11.sp,
             )
         }
 
@@ -972,9 +1138,13 @@ private fun RecentSessionRow(item: ProfileViewModel.RecentSessionItem) {
             Text(
                 text = stringResource(R.string.profile_session_xp, session.xpEarned),
                 color = LibraryNeonGreen,
-                fontSize = 11.sp,
+                fontSize = if (isLargeScreen) 12.sp else 11.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                modifier =
+                    Modifier.padding(
+                        horizontal = if (isLargeScreen) 9.dp else 7.dp,
+                        vertical = if (isLargeScreen) 4.dp else 3.dp,
+                    ),
             )
         }
     }

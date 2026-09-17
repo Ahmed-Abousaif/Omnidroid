@@ -13,6 +13,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -62,6 +63,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -87,6 +89,39 @@ import kotlin.math.roundToInt
 val LibrarySidebarWidth = 80.dp
 val LibrarySidebarButtonSize = 48.dp
 val LibrarySidebarInset = (LibrarySidebarWidth - LibrarySidebarButtonSize) / 2
+
+fun libraryGridRows(zoomDensity: Int, availableHeight: Dp): Int {
+    return when {
+        availableHeight < 420.dp -> {
+            when (zoomDensity) {
+                0 -> 1
+                1 -> 2
+                else -> 3
+            }
+        }
+        availableHeight < 640.dp -> {
+            when (zoomDensity) {
+                0 -> 2
+                1 -> 3
+                else -> 5
+            }
+        }
+        availableHeight < 880.dp -> {
+            when (zoomDensity) {
+                0 -> 3
+                1 -> 5
+                else -> 7
+            }
+        }
+        else -> {
+            when (zoomDensity) {
+                0 -> 3
+                1 -> (availableHeight / 140.dp).toInt().coerceIn(5, 6)
+                else -> (availableHeight / 90.dp).toInt().coerceIn(7, 9)
+            }
+        }
+    }
+}
 
 @Composable
 fun LibraryScreen(
@@ -295,7 +330,6 @@ private fun LibraryGrid(
         isEmpty &&
             state.searchQuery.isBlank() &&
             state.filter !is LibraryFilter.Favorites
-    val rows = state.zoomDensity + 1
     val infoStyle =
         when (state.zoomDensity) {
             0 -> GameCardInfoStyle.BELOW
@@ -324,54 +358,61 @@ private fun LibraryGrid(
         }
         else -> {
             Column(modifier = modifier.fillMaxSize()) {
-                LazyHorizontalGrid(
+                BoxWithConstraints(
                     modifier =
                         Modifier
                             .weight(1f)
-                            .fillMaxWidth()
-                            .focusGroup()
-                            .graphicsLayer { alpha = 1f - (0.88f * transitionProgress) },
-                    rows = GridCells.Fixed(rows),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                            .fillMaxWidth(),
                 ) {
-                    val featured = continueGame.takeIf { showContinue }
-                    if (featured != null) {
-                        item(key = "continue-${featured.id}") {
+                    val rows = libraryGridRows(state.zoomDensity, maxHeight)
+                    LazyHorizontalGrid(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .focusGroup()
+                                .graphicsLayer { alpha = 1f - (0.88f * transitionProgress) },
+                        rows = GridCells.Fixed(rows),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        val featured = continueGame.takeIf { showContinue }
+                        if (featured != null) {
+                            item(key = "continue-${featured.id}") {
+                                LibraryGameCardItem(
+                                    game = featured,
+                                    modifier = Modifier.focusRequester(firstItemRequester),
+                                    continueAction = true,
+                                    infoStyle = infoStyle,
+                                    hidden = featured.id == transitioningGameId,
+                                    onCoverBounds = { onCoverBounds(featured.id, it) },
+                                    onClick = { onContinueClick(featured) },
+                                    onLongClick = { onGameLongClick(featured) },
+                                )
+                            }
+                        }
+
+                        items(
+                            count = games.itemCount,
+                            key = { index -> games.peek(index)?.id ?: index },
+                        ) { index ->
+                            val game = games[index] ?: return@items
                             LibraryGameCardItem(
-                                game = featured,
-                                modifier = Modifier.focusRequester(firstItemRequester),
-                                continueAction = true,
+                                game = game,
+                                modifier =
+                                    if (!showContinue && index == 0) {
+                                        Modifier.focusRequester(firstItemRequester)
+                                    } else {
+                                        Modifier
+                                    },
+                                continueAction = false,
                                 infoStyle = infoStyle,
-                                hidden = featured.id == transitioningGameId,
-                                onCoverBounds = { onCoverBounds(featured.id, it) },
-                                onClick = { onContinueClick(featured) },
-                                onLongClick = { onGameLongClick(featured) },
+                                hidden = game.id == transitioningGameId,
+                                onCoverBounds = { onCoverBounds(game.id, it) },
+                                onClick = { onGameClick(game) },
+                                onLongClick = { onGameLongClick(game) },
                             )
                         }
-                    }
-
-                    items(
-                        count = games.itemCount,
-                        key = { index -> games.peek(index)?.id ?: index },
-                    ) { index ->
-                        val game = games[index] ?: return@items
-                        LibraryGameCardItem(
-                            game = game,
-                            modifier =
-                                if (!showContinue && index == 0) {
-                                    Modifier.focusRequester(firstItemRequester)
-                                } else {
-                                    Modifier
-                                },
-                            continueAction = false,
-                            infoStyle = infoStyle,
-                            hidden = game.id == transitioningGameId,
-                            onCoverBounds = { onCoverBounds(game.id, it) },
-                            onClick = { onGameClick(game) },
-                            onLongClick = { onGameLongClick(game) },
-                        )
                     }
                 }
                 if (showZoomBar) {
