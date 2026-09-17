@@ -32,7 +32,7 @@ interface RawgGameMetadataDao {
         """
         SELECT g.id FROM games g
         LEFT JOIN rawg_game_metadata r ON r.gameId = g.id
-        WHERE r.gameId IS NULL
+        WHERE r.gameId IS NULL OR r.trailerUrl IS NULL
         """,
     )
     suspend fun selectGameIdsMissingMetadata(): List<Int>

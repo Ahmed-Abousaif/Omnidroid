@@ -76,6 +76,7 @@ class RawgEnrichmentWork
                                     released = fetched.released,
                                     backgroundImageUrl = fetched.backgroundImageUrl,
                                     coverImageUrl = fetched.coverImageUrl,
+                                    trailerUrl = fetched.trailerUrl.orEmpty(),
                                     rating = fetched.rating,
                                     publisher = fetched.publisher,
                                     updatedAt = System.currentTimeMillis(),

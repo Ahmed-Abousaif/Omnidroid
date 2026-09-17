@@ -29,6 +29,8 @@ data class RawgGameMetadata(
     val released: String?,
     val backgroundImageUrl: String?,
     val coverImageUrl: String?,
+    /** Direct MP4 trailer URL from RAWG movies, or empty string if checked and none found. */
+    val trailerUrl: String? = null,
     val rating: Double?,
     val publisher: String?,
     val updatedAt: Long,

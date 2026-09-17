@@ -33,7 +33,7 @@ import com.omnidroid.lib.library.db.entity.RawgGameMetadata
 
 @Database(
     entities = [Game::class, DataFile::class, GameSession::class, RawgGameMetadata::class],
-    version = 13,
+    version = 14,
     exportSchema = true,
 )
 abstract class RetrogradeDatabase : RoomDatabase() {

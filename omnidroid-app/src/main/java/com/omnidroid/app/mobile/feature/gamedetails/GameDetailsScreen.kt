@@ -3,11 +3,6 @@
 import android.net.Uri
 import android.os.Build
 import android.view.ViewGroup
-import android.webkit.CookieManager
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -167,12 +162,12 @@ fun GameDetailsScreen(
                     modifier = Modifier.fillMaxHeight(),
                     game = game,
                     preferredCoverUrl = state.metadata.coverImageUrl,
+                    trailerUrl = state.metadata.trailerUrl,
                     playingTrailer = state.playingTrailer,
-                    trailerHtml = viewModel.trailerHtml(),
-                    trailerSearchUrl = viewModel.trailerSearchUrl(),
                     hideCover = hideCover,
                     onCoverBounds = onCoverBounds,
                     onToggleTrailer = { viewModel.toggleTrailer() },
+                    onStopTrailer = { viewModel.stopTrailer() },
                     onEditCover = {
                         pendingCoverGame = game
                         coverPicker.launch("image/*")
@@ -272,14 +267,15 @@ private fun GameCoverOrTrailer(
     modifier: Modifier,
     game: Game,
     preferredCoverUrl: String?,
+    trailerUrl: String?,
     playingTrailer: Boolean,
-    trailerHtml: String?,
-    trailerSearchUrl: String?,
     hideCover: Boolean,
     onCoverBounds: (Rect) -> Unit,
     onToggleTrailer: () -> Unit,
+    onStopTrailer: () -> Unit,
     onEditCover: () -> Unit,
 ) {
+    val hasTrailer = !trailerUrl.isNullOrBlank()
     var coverAspect by remember(game.id) { mutableStateOf(DefaultCoverAspect) }
     BoxWithConstraints(
         modifier = modifier,
@@ -311,14 +307,13 @@ private fun GameCoverOrTrailer(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    if (playingTrailer) {
-                        GameTrailerView(
-                            html = trailerHtml,
-                            searchUrl = trailerSearchUrl,
+                    if (playingTrailer && hasTrailer) {
+                        GameTrailerPlayer(
+                            trailerUrl = trailerUrl!!,
                             modifier = Modifier.fillMaxSize(),
                         )
                         IconButton(
-                            onClick = onToggleTrailer,
+                            onClick = onStopTrailer,
                             modifier =
                                 Modifier
                                     .align(Alignment.TopEnd)
@@ -335,7 +330,13 @@ private fun GameCoverOrTrailer(
                             modifier =
                                 Modifier
                                     .fillMaxSize()
-                                    .clickable(onClick = onToggleTrailer),
+                                    .then(
+                                        if (hasTrailer) {
+                                            Modifier.clickable(onClick = onToggleTrailer)
+                                        } else {
+                                            Modifier
+                                        },
+                                    ),
                             contentAlignment = Alignment.Center,
                         ) {
                             OmnidroidPoster(
@@ -344,12 +345,14 @@ private fun GameCoverOrTrailer(
                                 modifier = Modifier.fillMaxSize(),
                                 onAspectRatio = { coverAspect = it },
                             )
-                            Icon(
-                                imageVector = Icons.Outlined.PlayCircle,
-                                contentDescription = stringResource(R.string.game_trailer),
-                                modifier = Modifier.size(64.dp),
-                                tint = Color.White.copy(alpha = 0.85f),
-                            )
+                            if (hasTrailer) {
+                                Icon(
+                                    imageVector = Icons.Outlined.PlayCircle,
+                                    contentDescription = stringResource(R.string.game_trailer),
+                                    modifier = Modifier.size(64.dp),
+                                    tint = Color.White.copy(alpha = 0.85f),
+                                )
+                            }
                         }
                     }
                 }
@@ -404,55 +407,36 @@ private fun OmnidroidPoster(
 }
 
 @Composable
-private fun GameTrailerView(
-    html: String?,
-    searchUrl: String?,
+private fun GameTrailerPlayer(
+    trailerUrl: String,
     modifier: Modifier,
 ) {
     AndroidView(
         modifier = modifier,
         factory = { context ->
-            WebView(context).apply {
+            android.widget.VideoView(context).apply {
                 layoutParams =
                     ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT,
                     )
-                settings.javaScriptEnabled = true
-                settings.domStorageEnabled = true
-                settings.databaseEnabled = true
-                settings.mediaPlaybackRequiresUserGesture = false
-                settings.javaScriptCanOpenWindowsAutomatically = true
-                settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                settings.loadWithOverviewMode = true
-                settings.useWideViewPort = true
-                CookieManager.getInstance().setAcceptCookie(true)
-                CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
-                webChromeClient = WebChromeClient()
-                webViewClient = WebViewClient()
-                if (html != null) {
-                    loadDataWithBaseURL(
-                        "https://www.youtube.com",
-                        html,
-                        "text/html",
-                        "utf-8",
-                        null,
-                    )
-                } else if (searchUrl != null) {
-                    loadUrl(
-                        searchUrl,
-                        mapOf(
-                            "Referer" to "https://www.youtube.com",
-                            "Referrer-Policy" to "strict-origin-when-cross-origin",
-                        ),
-                    )
+                setVideoURI(Uri.parse(trailerUrl))
+                setOnPreparedListener { player ->
+                    player.isLooping = true
+                    start()
                 }
             }
         },
-        onRelease = { webView ->
-            webView.stopLoading()
-            webView.loadUrl("about:blank")
-            webView.destroy()
+        update = { videoView ->
+            val current = videoView.tag as? String
+            if (current != trailerUrl) {
+                videoView.tag = trailerUrl
+                videoView.setVideoURI(Uri.parse(trailerUrl))
+                videoView.start()
+            }
+        },
+        onRelease = { videoView ->
+            videoView.stopPlayback()
         },
     )
 }

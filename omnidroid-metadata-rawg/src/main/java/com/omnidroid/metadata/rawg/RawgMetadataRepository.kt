@@ -73,6 +73,9 @@ class RawgMetadataRepository(
                 delay(150)
                 val coverUrl = fetchPortraitCoverUrl(details.id, key)?.takeIf { it != backgroundUrl }
 
+                delay(150)
+                val trailerUrl = fetchTrailerUrl(details.id, key)
+
                 RawgFetchedMetadata(
                     rawgId = details.id,
                     description = description,
@@ -80,6 +83,7 @@ class RawgMetadataRepository(
                     released = details.released ?: match.released,
                     backgroundImageUrl = backgroundUrl,
                     coverImageUrl = coverUrl,
+                    trailerUrl = trailerUrl,
                     rating = details.rating ?: match.rating,
                     publisher = publisher,
                 )
@@ -104,6 +108,20 @@ class RawgMetadataRepository(
                 .filter { it.height.toFloat() / it.width.toFloat() >= 1.2f }
                 .maxByOrNull { it.height.toFloat() / it.width.toFloat() }
                 ?.image
+        }.getOrNull()
+    }
+
+    private suspend fun fetchTrailerUrl(
+        gameId: Int,
+        apiKey: String,
+    ): String? {
+        return runCatching {
+            val body = api.getGameMovies(id = gameId, key = apiKey).string()
+            val movies = json.decodeFromString(RawgMoviesResponse.serializer(), body).results
+            movies.firstNotNullOfOrNull { movie ->
+                movie.data["max"]?.takeIf { it.isNotBlank() }
+                    ?: movie.data["480"]?.takeIf { it.isNotBlank() }
+            }
         }.getOrNull()
     }
 

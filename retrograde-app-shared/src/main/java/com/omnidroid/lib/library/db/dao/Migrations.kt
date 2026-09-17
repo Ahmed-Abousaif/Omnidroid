@@ -117,4 +117,11 @@ object Migrations {
                 )
             }
         }
+
+    val VERSION_13_14: Migration =
+        object : Migration(13, 14) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `rawg_game_metadata` ADD COLUMN `trailerUrl` TEXT")
+            }
+        }
 }

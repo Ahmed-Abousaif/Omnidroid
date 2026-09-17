@@ -1,6 +1,5 @@
 package com.omnidroid.app.mobile.feature.gamedetails
 
-import android.net.Uri
 import com.omnidroid.lib.library.db.entity.RawgGameMetadata
 
 data class GameRemoteMetadata(
@@ -11,6 +10,7 @@ data class GameRemoteMetadata(
     val rating: String? = null,
     val coverImageUrl: String? = null,
     val backgroundImageUrl: String? = null,
+    val trailerUrl: String? = null,
     val rawgId: Int? = null,
 )
 
@@ -23,6 +23,7 @@ object GameMetadataMapper {
             row.coverImageUrl
                 ?.takeIf { it.isNotBlank() }
                 ?.takeIf { it != background }
+        val trailer = row.trailerUrl?.takeIf { it.isNotBlank() }
         return GameRemoteMetadata(
             description = row.description,
             genre = row.genres,
@@ -31,15 +32,8 @@ object GameMetadataMapper {
             rating = row.rating?.let { String.format("%.1f", it) },
             coverImageUrl = cover,
             backgroundImageUrl = background,
+            trailerUrl = trailer,
             rawgId = row.rawgId,
         )
-    }
-
-    fun trailerSearchUrl(
-        title: String,
-        systemName: String,
-    ): String {
-        val query = Uri.encode("$title $systemName trailer")
-        return "https://m.youtube.com/results?search_query=$query"
     }
 }
