@@ -27,4 +27,10 @@ interface RawgApi {
         @Query("key") key: String,
         @Query("page_size") pageSize: Int = 8,
     ): ResponseBody
+
+    @GET("api/games/{id}/movies")
+    suspend fun getGameMovies(
+        @Path("id") id: Int,
+        @Query("key") key: String,
+    ): ResponseBody
 }

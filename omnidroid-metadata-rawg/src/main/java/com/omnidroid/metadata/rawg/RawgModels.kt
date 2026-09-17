@@ -47,6 +47,19 @@ data class RawgScreenshot(
 )
 
 @Serializable
+data class RawgMoviesResponse(
+    val results: List<RawgMovie> = emptyList(),
+)
+
+@Serializable
+data class RawgMovie(
+    val id: Int = 0,
+    val name: String = "",
+    val preview: String? = null,
+    val data: Map<String, String> = emptyMap(),
+)
+
+@Serializable
 data class RawgNamedEntity(
     val id: Int = 0,
     val name: String = "",
@@ -60,6 +73,7 @@ data class RawgFetchedMetadata(
     val released: String?,
     val backgroundImageUrl: String?,
     val coverImageUrl: String?,
+    val trailerUrl: String?,
     val rating: Double?,
     val publisher: String?,
 )

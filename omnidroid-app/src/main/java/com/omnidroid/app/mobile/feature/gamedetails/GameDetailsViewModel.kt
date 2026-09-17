@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.app.shared.covers.RawgCoverStore
-import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,20 +80,11 @@ class GameDetailsViewModel(
     }
 
     fun toggleTrailer() {
+        if (state.value.metadata.trailerUrl.isNullOrBlank()) return
         playingTrailerFlow.value = !playingTrailerFlow.value
     }
 
-    fun trailerHtml(): String? = null
-
-    fun trailerSearchUrl(): String? {
-        val game = state.value.game ?: return null
-        return GameMetadataMapper.trailerSearchUrl(game.title, systemName(game))
-    }
-
-    private fun systemName(game: Game): String {
-        return runCatching { GameSystem.findById(game.systemId) }
-            .getOrNull()
-            ?.let { appContext.getString(it.shortTitleResId) }
-            .orEmpty()
+    fun stopTrailer() {
+        playingTrailerFlow.value = false
     }
 }
