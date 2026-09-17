@@ -43,7 +43,6 @@
         android:theme="@style/OmnidroidMaterialTheme">
         <activity
             android:name="com.omnidroid.app.mobile.feature.main.MainActivity"
-            android:excludeFromRecents="true"
             android:exported="true"
             android:launchMode="singleTask"
             android:screenOrientation="sensorLandscape"
