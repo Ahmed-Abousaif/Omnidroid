@@ -115,8 +115,8 @@ class ProfileViewModel(
             }
             .launchIn(viewModelScope)
 
-        // Observe recent 10 sessions with resolved game titles
-        retrogradeDb.gameSessionDao().observeRecent(10)
+        // Observe recent sessions with resolved game titles
+        retrogradeDb.gameSessionDao().observeRecent(50)
             .onEach { sessions ->
                 val items = sessions.map { session ->
                     val game = retrogradeDb.gameDao().selectById(session.gameId)

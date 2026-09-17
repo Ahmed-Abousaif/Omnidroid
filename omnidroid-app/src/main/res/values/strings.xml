@@ -26,6 +26,8 @@
     <string name="profile_badge_master">💎 Omnidroid Master</string>
     <string name="profile_achievements">Console Collection</string>
     <string name="profile_recent_sessions">Recent Sessions</string>
+    <string name="profile_view_all">View all (%d)</string>
+    <string name="profile_show_less">Show less</string>
     <string name="profile_session_xp">+%d XP</string>
     <string name="profile_xp_to_next">%d XP to level up</string>
     <string name="profile_streak_fire">🔥</string>
