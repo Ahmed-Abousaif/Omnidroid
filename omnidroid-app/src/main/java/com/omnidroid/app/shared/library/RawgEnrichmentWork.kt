@@ -47,6 +47,7 @@ class RawgEnrichmentWork
                 runCatching {
                     val dao = retrogradeDatabase.rawgGameMetadataDao()
                     dao.deleteOrphans()
+                    repairBackgroundUsedAsCover(dao)
 
                     val missingIds = dao.selectGameIdsMissingMetadata()
                     Timber.i("RAWG enrichment: %d games missing metadata", missingIds.size)
@@ -70,25 +71,41 @@ class RawgEnrichmentWork
                                     updatedAt = System.currentTimeMillis(),
                                 )
                             dao.insert(row)
-                            fetched.coverImageUrl?.takeIf { it.isNotBlank() }?.let {
-                                RawgCoverStore.put(game.id, it)
-                            }
                         }
                         delay(250)
                     }
 
-                    // Refresh cover cache from all persisted rows.
-                    val all = dao.selectAll()
-                    RawgCoverStore.replaceAll(
-                        all.mapNotNull { meta ->
-                            meta.coverImageUrl?.takeIf { it.isNotBlank() }?.let { meta.gameId to it }
-                        }.toMap(),
-                    )
+                    refreshCoverStore(dao)
                 }.onFailure {
                     Timber.e(it, "RAWG enrichment work failed")
                 }
             }
 
             return Result.success()
+        }
+
+        private suspend fun repairBackgroundUsedAsCover(
+            dao: com.omnidroid.lib.library.db.dao.RawgGameMetadataDao,
+        ) {
+            val broken = dao.selectRowsWithBackgroundUsedAsCover()
+            if (broken.isEmpty()) return
+            Timber.i("RAWG enrichment: clearing %d rows that used background as cover", broken.size)
+            for (row in broken) {
+                dao.insert(row.copy(coverImageUrl = null, updatedAt = System.currentTimeMillis()))
+            }
+        }
+
+        private suspend fun refreshCoverStore(
+            dao: com.omnidroid.lib.library.db.dao.RawgGameMetadataDao,
+        ) {
+            val all = dao.selectAll()
+            RawgCoverStore.replaceAll(
+                all.mapNotNull { meta ->
+                    val cover = meta.coverImageUrl?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                    // Never treat the backdrop promo image as library cover art.
+                    if (cover == meta.backgroundImageUrl) return@mapNotNull null
+                    meta.gameId to cover
+                }.toMap(),
+            )
         }
     }
