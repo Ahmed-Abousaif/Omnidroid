@@ -9,18 +9,33 @@ import androidx.work.WorkManager
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import com.google.android.material.color.DynamicColors
+import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.app.shared.covers.CoverUtils
+import com.omnidroid.app.shared.covers.RawgCoverStore
 import com.omnidroid.app.shared.startup.GameProcessInitializer
 import com.omnidroid.app.shared.startup.MainProcessInitializer
 import com.omnidroid.app.utils.android.isMainProcess
 import com.omnidroid.ext.feature.context.ContextHandler
+import com.omnidroid.lib.library.db.RetrogradeDatabase
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltAndroidApp
 class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
+
+    @Inject
+    lateinit var retrogradeDb: RetrogradeDatabase
+
+    @Inject
+    lateinit var settingsManager: SettingsManager
+
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val workManagerConfiguration: Configuration
         get() =
@@ -45,6 +60,27 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
         AppInitializer.getInstance(this).initializeComponent(initializeComponent)
 
         DynamicColors.applyToActivitiesIfAvailable(this)
+
+        if (isMainProcess()) {
+            bootstrapRawgCovers()
+        }
+    }
+
+    private fun bootstrapRawgCovers() {
+        applicationScope.launch {
+            runCatching {
+                if (!settingsManager.enableRawgMetadata()) {
+                    RawgCoverStore.clear()
+                    return@launch
+                }
+                val all = retrogradeDb.rawgGameMetadataDao().selectAll()
+                RawgCoverStore.replaceAll(
+                    all.mapNotNull { meta ->
+                        meta.coverImageUrl?.takeIf { it.isNotBlank() }?.let { meta.gameId to it }
+                    }.toMap(),
+                )
+            }
+        }
     }
 
     override fun attachBaseContext(base: Context) {

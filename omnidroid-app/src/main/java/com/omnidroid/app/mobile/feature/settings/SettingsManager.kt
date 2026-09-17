@@ -56,6 +56,8 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
 
     suspend fun enableImmersiveMode() = booleanPreference(R.string.pref_key_enable_immersive_mode, false)
 
+    suspend fun enableRawgMetadata() = booleanPreference(R.string.pref_key_enable_rawg_metadata, false)
+
     suspend fun cacheSizeBytes() =
         stringPreference(
             R.string.pref_key_max_cache_size,
