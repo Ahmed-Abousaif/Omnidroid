@@ -93,6 +93,12 @@ class PCEE2AssetsManager : CoreID.AssetsManager {
                         }
                         try {
                             pcsx2File.copyTo(systemFile, overwrite = true)
+                            // If named with full model name (e.g. SCPH-39001_BIOS_V7_USA_160.BIN), also alias to scph39001.bin
+                            if (baseName.contains("39001", ignoreCase = true) || baseName.contains("scph", ignoreCase = true)) {
+                                val standardName = "scph39001.bin"
+                                pcsx2File.copyTo(File(pcsx2BiosDir, standardName), overwrite = true)
+                                pcsx2File.copyTo(File(systemDir, standardName), overwrite = true)
+                            }
                         } catch (e: Exception) {
                             Timber.e(e, "Error copying extracted bios to system root")
                         }

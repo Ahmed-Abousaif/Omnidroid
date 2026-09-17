@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -74,6 +73,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.omnidroid.R
+import com.omnidroid.app.mobile.feature.library.LibraryTopBarRowHeight
 import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
@@ -148,14 +148,19 @@ fun GameDetailsScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(GameDetailsScreenPadding),
+                    .padding(
+                        start = GameDetailsScreenPadding,
+                        end = GameDetailsScreenPadding,
+                        bottom = GameDetailsScreenPadding,
+                    ),
             horizontalArrangement = Arrangement.spacedBy(GameDetailsColumnGap),
         ) {
             Box(
                 modifier =
                     Modifier
                         .fillMaxHeight()
-                        .weight(GameDetailsCoverWeight),
+                        .weight(GameDetailsCoverWeight)
+                        .padding(top = GameDetailsScreenPadding),
                 contentAlignment = Alignment.Center,
             ) {
                 GameCoverOrTrailer(
@@ -178,7 +183,7 @@ fun GameDetailsScreen(
                     Modifier
                         .weight(GameDetailsInfoWeight)
                         .fillMaxHeight()
-                        .padding(top = 20.dp)
+                        .padding(top = LibraryTopBarRowHeight)
                         .graphicsLayer { alpha = contentFade },
                 game = game,
                 state = state,
@@ -350,7 +355,7 @@ private fun GameCoverOrTrailer(
                 modifier =
                     Modifier
                         .align(Alignment.TopEnd)
-                        .offset(y = (-22).dp)
+                        .padding(8.dp)
                         .graphicsLayer { alpha = if (hideCover) 0f else 1f }
                         .size(18.dp)
                         .clip(RoundedCornerShape(4.dp))

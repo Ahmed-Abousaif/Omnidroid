@@ -177,8 +177,14 @@ object SerialScanner {
                     .getOrDefault(DiskInfo(null, SystemID.SEGACD))
 
             SystemID.PSX ->
-                runCatching { extractInfoForPSX(openedStream) }
-                    .getOrDefault(DiskInfo(null, SystemID.PSX))
+                // PS2 discs also contain the PLAYSTATION volume magic; BOOT2 marks PS2.
+                if (headerContainsAscii(header, "BOOT2")) {
+                    runCatching { extractInfoForPS2(openedStream) }
+                        .getOrDefault(DiskInfo(null, SystemID.PS2))
+                } else {
+                    runCatching { extractInfoForPSX(openedStream) }
+                        .getOrDefault(DiskInfo(null, SystemID.PSX))
+                }
 
             SystemID.PSP ->
                 runCatching { extractInfoForPSP(openedStream) }
@@ -186,6 +192,13 @@ object SerialScanner {
 
             else -> DiskInfo(null, null)
         }
+    }
+
+    private fun headerContainsAscii(
+        header: ByteArray,
+        text: String,
+    ): Boolean {
+        return header.indexOf(text.toByteArray(Charsets.US_ASCII)) >= 0
     }
 
     private fun extractInfoFor3DS(openedStream: InputStream): DiskInfo {
@@ -253,6 +266,19 @@ object SerialScanner {
             .mapNotNull { serial -> parsePSXSerial(serial) }
             .mapNotNull { serial -> DiskInfo(serial, SystemID.PSX) }
             .firstOrNull() ?: DiskInfo(null, SystemID.PSX)
+    }
+
+    private fun extractInfoForPS2(openedStream: InputStream): DiskInfo {
+        val headerSize = 64.kiloBytes()
+        if (openedStream.available() < headerSize) {
+            return DiskInfo(null, SystemID.PS2)
+        }
+
+        // PS2 serial prefixes largely overlap with PS1; system is already known via BOOT2.
+        return textSearch(PSX_BASE_SERIALS, openedStream, PS_SERIAL_MAX_SIZE, headerSize)
+            .mapNotNull { serial -> parsePSXSerial(serial) }
+            .mapNotNull { serial -> DiskInfo(serial, SystemID.PS2) }
+            .firstOrNull() ?: DiskInfo(null, SystemID.PS2)
     }
 
     private fun extractInfoForPSP(openedStream: InputStream): DiskInfo {

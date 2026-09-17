@@ -138,7 +138,6 @@ fun LibraryTopBar(
                 (maxWidth - GameDetailsScreenPadding * 2 - GameDetailsColumnGap).coerceAtLeast(0.dp)
             val detailsStart =
                 GameDetailsScreenPadding + available * GameDetailsCoverWeight + GameDetailsColumnGap
-            val leadingInset = if (overlayMode) 0.dp else lerp(0.dp, detailsStart, compact)
             val backStart = if (overlayMode) 0.dp else lerp(LibrarySidebarInset, detailsStart, compact)
             if (dismissSearchOnOutsideTap) {
                 Box(
@@ -151,31 +150,22 @@ fun LibraryTopBar(
                 )
             }
             Box(modifier = Modifier.fillMaxWidth().align(Alignment.TopStart)) {
-            if (compact < 1f) {
-                Box(
-                    modifier =
-                        Modifier
-                            .matchParentSize()
-                            .padding(start = leadingInset)
-                            .background(
-                                Brush.verticalGradient(
-                                    0f to Color.Black.copy(alpha = 1f - compact),
-                                    0.45f to Color.Black.copy(alpha = 0.82f * (1f - compact)),
-                                    1f to Color.Transparent,
-                                ),
-                            ),
-                )
-            }
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(LibraryTopBarRowHeight)
-                            .padding(start = if (overlayMode) 8.dp else 0.dp, end = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    when {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(LibraryTopBarRowHeight)
+                                .background(
+                                    Brush.verticalGradient(
+                                        0f to Color.Black,
+                                        1f to Color.Transparent,
+                                    ),
+                                )
+                                .padding(start = if (overlayMode) 8.dp else 0.dp, end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        when {
                         overlayMode -> {
                             OverlayTitle(titleId = overlayTitleId!!, onBackPressed = onBackPressed)
                             Spacer(modifier = Modifier.weight(1f))
@@ -315,7 +305,6 @@ fun LibraryTopBar(
                 AnimatedVisibility(operationInProgress) {
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                 }
-                Spacer(modifier = Modifier.height(20.dp * (1f - compact)))
             }
             }
         }

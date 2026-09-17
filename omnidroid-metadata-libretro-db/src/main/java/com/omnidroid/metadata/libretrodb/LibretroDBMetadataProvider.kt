@@ -31,13 +31,23 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
 
         val metadata =
             runCatching {
-                findByCRC(storageFile, db)
-                    ?: findBySerial(storageFile, db)
-                    ?: findByFilename(db, storageFile)
-                    ?: findByPathAndFilename(db, storageFile)
+                // Folder name is the intentional disambiguator for shared extensions
+                // (e.g. PS2 ISOs also match PLAYSTATION magic and would otherwise become PSX).
+                val pathSystemMetadata = findByPathAndSupportedExtension(storageFile)
+
+                findByCRC(storageFile, db)?.takeUnless { conflictsWithPath(it, pathSystemMetadata) }
+                    ?: findBySerial(storageFile, db)?.takeUnless {
+                        conflictsWithPath(it, pathSystemMetadata)
+                    }
+                    ?: findByFilename(db, storageFile)?.takeUnless {
+                        conflictsWithPath(it, pathSystemMetadata)
+                    }
+                    ?: findByPathAndFilename(db, storageFile)?.takeUnless {
+                        conflictsWithPath(it, pathSystemMetadata)
+                    }
                     ?: findByUniqueExtension(storageFile)
+                    ?: pathSystemMetadata
                     ?: findByKnownSystem(storageFile)
-                    ?: findByPathAndSupportedExtension(storageFile)
             }.getOrElse {
                 Timber.e("Error in retrieving $storageFile metadata: $it... Skipping.")
                 null
@@ -46,6 +56,13 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
         metadata?.let { Timber.d("Metadata retrieved for item: $it") }
 
         return metadata
+    }
+
+    private fun conflictsWithPath(
+        metadata: GameMetadata,
+        pathMetadata: GameMetadata?,
+    ): Boolean {
+        return pathMetadata != null && pathMetadata.system != metadata.system
     }
 
     private fun convertToGameMetadata(rom: LibretroRom): GameMetadata {
