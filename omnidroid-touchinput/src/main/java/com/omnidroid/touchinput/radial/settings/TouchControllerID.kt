@@ -38,6 +38,8 @@ import com.omnidroid.touchinput.radial.layouts.Nintendo3DSLeft
 import com.omnidroid.touchinput.radial.layouts.Nintendo3DSRight
 import com.omnidroid.touchinput.radial.layouts.PCELeft
 import com.omnidroid.touchinput.radial.layouts.PCERight
+import com.omnidroid.touchinput.radial.layouts.PS2Left
+import com.omnidroid.touchinput.radial.layouts.PS2Right
 import com.omnidroid.touchinput.radial.layouts.PSPLeft
 import com.omnidroid.touchinput.radial.layouts.PSPRight
 import com.omnidroid.touchinput.radial.layouts.PSXDualShockLeft
@@ -80,6 +82,7 @@ enum class TouchControllerID {
     WS_LANDSCAPE,
     WS_PORTRAIT,
     NINTENDO_3DS,
+    PS2,
     ;
 
     class Config(
@@ -244,6 +247,12 @@ enum class TouchControllerID {
                     Config(
                         { modifier, settings -> Nintendo3DSLeft(modifier, settings) },
                         { modifier, settings -> Nintendo3DSRight(modifier, settings) },
+                    )
+
+                PS2 ->
+                    Config(
+                        { modifier, settings -> PS2Left(modifier, settings) },
+                        { modifier, settings -> PS2Right(modifier, settings) },
                     )
             }
         }

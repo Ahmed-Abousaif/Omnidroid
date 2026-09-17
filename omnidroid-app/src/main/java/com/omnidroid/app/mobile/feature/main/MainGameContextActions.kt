@@ -11,6 +11,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -63,12 +64,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.omnidroid.R
@@ -342,16 +345,15 @@ private fun GameSettingsPanel(
 
                         if (fastForwardSupported) {
                             SectionLabel(text = stringResource(R.string.game_menu_fast_forward))
-                            speedLabels.forEachIndexed { index, label ->
-                                ChoiceRow(
-                                    selected = frameSpeed == speedValues[index],
-                                    label = label,
-                                    onClick = {
-                                        frameSpeed = speedValues[index]
-                                        onFrameSpeed(game, speedValues[index])
-                                    },
-                                )
-                            }
+                            FastForwardSpeedSelector(
+                                labels = speedLabels,
+                                values = speedValues,
+                                selected = frameSpeed,
+                                onSelect = { speed ->
+                                    frameSpeed = speed
+                                    onFrameSpeed(game, speed)
+                                },
+                            )
                             Text(
                                 text = stringResource(R.string.game_menu_fast_forward_note),
                                 style = MaterialTheme.typography.bodySmall,
@@ -489,6 +491,63 @@ private fun SectionLabel(text: String) {
         color = PanelMutedWhite,
         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 4.dp),
     )
+}
+
+private val SpeedSelectorTrack = Color.White.copy(alpha = 0.08f)
+private val SpeedSelectorHeight = 40.dp
+private val SpeedSelectorShape = RoundedCornerShape(10.dp)
+
+@Composable
+private fun FastForwardSpeedSelector(
+    labels: Array<String>,
+    values: List<Int>,
+    selected: Int,
+    onSelect: (Int) -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .height(SpeedSelectorHeight)
+                .clip(SpeedSelectorShape)
+                .background(SpeedSelectorTrack)
+                .padding(3.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        labels.forEachIndexed { index, label ->
+            val value = values.getOrElse(index) { 1 }
+            val isSelected = selected == value
+            Surface(
+                onClick = { onSelect(value) },
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .controllerFocusGlow(RoundedCornerShape(8.dp)),
+                shape = RoundedCornerShape(8.dp),
+                color = if (isSelected) LibraryNeonGreen else Color.Transparent,
+                contentColor = if (isSelected) Color.Black else Color.White,
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = label,
+                        style =
+                            MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            ),
+                        color = if (isSelected) Color.Black else PanelMutedWhite,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable

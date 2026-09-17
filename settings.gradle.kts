@@ -47,7 +47,8 @@ if (usePlayDynamicFeatures()) {
         ":omnidroid_core_prosystem",
         ":omnidroid_core_snes9x",
         ":omnidroid_core_stella",
-        ":omnidroid_core_citra"
+        ":omnidroid_core_citra",
+        ":omnidroid_core_pcee2"
     )
 
     project(":omnidroid_core_gambatte").projectDir = File("omnidroid-cores/omnidroid_core_gambatte")
@@ -70,4 +71,5 @@ if (usePlayDynamicFeatures()) {
     project(":omnidroid_core_mednafen_wswan").projectDir = File("omnidroid-cores/omnidroid_core_mednafen_wswan")
     project(":omnidroid_core_dosbox_pure").projectDir = File("omnidroid-cores/omnidroid_core_dosbox_pure")
     project(":omnidroid_core_citra").projectDir = File("omnidroid-cores/omnidroid_core_citra")
+    project(":omnidroid_core_pcee2").projectDir = File("omnidroid-cores/omnidroid_core_pcee2")
 }

@@ -1,7 +1,22 @@
 # Omnidroid
 
-[![Buy Me A Coffee](https://buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/abousaif)
-[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/abousaif)
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="560">
+        <br />
+        <strong>Support Omnidroid</strong>
+        <br />
+        <sub>If the app helps you play, you can fuel continued development here</sub>
+        <br /><br />
+        <a href="https://www.buymeacoffee.com/abousaif"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="48" /></a>
+        &nbsp;&nbsp;
+        <a href="https://ko-fi.com/abousaif"><img src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" alt="Support me on Ko-fi" height="48" /></a>
+        <br /><br />
+      </td>
+    </tr>
+  </table>
+</p>
 
 Everything you loved about [Lemuroid](https://github.com/Swordfish90/Lemuroid), rebuilt into a faster, cleaner, more capable Android game launcher.
 
@@ -45,9 +60,10 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 
 ### Revamped settings
 
-- Landscape settings with a sidebar for Library, Display, Controllers, Saves, and Advanced.
+- Landscape settings with a sidebar for Library, Display, Controllers, Saves, Advanced, and About.
 - Big cards on the settings home so you can jump straight to what you need.
 - Same look as the rest of the app, and fully usable with a controller.
+- About covers privacy policy, donation channels, and developer info.
 
 ### Cast to a TV
 
@@ -114,6 +130,18 @@ The original Lemuroid goals still apply: ease of use, good Android integration, 
 - WonderSwan (WS) ([beetle_cygne](https://docs.libretro.com/library/beetle_cygne/))
 - WonderSwan Color (WSC) ([beetle_cygne](https://docs.libretro.com/library/beetle_cygne/))
 - Nintendo 3DS (3DS) ([citra](https://docs.libretro.com/library/citra/))
+- PlayStation 2 (PS2) (Beta) ([pcee2](https://github.com/WizzardSK/pcee2-libretro))
+
+## PlayStation 2 Emulation (Beta)
+
+Omnidroid includes experimental **PlayStation 2 (PS2)** emulation powered by the **PCEE2** libretro core (PCSX2-based):
+
+- **Target Architecture:** Optimized and restricted to 64-bit ARM (`arm64-v8a`) devices.
+- **BIOS Required:** A legally dumped PS2 BIOS is required (e.g. `scph39001.bin`, `scph70012.bin`, `scph77001.bin`). Omnidroid automatically verifies the BIOS and syncs it into the core's `system/pcsx2/bios/` directory.
+- **Supported Disc & ROM Formats:** `.iso`, `.chd`, `.cue`, `.m3u`, `.cso`, `.zso`, `.gz`, `.bin`, `.mdf`, `.nrg`, `.elf`, `.irx`.
+- **Multi-Disc Support:** Multi-disc titles are supported through `.m3u` playlists.
+- **Custom DualShock 2 Layout:** Dedicated on-screen touch layout with dual analog sticks, D-Pad, face buttons, shoulder triggers (L1/L2/R1/R2), Select, Start, and full physical gamepad mapping with rumble support.
+- **Shaders & State Management:** Supports quick save/load states and CRT / modern display enhancement shaders.
 
 ## Features from Lemuroid, still here
 

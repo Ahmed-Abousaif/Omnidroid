@@ -1,672 +1,585 @@
-# User Profile, Console Achievements, Leveling & Play Streaks — v2
+# Add PlayStation 2 Core (PCEE2) to Omnidroid
 
-Add a persistent user profile that is auto-created on first launch, tracks console unlock achievements, accumulates total playtime into a leveling system, rewards consecutive daily play sessions with streak-based XP bonuses, stores session history in Room, and cloud-syncs profile data when the user has cloud enabled.
+Add PS2 system support using the **PCEE2** libretro core (PCSX2-based, from [WizzardSK/pcee2-libretro](https://github.com/WizzardSK/pcee2-libretro.git)), following the exact same patterns used by existing cores.
 
-## Changes from v1
+## Key Decisions (from your input)
 
-- ✅ **Session history in Room** — New `GameSession` entity + DAO + migration (v11→v12) instead of deriving playtime only from SharedPreferences.
-- ✅ **Cloud-backed profile** — Profile data is serialized to a `profile.json` file and synced via the existing cloud save infrastructure (`CloudSaveFolder.PROFILE`).
-- ✅ **Robot icon** — Default profile picture is a bundled robot vector drawable.
-- ✅ **XP pacing** — `level = floor(sqrt(totalXP / 100))` curve confirmed.
-- ✅ **Day boundaries** — Midnight local time confirmed for streak counting.
+- ✅ **arm64-v8a only** — restricted via `supportedOnlyArchitectures`
+- ✅ **Marked as Beta** — title shows "PlayStation 2 (Beta)"
+- ✅ **Dedicated PS2 DualShock 2 touch layout** — new `PS2Left`/`PS2Right` composables
+- ✅ **BIOS required** — PCEE2 requires a legally dumped PS2 BIOS (e.g. `scph39001.bin`)
+- ✅ **Save states enabled** — PCEE2 supports libretro save states (core-version-specific)
+- ✅ **Rumble supported** — DualShock 2 rumble mapped through libretro
+- ✅ **Vulkan by default** — with OpenGL/software fallback paths
+
+## User Review Required
+
+> [!WARNING]
+> **BIOS handling:** PCEE2 expects the BIOS at `system/pcsx2/bios/`. Omnidroid's `BiosManager` checks for files directly in `system/`. We register common PS2 BIOS filenames so the scanner can detect and copy them, but the PCEE2 core itself may look in `system/pcsx2/bios/`. This may require runtime symlinking or the user manually placing the BIOS in the right subdirectory. Alternatively, PCEE2 may also search the flat `system/` directory — we should verify at runtime.
+
+## Open Questions
+
+1. **BIOS subdirectory:** Should we add logic to the `BiosManager` or a custom assets manager to create the `system/pcsx2/bios/` subdirectory and copy/symlink BIOS files there? Or do we expect users to manually place the BIOS? The simplest approach for now: register the BIOS filenames in `BiosManager` for scan/detection, and document that users should place BIOS in `system/pcsx2/bios/`.: we should do the best we can, which is the first option.
+
+2. **Extensions list:** The Lemuroid fork registers `iso, chd, cue, m3u, cso, zso, gz, bin, mdf, nrg, elf, irx`. Several overlap with PSX/PSP. Should we include all of these, or stick to the most common: `iso, chd, cue, m3u, cso, bin, mdf`? I recommend the full list since path-based scanning disambiguates. go for the full list and we'll use path-based disambiguation, and if that fails, we'll ask the user.
 
 ---
 
 ## Proposed Changes
 
-### Component 1 — Session History in Room (retrograde-app-shared)
+### 1. Core Module — Dynamic Feature Module
 
-A proper session history table in the existing Room database so XP, streaks, and playtime are all derived from real recorded data rather than a running counter.
-
-#### [MODIFY] [RetrogradeDatabase.kt](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/omnidroid/lib/library/db/RetrogradeDatabase.kt)
-
-Add `GameSession` to the `@Database` entities list, bump version from 11 → 12, expose a `gameSessionDao()` accessor.
-
-```diff
- @Database(
--    entities = [Game::class, DataFile::class],
--    version = 11,
-+    entities = [Game::class, DataFile::class, GameSession::class],
-+    version = 12,
-     exportSchema = true,
- )
- abstract class RetrogradeDatabase : RoomDatabase() {
-     ...
-     abstract fun gameDao(): GameDao
-     abstract fun dataFileDao(): DataFileDao
-+    abstract fun gameSessionDao(): GameSessionDao
- }
-```
-
----
-
-#### [NEW] [GameSession.kt](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/omnidroid/lib/library/db/entity/GameSession.kt)
-
-Room entity storing one row per completed play session.
+#### [NEW] `omnidroid-cores/omnidroid_core_pcee2/build.gradle.kts`
 
 ```kotlin
-@Entity(
-    tableName = "game_sessions",
-    indices = [
-        Index("id", unique = true),
-        Index("gameId"),
-        Index("playedAt"),
-    ],
-    foreignKeys = [
-        ForeignKey(
-            entity = Game::class,
-            parentColumns = ["id"],
-            childColumns = ["gameId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-    ],
-)
-data class GameSession(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val gameId: Int,
-    val durationMs: Long,           // session length in milliseconds
-    val playedAt: Long,             // epoch ms when session ended
-    val xpEarned: Long,             // XP awarded for this session (base × streak multiplier)
-    val streakDay: Int,             // the streak count at time of this session
-)
-```
 
----
-
-#### [NEW] [GameSessionDao.kt](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/omnidroid/lib/library/db/dao/GameSessionDao.kt)
-
-```kotlin
-@Dao
-interface GameSessionDao {
-    @Insert
-    suspend fun insert(session: GameSession): Long
-
-    @Query("SELECT * FROM game_sessions ORDER BY playedAt DESC")
-    fun observeAll(): Flow<List<GameSession>>
-
-    @Query("SELECT * FROM game_sessions ORDER BY playedAt DESC LIMIT :limit")
-    fun observeRecent(limit: Int): Flow<List<GameSession>>
-
-    @Query("SELECT COALESCE(SUM(durationMs), 0) FROM game_sessions")
-    fun observeTotalPlayTime(): Flow<Long>
-
-    @Query("SELECT COALESCE(SUM(xpEarned), 0) FROM game_sessions")
-    fun observeTotalXP(): Flow<Long>
-
-    @Query("SELECT COALESCE(SUM(durationMs), 0) FROM game_sessions WHERE gameId = :gameId")
-    fun observePlayTimeForGame(gameId: Int): Flow<Long>
-
-    @Query("SELECT COUNT(DISTINCT date(playedAt / 1000, 'unixepoch', 'localtime')) FROM game_sessions")
-    suspend fun countDistinctPlayDays(): Int
-
-    @Query("SELECT * FROM game_sessions WHERE gameId = :gameId ORDER BY playedAt DESC")
-    fun observeSessionsForGame(gameId: Int): Flow<List<GameSession>>
+plugins {
+    id("com.android.dynamic-feature")
+    id("kotlin-android")
+    id("kotlin-kapt")
 }
-```
 
----
-
-#### [MODIFY] [Migrations.kt](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/omnidroid/lib/library/db/dao/Migrations.kt)
-
-Add `VERSION_11_12` migration to create the `game_sessions` table:
-
-```diff
-     val VERSION_10_11: Migration =
-         object : Migration(10, 11) { ... }
-+
-+    val VERSION_11_12: Migration =
-+        object : Migration(11, 12) {
-+            override fun migrate(database: SupportSQLiteDatabase) {
-+                database.execSQL("""
-+                    CREATE TABLE IF NOT EXISTS `game_sessions` (
-+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-+                        `gameId` INTEGER NOT NULL,
-+                        `durationMs` INTEGER NOT NULL,
-+                        `playedAt` INTEGER NOT NULL,
-+                        `xpEarned` INTEGER NOT NULL,
-+                        `streakDay` INTEGER NOT NULL,
-+                        FOREIGN KEY(`gameId`) REFERENCES `games`(`id`) ON DELETE CASCADE
-+                    )
-+                """.trimIndent())
-+                database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_game_sessions_id` ON `game_sessions` (`id`)")
-+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_game_sessions_gameId` ON `game_sessions` (`gameId`)")
-+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_game_sessions_playedAt` ON `game_sessions` (`playedAt`)")
-+            }
-+        }
- }
-```
-
----
-
-#### [MODIFY] [OmnidroidApplicationModule.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/OmnidroidApplicationModule.kt)
-
-Register the new migration in the Room builder:
-
-```diff
-         .addMigrations(
-             GameSearchDao.MIGRATION,
-             Migrations.VERSION_8_9,
-             Migrations.VERSION_9_10,
-             Migrations.VERSION_10_11,
-+            Migrations.VERSION_11_12,
-         )
-```
-
----
-
-### Component 2 — Profile Data Store (`profile` package — new)
-
-All new files in `omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/profile/`.
-
-#### [NEW] [UserProfileStore.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/profile/UserProfileStore.kt)
-
-SharedPreferences-backed store for lightweight profile metadata, following the [`PlayTimeStore`](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/gamedetails/PlayTimeStore.kt) pattern. Uses `FlowSharedPreferences` for reactive observation.
-
-**Stored keys:**
-
-| Key | Type | Default | Purpose |
-|---|---|---|---|
-| `profile_tag` | `String` | `"Pro Gamer"` | User's display tag |
-| `profile_pic_uri` | `String?` | `null` (→ bundled robot drawable) | Custom profile picture URI |
-| `profile_created_at` | `Long` | First-launch timestamp | Profile creation date |
-| `profile_current_streak` | `Int` | `0` | Consecutive calendar days played |
-| `profile_best_streak` | `Int` | `0` | All-time best streak |
-| `profile_last_play_date` | `String` | `""` | ISO date (`yyyy-MM-dd`) of last session |
-
-**Public API:**
-- `fun ensureCreated()` — Idempotent; writes defaults only if `profile_created_at` is missing.
-- `fun getTag(): String` / `fun setTag(tag: String)`
-- `fun getProfilePicUri(): String?` / `fun setProfilePicUri(uri: String?)`
-- `fun getCurrentStreak(): Int` / `fun getBestStreak(): Int`
-- `fun recordSessionStreak()` — Called per session to update streak counters using day-boundary logic.
-- `fun observe*()` — Flow-based reactive observers.
-- `fun exportToJson(): String` — Serializes profile fields to JSON for cloud sync.
-- `fun importFromJson(json: String)` — Merges remote profile (uses latest `profile_created_at`, highest `best_streak`, keeps local tag/pic if newer).
-
-**Streak logic inside `recordSessionStreak()`:**
-1. Get today's date as `yyyy-MM-dd`.
-2. If `last_play_date` == today → no-op (already counted today).
-3. If `last_play_date` == yesterday → increment `current_streak`, update `best_streak` if needed.
-4. Otherwise → reset `current_streak` to 1.
-5. Set `last_play_date` = today.
-
-> [!NOTE]
-> XP totals are **not** stored in SharedPreferences. They are computed live from Room via `GameSessionDao.observeTotalXP()`. This makes session history the single source of truth for XP/playtime.
-
----
-
-#### [NEW] [ConsoleAchievementsStore.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/profile/ConsoleAchievementsStore.kt)
-
-Reads from [`RegisteredSystemsStore`](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/library/RegisteredSystemsStore.kt) and Room `GameDao.selectSystemsWithCount()` to determine unlocked consoles.
-
-```kotlin
-data class ConsoleAchievement(
-    val metaSystemID: MetaSystemID,
-    val name: String,
-    val imageResId: Int,
-    val unlocked: Boolean,
-)
-```
-
-**Milestone tiers:**
-
-| Badge | Threshold | Name |
-|---|---|---|
-| 🥉 | 3 consoles | "Collector" |
-| 🥈 | 10 consoles | "Enthusiast" |
-| 🥇 | 15 consoles | "Historian" |
-| 💎 | 21 consoles (all) | "Omnidroid Master" |
-
-**Public API:**
-- `fun observeAchievements(): Flow<List<ConsoleAchievement>>`
-- `fun observeUnlockedCount(): Flow<Int>`
-- `fun getMilestoneBadge(unlockedCount: Int): String?`
-
----
-
-### Component 3 — XP Calculator (pure utility)
-
-#### [NEW] [XPCalculator.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/profile/XPCalculator.kt)
-
-Pure Kotlin object, no Android dependencies, easily unit-testable.
-
-```kotlin
-object XPCalculator {
-    /** XP required to reach a given level (cumulative). */
-    fun xpForLevel(level: Int): Long = (level.toLong() * level) * 100
-
-    /** Current level from total XP. */
-    fun levelFromXP(totalXP: Long): Int = floor(sqrt(totalXP.toDouble() / 100)).toInt()
-
-    /** Progress fraction [0.0, 1.0) within the current level. */
-    fun progressInLevel(totalXP: Long): Float { ... }
-
-    /** Streak multiplier: 1.0 at streak 0–1, up to 1.7 at streak ≥ 7. */
-    fun streakMultiplier(streak: Int): Double = 1.0 + (min(streak, 7) * 0.1)
-
-    /** Base XP from a session: 1 XP per minute played, minimum 1. */
-    fun baseXPFromSession(durationMs: Long): Long = max(1, durationMs / 60_000)
-}
-```
-
-**Level examples:**
-
-| Level | Total XP | Approx. playtime (no streak) |
-|---|---|---|
-| 1 | 100 | ~1h 40m |
-| 5 | 2,500 | ~41h |
-| 10 | 10,000 | ~166h |
-| 20 | 40,000 | ~666h |
-
----
-
-### Component 4 — Cloud Sync Integration
-
-Profile data syncs to cloud providers alongside game saves. The approach uses the existing file-based sync infrastructure rather than inventing a new channel.
-
-#### [MODIFY] [CloudSaveFolder.kt](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/omnidroid/lib/savesync/CloudSaveFolder.kt)
-
-Add a `PROFILE` enum entry:
-
-```diff
- enum class CloudSaveFolder(val remoteName: String) {
-     SAVES("saves"),
-     STATES("states"),
-     STATE_PREVIEWS("state-previews"),
-+    PROFILE("profile"),
- }
-```
-
----
-
-#### [MODIFY] [DirectoriesManager.kt](file:///d:/Work/Omnidroid/retrograde-app-shared/src/main/java/com/omnidroid/lib/storage/DirectoriesManager.kt)
-
-Add a profile directory accessor:
-
-```diff
-+    fun getProfileDirectory(): File =
-+        File(appContext.getExternalFilesDir(null), "profile").apply {
-+            mkdirs()
-+        }
-```
-
----
-
-#### [NEW] [ProfileSyncHelper.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/profile/ProfileSyncHelper.kt)
-
-Handles writing `profile.json` to the local profile directory before sync, and reading it after sync to merge remote data.
-
-```kotlin
-class ProfileSyncHelper(
-    private val context: Context,
-    private val directoriesManager: DirectoriesManager,
-    private val userProfileStore: UserProfileStore,
-) {
-    /** Write current profile to profile/profile.json before sync. */
-    fun exportBeforeSync() {
-        val json = userProfileStore.exportToJson()
-        val file = File(directoriesManager.getProfileDirectory(), "profile.json")
-        file.writeText(json)
+android {
+    namespace = "com.omnidroid.core.pcee2"
+    defaultConfig {
+        missingDimensionStrategy("opensource", "play")
+        missingDimensionStrategy("cores", "dynamic")
     }
-
-    /** After sync, read remote profile.json and merge. */
-    fun importAfterSync() {
-        val file = File(directoriesManager.getProfileDirectory(), "profile.json")
-        if (file.exists()) {
-            userProfileStore.importFromJson(file.readText())
-        }
+    packagingOptions {
+        doNotStrip("*/*/*_libretro_android.so")
     }
 }
+
+dependencies {
+    implementation(project(":omnidroid-app"))
+    implementation(kotlin(deps.libs.kotlin.stdlib))
+}
 ```
+
+#### [NEW] `omnidroid-cores/omnidroid_core_pcee2/src/main/AndroidManifest.xml`
+
+```xml
+
+<manifest xmlns:dist="http://schemas.android.com/apk/distribution"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:hasCode="false"
+        android:extractNativeLibs="true" />
+
+    <dist:module dist:title="@string/core_name_pcee2">
+        <dist:delivery>
+
+<dist:on-demand />
+<dist:install-time>
+    <dist:conditions>
+        <dist:device-feature dist:name="android.software.leanback"/>
+    </dist:conditions>
+</dist:install-time>
+
+        </dist:delivery>
+        <dist:fusing dist:include="true" />
+    </dist:module>
+</manifest>
+```
+
+#### [NEW] `omnidroid-cores/omnidroid_core_pcee2/src/main/jniLibs/arm64-v8a/libpcee2_libretro_android.so`
+
+The compiled PCEE2 libretro core — must be built from source (see build section below).
 
 ---
 
-#### [MODIFY] [SaveSyncManagerImpl.kt](file:///d:/Work/Omnidroid/omnidroid-app-ext-play/src/main/java/com/omnidroid/ext/feature/savesync/SaveSyncManagerImpl.kt)
+### 2. Gradle Registration
 
-Two changes to include profile data in the sync:
+#### [MODIFY] [`settings.gradle.kts`](file:///e:/Current%20Work/Omnidroid/settings.gradle.kts)
 
-1. Add `CloudSaveFolder.PROFILE` to the folder map via a new `localRoot` mapping:
-
-```diff
-     private fun localRoot(folder: CloudSaveFolder): File =
-         when (folder) {
-             CloudSaveFolder.SAVES -> directoriesManager.getSavesDirectory()
-             CloudSaveFolder.STATES -> directoriesManager.getStatesDirectory()
-             CloudSaveFolder.STATE_PREVIEWS -> directoriesManager.getStatesPreviewDirectory()
-+            CloudSaveFolder.PROFILE -> directoriesManager.getProfileDirectory()
-         }
-```
-
-2. In `foldersFor()`, always include `CloudSaveFolder.PROFILE` when any sync is requested:
+Add `:omnidroid_core_pcee2` to the dynamic feature includes and set its project directory.
 
 ```diff
-     private fun foldersFor(request: SaveSyncRequest): List<CloudSaveFolder> {
-         val folders = mutableListOf<CloudSaveFolder>()
-+        folders += CloudSaveFolder.PROFILE
-         if (request.includeSaves || ...) {
-             folders += CloudSaveFolder.SAVES
-         }
-```
-
-3. Profile files should always be included (not filtered by game filename). In `shouldInclude()`, add early return:
-
-```diff
-     private fun shouldInclude(...): Boolean {
-+        if (folder == CloudSaveFolder.PROFILE) return true
-         if (SaveSyncFileMatcher.matchesAnyGame(relativePath, request.excludedFileNames)) {
-```
-
----
-
-#### [MODIFY] [SaveSyncWork.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/shared/savesync/SaveSyncWork.kt)
-
-Call `ProfileSyncHelper.exportBeforeSync()` before the sync call and `importAfterSync()` after:
-
-```diff
-+    @Inject lateinit var directoriesManager: DirectoriesManager
-
-     override suspend fun doWork(): Result {
+     include(
+         ":omnidroid_core_desmume",
          ...
-+        val profileSync = ProfileSyncHelper(
-+            applicationContext,
-+            directoriesManager,
-+            UserProfileStore(applicationContext),
-+        )
-+        profileSync.exportBeforeSync()
-+
-         try {
-             saveSyncManager.sync(...)
-         } catch (e: Throwable) { ... }
-+
-+        profileSync.importAfterSync()
-+
-         return Result.success()
-     }
-```
-
----
-
-#### [MODIFY] [SaveBackupManager.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/shared/savesync/SaveBackupManager.kt)
-
-Add `CloudSaveFolder.PROFILE` to the `folderMap()` so profile data is included in export/import backups:
-
-```diff
-     private fun folderMap() =
-         mapOf(
-             CloudSaveFolder.SAVES to directoriesManager.getSavesDirectory(),
-             CloudSaveFolder.STATES to directoriesManager.getStatesDirectory(),
-             CloudSaveFolder.STATE_PREVIEWS to directoriesManager.getStatesPreviewDirectory(),
-+            CloudSaveFolder.PROFILE to directoriesManager.getProfileDirectory(),
-         )
-```
-
----
-
-### Component 5 — Profile UI
-
-#### [NEW] [ProfileScreen.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/profile/ProfileScreen.kt)
-
-Full-screen Compose UI. Layout sections:
-
-1. **Header** — Circular profile picture (robot icon default, tappable to pick from gallery) + tag (editable inline via dialog) + level badge.
-2. **Level & XP Card** — Level number, animated XP progress bar, `currentXP / nextLevelXP`, total playtime derived from `GameSessionDao.observeTotalPlayTime()`.
-3. **Play Streak Card** — Current streak 🔥 with day-dots (last 7 days), best streak, streak multiplier display (`×1.3` etc).
-4. **Console Achievements Card** — Grid of console icons; unlocked = full-color, locked = greyed silhouette. Progress bar `X / 21`. Milestone badges.
-5. **Recent Sessions** — Last 10 sessions from `GameSessionDao.observeRecent(10)` showing game name, duration, XP earned, date.
-
-Uses [`AppTheme`](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/mobile/shared/compose/ui/OmnidroidTheme.kt) dark-mode with `HomeChromeBackground` and `LibraryNeonGreen`.
-
----
-
-#### [NEW] [ProfileViewModel.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/profile/ProfileViewModel.kt)
-
-Standard `ViewModel` + `ViewModelProvider.Factory` (same pattern as [`GameDetailsViewModel`](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/gamedetails/GameDetailsViewModel.kt)).
-
-```kotlin
-data class UiState(
-    val tag: String = "Pro Gamer",
-    val profilePicUri: String? = null,
-    val level: Int = 0,
-    val xpProgress: Float = 0f,
-    val xpCurrent: Long = 0,
-    val xpForNext: Long = 100,
-    val totalPlayTimeMs: Long = 0,
-    val currentStreak: Int = 0,
-    val bestStreak: Int = 0,
-    val streakMultiplier: Double = 1.0,
-    val achievements: List<ConsoleAchievement> = emptyList(),
-    val unlockedConsoles: Int = 0,
-    val totalConsoles: Int = 21,
-    val milestoneBadge: String? = null,
-    val recentSessions: List<GameSession> = emptyList(),
-)
-```
-
-State combines flows from:
-- `UserProfileStore.observe*()` for tag, pic, streak
-- `GameSessionDao.observeTotalXP()` → fed into `XPCalculator` for level/progress
-- `GameSessionDao.observeTotalPlayTime()` for playtime
-- `ConsoleAchievementsStore.observeAchievements()` for console grid
-- `GameSessionDao.observeRecent(10)` for recent sessions list
-
-**Actions:** `updateTag(String)`, `updateProfilePic(Uri)`, `removeProfilePic()`
-
----
-
-### Component 6 — Profile Auto-Creation & Session Recording Hooks
-
-#### [MODIFY] [MainProcessInitializer.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/shared/startup/MainProcessInitializer.kt)
-
-Call `ensureCreated()` on first launch:
-
-```diff
- override fun create(context: Context) {
-     Timber.i("Requested initialization of main process tasks")
-+    UserProfileStore(context).ensureCreated()
-     SaveSyncWork.enqueueAutoWork(context, 0)
-```
-
----
-
-#### [MODIFY] [GameLaunchTaskHandler.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/shared/main/GameLaunchTaskHandler.kt)
-
-After the existing `PlayTimeStore.add()`, record a `GameSession` in Room and update streaks. The constructor needs `RetrogradeDatabase` (already injected).
-
-```diff
- class GameLaunchTaskHandler(
-     private val reviewManager: ReviewManager,
-     private val retrogradeDb: RetrogradeDatabase,
- ) {
+-        ":omnidroid_core_citra"
++        ":omnidroid_core_citra",
++        ":omnidroid_core_pcee2"
+     )
      ...
-     private suspend fun handleSuccessfulGameFinish(...) {
-         val duration = data?.extras?.getLong(...)
-         val game = data?.extras?.getSerializable(...) as Game
-
-         updateGamePlayedTimestamp(game)
-         PlayTimeStore(activity).add(game.id, duration)
-+
-+        // Record session & award XP
-+        val profileStore = UserProfileStore(activity)
-+        profileStore.recordSessionStreak()
-+        val streak = profileStore.getCurrentStreak()
-+        val baseXP = XPCalculator.baseXPFromSession(duration)
-+        val multiplier = XPCalculator.streakMultiplier(streak)
-+        val xpEarned = (baseXP * multiplier).toLong()
-+
-+        retrogradeDb.gameSessionDao().insert(
-+            GameSession(
-+                gameId = game.id,
-+                durationMs = duration,
-+                playedAt = System.currentTimeMillis(),
-+                xpEarned = xpEarned,
-+                streakDay = streak,
-+            )
-+        )
-
-         if (enableRatingFlow) {
-             displayReviewRequest(activity, duration)
-         }
-     }
+     project(":omnidroid_core_citra").projectDir = File("omnidroid-cores/omnidroid_core_citra")
++    project(":omnidroid_core_pcee2").projectDir = File("omnidroid-cores/omnidroid_core_pcee2")
 ```
 
 ---
 
-### Component 7 — Navigation & Top Bar
+### 3. Core Registration
 
-#### [MODIFY] [MainNavigationRoutes.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/main/MainNavigationRoutes.kt)
+#### [MODIFY] [`CoreID.kt`](file:///e:/Current%20Work/Omnidroid/retrograde-app-shared/src/main/java/com/omnidroid/lib/library/CoreID.kt)
 
-Add `PROFILE` route:
+Add `PCEE2` enum entry after `DOSBOX_PURE`:
 
 ```diff
-     SETTINGS_DEVICE_PROFILE(...),
-+    PROFILE(
-+        route = "profile",
-+        titleId = R.string.title_profile,
-+        parent = HOME,
-+        showBottomNavigation = false,
+     DOSBOX_PURE(
+         "dosbox_pure",
+         "DosBox Pure",
+         "libdosbox_pure_libretro_android.so",
+     ),
++    PCEE2(
++        "pcee2",
++        "PCEE2",
++        "libpcee2_libretro_android.so",
 +    ),
      ;
 ```
 
 ---
 
-#### [MODIFY] [MainTopBar.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/main/MainTopBar.kt)
+### 4. System Registration
 
-Add a robot/avatar icon button in `OmnidroidTopBarActions()`:
+#### [MODIFY] [`SystemID.kt`](file:///e:/Current%20Work/Omnidroid/retrograde-app-shared/src/main/java/com/omnidroid/lib/library/SystemID.kt)
 
 ```diff
-     Row {
-+        CompactBarIconButton(
-+            onClick = { navController.navigate(MainRoute.PROFILE.route) },
-+        ) {
-+            Icon(
-+                painter = painterResource(R.drawable.ic_profile_robot),
-+                contentDescription = stringResource(R.string.title_profile),
-+                modifier = Modifier.size(18.dp),
-+            )
-+        }
-         CompactBarIconButton(
-             onClick = onHelpPressed,
+     DOS("dos"),
+     NINTENDO_3DS("3ds"),
++    PS2("ps2"),
+ }
+```
+
+#### [MODIFY] [`GameSystem.kt`](file:///e:/Current%20Work/Omnidroid/retrograde-app-shared/src/main/java/com/omnidroid/lib/library/GameSystem.kt)
+
+Add PS2 `GameSystem` entry after the 3DS entry (before the closing parenthesis of the `SYSTEMS` list):
+
+```kotlin
+GameSystem(
+    SystemID.PS2,
+    "Sony - PlayStation 2",
+    R.string.game_system_title_ps2,
+    R.string.game_system_abbr_ps2,
+    listOf(
+        SystemCoreConfig(
+            CoreID.PCEE2,
+            controllerConfigs =
+                hashMapOf(
+                    0 to arrayListOf(ControllerConfigs.PS2_DUALSHOCK2),
+                    1 to arrayListOf(ControllerConfigs.PS2_DUALSHOCK2),
+                ),
+            requiredBIOSFiles =
+                listOf(
+                    "scph39001.bin",
+                ),
+            rumbleSupported = true,
+            statesSupported = true,
+            supportsLibretroVFS = true,
+            skipDuplicateFrames = false,
+            supportedOnlyArchitectures = setOf("arm64-v8a"),
+        ),
+    ),
+    uniqueExtensions = listOf(),
+    supportedExtensions = listOf("iso", "chd", "cue", "m3u", "cso", "zso", "gz", "bin", "mdf", "nrg", "elf", "irx"),
+    scanOptions =
+        ScanOptions(
+            scanByFilename = false,
+            scanByUniqueExtension = false,
+            scanByPathAndSupportedExtensions = true,
+        ),
+    hasMultiDiskSupport = true,
+),
+```
+
+**Key decisions:**
+
+- **Dedicated `PS2_DUALSHOCK2` controller** with own touch layout
+- **`requiredBIOSFiles`** lists `scph39001.bin` — the most commonly used NTSC-U/C BIOS
+- **`hasMultiDiskSupport = true`** — PS2 uses `.m3u` playlists for multi-disc
+- **2 controller ports** (PS2 natively supports 2 controllers)
+
+---
+
+### 5. BIOS Registration
+
+#### [MODIFY] [`BiosManager.kt`](file:///e:/Current%20Work/Omnidroid/retrograde-app-shared/src/main/java/com/omnidroid/lib/bios/BiosManager.kt)
+
+Add PS2 BIOS entries to `SUPPORTED_BIOS` list. These are the most common PS2 BIOS dumps:
+
+```diff
+                 Bios(
+                     "firmware.bin",
+                     "E45033D9B0FA6B0DE071292BBA7C9D13",
+                     "Nintendo DS Firmware",
+                     SystemID.NDS,
+                     "945F9DC9",
+                     "nds_firmware.bin",
+                 ),
++                Bios(
++                    "scph39001.bin",
++                    "D5CE2C7D119F563CE04BC04571DE9B9F",
++                    "PS2 NTSC-U/C v1.60",
++                    SystemID.PS2,
++                    "0220C2F9",
++                ),
++                Bios(
++                    "scph70012.bin",
++                    "D333558CC14561C1FDC334C0C34137A5",
++                    "PS2 Slim NTSC-U/C v2.00",
++                    SystemID.PS2,
++                    "1B6E631A",
++                ),
++                Bios(
++                    "scph77001.bin",
++                    "BF7E4EAF60459DB6182B11C865E9AECE",
++                    "PS2 Slim NTSC-U/C v2.20",
++                    SystemID.PS2,
++                    "0B27DB79",
++                ),
+             )
+```
+
+> [!NOTE]
+> The MD5 and CRC32 values above are well-known hashes for these specific BIOS versions. PCEE2 accepts any valid PS2 BIOS dump, but these are the most commonly used ones. Additional regional BIOS entries can be added later.
+
+---
+
+### 6. Touch Controller Layout — DualShock 2
+
+#### [NEW] [`omnidroid-touchinput/.../layouts/PS2.kt`](file:///e:/Current%20Work/Omnidroid/omnidroid-touchinput/src/main/java/com/omnidroid/touchinput/radial/layouts/PS2.kt)
+
+Dedicated PS2 DualShock 2 layout — functionally identical to PSXDualShock but as a separate composable for future PS2-specific customization:
+
+```kotlin
+package com.omnidroid.touchinput.radial.layouts
+
+import android.view.KeyEvent
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.ui.Modifier
+import com.omnidroid.touchinput.R
+import com.omnidroid.touchinput.radial.controls.OmnidroidControlCross
+import com.omnidroid.touchinput.radial.controls.OmnidroidControlFaceButtons
+import com.omnidroid.touchinput.radial.layouts.shared.ComposeTouchLayouts
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryAnalogLeft
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryAnalogRight
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonL1
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonL2
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonMenu
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonMenuPlaceholder
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonR1
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonR2
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonSelect
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonStart
+import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
+import com.omnidroid.touchinput.radial.ui.OmnidroidButtonForeground
+import gg.padkit.PadKitScope
+import gg.padkit.ids.Id
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+
+@Composable
+fun PadKitScope.PS2Left(
+    modifier: Modifier = Modifier,
+    settings: TouchControllerSettingsManager.Settings,
+) {
+    BaseLayoutLeft(
+        settings = settings,
+        modifier = modifier,
+        primaryDial = { OmnidroidControlCross(id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD)) },
+        secondaryDials = {
+            SecondaryButtonL1()
+            SecondaryButtonL2()
+            SecondaryButtonSelect(position = 2)
+            SecondaryButtonMenuPlaceholder(settings)
+            SecondaryAnalogLeft()
+        },
+    )
+}
+
+@Composable
+fun PadKitScope.PS2Right(
+    modifier: Modifier = Modifier,
+    settings: TouchControllerSettingsManager.Settings,
+) {
+    BaseLayoutRight(
+        settings = settings,
+        modifier = modifier,
+        primaryDial = {
+            OmnidroidControlFaceButtons(
+                ids =
+                    persistentListOf(
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_A),
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_B),
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_Y),
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_X),
+                    ),
+                idsForegrounds =
+                    persistentMapOf<Id.Key, @Composable (State<Boolean>) -> Unit>(
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_A) to {
+                            OmnidroidButtonForeground(
+                                pressed = it,
+                                icon = R.drawable.psx_circle,
+                            )
+                        },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_B) to {
+                            OmnidroidButtonForeground(
+                                pressed = it,
+                                icon = R.drawable.psx_cross,
+                            )
+                        },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_Y) to {
+                            OmnidroidButtonForeground(
+                                pressed = it,
+                                icon = R.drawable.psx_square,
+                            )
+                        },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_X) to {
+                            OmnidroidButtonForeground(
+                                pressed = it,
+                                icon = R.drawable.psx_triangle,
+                            )
+                        },
+                    ),
+            )
+        },
+        secondaryDials = {
+            SecondaryButtonR1()
+            SecondaryButtonR2()
+            SecondaryButtonStart(position = 2)
+            SecondaryAnalogRight()
+            SecondaryButtonMenu(settings)
+        },
+    )
+}
+```
+
+#### [MODIFY] [`TouchControllerID.kt`](file:///e:/Current%20Work/Omnidroid/omnidroid-touchinput/src/main/java/com/omnidroid/touchinput/radial/settings/TouchControllerID.kt)
+
+Add `PS2` enum entry and its `Config` mapping:
+
+```diff
+     WS_PORTRAIT,
+     NINTENDO_3DS,
++    PS2,
+     ;
+```
+
+And in the `getConfig` `when` block:
+
+```diff
+             NINTENDO_3DS ->
+                 Config(
+                     { modifier, settings -> Nintendo3DSLeft(modifier, settings) },
+                     { modifier, settings -> Nintendo3DSRight(modifier, settings) },
+                 )
++
++            PS2 ->
++                Config(
++                    { modifier, settings -> PS2Left(modifier, settings) },
++                    { modifier, settings -> PS2Right(modifier, settings) },
++                )
+         }
+```
+
+Imports to add:
+
+```kotlin
+import com.omnidroid.touchinput.radial.layouts.PS2Left
+import com.omnidroid.touchinput.radial.layouts.PS2Right
 ```
 
 ---
 
-#### [MODIFY] [MainActivity.kt](file:///d:/Work/Omnidroid/omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/main/MainActivity.kt)
+### 7. Controller Configuration
 
-Add `composable(MainRoute.PROFILE) { ProfileScreen(...) }` in the NavHost graph.
+#### [MODIFY] [`ControllerConfigs.kt`](file:///e:/Current%20Work/Omnidroid/retrograde-app-shared/src/main/java/com/omnidroid/lib/library/ControllerConfigs.kt)
 
----
+Add `PS2_DUALSHOCK2` config after `NINTENDO_3DS`:
 
-### Component 8 — Resources
-
-#### [MODIFY] [strings.xml](file:///d:/Work/Omnidroid/omnidroid-app/src/main/res/values/strings.xml)
-
-```xml
-<!-- Profile -->
-<string name="title_profile">Profile</string>
-<string name="profile_default_tag">Pro Gamer</string>
-<string name="profile_level">Level %d</string>
-<string name="profile_xp_progress">%1$s / %2$s XP</string>
-<string name="profile_total_playtime">Total Playtime</string>
-<string name="profile_streak_current">Current Streak</string>
-<string name="profile_streak_best">Best Streak</string>
-<string name="profile_streak_multiplier">XP Bonus: ×%1$.1f</string>
-<string name="profile_streak_days">%d days</string>
-<string name="profile_consoles_unlocked">%1$d / %2$d Consoles Unlocked</string>
-<string name="profile_change_picture">Change Picture</string>
-<string name="profile_change_tag">Change Tag</string>
-<string name="profile_badge_collector">Collector</string>
-<string name="profile_badge_enthusiast">Enthusiast</string>
-<string name="profile_badge_historian">Historian</string>
-<string name="profile_badge_master">Omnidroid Master</string>
-<string name="profile_achievements">Console Collection</string>
-<string name="profile_recent_sessions">Recent Sessions</string>
-<string name="profile_session_xp">+%d XP</string>
+```diff
+     val NINTENDO_3DS =
+         ControllerConfig(
+             "default",
+             R.string.controller_default,
+             TouchControllerID.NINTENDO_3DS,
+             allowTouchOverlay = false,
+             tiltConfigurations =
+                 listOf(
+                     TILT_CONFIGURATION_DISABLED,
+                     TILT_CONFIGURATION_CROSS,
+                     TILT_CONFIGURATION_ANALOG_LEFT,
+                     TILT_CONFIGURATION_L_R,
+                 ),
+         )
++
++    val PS2_DUALSHOCK2 =
++        ControllerConfig(
++            "dualshock2",
++            R.string.controller_dualshock2,
++            TouchControllerID.PS2,
++            allowTouchRotation = true,
++            tiltConfigurations =
++                listOf(
++                    TILT_CONFIGURATION_DISABLED,
++                    TILT_CONFIGURATION_CROSS,
++                    TILT_CONFIGURATION_ANALOG_LEFT,
++                    TILT_CONFIGURATION_ANALOG_RIGHT,
++                    TILT_CONFIGURATION_L1_R1,
++                    TILT_CONFIGURATION_L2_R2,
++                ),
++        )
+ }
 ```
 
 ---
 
-#### [NEW] `ic_profile_robot.xml` in `omnidroid-app/src/main/res/drawable/`
+### 8. String Resources
 
-Vector drawable — a stylized robot head icon (circular face, antenna, rectangular eyes). Used as the default profile picture and the top-bar navigation icon.
+#### [MODIFY] [`strings-game-system.xml`](file:///e:/Current%20Work/Omnidroid/retrograde-app-shared/src/main/res/values/strings-game-system.xml)
+
+```diff
+     <string name="game_system_abbr_3ds">3DS</string>
++    <string name="game_system_abbr_ps2">PS2</string>
+     ...
+     <string name="game_system_title_3ds">Nintendo 3DS (Beta)</string>
++    <string name="game_system_title_ps2">PlayStation 2 (Beta)</string>
+```
+
+#### [MODIFY] [`core_names.xml`](file:///e:/Current%20Work/Omnidroid/omnidroid-app/src/main/res/values/core_names.xml)
+
+```diff
+     <string name="core_name_citra" translatable="false">citra</string>
++    <string name="core_name_pcee2" translatable="false">pcee2</string>
+ </resources>
+```
+
+#### [MODIFY] Controller string resources
+
+A new string for the DualShock 2 controller name needs to be added. Find the file containing the existing controller strings:
+
+In `retrograde-app-shared/src/main/res/values/` (in the same strings file containing `controller_dualshock`):
+
+```diff
+     <string name="controller_dualshock">DualShock</string>
++    <string name="controller_dualshock2">DualShock 2</string>
+```
 
 ---
 
-## File Summary
+### 9. Core Update Script
 
-| Action | File | Component |
-|---|---|---|
-| MODIFY | `retrograde-app-shared/.../db/RetrogradeDatabase.kt` | Room |
-| NEW | `retrograde-app-shared/.../db/entity/GameSession.kt` | Room |
-| NEW | `retrograde-app-shared/.../db/dao/GameSessionDao.kt` | Room |
-| MODIFY | `retrograde-app-shared/.../db/dao/Migrations.kt` | Room |
-| MODIFY | `omnidroid-app/.../OmnidroidApplicationModule.kt` | Room |
-| NEW | `mobile/feature/profile/UserProfileStore.kt` | Data |
-| NEW | `mobile/feature/profile/ConsoleAchievementsStore.kt` | Data |
-| NEW | `mobile/feature/profile/XPCalculator.kt` | Data |
-| NEW | `mobile/feature/profile/ProfileSyncHelper.kt` | Cloud |
-| MODIFY | `retrograde-app-shared/.../savesync/CloudSaveFolder.kt` | Cloud |
-| MODIFY | `retrograde-app-shared/.../storage/DirectoriesManager.kt` | Cloud |
-| MODIFY | `omnidroid-app-ext-play/.../SaveSyncManagerImpl.kt` | Cloud |
-| MODIFY | `omnidroid-app/.../savesync/SaveSyncWork.kt` | Cloud |
-| MODIFY | `omnidroid-app/.../savesync/SaveBackupManager.kt` | Cloud |
-| NEW | `mobile/feature/profile/ProfileScreen.kt` | UI |
-| NEW | `mobile/feature/profile/ProfileViewModel.kt` | UI |
-| MODIFY | `shared/startup/MainProcessInitializer.kt` | Hook |
-| MODIFY | `shared/main/GameLaunchTaskHandler.kt` | Hook |
-| MODIFY | `mobile/feature/main/MainNavigationRoutes.kt` | Nav |
-| MODIFY | `mobile/feature/main/MainTopBar.kt` | Nav |
-| MODIFY | `mobile/feature/main/MainActivity.kt` | Nav |
-| MODIFY | `res/values/strings.xml` | Resources |
-| NEW | `res/drawable/ic_profile_robot.xml` | Resources |
+#### [MODIFY] [`update_cores.ipy`](file:///e:/Current%20Work/Omnidroid/omnidroid-cores/update_cores.ipy)
+
+```diff
+     #"mednafen_wswan"
+     #"citra"
++    #"pcee2"
+ ]
+```
+
+> [!NOTE]
+> Since PCEE2 is NOT on the libretro buildbot, the standard `wget` download in the update script won't work for this core. It must be built from source and manually placed.
+
+---
+
+## Summary of All Files Changed
+
+| File                                                                                           | Action  | Purpose                                 |
+| ---------------------------------------------------------------------------------------------- | ------- | --------------------------------------- |
+| `omnidroid-cores/omnidroid_core_pcee2/build.gradle.kts`                                        | **NEW** | Gradle dynamic feature module           |
+| `omnidroid-cores/omnidroid_core_pcee2/src/main/AndroidManifest.xml`                            | **NEW** | Android manifest for core module        |
+| `omnidroid-cores/omnidroid_core_pcee2/src/main/jniLibs/arm64-v8a/libpcee2_libretro_android.so` | **NEW** | Native library (compiled from source)   |
+| `omnidroid-touchinput/.../layouts/PS2.kt`                                                      | **NEW** | PS2 DualShock 2 touch controller layout |
+| `settings.gradle.kts`                                                                          | MODIFY  | Register new module                     |
+| `CoreID.kt`                                                                                    | MODIFY  | Add `PCEE2` enum entry                  |
+| `SystemID.kt`                                                                                  | MODIFY  | Add `PS2` enum entry                    |
+| `GameSystem.kt`                                                                                | MODIFY  | Add PS2 system definition               |
+| `BiosManager.kt`                                                                               | MODIFY  | Add PS2 BIOS entries                    |
+| `TouchControllerID.kt`                                                                         | MODIFY  | Add `PS2` enum + config mapping         |
+| `ControllerConfigs.kt`                                                                         | MODIFY  | Add `PS2_DUALSHOCK2` controller config  |
+| `strings-game-system.xml`                                                                      | MODIFY  | Add PS2 title/abbreviation              |
+| `core_names.xml`                                                                               | MODIFY  | Add PCEE2 core name string              |
+| Controller strings XML                                                                         | MODIFY  | Add "DualShock 2" string                |
+| `update_cores.ipy`                                                                             | MODIFY  | Add pcee2 to cores list                 |
 
 ---
 
 ## Verification Plan
 
-### Automated Tests
+### Build Verification
 
-#### Unit tests for `XPCalculator`:
-```bash
-./gradlew :omnidroid-app:testDebugUnitTest --tests "*XPCalculatorTest*"
-```
-- Verify `levelFromXP()` at boundary values (0, 99, 100, 400, 10000).
-- Verify `streakMultiplier()` capping at streak 7.
-- Verify `baseXPFromSession()` minimum-1 for short sessions.
-- Verify `progressInLevel()` returns 0.0 at level boundary.
-
-#### Unit tests for `UserProfileStore` streak logic:
-```bash
-./gradlew :omnidroid-app:testDebugUnitTest --tests "*UserProfileStoreTest*"
-```
-- Same-day double play does not double-count streak.
-- Consecutive-day play increments streak.
-- Gap in days resets streak to 1.
-- Best streak preserved across resets.
-- `exportToJson()` / `importFromJson()` round-trip.
-
-#### Room migration test:
-```bash
-./gradlew :retrograde-app-shared:testDebugUnitTest --tests "*MigrationTest*"
-```
-- Verify v11→v12 migration creates `game_sessions` table with correct schema.
-- Verify foreign key cascade (deleting a Game deletes its sessions).
-
-### Build verification:
-```bash
-./gradlew :omnidroid-app:assemblePlayDebug
-```
+- Run `./gradlew assemblePlayDynamic` to ensure the project compiles
+- Verify the `libpcee2_libretro_android.so` is packaged in the APK under `arm64-v8a`
 
 ### Manual Verification
-- **First launch** — Profile auto-creates with tag "Pro Gamer" and robot icon.
-- **Tap robot icon** in top bar → navigates to profile screen.
-- **Edit tag** — Persists across app restart.
-- **Change picture** — Pick from gallery, circular crop displays. Remove reverts to robot.
-- **Play a game** for 2+ minutes → close → profile shows XP gain, session in recent list.
-- **Play on consecutive days** → streak increments, multiplier updates.
-- **Install a console** via Add Consoles → unlocked count increments, achievement grid updates.
-- **Unlock 3 consoles** → "Collector" badge appears.
-- **Enable cloud sync** → play a session → trigger manual sync → check that `profile/profile.json` appears in cloud storage.
-- **Install on second device** → sync → verify profile tag, best streak, and session history arrive.
-- **Export/import backup** → verify profile.json is included in the zip.
+
+- Install on an arm64 Android device
+- Confirm PS2 system appears in the system list with "(Beta)" label
+- Verify BIOS detection prompts when no BIOS is found
+- Place a PS2 BIOS and `.iso` file and confirm scanning works
+- Launch a PS2 game and verify PCEE2 core loads
+- Test touch controls (DualShock 2 layout)
+- Test rumble
+
+---
+
+## How to Compile the PCEE2 Core `.so`
+
+The PCEE2 core must be compiled from source. Based on the Lemuroid-upgraded fork's build system:
+
+### Prerequisites
+
+- Linux environment (or WSL)
+- Android NDK (latest recommended — older NDK causes clang toolchain failures)
+- CMake and Ninja
+- JDK 17
+
+### Steps
+
+```bash
+# 1. Clone the PCEE2 repo
+git clone --recurse-submodules https://github.com/WizzardSK/pcee2-libretro.git
+cd pcee2-libretro
+
+# 2. Set NDK path
+export ANDROID_NDK_ROOT=/path/to/android-ndk
+
+# 3. Build dependencies (shaderc, etc.) — this can take a while
+#    JOBS caps parallelism to prevent OOM on CI (default 2)
+export JOBS=2
+
+# Create dependencies build directory
+DEPS_DIR="$(pwd)/build/deps"
+mkdir -p "$DEPS_DIR"
+
+# Build shaderc and other deps
+ANDROID_NDK="$ANDROID_NDK_ROOT" ANDROID_ABI=arm64-v8a ANDROID_API=24 \
+    bash pcee2-libretro/scripts/build-deps-android.sh "$DEPS_DIR"
+
+# 4. Configure and build the core
+BUILD_DIR="$(pwd)/build/cmake"
+cmake -S . -B "$BUILD_DIR" -G Ninja \
+    -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake" \
+    -DANDROID_ABI=arm64-v8a \
+    -DANDROID_PLATFORM=android-24 \
+    -DANDROID_STL=c++_static \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DENABLE_QT_UI=OFF \
+    -DENABLE_TESTS=OFF \
+    -DENABLE_LIBRETRO=ON \
+    -DCMAKE_PREFIX_PATH="$DEPS_DIR" \
+    -DCMAKE_FIND_ROOT_PATH="$DEPS_DIR" \
+    -DSHADERC_STATIC=ON \
+    "-DSHADERC_LIBRARY=$DEPS_DIR/lib/libshaderc_combined.a" \
+    -DDISABLE_ADVANCE_SIMD=ON
+
+cmake --build "$BUILD_DIR" --target pcee2_libretro --parallel "$JOBS"
+
+# 5. Strip and stage
+CORE="$BUILD_DIR/bin/pcee2_libretro.so"
+"$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip" --strip-debug "$CORE"
+
+# 6. Copy to Omnidroid
+cp "$CORE" /path/to/Omnidroid/omnidroid-cores/omnidroid_core_pcee2/src/main/jniLibs/arm64-v8a/libpcee2_libretro_android.so
+```
+
+### Important Notes
+
+- The `JOBS=2` limit prevents OOM kills during shaderc compilation
+- Use a **recent NDK** — pinned older NDKs cause deterministic clang toolchain failures
+- The output is `pcee2_libretro.so` → renamed to `libpcee2_libretro_android.so` (Android convention)
+- Minimum Android API is 24 (Android 7.0)

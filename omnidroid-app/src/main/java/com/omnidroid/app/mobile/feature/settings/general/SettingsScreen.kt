@@ -1,5 +1,7 @@
 package com.omnidroid.app.mobile.feature.settings.general
 
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -22,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Monitor
 import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.Tune
@@ -89,6 +92,7 @@ private enum class SettingsSection(
     CONTROLLERS(R.string.settings_category_controllers),
     SAVES(R.string.settings_category_saves),
     ADVANCED(R.string.settings_title_advanced_settings),
+    ABOUT(R.string.settings_category_about),
 }
 
 @Composable
@@ -208,6 +212,10 @@ fun SettingsScreen(
                             navController = navController,
                         )
                     }
+                SettingsSection.ABOUT ->
+                    OmnidroidSettingsPage(modifier = paneModifier) {
+                        AboutSettings()
+                    }
             }
         }
     }
@@ -314,6 +322,13 @@ private fun GeneralHub(
                 onClick = { onSelectSection(SettingsSection.ADVANCED) },
             )
         }
+        item {
+            SettingsHubCard(
+                title = stringResource(R.string.settings_category_about),
+                icon = Icons.Outlined.Info,
+                onClick = { onSelectSection(SettingsSection.ABOUT) },
+            )
+        }
     }
 }
 
@@ -396,6 +411,72 @@ private fun AdvancedLinks(
             },
             onClick = { navController.navigateToRoute(MainRoute.SETTINGS_ADVANCED) },
         )
+    }
+}
+
+@Composable
+private fun AboutSettings() {
+    val context = LocalContext.current
+
+    OmnidroidCardSettingsGroup(
+        title = { Text(text = stringResource(id = R.string.settings_section_privacy)) },
+    ) {
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_privacy_policy)) },
+            subtitle = {
+                Text(text = stringResource(id = R.string.settings_description_privacy_policy))
+            },
+            onClick = { openExternalUrl(context, context.getString(R.string.url_privacy_policy)) },
+        )
+    }
+
+    OmnidroidCardSettingsGroup(
+        title = { Text(text = stringResource(id = R.string.settings_section_donations)) },
+    ) {
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_donate_buy_me_a_coffee)) },
+            subtitle = {
+                Text(text = stringResource(id = R.string.settings_description_donate_buy_me_a_coffee))
+            },
+            onClick = {
+                openExternalUrl(context, context.getString(R.string.url_donate_buy_me_a_coffee))
+            },
+        )
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_donate_ko_fi)) },
+            subtitle = {
+                Text(text = stringResource(id = R.string.settings_description_donate_ko_fi))
+            },
+            onClick = { openExternalUrl(context, context.getString(R.string.url_donate_ko_fi)) },
+        )
+    }
+
+    OmnidroidCardSettingsGroup(
+        title = { Text(text = stringResource(id = R.string.settings_section_about_developer)) },
+    ) {
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_about_developer)) },
+            subtitle = {
+                Text(text = stringResource(id = R.string.settings_description_about_developer))
+            },
+            onClick = { openExternalUrl(context, context.getString(R.string.url_developer_github)) },
+        )
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_developer_github)) },
+            subtitle = {
+                Text(text = stringResource(id = R.string.settings_description_developer_github))
+            },
+            onClick = { openExternalUrl(context, context.getString(R.string.url_developer_github)) },
+        )
+    }
+}
+
+private fun openExternalUrl(
+    context: Context,
+    url: String,
+) {
+    runCatching {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     }
 }
 

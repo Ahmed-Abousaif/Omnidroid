@@ -10,6 +10,7 @@
 
     <string name="controller_default">Default</string>
     <string name="controller_dualshock">DualShock</string>
+    <string name="controller_dualshock2">DualShock 2</string>
     <string name="controller_standard">Standard</string>
     <string name="controller_landscape">Landscape</string>
     <string name="controller_portrait">Portrait</string>

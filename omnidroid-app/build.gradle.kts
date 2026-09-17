@@ -51,6 +51,7 @@ android {
                 ":omnidroid_core_snes9x",
                 ":omnidroid_core_stella",
                 ":omnidroid_core_citra",
+                ":omnidroid_core_pcee2",
             ),
         )
     }

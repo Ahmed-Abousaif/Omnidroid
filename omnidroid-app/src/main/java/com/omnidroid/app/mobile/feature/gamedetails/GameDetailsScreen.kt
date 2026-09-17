@@ -1,5 +1,6 @@
 ﻿package com.omnidroid.app.mobile.feature.gamedetails
 
+import android.net.Uri
 import android.os.Build
 import android.view.ViewGroup
 import android.webkit.CookieManager
@@ -7,6 +8,8 @@ import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,13 +17,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -28,14 +34,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -88,22 +98,39 @@ fun GameDetailsScreen(
     onPlay: (Game) -> Unit,
     onFavoriteToggle: (Game, Boolean) -> Unit,
     onOpenSettings: (Game) -> Unit,
+    onSetCustomName: (Game, String) -> Unit = { _, _ -> },
+    onSetCustomThumbnail: (Game, Uri) -> Unit = { _, _ -> },
     transitionProgress: Float = 1f,
     hideCover: Boolean = false,
     onCoverBounds: (Rect) -> Unit = {},
 ) {
     val state = viewModel.state.collectAsState().value
     val game = state.game
+
+    var showNameDialog by remember { mutableStateOf(false) }
+    var nameDraft by remember { mutableStateOf("") }
+    var pendingCoverGame by remember { mutableStateOf<Game?>(null) }
+    val coverPicker =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            val coverGame = pendingCoverGame
+            pendingCoverGame = null
+            if (uri != null && coverGame != null) {
+                onSetCustomThumbnail(coverGame, uri)
+            }
+        }
+
+    val controllerNav = LocalControllerNavigation.current
+    LaunchedEffect(game?.id) {
+        if (game != null) {
+            controllerNav?.setFocusedGame(game)
+        }
+    }
+
     if (game == null) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
-    }
-
-    val controllerNav = LocalControllerNavigation.current
-    LaunchedEffect(game.id) {
-        controllerNav?.setFocusedGame(game)
     }
 
     val contentFade = ((transitionProgress - 0.42f) / 0.58f).coerceIn(0f, 1f)
@@ -140,6 +167,10 @@ fun GameDetailsScreen(
                     hideCover = hideCover,
                     onCoverBounds = onCoverBounds,
                     onToggleTrailer = { viewModel.toggleTrailer() },
+                    onEditCover = {
+                        pendingCoverGame = game
+                        coverPicker.launch("image/*")
+                    },
                 )
             }
             GameDetailsInfo(
@@ -154,8 +185,42 @@ fun GameDetailsScreen(
                 onPlay = { onPlay(game) },
                 onFavoriteToggle = { onFavoriteToggle(game, !game.isFavorite) },
                 onOpenSettings = { onOpenSettings(game) },
+                onEditName = {
+                    nameDraft = game.customName ?: game.title
+                    showNameDialog = true
+                },
             )
         }
+    }
+
+    if (showNameDialog) {
+        AlertDialog(
+            onDismissRequest = { showNameDialog = false },
+            title = { Text(text = stringResource(R.string.game_context_menu_set_custom_name)) },
+            text = {
+                OutlinedTextField(
+                    value = nameDraft,
+                    onValueChange = { nameDraft = it },
+                    singleLine = true,
+                    label = { Text(text = stringResource(R.string.game_custom_name_hint)) },
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onSetCustomName(game, nameDraft)
+                        showNameDialog = false
+                    },
+                ) {
+                    Text(text = stringResource(R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNameDialog = false }) {
+                    Text(text = stringResource(R.string.cancel))
+                }
+            },
+        )
     }
 }
 
@@ -203,6 +268,7 @@ private fun GameCoverOrTrailer(
     hideCover: Boolean,
     onCoverBounds: (Rect) -> Unit,
     onToggleTrailer: () -> Unit,
+    onEditCover: () -> Unit,
 ) {
     var coverAspect by remember(game.id) { mutableStateOf(DefaultCoverAspect) }
     BoxWithConstraints(
@@ -219,60 +285,77 @@ private fun GameCoverOrTrailer(
                         Modifier.fillMaxWidth().aspectRatio(coverAspect)
                     },
                 )
-                .clip(GameCoverCorner)
-                .onGloballyPositioned { onCoverBounds(it.boundsInRoot()) }
-                .graphicsLayer { alpha = if (hideCover) 0f else 1f }
-        Surface(
-            modifier = coverModifier,
-            shape = GameCoverCorner,
-            tonalElevation = 6.dp,
-            color = Color.Black,
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
+        Box(modifier = coverModifier) {
+            Surface(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .clip(GameCoverCorner)
+                        .onGloballyPositioned { onCoverBounds(it.boundsInRoot()) }
+                        .graphicsLayer { alpha = if (hideCover) 0f else 1f },
+                shape = GameCoverCorner,
+                tonalElevation = 6.dp,
+                color = Color.Black,
             ) {
-                if (playingTrailer) {
-                    GameTrailerView(
-                        html = trailerHtml,
-                        searchUrl = trailerSearchUrl,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    IconButton(
-                        onClick = onToggleTrailer,
-                        modifier =
-                            Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(4.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Close,
-                            contentDescription = stringResource(R.string.stop),
-                            tint = Color.White,
-                        )
-                    }
-                } else {
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .clickable(onClick = onToggleTrailer),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        OmnidroidPoster(
-                            game = game,
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (playingTrailer) {
+                        GameTrailerView(
+                            html = trailerHtml,
+                            searchUrl = trailerSearchUrl,
                             modifier = Modifier.fillMaxSize(),
-                            onAspectRatio = { coverAspect = it },
                         )
-                        Icon(
-                            imageVector = Icons.Outlined.PlayCircle,
-                            contentDescription = stringResource(R.string.game_trailer),
-                            modifier = Modifier.size(64.dp),
-                            tint = Color.White.copy(alpha = 0.85f),
-                        )
+                        IconButton(
+                            onClick = onToggleTrailer,
+                            modifier =
+                                Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(4.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = stringResource(R.string.stop),
+                                tint = Color.White,
+                            )
+                        }
+                    } else {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .clickable(onClick = onToggleTrailer),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            OmnidroidPoster(
+                                game = game,
+                                modifier = Modifier.fillMaxSize(),
+                                onAspectRatio = { coverAspect = it },
+                            )
+                            Icon(
+                                imageVector = Icons.Outlined.PlayCircle,
+                                contentDescription = stringResource(R.string.game_trailer),
+                                modifier = Modifier.size(64.dp),
+                                tint = Color.White.copy(alpha = 0.85f),
+                            )
+                        }
                     }
                 }
             }
+            Icon(
+                imageVector = Icons.Outlined.Edit,
+                contentDescription = stringResource(R.string.game_context_menu_change_thumbnail),
+                tint = Color.White.copy(alpha = 0.55f),
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(y = (-22).dp)
+                        .graphicsLayer { alpha = if (hideCover) 0f else 1f }
+                        .size(18.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .clickable(onClick = onEditCover),
+            )
         }
     }
 }
@@ -374,6 +457,7 @@ private fun GameDetailsInfo(
     onPlay: () -> Unit,
     onFavoriteToggle: () -> Unit,
     onOpenSettings: () -> Unit,
+    onEditName: () -> Unit,
 ) {
     val context = LocalContext.current
     val systemName = remember(game.id) { GameUtils.getGameSubtitle(context, game) }
@@ -386,12 +470,30 @@ private fun GameDetailsInfo(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
         ) {
-            Text(
-                text = game.displayName,
-                style = MaterialTheme.typography.headlineSmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onEditName)
+                        .padding(end = 4.dp),
+            ) {
+                Text(
+                    text = game.displayName,
+                    style = MaterialTheme.typography.headlineSmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = stringResource(R.string.game_context_menu_change_name),
+                    tint = Color.White.copy(alpha = 0.55f),
+                    modifier = Modifier.size(18.dp),
+                )
+            }
             Text(
                 text = systemName,
                 style = MaterialTheme.typography.bodyMedium,

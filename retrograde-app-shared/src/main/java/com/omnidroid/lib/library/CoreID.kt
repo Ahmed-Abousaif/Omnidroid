@@ -3,6 +3,7 @@ package com.omnidroid.lib.library
 import android.content.SharedPreferences
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.assetsmanager.NoAssetsManager
+import com.omnidroid.lib.core.assetsmanager.PCEE2AssetsManager
 import com.omnidroid.lib.core.assetsmanager.PPSSPPAssetsManager
 import com.omnidroid.lib.storage.DirectoriesManager
 
@@ -111,12 +112,18 @@ enum class CoreID(
         "DosBox Pure",
         "libdosbox_pure_libretro_android.so",
     ),
+    PCEE2(
+        "pcee2",
+        "PCEE2",
+        "libpcee2_libretro_android.so",
+    ),
     ;
 
     companion object {
         fun getAssetManager(coreID: CoreID): AssetsManager {
             return when (coreID) {
                 PPSSPP -> PPSSPPAssetsManager()
+                PCEE2 -> PCEE2AssetsManager()
                 else -> NoAssetsManager()
             }
         }
