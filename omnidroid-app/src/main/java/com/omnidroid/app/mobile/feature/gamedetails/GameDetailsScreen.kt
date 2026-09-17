@@ -142,7 +142,7 @@ fun GameDetailsScreen(
                 .background(HomeChromeBackground),
     ) {
         Box(modifier = Modifier.fillMaxSize().graphicsLayer { alpha = transitionProgress }) {
-            GameBackdrop(game)
+            GameBackdrop(game, state.metadata.backgroundImageUrl ?: state.metadata.coverImageUrl)
         }
         Row(
             modifier =
@@ -166,6 +166,7 @@ fun GameDetailsScreen(
                 GameCoverOrTrailer(
                     modifier = Modifier.fillMaxHeight(),
                     game = game,
+                    preferredCoverUrl = state.metadata.coverImageUrl,
                     playingTrailer = state.playingTrailer,
                     trailerHtml = viewModel.trailerHtml(),
                     trailerSearchUrl = viewModel.trailerSearchUrl(),
@@ -233,14 +234,17 @@ private val GameCoverCorner = RoundedCornerShape(16.dp)
 private const val DefaultCoverAspect = 2f / 3f
 
 @Composable
-private fun GameBackdrop(game: Game) {
+private fun GameBackdrop(
+    game: Game,
+    preferredImageUrl: String?,
+) {
     val context = LocalContext.current
     val fallback = remember(game) { CoverUtils.getFallbackDrawable(game) }
     val fallbackPainter = rememberDrawablePainter(drawable = fallback)
     val blurModifier = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) Modifier.blur(18.dp) else Modifier
 
     AsyncImage(
-        model = CoverUtils.coverRequest(context, game),
+        model = CoverUtils.coverRequest(context, game, preferredImageUrl),
         contentDescription = null,
         modifier = Modifier.fillMaxSize().then(blurModifier),
         fallback = fallbackPainter,
@@ -267,6 +271,7 @@ private fun GameBackdrop(game: Game) {
 private fun GameCoverOrTrailer(
     modifier: Modifier,
     game: Game,
+    preferredCoverUrl: String?,
     playingTrailer: Boolean,
     trailerHtml: String?,
     trailerSearchUrl: String?,
@@ -335,6 +340,7 @@ private fun GameCoverOrTrailer(
                         ) {
                             OmnidroidPoster(
                                 game = game,
+                                preferredCoverUrl = preferredCoverUrl,
                                 modifier = Modifier.fillMaxSize(),
                                 onAspectRatio = { coverAspect = it },
                             )
@@ -368,6 +374,7 @@ private fun GameCoverOrTrailer(
 @Composable
 private fun OmnidroidPoster(
     game: Game,
+    preferredCoverUrl: String?,
     modifier: Modifier,
     onAspectRatio: (Float) -> Unit,
 ) {
@@ -375,7 +382,7 @@ private fun OmnidroidPoster(
     val fallback = remember(game) { CoverUtils.getFallbackDrawable(game) }
     val fallbackPainter = rememberDrawablePainter(drawable = fallback)
     AsyncImage(
-        model = CoverUtils.coverRequest(context, game),
+        model = CoverUtils.coverRequest(context, game, preferredCoverUrl),
         contentDescription = game.displayName,
         modifier = modifier,
         fallback = fallbackPainter,
@@ -538,6 +545,24 @@ private fun GameDetailsInfo(
                     modifier = Modifier.weight(1f),
                     label = stringResource(R.string.game_release_date),
                     value = state.metadata.releaseDate ?: stringResource(R.string.none),
+                )
+            }
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                GameStat(
+                    modifier = Modifier.weight(1f),
+                    label = stringResource(R.string.game_publisher),
+                    value = state.metadata.publisher ?: stringResource(R.string.none),
+                )
+                GameStat(
+                    modifier = Modifier.weight(1f),
+                    label = stringResource(R.string.game_rating),
+                    value = state.metadata.rating ?: stringResource(R.string.none),
                 )
             }
             Row(

@@ -61,6 +61,9 @@ import com.omnidroid.lib.storage.local.LocalStorageProvider
 import com.omnidroid.lib.storage.local.StorageAccessFrameworkProvider
 import com.omnidroid.metadata.libretrodb.LibretroDBMetadataProvider
 import com.omnidroid.metadata.libretrodb.db.LibretroDBManager
+import com.omnidroid.metadata.rawg.RawgApi
+import com.omnidroid.metadata.rawg.RawgConfig
+import com.omnidroid.metadata.rawg.RawgMetadataRepository
 import dagger.Lazy
 import android.app.Activity
 import com.omnidroid.app.mobile.feature.main.MainActivity
@@ -140,6 +143,7 @@ object OmnidroidApplicationModule {
                 Migrations.VERSION_9_10,
                 Migrations.VERSION_10_11,
                 Migrations.VERSION_11_12,
+                Migrations.VERSION_12_13,
             )
             .fallbackToDestructiveMigration()
             .build()
@@ -195,6 +199,19 @@ object OmnidroidApplicationModule {
             .client(okHttpClient)
             .baseUrl("https://example.com/")
             .build()
+
+    @Provides
+    @Singleton
+    fun rawgApi(okHttpClient: OkHttpClient): RawgApi =
+        Retrofit.Builder()
+            .client(okHttpClient)
+            .baseUrl(RawgConfig.BASE_URL)
+            .build()
+            .create(RawgApi::class.java)
+
+    @Provides
+    @Singleton
+    fun rawgMetadataRepository(rawgApi: RawgApi) = RawgMetadataRepository(rawgApi)
 
     @Provides
     @Singleton

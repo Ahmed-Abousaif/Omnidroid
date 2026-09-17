@@ -5,16 +5,22 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.main.MainRoute
+import com.omnidroid.app.shared.covers.RawgCoverStore
+import com.omnidroid.app.shared.library.LibraryIndexScheduler
 import com.omnidroid.app.utils.android.settings.OmnidroidCardSettingsGroup
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsList
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
@@ -86,6 +92,19 @@ private fun GeneralSettings(
     navController: NavController,
 ) {
     val factoryResetDialogState = remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val rawgEnabled = booleanPreferenceState(R.string.pref_key_enable_rawg_metadata, false)
+    var previousRawgEnabled by remember { mutableStateOf(rawgEnabled.value) }
+
+    LaunchedEffect(rawgEnabled.value) {
+        if (rawgEnabled.value == previousRawgEnabled) return@LaunchedEffect
+        previousRawgEnabled = rawgEnabled.value
+        if (rawgEnabled.value) {
+            LibraryIndexScheduler.scheduleLibrarySync(context.applicationContext)
+        } else {
+            RawgCoverStore.clear()
+        }
+    }
 
     OmnidroidCardSettingsGroup(
         title = { Text(text = stringResource(id = R.string.settings_category_general)) },
@@ -94,6 +113,11 @@ private fun GeneralSettings(
             state = booleanPreferenceState(R.string.pref_key_low_latency_audio, false),
             title = { Text(text = stringResource(id = R.string.settings_title_low_latency_audio)) },
             subtitle = { Text(text = stringResource(id = R.string.settings_description_low_latency_audio)) },
+        )
+        OmnidroidSettingsSwitch(
+            state = rawgEnabled,
+            title = { Text(text = stringResource(id = R.string.settings_title_enable_rawg_metadata)) },
+            subtitle = { Text(text = stringResource(id = R.string.settings_description_enable_rawg_metadata)) },
         )
         OmnidroidSettingsList(
             title = { Text(text = stringResource(R.string.settings_title_maximum_cache_usage)) },

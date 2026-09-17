@@ -148,6 +148,7 @@ dependencies {
     implementation(project(":retrograde-util"))
     implementation(project(":retrograde-app-shared"))
     implementation(project(":omnidroid-metadata-libretro-db"))
+    implementation(project(":omnidroid-metadata-rawg"))
     implementation(project(":omnidroid-touchinput"))
 
     "baselineProfile"(project(":baselineprofile"))

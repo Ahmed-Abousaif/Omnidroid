@@ -34,12 +34,25 @@ object CoverUtils {
         }
     }
 
+    fun coverData(game: Game): Any? =
+        resolveCustomCoverFile(game) ?: RawgCoverStore.get(game.id) ?: game.coverFrontUrl
+
+    fun coverData(
+        game: Game,
+        preferredCoverUrl: String?,
+    ): Any? =
+        resolveCustomCoverFile(game)
+            ?: preferredCoverUrl?.takeIf { it.isNotBlank() }
+            ?: RawgCoverStore.get(game.id)
+            ?: game.coverFrontUrl
+
     fun coverRequest(
         context: Context,
         game: Game,
+        preferredCoverUrl: String? = null,
     ): ImageRequest {
         return ImageRequest.Builder(context)
-            .data(coverData(game))
+            .data(coverData(game, preferredCoverUrl))
             .apply {
                 customCoverCacheKey(game)?.let { key ->
                     memoryCacheKey(key)
@@ -56,8 +69,6 @@ object CoverUtils {
             ?.let(CustomCoverManager::fileForStoredPath)
             ?.takeIf { it.isFile && it.length() > 0L }
     }
-
-    fun coverData(game: Game): Any? = resolveCustomCoverFile(game) ?: game.coverFrontUrl
 
     fun buildImageLoader(applicationContext: Context): ImageLoader {
         return ImageLoader.Builder(applicationContext)

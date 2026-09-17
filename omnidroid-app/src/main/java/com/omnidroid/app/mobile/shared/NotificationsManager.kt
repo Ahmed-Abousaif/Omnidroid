@@ -75,6 +75,20 @@ class NotificationsManager(private val applicationContext: Context) {
         return builder.build()
     }
 
+    fun rawgEnrichmentNotification(): Notification {
+        createDefaultNotificationChannel()
+
+        val builder =
+            NotificationCompat.Builder(applicationContext, DEFAULT_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_omnidroid_tiny)
+                .setContentTitle(applicationContext.getString(R.string.rawg_enrichment_notification_title))
+                .setContentText(applicationContext.getString(R.string.rawg_enrichment_notification_message))
+                .setProgress(100, 0, true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+
+        return builder.build()
+    }
+
     fun installingCoresNotification(): Notification {
         createDefaultNotificationChannel()
 
@@ -146,5 +160,6 @@ class NotificationsManager(private val applicationContext: Context) {
         const val SAVE_SYNC_NOTIFICATION_ID = 2
         const val GAME_RUNNING_NOTIFICATION_ID = 3
         const val CORE_INSTALL_NOTIFICATION_ID = 4
+        const val RAWG_ENRICHMENT_NOTIFICATION_ID = 5
     }
 }
