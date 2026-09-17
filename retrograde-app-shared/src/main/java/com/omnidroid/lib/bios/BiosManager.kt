@@ -40,26 +40,59 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
 
         Timber.d("Required regional files for game: $requiredRegionalFiles")
 
+        val systemDir = directoriesManager.getSystemDirectory()
         return (coreConfig.requiredBIOSFiles + requiredRegionalFiles)
-            .filter { !File(directoriesManager.getSystemDirectory(), it).exists() }
+            .filter { biosName ->
+                !File(systemDir, biosName).exists() &&
+                    !File(systemDir, "pcsx2/bios/$biosName").exists()
+            }
     }
 
     fun deleteBiosBefore(timestampMs: Long) {
         Timber.i("Pruning old bios files")
+        val systemDir = directoriesManager.getSystemDirectory()
         SUPPORTED_BIOS
-            .map { File(directoriesManager.getSystemDirectory(), it.libretroFileName) }
-            .filter { it.lastModified() < normalizeTimestamp(timestampMs) }
+            .flatMap {
+                listOf(
+                    File(systemDir, it.libretroFileName),
+                    File(systemDir, "pcsx2/bios/${it.libretroFileName}"),
+                )
+            }
+            .filter { it.exists() && it.lastModified() < normalizeTimestamp(timestampMs) }
             .forEach {
                 Timber.d("Pruning old bios file: ${it.path}")
                 it.safeDelete()
             }
     }
 
+    private fun isBiosPresent(systemDir: File, bios: Bios): Boolean {
+        if (File(systemDir, bios.libretroFileName).exists() ||
+            File(systemDir, "pcsx2/bios/${bios.libretroFileName}").exists()
+        ) {
+            return true
+        }
+        if (bios.externalName != null &&
+            (File(systemDir, bios.externalName).exists() || File(systemDir, "pcsx2/bios/${bios.externalName}").exists())
+        ) {
+            return true
+        }
+        if (bios.systemID == SystemID.PS2) {
+            val pcsx2BiosDir = File(systemDir, "pcsx2/bios")
+            val model = bios.libretroFileName.removePrefix("scph").removeSuffix(".bin")
+            fun matchesModel(f: File) = f.name.contains(model, ignoreCase = true) && f.name.endsWith(".bin", ignoreCase = true)
+
+            if (systemDir.listFiles()?.any { matchesModel(it) } == true) return true
+            if (pcsx2BiosDir.exists() && pcsx2BiosDir.listFiles()?.any { matchesModel(it) } == true) return true
+        }
+        return false
+    }
+
     @Deprecated("Use the suspend variant")
     fun getBiosInfo(): BiosInfo {
+        val systemDir = directoriesManager.getSystemDirectory()
         val bios =
             SUPPORTED_BIOS.groupBy {
-                File(directoriesManager.getSystemDirectory(), it.libretroFileName).exists()
+                isBiosPresent(systemDir, it)
             }.withDefault { listOf() }
 
         return BiosInfo(bios.getValue(true), bios.getValue(false))
@@ -197,21 +230,35 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
                 Bios(
                     "scph39001.bin",
                     "D5CE2C7D119F563CE04BC04571DE9B9F",
-                    "PS2 NTSC-U/C v1.60",
+                    "PlayStation 2 (SCPH-39001)",
                     SystemID.PS2,
                     "0220C2F9",
                 ),
                 Bios(
+                    "scph39004.bin",
+                    "C9A0F7E04C74E2FA1E094F94FFCFBFD8",
+                    "PlayStation 2 Europe (SCPH-39004)",
+                    SystemID.PS2,
+                    "98D4D6B6",
+                ),
+                Bios(
+                    "scph39000.bin",
+                    "D6846CF87CA7C7F30A3C910FD5F1D328",
+                    "PlayStation 2 Japan (SCPH-39000)",
+                    SystemID.PS2,
+                    "46FB0EA2",
+                ),
+                Bios(
                     "scph70012.bin",
                     "D333558CC14561C1FDC334C0C34137A5",
-                    "PS2 Slim NTSC-U/C v2.00",
+                    "PlayStation 2 Slim (SCPH-70012)",
                     SystemID.PS2,
                     "1B6E631A",
                 ),
                 Bios(
                     "scph77001.bin",
                     "BF7E4EAF60459DB6182B11C865E9AECE",
-                    "PS2 Slim NTSC-U/C v2.20",
+                    "PlayStation 2 Slim (SCPH-77001)",
                     SystemID.PS2,
                     "0B27DB79",
                 ),
