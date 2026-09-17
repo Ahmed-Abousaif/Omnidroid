@@ -134,7 +134,7 @@ fun LibraryScreen(
             onSync = { viewModel.syncLibrary(it) },
             onZoomDensityChange = { viewModel.setZoomDensity(it) },
             requestInitialFocus = controllerConnected,
-            showZoomBar = true,
+            showZoomBar = !controllerConnected,
             transitionProgress = transitionProgress,
             zoomSlide = zoomSlide,
             transitioningGameId = transitioningGameId,

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -324,7 +325,7 @@ private fun ProfileHeaderSection(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = if (compact) Arrangement.SpaceEvenly else Arrangement.Center,
         ) {
-            val avatarSize = if (compact) 68.dp else 88.dp
+            val avatarSize = if (compact) 96.dp else 128.dp
 
             // Avatar with edit badge
             Box(
@@ -360,7 +361,7 @@ private fun ProfileHeaderSection(
                             painter = painterResource(R.drawable.ic_profile_robot),
                             contentDescription = stringResource(R.string.title_profile),
                             tint = LibraryNeonGreen,
-                            modifier = Modifier.size(if (compact) 38.dp else 48.dp),
+                            modifier = Modifier.size(if (compact) 52.dp else 72.dp),
                         )
                     }
                 }
@@ -369,7 +370,7 @@ private fun ProfileHeaderSection(
                 Box(
                     modifier =
                         Modifier
-                            .size(if (compact) 22.dp else 26.dp)
+                            .size(if (compact) 26.dp else 30.dp)
                             .clip(CircleShape)
                             .background(LibraryNeonGreen)
                             .clickable(onClick = onAvatarClick),
@@ -379,12 +380,12 @@ private fun ProfileHeaderSection(
                         Icons.Outlined.PhotoCamera,
                         contentDescription = stringResource(R.string.profile_change_picture),
                         tint = Color.Black,
-                        modifier = Modifier.size(if (compact) 13.dp else 15.dp),
+                        modifier = Modifier.size(if (compact) 14.dp else 16.dp),
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(if (compact) 8.dp else 12.dp))
+            Spacer(modifier = Modifier.height(if (compact) 4.dp else 6.dp))
 
             // Gamer Tag with inline edit pencil
             Row(
@@ -764,14 +765,28 @@ private fun ProfileAchievementsCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Console badges (FlowRow)
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                achievements.forEach { achievement ->
-                    ConsoleAchievementItem(achievement = achievement)
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val spacing = 8.dp
+                val minCell = 64.dp
+                val columns =
+                    maxOf(
+                        1,
+                        ((maxWidth + spacing) / (minCell + spacing)).toInt(),
+                    )
+                val cellWidth = (maxWidth - spacing * (columns - 1)) / columns
+
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(spacing),
+                    verticalArrangement = Arrangement.spacedBy(spacing),
+                    maxItemsInEachRow = columns,
+                ) {
+                    achievements.forEach { achievement ->
+                        ConsoleAchievementItem(
+                            achievement = achievement,
+                            modifier = Modifier.width(cellWidth),
+                        )
+                    }
                 }
             }
         }
@@ -779,26 +794,29 @@ private fun ProfileAchievementsCard(
 }
 
 @Composable
-private fun ConsoleAchievementItem(achievement: ConsoleAchievement) {
+private fun ConsoleAchievementItem(
+    achievement: ConsoleAchievement,
+    modifier: Modifier = Modifier,
+) {
     val unlocked = achievement.unlocked
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = if (unlocked) Color(0xFF242424) else Color(0xFF121212),
-        border = BorderStroke(
-            1.dp,
-            if (unlocked) LibraryNeonGreen.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.07f),
-        ),
-        modifier = Modifier.size(76.dp),
+        border =
+            BorderStroke(
+                1.dp,
+                if (unlocked) LibraryNeonGreen.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.07f),
+            ),
+        modifier = modifier.aspectRatio(1f),
     ) {
         Column(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 3.dp, vertical = 4.dp),
+                    .padding(horizontal = 4.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            // Console Icon & Lock Overlay
             Box(
                 contentAlignment = Alignment.Center,
                 modifier =
@@ -806,21 +824,22 @@ private fun ConsoleAchievementItem(achievement: ConsoleAchievement) {
                         .weight(1f)
                         .fillMaxWidth(),
             ) {
-                // Console Icon (Bigger: 44dp)
                 Icon(
                     painter = painterResource(achievement.imageResId),
                     contentDescription = stringResource(achievement.nameResId),
                     tint = if (unlocked) Color.White else Color.White.copy(alpha = 0.18f),
-                    modifier = Modifier.size(44.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(0.62f)
+                            .aspectRatio(1f),
                 )
 
-                // High-Contrast Lock in front of the console icon
                 if (!unlocked) {
                     Surface(
                         shape = CircleShape,
                         color = Color(0xEE000000),
                         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)),
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.fillMaxWidth(0.34f).aspectRatio(1f),
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
@@ -830,7 +849,7 @@ private fun ConsoleAchievementItem(achievement: ConsoleAchievement) {
                                 Icons.Outlined.Lock,
                                 contentDescription = "Locked",
                                 tint = Color(0xFFF5F5F5),
-                                modifier = Modifier.size(13.dp),
+                                modifier = Modifier.fillMaxSize(0.55f),
                             )
                         }
                     }

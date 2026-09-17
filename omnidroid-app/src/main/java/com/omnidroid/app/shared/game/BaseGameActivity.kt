@@ -22,6 +22,7 @@ import com.omnidroid.app.shared.ImmersiveActivity
 import com.omnidroid.app.shared.coreoptions.CoreOption
 import com.omnidroid.app.shared.coreoptions.OmnidroidCoreOption
 import com.omnidroid.app.shared.game.viewmodel.GameViewModelSideEffects
+import com.omnidroid.app.shared.game.viewmodel.GameViewModelRetroGameView
 import com.omnidroid.app.shared.input.InputDeviceManager
 import com.omnidroid.app.shared.rumble.RumbleManager
 import com.omnidroid.app.shared.settings.ControllerConfigsManager
@@ -160,6 +161,9 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         launchOnState(Lifecycle.State.CREATED) {
             initializeViewModelsEffectsFlow()
         }
+        launchOnState(Lifecycle.State.STARTED) {
+            reportPlatformGameState()
+        }
         if (TVHelper.isTV(this)) {
             launchOnState(Lifecycle.State.CREATED) {
                 inputDeviceManager
@@ -168,6 +172,17 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                     .safeCollect {
                         displayToast(R.string.tv_game_message_missing_gamepad)
                     }
+            }
+        }
+    }
+
+    private suspend fun reportPlatformGameState() {
+        baseGameScreenViewModel.getGameState().collect { state ->
+            when (state) {
+                is GameViewModelRetroGameView.GameState.Ready ->
+                    GamePlatformSession.reportPlaying(this@BaseGameActivity)
+                else ->
+                    GamePlatformSession.reportLoading(this@BaseGameActivity)
             }
         }
     }

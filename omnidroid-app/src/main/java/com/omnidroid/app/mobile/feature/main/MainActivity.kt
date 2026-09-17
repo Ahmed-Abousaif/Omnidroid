@@ -94,9 +94,11 @@ import com.omnidroid.app.shared.input.omnidroiddevice.OmnidroidInputDeviceGamePa
 import com.omnidroid.app.shared.input.omnidroiddevice.getOmnidroidInputDevice
 import com.omnidroid.app.shared.GameInteractor
 import com.omnidroid.app.shared.cast.CastDisplayManager
+import com.omnidroid.app.shared.cast.StopCastResult
 import com.omnidroid.app.shared.deviceprofile.DeviceProfileManager
 import com.omnidroid.app.shared.game.BaseGameActivity
 import com.omnidroid.app.shared.game.GameLauncher
+import com.omnidroid.app.shared.game.GamePlatformSession
 import com.omnidroid.app.shared.input.InputDeviceManager
 import com.omnidroid.app.shared.main.BusyActivity
 import com.omnidroid.app.shared.main.GameLaunchTaskHandler
@@ -121,7 +123,6 @@ import de.charlex.compose.material3.HtmlText
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -160,7 +161,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
     private val reviewManager = ReviewManager()
     private val controllerBridge = ControllerInputBridge()
-    private val homePressEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private var notificationPermissionCallback: ((Boolean) -> Unit)? = null
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -437,19 +437,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
             }
             SideEffect {
                 controllerBridge.navigation = controllerNav
-            }
-
-            LaunchedEffect(Unit) {
-                homePressEvents.collect {
-                    selectedGameState.value = null
-                    infoDialogDisplayed.value = false
-                    heroGame.value = null
-                    closingDetails.value = false
-                    waitingForDest.value = false
-                    heroProgress.snapTo(0f)
-                    libraryViewModel.resetHomeUi()
-                    navigateToLibraryHome(navController)
-                }
             }
 
             BackHandler {
@@ -735,8 +722,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         castDisplayManager.showIdle(this@MainActivity)
                     },
                     onStopCasting = {
-                        castDisplayManager.stopCasting()
+                        val result = castDisplayManager.stopCasting()
                         showCastPicker.value = false
+                        if (result is StopCastResult.NeedsSystemDisconnect) {
+                            castDisplayManager.openSystemCastSettings(this@MainActivity)
+                        }
                     },
                     onFindDisplay = { castDisplayManager.openSystemCastSettings(this@MainActivity) },
                     onDismiss = { showCastPicker.value = false },
@@ -854,7 +844,8 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
         super.onResume()
         hideSystemBars()
         castDisplayManager.refresh()
-        castDisplayManager.showIdle(this)
+        castDisplayManager.attachHost(this)
+        GamePlatformSession.reportLibrary(this)
     }
 
     override fun onDestroy() {
@@ -880,9 +871,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.hasCategory(Intent.CATEGORY_HOME)) {
-            homePressEvents.tryEmit(Unit)
-        }
     }
 
     private fun navigateToLibraryHome(navController: NavHostController) {
