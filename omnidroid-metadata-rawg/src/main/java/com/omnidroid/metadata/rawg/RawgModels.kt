@@ -34,6 +34,19 @@ data class RawgGameDetails(
 )
 
 @Serializable
+data class RawgScreenshotsResponse(
+    val results: List<RawgScreenshot> = emptyList(),
+)
+
+@Serializable
+data class RawgScreenshot(
+    val id: Int = 0,
+    val image: String = "",
+    val width: Int = 0,
+    val height: Int = 0,
+)
+
+@Serializable
 data class RawgNamedEntity(
     val id: Int = 0,
     val name: String = "",

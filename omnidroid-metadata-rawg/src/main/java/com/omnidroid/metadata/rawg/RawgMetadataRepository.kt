@@ -61,21 +61,44 @@ class RawgMetadataRepository(
                         .joinToString(", ")
                         .ifBlank { null }
 
-                val imageUrl = details.backgroundImage ?: match.backgroundImage
+                // RAWG's background_image is a landscape promo shot — use it only as backdrop.
+                val backgroundUrl = details.backgroundImage ?: match.backgroundImage
+
+                // Prefer a portrait screenshot for cover art when available; otherwise leave null
+                // so the UI keeps Libretro Named_Boxarts / custom covers.
+                delay(150)
+                val coverUrl = fetchPortraitCoverUrl(details.id)?.takeIf { it != backgroundUrl }
 
                 RawgFetchedMetadata(
                     rawgId = details.id,
                     description = description,
                     genres = genres,
                     released = details.released ?: match.released,
-                    backgroundImageUrl = imageUrl,
-                    coverImageUrl = imageUrl,
+                    backgroundImageUrl = backgroundUrl,
+                    coverImageUrl = coverUrl,
                     rating = details.rating ?: match.rating,
                     publisher = publisher,
                 )
             }.onFailure { Timber.w(it, "RAWG fetch failed for %s", title) }
                 .getOrNull()
         }
+
+    private suspend fun fetchPortraitCoverUrl(gameId: Int): String? {
+        return runCatching {
+            val body =
+                api.getGameScreenshots(
+                    id = gameId,
+                    key = RawgConfig.API_KEY,
+                    pageSize = 8,
+                ).string()
+            val shots = json.decodeFromString(RawgScreenshotsResponse.serializer(), body).results
+            shots
+                .filter { it.image.isNotBlank() && it.height > 0 && it.width > 0 }
+                .filter { it.height.toFloat() / it.width.toFloat() >= 1.2f }
+                .maxByOrNull { it.height.toFloat() / it.width.toFloat() }
+                ?.image
+        }.getOrNull()
+    }
 
     private fun pickBestMatch(
         title: String,

@@ -20,6 +20,16 @@ interface RawgGameMetadataDao {
 
     @Query(
         """
+        SELECT * FROM rawg_game_metadata
+        WHERE coverImageUrl IS NOT NULL
+          AND backgroundImageUrl IS NOT NULL
+          AND coverImageUrl = backgroundImageUrl
+        """,
+    )
+    suspend fun selectRowsWithBackgroundUsedAsCover(): List<RawgGameMetadata>
+
+    @Query(
+        """
         SELECT g.id FROM games g
         LEFT JOIN rawg_game_metadata r ON r.gameId = g.id
         WHERE r.gameId IS NULL

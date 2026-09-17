@@ -142,7 +142,7 @@ fun GameDetailsScreen(
                 .background(HomeChromeBackground),
     ) {
         Box(modifier = Modifier.fillMaxSize().graphicsLayer { alpha = transitionProgress }) {
-            GameBackdrop(game, state.metadata.backgroundImageUrl ?: state.metadata.coverImageUrl)
+            GameBackdrop(game, state.metadata.backgroundImageUrl)
         }
         Row(
             modifier =

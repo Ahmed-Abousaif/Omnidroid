@@ -17,14 +17,20 @@ data class GameRemoteMetadata(
 object GameMetadataMapper {
     fun fromRawg(row: RawgGameMetadata?): GameRemoteMetadata {
         if (row == null) return GameRemoteMetadata()
+        val background = row.backgroundImageUrl?.takeIf { it.isNotBlank() }
+        // Ignore cover when it was incorrectly stored as the same landscape background image.
+        val cover =
+            row.coverImageUrl
+                ?.takeIf { it.isNotBlank() }
+                ?.takeIf { it != background }
         return GameRemoteMetadata(
             description = row.description,
             genre = row.genres,
             releaseDate = row.released,
             publisher = row.publisher,
             rating = row.rating?.let { String.format("%.1f", it) },
-            coverImageUrl = row.coverImageUrl,
-            backgroundImageUrl = row.backgroundImageUrl,
+            coverImageUrl = cover,
+            backgroundImageUrl = background,
             rawgId = row.rawgId,
         )
     }

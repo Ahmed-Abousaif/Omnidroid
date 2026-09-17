@@ -73,10 +73,17 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
                     RawgCoverStore.clear()
                     return@launch
                 }
-                val all = retrogradeDb.rawgGameMetadataDao().selectAll()
+                val dao = retrogradeDb.rawgGameMetadataDao()
+                // Fix older rows that stored the landscape background as cover art.
+                dao.selectRowsWithBackgroundUsedAsCover().forEach { row ->
+                    dao.insert(row.copy(coverImageUrl = null, updatedAt = System.currentTimeMillis()))
+                }
+                val all = dao.selectAll()
                 RawgCoverStore.replaceAll(
                     all.mapNotNull { meta ->
-                        meta.coverImageUrl?.takeIf { it.isNotBlank() }?.let { meta.gameId to it }
+                        val cover = meta.coverImageUrl?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                        if (cover == meta.backgroundImageUrl) return@mapNotNull null
+                        meta.gameId to cover
                     }.toMap(),
                 )
             }
