@@ -87,4 +87,34 @@ object Migrations {
                 )
             }
         }
+
+    val VERSION_12_13: Migration =
+        object : Migration(12, 13) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `rawg_game_metadata` (
+                        `gameId` INTEGER NOT NULL,
+                        `rawgId` INTEGER NOT NULL,
+                        `description` TEXT,
+                        `genres` TEXT,
+                        `released` TEXT,
+                        `backgroundImageUrl` TEXT,
+                        `coverImageUrl` TEXT,
+                        `rating` REAL,
+                        `publisher` TEXT,
+                        `updatedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`gameId`),
+                        FOREIGN KEY(`gameId`) REFERENCES `games`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                database.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_rawg_game_metadata_gameId` ON `rawg_game_metadata` (`gameId`)",
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_rawg_game_metadata_rawgId` ON `rawg_game_metadata` (`rawgId`)",
+                )
+            }
+        }
 }

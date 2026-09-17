@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 class PendingOperationsMonitor(private val appContext: Context) {
     enum class Operation(val uniqueId: String, val isPeriodic: Boolean) {
         LIBRARY_INDEX(LibraryIndexScheduler.LIBRARY_INDEX_WORK_ID, false),
+        RAWG_ENRICHMENT(LibraryIndexScheduler.RAWG_ENRICHMENT_WORK_ID, false),
         CORE_UPDATE(LibraryIndexScheduler.CORE_UPDATE_WORK_ID, false),
         SAVES_SYNC_PERIODIC(SaveSyncWork.UNIQUE_PERIODIC_WORK_ID, true),
         SAVES_SYNC_ONE_SHOT(SaveSyncWork.UNIQUE_WORK_ID, false),
@@ -27,7 +28,7 @@ class PendingOperationsMonitor(private val appContext: Context) {
     }
 
     fun anyLibraryOperationInProgress(): Flow<Boolean> {
-        return operationsInProgress(Operation.LIBRARY_INDEX, Operation.CORE_UPDATE)
+        return operationsInProgress(Operation.LIBRARY_INDEX, Operation.RAWG_ENRICHMENT, Operation.CORE_UPDATE)
     }
 
     fun isDirectoryScanInProgress(): Flow<Boolean> {

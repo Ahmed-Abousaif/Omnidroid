@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.omnidroid.app.mobile.feature.settings.SettingsManager
+import com.omnidroid.app.shared.covers.RawgCoverStore
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
@@ -17,16 +19,18 @@ import kotlinx.coroutines.launch
 
 class GameDetailsViewModel(
     private val appContext: Context,
-    retrogradeDb: RetrogradeDatabase,
+    private val retrogradeDb: RetrogradeDatabase,
+    private val settingsManager: SettingsManager,
     gameId: Int,
 ) : ViewModel() {
     class Factory(
         private val appContext: Context,
         private val retrogradeDb: RetrogradeDatabase,
+        private val settingsManager: SettingsManager,
         private val gameId: Int,
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return GameDetailsViewModel(appContext, retrogradeDb, gameId) as T
+            return GameDetailsViewModel(appContext, retrogradeDb, settingsManager, gameId) as T
         }
     }
 
@@ -62,9 +66,15 @@ class GameDetailsViewModel(
 
     init {
         viewModelScope.launch {
-            val game = retrogradeDb.gameDao().selectById(gameId)
-            if (game != null) {
-                metadataFlow.value = GameMetadataRepository.fetch(game.title, systemName(game))
+            if (settingsManager.enableRawgMetadata()) {
+                val row = retrogradeDb.rawgGameMetadataDao().selectByGameId(gameId)
+                val metadata = GameMetadataMapper.fromRawg(row)
+                metadataFlow.value = metadata
+                metadata.coverImageUrl?.takeIf { it.isNotBlank() }?.let {
+                    RawgCoverStore.put(gameId, it)
+                }
+            } else {
+                metadataFlow.value = GameRemoteMetadata()
             }
             loadingMetadataFlow.value = false
         }
@@ -74,13 +84,11 @@ class GameDetailsViewModel(
         playingTrailerFlow.value = !playingTrailerFlow.value
     }
 
-    fun trailerHtml(): String? {
-        return state.value.metadata.youtubeId?.let(GameMetadataRepository::trailerEmbedHtml)
-    }
+    fun trailerHtml(): String? = null
 
     fun trailerSearchUrl(): String? {
         val game = state.value.game ?: return null
-        return GameMetadataRepository.trailerSearchUrl(game.title, systemName(game))
+        return GameMetadataMapper.trailerSearchUrl(game.title, systemName(game))
     }
 
     private fun systemName(game: Game): String {

@@ -139,6 +139,9 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
     lateinit var retrogradeDb: RetrogradeDatabase
 
     @Inject
+    lateinit var settingsManager: com.omnidroid.app.mobile.feature.settings.SettingsManager
+
+    @Inject
     lateinit var gameInteractor: GameInteractor
 
     @Inject
@@ -526,6 +529,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                         GameDetailsViewModel.Factory(
                                             applicationContext,
                                             retrogradeDb,
+                                            settingsManager,
                                             gameId,
                                         ),
                                 ),

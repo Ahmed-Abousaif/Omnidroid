@@ -25,13 +25,15 @@ import com.omnidroid.lib.library.db.dao.DataFileDao
 import com.omnidroid.lib.library.db.dao.GameDao
 import com.omnidroid.lib.library.db.dao.GameSearchDao
 import com.omnidroid.lib.library.db.dao.GameSessionDao
+import com.omnidroid.lib.library.db.dao.RawgGameMetadataDao
 import com.omnidroid.lib.library.db.entity.DataFile
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.library.db.entity.GameSession
+import com.omnidroid.lib.library.db.entity.RawgGameMetadata
 
 @Database(
-    entities = [Game::class, DataFile::class, GameSession::class],
-    version = 12,
+    entities = [Game::class, DataFile::class, GameSession::class, RawgGameMetadata::class],
+    version = 13,
     exportSchema = true,
 )
 abstract class RetrogradeDatabase : RoomDatabase() {
@@ -44,6 +46,8 @@ abstract class RetrogradeDatabase : RoomDatabase() {
     abstract fun dataFileDao(): DataFileDao
 
     abstract fun gameSessionDao(): GameSessionDao
+
+    abstract fun rawgGameMetadataDao(): RawgGameMetadataDao
 
     fun gameSearchDao() = GameSearchDao(gameSearchDaoInternal())
 
