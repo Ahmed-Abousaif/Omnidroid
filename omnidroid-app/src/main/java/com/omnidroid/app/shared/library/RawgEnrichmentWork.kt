@@ -35,6 +35,12 @@ class RawgEnrichmentWork
                 return Result.success()
             }
 
+            val apiKey = settingsManager.rawgApiKey()
+            if (apiKey.isBlank()) {
+                Timber.i("RAWG enrichment skipped (missing API key)")
+                return Result.success()
+            }
+
             val notificationsManager = NotificationsManager(applicationContext)
             val foregroundInfo =
                 createSyncForegroundInfo(
@@ -55,7 +61,11 @@ class RawgEnrichmentWork
                     for (gameId in missingIds) {
                         val game = retrogradeDatabase.gameDao().selectById(gameId) ?: continue
                         val fetched =
-                            rawgMetadataRepository.fetchForGame(game.displayName, game.systemId)
+                            rawgMetadataRepository.fetchForGame(
+                                title = game.displayName,
+                                systemId = game.systemId,
+                                apiKey = apiKey,
+                            )
                         if (fetched != null) {
                             val row =
                                 RawgGameMetadata(

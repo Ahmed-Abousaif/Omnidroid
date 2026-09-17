@@ -20,16 +20,20 @@ class RawgMetadataRepository(
     suspend fun fetchForGame(
         title: String,
         systemId: String?,
+        apiKey: String,
     ): RawgFetchedMetadata? =
         withContext(Dispatchers.IO) {
             runCatching {
+                val key = apiKey.trim()
+                if (key.isBlank()) return@runCatching null
+
                 val cleanedTitle = sanitizeTitle(title)
                 if (cleanedTitle.isBlank()) return@runCatching null
 
                 val platformId = RawgPlatformIds.forSystemId(systemId)
                 val searchBody =
                     api.searchGames(
-                        key = RawgConfig.API_KEY,
+                        key = key,
                         search = cleanedTitle,
                         pageSize = 5,
                         platforms = platformId?.toString(),
@@ -42,7 +46,7 @@ class RawgMetadataRepository(
                 delay(150)
 
                 val detailsBody =
-                    api.getGameDetails(id = match.id, key = RawgConfig.API_KEY).string()
+                    api.getGameDetails(id = match.id, key = key).string()
                 val details = json.decodeFromString(RawgGameDetails.serializer(), detailsBody)
 
                 val description =
@@ -67,7 +71,7 @@ class RawgMetadataRepository(
                 // Prefer a portrait screenshot for cover art when available; otherwise leave null
                 // so the UI keeps Libretro Named_Boxarts / custom covers.
                 delay(150)
-                val coverUrl = fetchPortraitCoverUrl(details.id)?.takeIf { it != backgroundUrl }
+                val coverUrl = fetchPortraitCoverUrl(details.id, key)?.takeIf { it != backgroundUrl }
 
                 RawgFetchedMetadata(
                     rawgId = details.id,
@@ -83,12 +87,15 @@ class RawgMetadataRepository(
                 .getOrNull()
         }
 
-    private suspend fun fetchPortraitCoverUrl(gameId: Int): String? {
+    private suspend fun fetchPortraitCoverUrl(
+        gameId: Int,
+        apiKey: String,
+    ): String? {
         return runCatching {
             val body =
                 api.getGameScreenshots(
                     id = gameId,
-                    key = RawgConfig.API_KEY,
+                    key = apiKey,
                     pageSize = 8,
                 ).string()
             val shots = json.decodeFromString(RawgScreenshotsResponse.serializer(), body).results
