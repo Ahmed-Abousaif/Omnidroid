@@ -1314,6 +1314,12 @@ data class GameSystem(
                                 listOf(
                                     "scph39001.bin",
                                 ),
+                            regionalBIOSFiles =
+                                mapOf(
+                                    "USA" to "scph39001.bin",
+                                    "Europe" to "scph39004.bin",
+                                    "Japan" to "scph39000.bin",
+                                ),
                             rumbleSupported = true,
                             statesSupported = true,
                             supportsLibretroVFS = true,
