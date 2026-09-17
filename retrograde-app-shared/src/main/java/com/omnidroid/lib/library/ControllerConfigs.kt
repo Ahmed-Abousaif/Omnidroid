@@ -389,4 +389,21 @@ object ControllerConfigs {
                     TILT_CONFIGURATION_L_R,
                 ),
         )
+
+    val PS2_DUALSHOCK2 =
+        ControllerConfig(
+            "dualshock2",
+            R.string.controller_dualshock2,
+            TouchControllerID.PS2,
+            allowTouchRotation = true,
+            tiltConfigurations =
+                listOf(
+                    TILT_CONFIGURATION_DISABLED,
+                    TILT_CONFIGURATION_CROSS,
+                    TILT_CONFIGURATION_ANALOG_LEFT,
+                    TILT_CONFIGURATION_ANALOG_RIGHT,
+                    TILT_CONFIGURATION_L1_R1,
+                    TILT_CONFIGURATION_L2_R2,
+                ),
+        )
 }

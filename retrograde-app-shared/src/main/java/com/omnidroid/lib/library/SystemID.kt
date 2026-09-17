@@ -26,4 +26,5 @@ enum class SystemID(val dbname: String) {
     WSC("wsc"),
     DOS("dos"),
     NINTENDO_3DS("3ds"),
+    PS2("ps2"),
 }

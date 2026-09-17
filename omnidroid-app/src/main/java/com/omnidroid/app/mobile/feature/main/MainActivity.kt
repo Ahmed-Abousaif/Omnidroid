@@ -547,6 +547,8 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                             },
                             onFavoriteToggle = onGameFavoriteToggle,
                             onOpenSettings = { selectedGameState.value = it },
+                            onSetCustomName = { game, name -> gameInteractor.onSetCustomName(game, name) },
+                            onSetCustomThumbnail = { game, uri -> gameInteractor.onSetCustomCover(game, uri) },
                             transitionProgress = if (heroActive) heroProgress.value else 1f,
                             hideCover = heroActive && (heroProgress.value < 0.97f || closingDetails.value),
                             onCoverBounds = { rect ->

@@ -86,6 +86,18 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
             Timber.d("Bios file not available. Copying new file.")
             inputStream.writeToFile(biosFile)
         }
+
+        if (bios.systemID == SystemID.PS2) {
+            try {
+                val pcsx2BiosDir = File(directoriesManager.getSystemDirectory(), "pcsx2/bios")
+                pcsx2BiosDir.mkdirs()
+                val pcsx2BiosFile = File(pcsx2BiosDir, bios.libretroFileName)
+                biosFile.copyTo(pcsx2BiosFile, overwrite = true)
+                Timber.d("Synced PS2 bios to pcsx2/bios/${bios.libretroFileName}")
+            } catch (e: Exception) {
+                Timber.e(e, "Error syncing PS2 bios to pcsx2/bios")
+            }
+        }
         return true
     }
 
@@ -181,6 +193,27 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
                     SystemID.NDS,
                     "945F9DC9",
                     "nds_firmware.bin",
+                ),
+                Bios(
+                    "scph39001.bin",
+                    "D5CE2C7D119F563CE04BC04571DE9B9F",
+                    "PS2 NTSC-U/C v1.60",
+                    SystemID.PS2,
+                    "0220C2F9",
+                ),
+                Bios(
+                    "scph70012.bin",
+                    "D333558CC14561C1FDC334C0C34137A5",
+                    "PS2 Slim NTSC-U/C v2.00",
+                    SystemID.PS2,
+                    "1B6E631A",
+                ),
+                Bios(
+                    "scph77001.bin",
+                    "BF7E4EAF60459DB6182B11C865E9AECE",
+                    "PS2 Slim NTSC-U/C v2.20",
+                    SystemID.PS2,
+                    "0B27DB79",
                 ),
             )
     }

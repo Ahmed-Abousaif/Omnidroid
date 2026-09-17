@@ -1297,6 +1297,40 @@ data class GameSystem(
                     uniqueExtensions = listOf("3ds"),
                     hasTouchScreen = true,
                 ),
+                GameSystem(
+                    SystemID.PS2,
+                    "Sony - PlayStation 2",
+                    R.string.game_system_title_ps2,
+                    R.string.game_system_abbr_ps2,
+                    listOf(
+                        SystemCoreConfig(
+                            CoreID.PCEE2,
+                            controllerConfigs =
+                                hashMapOf(
+                                    0 to arrayListOf(ControllerConfigs.PS2_DUALSHOCK2),
+                                    1 to arrayListOf(ControllerConfigs.PS2_DUALSHOCK2),
+                                ),
+                            requiredBIOSFiles =
+                                listOf(
+                                    "scph39001.bin",
+                                ),
+                            rumbleSupported = true,
+                            statesSupported = true,
+                            supportsLibretroVFS = true,
+                            skipDuplicateFrames = false,
+                            supportedOnlyArchitectures = setOf("arm64-v8a"),
+                        ),
+                    ),
+                    uniqueExtensions = listOf(),
+                    supportedExtensions = listOf("iso", "chd", "cue", "m3u", "cso", "zso", "gz", "bin", "mdf", "nrg", "elf", "irx"),
+                    scanOptions =
+                        ScanOptions(
+                            scanByFilename = false,
+                            scanByUniqueExtension = false,
+                            scanByPathAndSupportedExtensions = true,
+                        ),
+                    hasMultiDiskSupport = true,
+                ),
             )
 
         private val byIdCache by lazy { mapOf(*SYSTEMS.map { it.id.dbname to it }.toTypedArray()) }
