@@ -11,7 +11,7 @@
         <br /><br />
         <a href="https://www.buymeacoffee.com/abousaif"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="48" /></a>
         &nbsp;&nbsp;
-        <a href="https://ko-fi.com/abousaif"><img src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" alt="Support me on Ko-fi" height="48" /></a>
+        <a href="https://ko-fi.com/abousaif"><img src="https://storage.ko-fi.com/cdn/brandasset/v2/support_me_on_kofi_blue.png" alt="Support me on Ko-fi" height="48" /></a>
         <br /><br />
       </td>
     </tr>

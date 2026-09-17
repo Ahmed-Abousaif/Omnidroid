@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -514,7 +515,14 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         Modifier
                             .fillMaxSize()
                             .zIndex(if (currentRoute == MainRoute.HOME) 0f else 1f)
-                            .padding(top = LibraryTopBarRowHeight),
+                            .padding(
+                                top =
+                                    if (currentRoute == MainRoute.GAME_DETAILS) {
+                                        0.dp
+                                    } else {
+                                        LibraryTopBarRowHeight
+                                    },
+                            ),
                     navController = navController,
                     startDestination = MainRoute.HOME.route,
                 ) {
