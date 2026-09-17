@@ -216,6 +216,9 @@
 
     <string name="settings_title_enable_rawg_metadata">RAWG game metadata</string>
     <string name="settings_description_enable_rawg_metadata">(Experimental) Fetch and cache game descriptions, genres, covers, and ratings from RAWG when your library syncs. Off by default.</string>
+    <string name="settings_title_rawg_api_key">RAWG API key</string>
+    <string name="settings_description_rawg_api_key">Get a free key at rawg.io/apidocs</string>
+    <string name="settings_hint_rawg_api_key">Paste your API key</string>
 
     <string name="reset_settings_warning_message_title">Are you sure?</string>
     <string name="reset_settings_warning_message_description">This will reset Omnidroid to its factory settings. Saves and States will be preserved.</string>
