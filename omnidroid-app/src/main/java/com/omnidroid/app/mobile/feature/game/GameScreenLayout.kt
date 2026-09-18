@@ -16,11 +16,36 @@ object GameScreenLayout {
     fun buildConstraintSet(
         isLandscape: Boolean,
         allowTouchOverlay: Boolean,
+        padsVisible: Boolean = true,
     ): ConstraintSet {
         return when {
+            !padsVisible -> buildConstraintSetFullscreen()
             !isLandscape -> buildConstraintSetPortrait()
             allowTouchOverlay -> buildConstraintSetLandscape()
             else -> buildConstraintSetLandscapeNoOverlay()
+        }
+    }
+
+    private fun buildConstraintSetFullscreen(): ConstraintSet {
+        return ConstraintSet {
+            val gameView = createRefFor(CONSTRAINTS_GAME_VIEW)
+            val gameContainer = createRefFor(CONSTRAINTS_GAME_CONTAINER)
+
+            constrain(gameView) {
+                width = Dimension.fillToConstraints
+                height = Dimension.fillToConstraints
+                top.linkTo(parent.top)
+                absoluteLeft.linkTo(parent.absoluteLeft)
+                absoluteRight.linkTo(parent.absoluteRight)
+                bottom.linkTo(parent.bottom)
+            }
+
+            constrain(gameContainer) {
+                absoluteLeft.linkTo(gameView.absoluteLeft)
+                absoluteRight.linkTo(gameView.absoluteRight)
+                top.linkTo(gameView.top)
+                bottom.linkTo(gameView.bottom)
+            }
         }
     }
 

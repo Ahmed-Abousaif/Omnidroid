@@ -149,10 +149,36 @@ fun SecondaryButtonCoin() {
     )
 }
 
+context(PadKitScope, LayoutRadialSecondaryDialsScope)
+@Composable
+fun SecondaryButtonScreenLayout(positionDegrees: Float = -120f) {
+    OmnidroidControlButton(
+        modifier = Modifier.radialPosition(positionDegrees),
+        id = Id.Key(ComposeTouchLayouts.HOST_KEY_SCREEN_LAYOUT),
+        icon = R.drawable.button_screen_layout,
+    )
+}
+
+context(PadKitScope, LayoutRadialSecondaryDialsScope)
+@Composable
+fun SecondaryButtonHidePads(positionDegrees: Float = -90f) {
+    OmnidroidControlButton(
+        modifier = Modifier.radialPosition(positionDegrees),
+        id = Id.Key(ComposeTouchLayouts.HOST_KEY_HIDE_PADS),
+        icon = R.drawable.button_hide_pads,
+    )
+}
+
 object ComposeTouchLayouts {
     const val MOTION_SOURCE_DPAD = 0
     const val MOTION_SOURCE_LEFT_STICK = 1
     const val MOTION_SOURCE_RIGHT_STICK = 2
     const val MOTION_SOURCE_DPAD_AND_LEFT_STICK = 3
     const val MOTION_SOURCE_RIGHT_DPAD = 4
+
+    /** Host-only: toggle DS/3DS dual ↔ top-only layout (not sent to core). */
+    const val HOST_KEY_SCREEN_LAYOUT = KeyEvent.KEYCODE_BUTTON_1
+
+    /** Host-only: slide virtual pads away / restore (not sent to core). */
+    const val HOST_KEY_HIDE_PADS = KeyEvent.KEYCODE_BUTTON_2
 }
