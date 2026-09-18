@@ -94,13 +94,13 @@ class PPSSPPAssetsManager : CoreID.AssetsManager {
     }
 
     companion object {
-        // Cache-bust key; download path is always master/assets on OmnidroidCores.
+        // Cache-bust key; keep path tag in sync with GithubCoreDownloader.CORES_VERSION.
         const val PPSSPP_ASSETS_VERSION = "omnidroid-1"
 
         val PPSSPP_ASSETS_URL: Uri =
             Uri.parse("https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/")
                 .buildUpon()
-                .appendEncodedPath("master/assets/ppsspp.zip")
+                .appendEncodedPath("2.0.1/assets/ppsspp.zip")
                 .build()
 
         const val PPSSPP_ASSETS_VERSION_KEY = "ppsspp_assets_version_key"

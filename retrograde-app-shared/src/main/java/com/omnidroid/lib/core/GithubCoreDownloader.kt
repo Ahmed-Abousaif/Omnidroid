@@ -78,8 +78,8 @@ class GithubCoreDownloader(
     }
 
     companion object {
-        // OmnidroidCores has no version tags yet; pin to master and bump when tags are cut.
-        const val CORES_VERSION = "master"
+        // Keep in sync with omnidroid-app versionName / OmnidroidCores git tags.
+        const val CORES_VERSION = "2.0.1"
         private val BASE_URI = Uri.parse("https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/")
     }
 }
