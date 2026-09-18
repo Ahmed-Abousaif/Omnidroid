@@ -91,6 +91,12 @@ private fun InputSettings() {
             enabled = true,
             title = { Text(text = stringResource(R.string.settings_title_vibration_intensity)) },
             subtitle = { Text(text = stringResource(R.string.settings_description_vibration_intensity)) },
+            valueText = { value ->
+                Text(
+                    text = value.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            },
         )
         OmnidroidSettingsSlider(
             state =

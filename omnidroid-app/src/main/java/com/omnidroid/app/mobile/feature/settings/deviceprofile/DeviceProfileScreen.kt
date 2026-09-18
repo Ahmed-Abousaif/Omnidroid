@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -649,6 +650,14 @@ fun WelcomeBenchmarkDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDecline,
+        icon = {
+            Icon(
+                painter = painterResource(R.drawable.ic_profile_robot),
+                contentDescription = null,
+                tint = LibraryNeonGreen,
+                modifier = Modifier.size(40.dp),
+            )
+        },
         title = { Text(text = stringResource(R.string.device_profile_welcome_title)) },
         text = { Text(text = stringResource(R.string.device_profile_welcome_message)) },
         confirmButton = {

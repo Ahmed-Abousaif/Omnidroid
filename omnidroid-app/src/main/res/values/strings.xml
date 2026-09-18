@@ -198,8 +198,8 @@
     <string name="settings_device_profile_benchmark_progress">%1$d%%</string>
 
     <string name="device_profile_welcome_title">Welcome to Omnidroid</string>
-    <string name="device_profile_welcome_message">To help make your experience better, we would like to run a short 30-second CPU benchmark to gauge how well this device can run various emulators. A quick background check already ran when you opened the app. You can view all device details and re-run this benchmark anytime in Settings → Advanced → Device profile.</string>
-    <string name="device_profile_welcome_agree">Run benchmark</string>
+    <string name="device_profile_welcome_message">A quick 30-second check helps us tune games for your device. You can always run it later in Settings.</string>
+    <string name="device_profile_welcome_agree">Sounds good</string>
     <string name="device_profile_welcome_decline">Not now</string>
 
     <string name="settings_title_low_latency_audio">Prefer low-latency audio</string>
