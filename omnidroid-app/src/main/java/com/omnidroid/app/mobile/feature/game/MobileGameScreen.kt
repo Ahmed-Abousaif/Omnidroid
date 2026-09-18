@@ -1,6 +1,12 @@
 package com.omnidroid.app.mobile.feature.game
 
 import android.graphics.RectF
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,22 +17,28 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Height
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.RotateLeft
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -87,6 +99,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
         val controllerConfigState = viewModel.getTouchControllerConfig().collectAsState(null)
         val touchControlsVisibleState = viewModel.isTouchControllerVisible().collectAsState(false)
+        val forceHidePadsState = viewModel.isForceHideTouchControls().collectAsState(false)
         val touchControllerSettingsState =
             viewModel
                 .getTouchControlsSettings(LocalDensity.current, WindowInsets.displayCutout)
@@ -113,6 +126,11 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
         val fullPos = fullScreenPosition.value
         val viewPos = viewportPosition.value
+
+        val isVisible =
+            touchControllerSettings != null &&
+                currentControllerConfig != null &&
+                touchControlsVisibleState.value
 
         LaunchedEffect(fullPos, viewPos) {
             val gameView = viewModel.retroGameView.retroGameViewFlow()
@@ -153,8 +171,9 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 modifier = Modifier.fillMaxSize(),
                 constraintSet =
                     GameScreenLayout.buildConstraintSet(
-                        isLandscape,
-                        currentControllerConfig?.allowTouchOverlay ?: true,
+                        isLandscape = isLandscape,
+                        allowTouchOverlay = currentControllerConfig?.allowTouchOverlay ?: true,
+                        padsVisible = isVisible,
                     ),
             ) {
                 Box(
@@ -164,11 +183,6 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                             .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top))
                             .onGloballyPositioned { viewportPosition.value = it.boundsInRoot() },
                 )
-
-                val isVisible =
-                    touchControllerSettings != null &&
-                        currentControllerConfig != null &&
-                        touchControlsVisibleState.value
 
                 if (isVisible) {
                     CompositionLocalProvider(LocalOmnidroidPadTheme provides OmnidroidPadTheme()) {
@@ -227,6 +241,17 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             )
         }
 
+        AnimatedVisibility(
+            visible = viewModel.hasTouchScreen && forceHidePadsState.value,
+            enter = fadeIn() + slideInVertically { it },
+            exit = fadeOut() + slideOutVertically { it },
+            modifier = Modifier.align(Alignment.BottomCenter),
+        ) {
+            TouchControlsRestoreTab(
+                onClick = { viewModel.showTouchControls() },
+            )
+        }
+
         val isLoading =
             viewModel.loadingState
                 .collectAsState(true)
@@ -239,6 +264,29 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             ) {
                 CircularProgressIndicator()
             }
+        }
+    }
+}
+
+@Composable
+private fun TouchControlsRestoreTab(onClick: () -> Unit) {
+    Surface(
+        modifier =
+            Modifier
+                .padding(bottom = 8.dp)
+                .width(72.dp)
+                .height(28.dp)
+                .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+        tonalElevation = 2.dp,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowUp,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+            )
         }
     }
 }

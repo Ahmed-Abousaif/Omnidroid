@@ -1,8 +1,6 @@
 package com.omnidroid.touchinput.radial.layouts
 
 import android.view.KeyEvent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
@@ -11,6 +9,7 @@ import com.omnidroid.touchinput.radial.controls.OmnidroidControlButton
 import com.omnidroid.touchinput.radial.controls.OmnidroidControlCross
 import com.omnidroid.touchinput.radial.controls.OmnidroidControlFaceButtons
 import com.omnidroid.touchinput.radial.layouts.shared.ComposeTouchLayouts
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonHidePads
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonL
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonMenu
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonMenuPlaceholder
@@ -81,7 +80,7 @@ fun PadKitScope.DesmumeRight(
             SecondaryButtonR()
             SecondaryButtonStart(position = 2)
             SecondaryButtonMenu(settings)
-            Box(modifier = Modifier.fillMaxSize().radialPosition(-120f))
+            SecondaryButtonHidePads(positionDegrees = -120f)
         },
     )
 }

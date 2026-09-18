@@ -130,6 +130,10 @@ class BaseGameScreenViewModel(
             tilt,
             sideEffects,
             viewModelScope,
+            system.id,
+            systemCoreConfig,
+            sharedPreferences,
+            system.hasTouchScreen,
         )
     private val saves =
         GameViewModelSaves(
@@ -226,6 +230,14 @@ class BaseGameScreenViewModel(
 
     fun isTouchControllerVisible(): Flow<Boolean> {
         return touchControls.isTouchControllerVisible()
+    }
+
+    fun isForceHideTouchControls(): Flow<Boolean> {
+        return touchControls.isForceHideTouchControls()
+    }
+
+    fun showTouchControls() {
+        touchControls.showTouchControls()
     }
 
     fun getTouchControllerConfig(): Flow<ControllerConfig> {

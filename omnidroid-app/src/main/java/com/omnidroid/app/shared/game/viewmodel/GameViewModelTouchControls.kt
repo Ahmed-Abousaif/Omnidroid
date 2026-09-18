@@ -1,6 +1,7 @@
 package com.omnidroid.app.shared.game.viewmodel
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.view.KeyEvent
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.ui.unit.Density
@@ -15,6 +16,8 @@ import com.omnidroid.app.tv.shared.TVHelper
 import com.omnidroid.common.coroutines.launchOnState
 import com.omnidroid.common.coroutines.safeCollect
 import com.omnidroid.lib.controller.ControllerConfig
+import com.omnidroid.lib.library.SystemCoreConfig
+import com.omnidroid.lib.library.SystemID
 import com.swordfish.libretrodroid.GLRetroView
 import com.swordfish.libretrodroid.GLRetroView.Companion.MOTION_SOURCE_ANALOG_LEFT
 import com.swordfish.libretrodroid.GLRetroView.Companion.MOTION_SOURCE_ANALOG_RIGHT
@@ -50,6 +53,10 @@ class GameViewModelTouchControls(
     private val tilt: GameViewModelTilt,
     private val sideEffects: GameViewModelSideEffects,
     private val scope: CoroutineScope,
+    private val systemId: SystemID,
+    systemCoreConfig: SystemCoreConfig,
+    sharedPreferences: SharedPreferences,
+    private val hasTouchScreen: Boolean,
 ) : DefaultLifecycleObserver {
     private val touchControlId = MutableStateFlow(TouchControllerID.GB)
     private val screenOrientation = MutableStateFlow(TouchControllerSettingsManager.Orientation.PORTRAIT)
@@ -59,6 +66,14 @@ class GameViewModelTouchControls(
     private val vibrationIntensity = MutableStateFlow(RumbleManager.DEFAULT_RUMBLE_STRENGTH)
     private val touchHapticPlayer = TouchHapticPlayer(appContext)
     private val activeDiscreteDirections = mutableSetOf<Int>()
+    private val forceHideTouchControls = MutableStateFlow(false)
+
+    private val screenLayoutController =
+        TouchScreenLayoutController(
+            sharedPreferences = sharedPreferences,
+            systemId = systemId,
+            coreId = systemCoreConfig.coreID,
+        )
 
     private var loadingMenuJob: Job? = null
 
@@ -120,8 +135,22 @@ class GameViewModelTouchControls(
         if (TVHelper.isTV(appContext)) {
             return flowOf(false)
         }
-        return inputs.getEnabledInputDevices()
-            .map { it.isEmpty() }
+        return combine(
+            inputs.getEnabledInputDevices(),
+            forceHideTouchControls,
+        ) { devices, forceHide ->
+            devices.isEmpty() && !forceHide
+        }
+    }
+
+    fun isForceHideTouchControls(): Flow<Boolean> = forceHideTouchControls
+
+    fun toggleForceHideTouchControls() {
+        forceHideTouchControls.value = !forceHideTouchControls.value
+    }
+
+    fun showTouchControls() {
+        forceHideTouchControls.value = false
     }
 
     fun getTouchControllerConfig(): Flow<ControllerConfig> {
@@ -140,6 +169,9 @@ class GameViewModelTouchControls(
         events.forEach { event ->
             when (event) {
                 is InputEvent.Button -> {
+                    if (handleHostButton(event)) {
+                        return@forEach
+                    }
                     playTouchHapticForButton(event.pressed)
                     handleVirtualInputButton(event)
                 }
@@ -153,6 +185,30 @@ class GameViewModelTouchControls(
                     handleVirtualInputDirection(event.id, event.direction.x, -event.direction.y)
                 }
             }
+        }
+    }
+
+    private fun handleHostButton(event: InputEvent.Button): Boolean {
+        if (!hasTouchScreen || !event.pressed) {
+            return event.id == ComposeTouchLayouts.HOST_KEY_SCREEN_LAYOUT ||
+                event.id == ComposeTouchLayouts.HOST_KEY_HIDE_PADS
+        }
+
+        return when (event.id) {
+            ComposeTouchLayouts.HOST_KEY_SCREEN_LAYOUT -> {
+                if (screenLayoutController.supportsToggle()) {
+                    playTouchHapticForButton(true)
+                    val variables = screenLayoutController.toggle(screenOrientation.value)
+                    retroGameView.applyCoreVariables(variables)
+                }
+                true
+            }
+            ComposeTouchLayouts.HOST_KEY_HIDE_PADS -> {
+                playTouchHapticForButton(true)
+                toggleForceHideTouchControls()
+                true
+            }
+            else -> false
         }
     }
 
@@ -271,4 +327,3 @@ class GameViewModelTouchControls(
         private const val DIRECTION_ACTIVE_THRESHOLD = 0.01f
     }
 }
-

@@ -336,6 +336,11 @@ class GameViewModelRetroGameView(
         retroGameView?.updateVariables(*updatedVariables)
     }
 
+    fun applyCoreVariables(options: List<CoreVariable>) {
+        if (options.isEmpty()) return
+        updateCoreVariables(options)
+    }
+
     private fun handleRetroViewError(errorCode: Int) {
         Timber.e("Error in GLRetroView $errorCode")
         val gameLoaderError =
