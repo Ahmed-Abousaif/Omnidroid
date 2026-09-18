@@ -174,11 +174,12 @@ class GameViewModelRetroGameView(
         // virtual buttons are held. GLRetroView.onTouchEvent only handles the primary pointer.
         result.disableTouchEvents()
 
+        // Apply after addObserver: LibretroDroid.create() (ON_CREATE) always resets frameSpeed to 1.
+        lifecycle.lifecycle.addObserver(result)
+
         if (system.fastForwardSupport) {
             result.frameSpeed = frameSpeedPreferences.get(currentState.gameData.game.id)
         }
-
-        lifecycle.lifecycle.addObserver(result)
 
         if (BuildConfig.DEBUG) {
             runCatching {
