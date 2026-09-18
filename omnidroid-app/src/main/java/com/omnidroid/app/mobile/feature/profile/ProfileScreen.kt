@@ -496,9 +496,9 @@ private fun ProfileHeaderSection(
                 )
             }
 
-            // Milestone Badge (if earned)
+            // Milestone rank (if earned)
             if (milestoneBadge != null) {
-                Spacer(modifier = Modifier.height(if (isLargeScreen) 8.dp else if (compact) 4.dp else 6.dp))
+                Spacer(modifier = Modifier.height(if (isLargeScreen) 6.dp else if (compact) 2.dp else 4.dp))
                 val badgeText =
                     when (milestoneBadge) {
                         ConsoleAchievementsStore.MilestoneBadge.COLLECTOR -> stringResource(R.string.profile_badge_collector)
@@ -506,21 +506,24 @@ private fun ProfileHeaderSection(
                         ConsoleAchievementsStore.MilestoneBadge.HISTORIAN -> stringResource(R.string.profile_badge_historian)
                         ConsoleAchievementsStore.MilestoneBadge.OMNIDROID_MASTER -> stringResource(R.string.profile_badge_master)
                     }
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = LibraryNeonGreen.copy(alpha = 0.12f),
-                    border = BorderStroke(1.dp, LibraryNeonGreen.copy(alpha = 0.35f)),
+                val isMaster = milestoneBadge == ConsoleAchievementsStore.MilestoneBadge.OMNIDROID_MASTER
+                val rankColor = if (isMaster) LibraryNeonGreen else SubtitleColor
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
                 ) {
+                    Icon(
+                        Icons.Outlined.EmojiEvents,
+                        contentDescription = null,
+                        tint = rankColor,
+                        modifier = Modifier.size(if (isLargeScreen) 14.dp else if (compact) 12.dp else 13.dp),
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = badgeText,
-                        color = LibraryNeonGreen,
+                        color = rankColor,
                         fontSize = if (isLargeScreen) 13.sp else if (compact) 11.sp else 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier =
-                            Modifier.padding(
-                                horizontal = if (isLargeScreen) 10.dp else 8.dp,
-                                vertical = if (isLargeScreen) 4.dp else 3.dp,
-                            ),
+                        fontWeight = FontWeight.Medium,
                     )
                 }
             }
@@ -734,24 +737,12 @@ private fun ProfileStreakCard(
                     )
                 }
 
-                // XP Multiplier Pill
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = FireColor.copy(alpha = 0.15f),
-                    border = BorderStroke(1.dp, FireColor.copy(alpha = 0.4f)),
-                ) {
-                    Text(
-                        text = stringResource(R.string.profile_streak_multiplier, streakMultiplier),
-                        color = FireColor,
-                        fontSize = if (isLargeScreen) 13.sp else 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier =
-                            Modifier.padding(
-                                horizontal = if (isLargeScreen) 10.dp else 8.dp,
-                                vertical = if (isLargeScreen) 4.dp else 3.dp,
-                            ),
-                    )
-                }
+                Text(
+                    text = stringResource(R.string.profile_streak_multiplier, streakMultiplier),
+                    color = if (streakMultiplier > 1.0) FireColor else SubtitleColor,
+                    fontSize = if (isLargeScreen) 15.sp else 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
 
             Spacer(modifier = Modifier.height(if (isLargeScreen) 14.dp else 12.dp))
