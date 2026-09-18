@@ -96,7 +96,17 @@ android {
         maybeCreate("debug").apply {
             val projectDebugKeystore = file("$rootDir/debug.keystore")
             if (projectDebugKeystore.exists()) {
+                val storePass =
+                    project.signingSecret("OMNIDROID_DEBUG_STORE_PASSWORD", "omnidroid.debugStorePassword")
+                        ?: project.signingSecret("OMNIDROID_STORE_PASSWORD", "omnidroid.storePassword")
+                        ?: "android"
+                val keyPass =
+                    project.signingSecret("OMNIDROID_DEBUG_KEY_PASSWORD", "omnidroid.debugKeyPassword")
+                        ?: storePass
                 storeFile = projectDebugKeystore
+                keyAlias = "androiddebugkey"
+                storePassword = storePass
+                keyPassword = keyPass
             }
         }
 
@@ -117,12 +127,19 @@ android {
             } else {
                 // Local/CI without a release keystore — fall back to debug signing material only.
                 val projectDebugKeystore = file("$rootDir/debug.keystore")
+                val storePass =
+                    project.signingSecret("OMNIDROID_DEBUG_STORE_PASSWORD", "omnidroid.debugStorePassword")
+                        ?: project.signingSecret("OMNIDROID_STORE_PASSWORD", "omnidroid.storePassword")
+                        ?: "android"
+                val keyPass =
+                    project.signingSecret("OMNIDROID_DEBUG_KEY_PASSWORD", "omnidroid.debugKeyPassword")
+                        ?: storePass
                 if (projectDebugKeystore.exists()) {
                     storeFile = projectDebugKeystore
                 }
                 keyAlias = "androiddebugkey"
-                storePassword = "android"
-                keyPassword = "android"
+                storePassword = storePass
+                keyPassword = keyPass
             }
         }
     }
