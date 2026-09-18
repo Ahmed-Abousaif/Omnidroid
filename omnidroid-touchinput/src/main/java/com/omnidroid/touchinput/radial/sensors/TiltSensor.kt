@@ -9,12 +9,9 @@ import android.view.Surface
 import android.view.WindowManager
 import com.omnidroid.common.kotlin.CustomDelegates
 import com.omnidroid.common.math.linearInterpolation
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import kotlin.math.abs
 import kotlin.math.sign
@@ -96,11 +93,8 @@ class TiltSensor(context: Context) : SensorEventListener {
         }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     private fun sendRestPosition() {
-        GlobalScope.launch {
-            tiltEvents.emit(floatArrayOf(0f, 0f))
-        }
+        tiltEvents.value = floatArrayOf(0f, 0f)
     }
 
     private fun onNewRotationVector(rotationVector: FloatArray) {

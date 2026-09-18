@@ -7,6 +7,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.omnidroid.R
+import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.app.shared.ImmersiveActivity
 import com.omnidroid.app.shared.library.PendingOperationsMonitor
 import com.omnidroid.app.shared.main.GameLaunchTaskHandler
@@ -20,7 +21,6 @@ import com.omnidroid.common.longAnimationDuration
 import com.omnidroid.lib.core.CoresSelection
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -134,7 +134,7 @@ class ExternalGameLauncherActivity : ImmersiveActivity() {
             BaseGameActivity.REQUEST_PLAY_GAME -> {
                 val isLeanback = data?.extras?.getBoolean(BaseGameActivity.PLAY_GAME_RESULT_LEANBACK) == true
 
-                GlobalScope.safeLaunch {
+                OmnidroidApplication.scope(this).safeLaunch {
                     if (isLeanback) {
                         ChannelUpdateWork.enqueue(applicationContext)
                     }

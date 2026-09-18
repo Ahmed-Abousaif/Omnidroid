@@ -45,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -52,6 +53,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.fredporciuncula.flow.preferences.FlowSharedPreferences
 import com.omnidroid.R
+import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.app.mobile.feature.addconsole.AddConsoleScreen
 import com.omnidroid.app.mobile.feature.addconsole.AddConsoleViewModel
 import com.omnidroid.app.mobile.feature.cast.CastPickerSheet
@@ -120,14 +122,11 @@ import com.omnidroid.lib.savesync.SaveSyncManager
 import com.omnidroid.lib.storage.DirectoriesManager
 import dagger.hilt.android.AndroidEntryPoint
 import de.charlex.compose.material3.HtmlText
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-@OptIn(DelicateCoroutinesApi::class)
 class MainActivity : RetrogradeComponentActivity(), BusyActivity {
     @Inject
     lateinit var gameLaunchTaskHandler: GameLaunchTaskHandler
@@ -187,7 +186,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
         hideSystemBars()
         ensureLegacyStoragePermissionsIfNeeded()
 
-        GlobalScope.safeLaunch {
+        OmnidroidApplication.scope(this).safeLaunch {
             reviewManager.initialize(applicationContext)
         }
 
@@ -950,7 +949,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
         when (requestCode) {
             BaseGameActivity.REQUEST_PLAY_GAME -> {
                 castDisplayManager.restoreIdle(this)
-                GlobalScope.safeLaunch {
+                lifecycleScope.safeLaunch {
                     gameLaunchTaskHandler.handleGameFinish(
                         true,
                         this@MainActivity,

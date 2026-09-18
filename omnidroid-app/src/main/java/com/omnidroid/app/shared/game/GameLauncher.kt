@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.omnidroid.R
+import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.app.shared.cast.CastDisplayManager
 import com.omnidroid.app.shared.input.InputDeviceManager
@@ -18,7 +19,6 @@ import com.omnidroid.lib.savesync.GameCloudSyncPreferences
 import com.omnidroid.lib.savesync.SaveSyncManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 class GameLauncher(
@@ -47,7 +47,8 @@ class GameLauncher(
         }
 
         val scope: CoroutineScope =
-            (activity as? LifecycleOwner)?.lifecycleScope ?: GlobalScope
+            (activity as? LifecycleOwner)?.lifecycleScope
+                ?: OmnidroidApplication.scope(activity)
 
         scope.launch(Dispatchers.Main) {
             val system = GameSystem.findById(game.systemId)

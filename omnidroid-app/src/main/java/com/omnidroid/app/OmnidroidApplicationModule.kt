@@ -31,8 +31,6 @@ import com.omnidroid.app.shared.main.GameLaunchTaskHandler
 import com.omnidroid.app.shared.rumble.RumbleManager
 import com.omnidroid.app.shared.settings.ControllerConfigsManager
 import com.omnidroid.app.tv.channel.ChannelHandler
-import com.omnidroid.app.tv.settings.BiosPreferences
-import com.omnidroid.app.tv.settings.CoresSelectionPreferences
 import com.omnidroid.ext.feature.core.CoreUpdaterImpl
 import com.omnidroid.ext.feature.review.ReviewManager
 import com.omnidroid.ext.feature.savesync.SaveSyncManagerImpl
@@ -282,18 +280,10 @@ object OmnidroidApplicationModule {
 
     @Provides
     @Singleton
-    fun biosPreferences(biosManager: BiosManager) = BiosPreferences(biosManager)
-
-    @Provides
-    @Singleton
     fun coresSelection(
         sharedPreferences: Lazy<SharedPreferences>,
         desmumeMigrationHandler: DesmumeMigrationHandler,
     ) = CoresSelection(sharedPreferences, desmumeMigrationHandler)
-
-    @Provides
-    @Singleton
-    fun coreSelectionPreferences() = CoresSelectionPreferences()
 
     @Provides
     @Singleton

@@ -1,6 +1,6 @@
 ## Options
--dontoptimize
--optimizations !code/simplification/arithmetic,!field/*,!class/merging/*,!code/allocation/variable
+# R8 optimization enabled via proguard-android-optimize.txt (do not add -dontoptimize).
+# Verified: assemblePlayDynamicRelease with minifyPlayDynamicReleaseWithR8 succeeds.
 -keepattributes Signature,RuntimeVisibleAnnotations,AnnotationDefault
 -keepattributes SourceFile,LineNumberTable,Signature,JavascriptInterface,Exceptions
 -verbose

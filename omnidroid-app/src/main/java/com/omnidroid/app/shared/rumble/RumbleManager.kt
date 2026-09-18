@@ -10,7 +10,7 @@ import com.omnidroid.app.shared.input.InputDeviceManager
 import com.omnidroid.common.coroutines.safeCollect
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.swordfish.libretrodroid.RumbleEvent
-import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -19,17 +19,17 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.newSingleThreadContext
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class RumbleManager(
     applicationContext: Context,
     private val settingsManager: SettingsManager,
     private val inputDeviceManager: InputDeviceManager,
 ) {
     private val deviceVibrator = applicationContext.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-    private val rumbleContext = newSingleThreadContext("Rumble")
+    // Serial rumble work without owning a permanent Thread (unlike newSingleThreadContext).
+    private val rumbleDispatcher = Dispatchers.Default.limitedParallelism(1)
 
     suspend fun collectAndProcessRumbleEvents(
         systemCoreConfig: SystemCoreConfig,
@@ -50,7 +50,7 @@ class RumbleManager(
                     .onEach { kotlin.runCatching { vibrate(vibrators[it.port], it, vibrationIntensity) } }
                     .onStart { stopAllVibrators(vibrators) }
                     .onCompletion { stopAllVibrators(vibrators) }
-                    .flowOn(rumbleContext)
+                    .flowOn(rumbleDispatcher)
             }
             .safeCollect { }
     }
