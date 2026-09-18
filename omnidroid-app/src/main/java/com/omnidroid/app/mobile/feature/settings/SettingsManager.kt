@@ -23,6 +23,8 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
 
     suspend fun hapticFeedbackMode() = stringPreference(R.string.pref_key_haptic_feedback_mode, "press")
 
+    suspend fun vibrationIntensity() = floatPreference(R.string.pref_key_vibration_intensity, 100, 50)
+
     suspend fun lowLatencyAudio() = booleanPreference(R.string.pref_key_low_latency_audio, false)
 
     suspend fun screenFilter() =
