@@ -10,6 +10,7 @@ data class ControllerConfig(
     val touchControllerID: TouchControllerID,
     val allowTouchRotation: Boolean = false,
     val allowTouchOverlay: Boolean = true,
+    val allowDpadDiagonalsToggle: Boolean = true,
     val mergeDPADAndLeftStickEvents: Boolean = false,
     val libretroDescriptor: String? = null,
     val libretroId: Int? = null,

@@ -26,7 +26,7 @@ fun PadKitScope.WSPortraitLeft(
     BaseLayoutLeft(
         settings = settings,
         modifier = modifier,
-        primaryDial = { OmnidroidControlCross(id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD)) },
+        primaryDial = { OmnidroidControlCross(id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD), allowDiagonals = settings.allowDiagonals) },
         secondaryDials = {
             Box(modifier = Modifier.radialPosition(120f))
             SecondaryButtonMenuPlaceholder(settings)
@@ -75,7 +75,7 @@ fun PadKitScope.WSLandscapeLeft(
     BaseLayoutLeft(
         settings = settings,
         modifier = modifier,
-        primaryDial = { OmnidroidControlCross(id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD)) },
+        primaryDial = { OmnidroidControlCross(id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD), allowDiagonals = settings.allowDiagonals) },
         secondaryDials = {
             Box(modifier = Modifier.radialPosition(120f))
             SecondaryButtonMenuPlaceholder(settings)

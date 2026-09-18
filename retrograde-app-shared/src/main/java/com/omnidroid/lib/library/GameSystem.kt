@@ -979,6 +979,14 @@ data class GameSystem(
                                                 "left-right",
                                                 R.string.value_melonds_screen_layout_leftright,
                                             ),
+                                            ExposedSetting.Value(
+                                                "top",
+                                                R.string.value_melonds_screen_layout_toponly,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "bottom",
+                                                R.string.value_melonds_screen_layout_bottomonly,
+                                            ),
                                         ),
                                     ),
                                     ExposedSetting(
@@ -1273,6 +1281,24 @@ data class GameSystem(
                                             ExposedSetting.Value(
                                                 "Side by Side",
                                                 R.string.value_citra_layout_option_sidebyside,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Single Screen Only",
+                                                R.string.value_citra_layout_option_single,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "citra_swap_screen",
+                                        R.string.setting_citra_swap_screen,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "Top",
+                                                R.string.value_citra_swap_screen_top,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Bottom",
+                                                R.string.value_citra_swap_screen_bottom,
                                             ),
                                         ),
                                     ),

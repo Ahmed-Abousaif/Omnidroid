@@ -20,10 +20,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Height
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.RotateLeft
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -316,6 +318,31 @@ private fun MenuEditTouchControls(
                             onValueChange = {
                                 viewModel.updateTouchControllerSettings(
                                     touchControllerSettings.copy(rotation = it),
+                                )
+                            },
+                        )
+                    }
+                }
+                if (controllerConfig.allowDpadDiagonalsToggle) {
+                    val dpadLabel = stringResource(R.string.touch_customize_dpad_8way)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SportsEsports,
+                            contentDescription = dpadLabel,
+                        )
+                        Text(
+                            text = dpadLabel,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Switch(
+                            checked = touchControllerSettings.allowDiagonals,
+                            onCheckedChange = {
+                                viewModel.updateTouchControllerSettings(
+                                    touchControllerSettings.copy(allowDiagonals = it),
                                 )
                             },
                         )
