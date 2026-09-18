@@ -36,6 +36,7 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 ### A library that is easier to live in
 
 - Zoom game covers in or out to show more or fewer games.
+- The library grid picks how many rows to show from the **available screen height**, so phones, tall devices, and tablets stay readable at every zoom level.
 - Hit **Continue** to jump straight back into your last game
 - Search as you type, advanced search for all games and consoles.
 
@@ -47,12 +48,20 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 
 ### Game pages
 
-- Open a game to see its cover, description, genre, release date, play time, and when you last played it.
-- Play game trailers and see ratings.
+- Open a game to see its cover, description, genre, release date, publisher, rating, play time, and when you last played it.
+- When RAWG metadata is enabled and a trailer is available, play it from the cover.
 - Favorite a game, play it, or change that game’s settings from the same screen.
 - Set a custom game image for any title.
 - Give any game a custom name.
 - Pick a per-game fast-forward speed, including 8x and 16x.
+
+### Experimental RAWG game metadata
+
+- Under **Settings → Advanced**, turn on **RAWG game metadata** (off by default).
+- Enter your own free API key from [rawg.io/apidocs](https://rawg.io/apidocs); the key field appears under the toggle.
+- On the next library sync, Omnidroid searches RAWG by title, caches description, genres, release date, publisher, rating, and backdrop image on device, and keeps Libretro box art for covers unless a portrait screenshot is available.
+- Trailers come from RAWG’s movie files when present — no YouTube scraping.
+- Independent of cloud login / save sync; leave it off and game pages show empty metadata fields.
 
 ### Add consoles
 
@@ -164,7 +173,7 @@ These are issues from Lemuroid’s original flow, or regressions found while bui
 - Notification permission no longer just tells you to enable it — the app actually prompts, and can open system settings if needed.
 - Rescan used to do work with no UI feedback. The top bar now shows a scanning state.
 - Tapping a library game no longer launches it by accident. Only **Continue** starts play immediately.
-- Game descriptions and trailers failed to load; Wikipedia / Wikidata / YouTube lookup now works.
+- Game descriptions and trailers no longer depend on Wikipedia / Wikidata / YouTube scraping; optional RAWG metadata fills those fields when enabled.
 - Back from the launcher could leave you on the stock Android home screen. It now stays inside Omnidroid.
 - System status and navigation bars leaked over the launcher; both are hidden.
 - HD mode could keep burning battery at low charge. It now auto-disables under 15%.
