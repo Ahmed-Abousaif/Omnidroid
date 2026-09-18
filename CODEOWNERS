@@ -1,0 +1,8 @@
+# Require owner review for funding, signing, and CI changes.
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+.github/FUNDING.yml @Ahmed-Abousaif
+.github/workflows/ @Ahmed-Abousaif
+omnidroid-app/build.gradle.kts @Ahmed-Abousaif
+.gitignore @Ahmed-Abousaif
+CODEOWNERS @Ahmed-Abousaif

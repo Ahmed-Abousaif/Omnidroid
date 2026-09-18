@@ -16,4 +16,12 @@ project.properties
 .gradle
 .externalNativeBuild
 local.properties
-release.jks
+
+# Signing material — never commit private keys or passwords
+*.jks
+*.keystore
+*.keystore.asc
+release.keystore.asc
+signing.properties
+.env
+.env.*

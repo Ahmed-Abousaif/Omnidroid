@@ -32,6 +32,11 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Assemble Artifact
+        env:
+          # Required once release.jks exists (no longer hardcoded in Gradle).
+          OMNIDROID_STORE_PASSWORD: ${{ secrets.OMNIDROID_STORE_PASSWORD }}
+          OMNIDROID_KEY_PASSWORD: ${{ secrets.OMNIDROID_KEY_PASSWORD }}
+          OMNIDROID_KEY_ALIAS: ${{ secrets.OMNIDROID_KEY_ALIAS }}
         run: ./gradlew assembleFreeDynamic
 
       - name: Upload Artifact

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -90,19 +92,34 @@ android {
     }
 
     signingConfigs {
+        // Prefer a project-local debug keystore when present; otherwise AGP's default (~/.android/debug.keystore).
         maybeCreate("debug").apply {
-            storeFile = file("$rootDir/debug.keystore")
+            val projectDebugKeystore = file("$rootDir/debug.keystore")
+            if (projectDebugKeystore.exists()) {
+                storeFile = projectDebugKeystore
+            }
         }
 
         maybeCreate("release").apply {
-            if (file("$rootDir/release.jks").exists()) {
-                storeFile = file("$rootDir/release.jks")
-                keyAlias = "omnidroid"
-                storePassword = "omnidroid"
-                keyPassword = "omnidroid"
+            val releaseKeystore = file("$rootDir/release.jks")
+            if (releaseKeystore.exists()) {
+                val storePass = project.signingSecret("OMNIDROID_STORE_PASSWORD", "omnidroid.storePassword")
+                    ?: error(
+                        "release.jks found but no store password. Set OMNIDROID_STORE_PASSWORD env " +
+                            "or omnidroid.storePassword in local.properties / gradle.properties.",
+                    )
+                val keyPass = project.signingSecret("OMNIDROID_KEY_PASSWORD", "omnidroid.keyPassword") ?: storePass
+                val alias = project.signingSecret("OMNIDROID_KEY_ALIAS", "omnidroid.keyAlias") ?: "omnidroid"
+                storeFile = releaseKeystore
+                keyAlias = alias
+                storePassword = storePass
+                keyPassword = keyPass
             } else {
-                // No release.jks — sign with the local debug keystore
-                storeFile = file("$rootDir/debug.keystore")
+                // Local/CI without a release keystore — fall back to debug signing material only.
+                val projectDebugKeystore = file("$rootDir/debug.keystore")
+                if (projectDebugKeystore.exists()) {
+                    storeFile = projectDebugKeystore
+                }
                 keyAlias = "androiddebugkey"
                 storePassword = "android"
                 keyPassword = "android"
@@ -223,4 +240,16 @@ dependencies {
 fun usePlayDynamicFeatures(): Boolean {
     val task = gradle.startParameter.taskRequests.toString()
     return task.contains("Play") && task.contains("Dynamic")
+}
+
+/** Resolve signing secrets: env var first, then Gradle/-P property, then local.properties. */
+fun Project.signingSecret(envName: String, propertyName: String): String? {
+    System.getenv(envName)?.takeIf { it.isNotBlank() }?.let { return it }
+    (findProperty(propertyName) as String?)?.takeIf { it.isNotBlank() }?.let { return it }
+    val localProperties = Properties()
+    val localFile = rootProject.file("local.properties")
+    if (localFile.exists()) {
+        localFile.inputStream().use { localProperties.load(it) }
+    }
+    return localProperties.getProperty(propertyName)?.takeIf { it.isNotBlank() }
 }
