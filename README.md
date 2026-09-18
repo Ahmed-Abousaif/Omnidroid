@@ -92,6 +92,17 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 
 - HD mode turns itself off when the battery drops below 15%, then comes back when you have charge again.
 
+### Touch D-Pad: 4-way or 8-way
+
+- In **Edit Controls**, toggle **8-way D-Pad** on or off for any console with a D-Pad.
+- On = diagonals (default); off = cardinal directions only.
+- Saved per layout and orientation with your other touch control settings.
+
+### NDS and 3DS single-screen layouts
+
+- **melonDS (NDS):** Screens layout includes **Top Only** and **Bottom Only**, alongside Top–Bottom and Left–Right.
+- **Citra (3DS):** Screens layout includes **Single Screen**, plus **Displayed screen** (Top or Bottom) to choose which one shows.
+
 ### Your profile
 
 - Open **Profile** from the library top bar. A gamer tag and robot avatar are created on first launch; change either anytime.
@@ -163,7 +174,7 @@ Omnidroid includes experimental **PlayStation 2 (PS2)** emulation powered by the
 - Gamepad support
 - Local multiplayer
 - Tilt input
-- Customizable touch controls (size and position)
+- Customizable touch controls (size, position, and 4-way / 8-way D-Pad)
 - HD mode
 
 ## Bug fixes
