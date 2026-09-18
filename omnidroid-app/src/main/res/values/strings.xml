@@ -214,6 +214,9 @@
     <string name="settings_title_enable_device_rumble">Device rumble</string>
     <string name="settings_description_enable_device_rumble">When no controller is connected vibrate the device instead</string>
 
+    <string name="settings_title_vibration_intensity">Vibration intensity</string>
+    <string name="settings_description_vibration_intensity">Strength for touch feedback and rumble</string>
+
     <string name="settings_title_enable_rawg_metadata">RAWG game metadata</string>
     <string name="settings_description_enable_rawg_metadata">(Experimental) Fetch and cache game descriptions, genres, covers, and ratings from RAWG when your library syncs. Off by default.</string>
     <string name="settings_title_rawg_api_key">RAWG API key</string>

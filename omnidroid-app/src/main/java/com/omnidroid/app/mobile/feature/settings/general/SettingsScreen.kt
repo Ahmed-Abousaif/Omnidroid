@@ -539,6 +539,18 @@ private fun ControllerSettings(navController: NavController) {
         OmnidroidSettingsSlider(
             state =
                 intPreferenceState(
+                    key = stringResource(id = R.string.pref_key_vibration_intensity),
+                    default = 50,
+                ),
+            steps = 100,
+            valueRange = 0f..100f,
+            enabled = true,
+            title = { Text(text = stringResource(R.string.settings_title_vibration_intensity)) },
+            subtitle = { Text(text = stringResource(R.string.settings_description_vibration_intensity)) },
+        )
+        OmnidroidSettingsSlider(
+            state =
+                intPreferenceState(
                     key = stringResource(id = R.string.pref_key_tilt_sensitivity_index),
                     default = 6,
                 ),

@@ -8,6 +8,8 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
+import com.omnidroid.app.shared.rumble.RumbleManager
+import com.omnidroid.app.shared.rumble.TouchHapticPlayer
 import com.omnidroid.app.shared.settings.HapticFeedbackMode
 import com.omnidroid.app.tv.shared.TVHelper
 import com.omnidroid.common.coroutines.launchOnState
@@ -36,6 +38,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.abs
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GameViewModelTouchControls(
@@ -53,6 +56,9 @@ class GameViewModelTouchControls(
     private val menuPressed = MutableStateFlow(false)
     private val showEditControls = MutableStateFlow(false)
     private val hapticFeedbackMode = MutableStateFlow(HapticFeedbackMode.NONE)
+    private val vibrationIntensity = MutableStateFlow(RumbleManager.DEFAULT_RUMBLE_STRENGTH)
+    private val touchHapticPlayer = TouchHapticPlayer(appContext)
+    private val activeDiscreteDirections = mutableSetOf<Int>()
 
     private var loadingMenuJob: Job? = null
 
@@ -65,6 +71,7 @@ class GameViewModelTouchControls(
         owner.launchOnState(Lifecycle.State.CREATED) {
             withContext(Dispatchers.IO) {
                 hapticFeedbackMode.value = HapticFeedbackMode.parse(settingsManager.hapticFeedbackMode())
+                vibrationIntensity.value = settingsManager.vibrationIntensity()
             }
         }
     }
@@ -133,15 +140,49 @@ class GameViewModelTouchControls(
         events.forEach { event ->
             when (event) {
                 is InputEvent.Button -> {
+                    playTouchHapticForButton(event.pressed)
                     handleVirtualInputButton(event)
                 }
 
                 is InputEvent.DiscreteDirection -> {
+                    playTouchHapticForDirection(event.id, event.direction.x, event.direction.y)
                     handleVirtualInputDirection(event.id, event.direction.x, -event.direction.y)
                 }
 
                 is InputEvent.ContinuousDirection -> {
                     handleVirtualInputDirection(event.id, event.direction.x, -event.direction.y)
+                }
+            }
+        }
+    }
+
+    private fun playTouchHapticForButton(pressed: Boolean) {
+        val mode = hapticFeedbackMode.value
+        if (mode == HapticFeedbackMode.NONE) return
+        if (!pressed && mode != HapticFeedbackMode.PRESS_RELEASE) return
+        touchHapticPlayer.play(isPress = pressed, intensity = vibrationIntensity.value)
+    }
+
+    private fun playTouchHapticForDirection(
+        id: Int,
+        x: Float,
+        y: Float,
+    ) {
+        val mode = hapticFeedbackMode.value
+        if (mode == HapticFeedbackMode.NONE) return
+
+        val isActive = abs(x) > DIRECTION_ACTIVE_THRESHOLD || abs(y) > DIRECTION_ACTIVE_THRESHOLD
+        val wasActive = id in activeDiscreteDirections
+
+        when {
+            isActive && !wasActive -> {
+                activeDiscreteDirections.add(id)
+                touchHapticPlayer.play(isPress = true, intensity = vibrationIntensity.value)
+            }
+            !isActive && wasActive -> {
+                activeDiscreteDirections.remove(id)
+                if (mode == HapticFeedbackMode.PRESS_RELEASE) {
+                    touchHapticPlayer.play(isPress = false, intensity = vibrationIntensity.value)
                 }
             }
         }
@@ -227,5 +268,7 @@ class GameViewModelTouchControls(
 
     companion object {
         const val MENU_LOADING_ANIMATION_MILLIS = 500
+        private const val DIRECTION_ACTIVE_THRESHOLD = 0.01f
     }
 }
+

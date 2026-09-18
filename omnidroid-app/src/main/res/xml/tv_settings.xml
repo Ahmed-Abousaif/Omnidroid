@@ -103,6 +103,17 @@
                     app:iconSpaceReserved="false"
                     android:defaultValue="false"/>
 
+                <SeekBarPreference
+                    android:key="@string/pref_key_vibration_intensity"
+                    android:title="@string/settings_title_vibration_intensity"
+                    android:summary="@string/settings_description_vibration_intensity"
+                    app:min="0"
+                    android:max="100"
+                    app:seekBarIncrement="1"
+                    app:showSeekBarValue="true"
+                    app:iconSpaceReserved="false"
+                    android:defaultValue="50"/>
+
             </PreferenceCategory>
 
             <PreferenceCategory

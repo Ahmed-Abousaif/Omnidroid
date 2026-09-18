@@ -37,6 +37,7 @@ class RumbleManager(
     ) {
         val enableRumble = settingsManager.enableRumble()
         val rumbleSupported = systemCoreConfig.rumbleSupported
+        val vibrationIntensity = settingsManager.vibrationIntensity()
 
         if (!enableRumble && rumbleSupported) {
             return
@@ -46,7 +47,7 @@ class RumbleManager(
             .map { getVibrators(it) }
             .flatMapLatest { vibrators ->
                 rumbleEventsObservable
-                    .onEach { kotlin.runCatching { vibrate(vibrators[it.port], it) } }
+                    .onEach { kotlin.runCatching { vibrate(vibrators[it.port], it, vibrationIntensity) } }
                     .onStart { stopAllVibrators(vibrators) }
                     .onCompletion { stopAllVibrators(vibrators) }
                     .flowOn(rumbleContext)
@@ -73,12 +74,13 @@ class RumbleManager(
     private fun vibrate(
         vibrator: Vibrator?,
         rumbleEvent: RumbleEvent,
+        intensity: Float,
     ) {
         if (vibrator == null) return
 
         vibrator.cancel()
 
-        val amplitude = computeAmplitude(rumbleEvent)
+        val amplitude = computeAmplitude(rumbleEvent, intensity)
 
         if (amplitude == 0) return
 
@@ -89,9 +91,12 @@ class RumbleManager(
         }
     }
 
-    private fun computeAmplitude(rumbleEvent: RumbleEvent): Int {
+    private fun computeAmplitude(
+        rumbleEvent: RumbleEvent,
+        intensity: Float,
+    ): Int {
         val strength = rumbleEvent.strengthStrong * 0.66f + rumbleEvent.strengthWeak * 0.33f
-        return (DEFAULT_RUMBLE_STRENGTH * (strength) * 255).roundToInt()
+        return (intensity * strength * 255).roundToInt()
     }
 
     companion object {

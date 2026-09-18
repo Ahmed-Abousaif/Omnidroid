@@ -53,7 +53,6 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.omnidroid.app.shared.game.BaseGameScreenViewModel
 import com.omnidroid.app.shared.game.viewmodel.GameViewModelTouchControls.Companion.MENU_LOADING_ANIMATION_MILLIS
-import com.omnidroid.app.shared.settings.HapticFeedbackMode
 import com.omnidroid.lib.controller.ControllerConfig
 import com.omnidroid.touchinput.R
 import com.omnidroid.touchinput.radial.OmnidroidPadTheme
@@ -99,22 +98,11 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
         val leftGamePad = touchGamePads?.leftComposable
         val rightGamePad = touchGamePads?.rightComposable
 
-        val hapticFeedbackMode =
-            viewModel
-                .getTouchHapticFeedbackMode()
-                .collectAsState(HapticFeedbackMode.NONE)
-
-        val padHapticFeedback =
-            when (hapticFeedbackMode.value) {
-                HapticFeedbackMode.NONE -> HapticFeedbackType.NONE
-                HapticFeedbackMode.PRESS -> HapticFeedbackType.PRESS
-                HapticFeedbackMode.PRESS_RELEASE -> HapticFeedbackType.PRESS_RELEASE
-            }
-
+        // PadKit has no intensity API; touch haptics are played in GameViewModelTouchControls.
         PadKit(
             modifier = Modifier.fillMaxSize(),
             onInputEvents = { viewModel.handleVirtualInputEvent(it) },
-            hapticFeedbackType = padHapticFeedback,
+            hapticFeedbackType = HapticFeedbackType.NONE,
             simulatedState = tiltSimulatedStates,
             simulatedControlIds = tiltSimulatedControls,
         ) {
