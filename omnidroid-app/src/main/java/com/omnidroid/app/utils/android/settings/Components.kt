@@ -23,8 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.alorma.compose.settings.storage.base.SettingValueState
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.Slider
 import com.alorma.compose.settings.ui.SettingsMenuLink
-import com.alorma.compose.settings.ui.SettingsSlider
 import com.alorma.compose.settings.ui.SettingsSwitch
 import kotlin.math.roundToInt
 
@@ -139,28 +140,41 @@ fun OmnidroidSettingsSlider(
     enabled: Boolean,
     valueRange: ClosedFloatingPointRange<Float>,
     title: @Composable () -> Unit,
-    subtitle: @Composable () -> Unit = { },
+    subtitle: (@Composable () -> Unit)? = null,
+    valueText: (@Composable (Int) -> Unit)? = null,
 ) {
-    val defaultColors = ListItemDefaults.colors()
+    val defaultColors = ListItemDefaults.colors(containerColor = Color.Transparent)
     val disabledColors =
         ListItemDefaults.colors(
+            containerColor = Color.Transparent,
             headlineColor = defaultColors.disabledHeadlineColor,
             leadingIconColor = defaultColors.disabledLeadingIconColor,
             trailingIconColor = defaultColors.disabledTrailingIconColor,
             supportingColor = defaultColors.supportingTextColor.copy(alpha = 0.3f),
         )
+    val colors = if (enabled) defaultColors else disabledColors
 
-    SettingsSlider(
-        modifier = modifier,
-        steps = steps,
-        value = state.value.toFloat(),
-        onValueChange = { state.value = it.roundToInt() },
-        valueRange = valueRange,
-        title = title,
-        subtitle = subtitle,
-        enabled = enabled,
-        colors = if (enabled) defaultColors else disabledColors,
-    )
+    Column(
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        ListItem(
+            headlineContent = title,
+            supportingContent = subtitle,
+            trailingContent = valueText?.let { { it(state.value) } },
+            colors = colors,
+        )
+        Slider(
+            value = state.value.toFloat(),
+            onValueChange = { state.value = it.roundToInt() },
+            valueRange = valueRange,
+            steps = steps,
+            enabled = enabled,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+        )
+    }
 }
 
 @Composable

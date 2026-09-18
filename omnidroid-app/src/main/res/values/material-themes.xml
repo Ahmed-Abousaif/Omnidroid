@@ -33,6 +33,8 @@
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:navigationBarColor">?attr/colorSurface</item>
         <item name="elevationOverlayColor">?attr/colorOnSurface</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="s">@color/omnidroid_launcher_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@drawable/omnidroid_launcher_foreground</item>
     </style>
 
     <style name="OmnidroidMaterialTheme.Launcher" parent="OmnidroidMaterialTheme">
@@ -40,6 +42,8 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
+        <item name="android:windowSplashScreenBackground" tools:targetApi="s">@color/omnidroid_launcher_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@drawable/omnidroid_launcher_foreground</item>
     </style>
 
     <style name="OmnidroidMaterialTheme.Invisible" parent="OmnidroidMaterialTheme">
