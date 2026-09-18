@@ -190,11 +190,7 @@ Omnidroid includes experimental **PlayStation 2 (PS2)** emulation powered by the
 
 These are issues from Lemuroid’s original flow, or regressions found while building Omnidroid, that are now fixed:
 
-- Notification permission no longer just tells you to enable it — the app actually prompts, and can open system settings if needed.
-- Rescan used to do work with no UI feedback. The top bar now shows a scanning state.
 - Tapping a library game no longer launches it by accident. Only **Continue** starts play immediately.
-- Game descriptions and trailers no longer depend on Wikipedia / Wikidata / YouTube scraping; optional RAWG metadata fills those fields when enabled.
-- Back from the launcher could leave you on the stock Android home screen. It now stays inside Omnidroid.
 - System status and navigation bars leaked over the launcher; both are hidden.
 - HD mode could keep burning battery at low charge. It now auto-disables under 15%.
 - Core updates re-downloaded cores that were already on disk. Missing cores are detected and fetched instead.

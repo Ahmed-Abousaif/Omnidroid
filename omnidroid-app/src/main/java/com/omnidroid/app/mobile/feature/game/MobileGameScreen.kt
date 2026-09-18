@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
@@ -46,11 +48,13 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlin.math.roundToInt
 import com.omnidroid.app.shared.game.BaseGameScreenViewModel
 import com.omnidroid.app.shared.game.viewmodel.GameViewModelTouchControls.Companion.MENU_LOADING_ANIMATION_MILLIS
 import com.omnidroid.lib.controller.ControllerConfig
@@ -99,7 +103,33 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
         val leftGamePad = touchGamePads?.leftComposable
         val rightGamePad = touchGamePads?.rightComposable
 
+        val localContext = LocalContext.current
+        val lifecycle = LocalLifecycleOwner.current
+        val density = LocalDensity.current
+
+        val fullScreenPosition = remember { mutableStateOf<Rect?>(null) }
+        val viewportPosition = remember { mutableStateOf<Rect?>(null) }
+        val retroViewState = remember { mutableStateOf<GLRetroView?>(null) }
+
+        val fullPos = fullScreenPosition.value
+        val viewPos = viewportPosition.value
+
+        LaunchedEffect(fullPos, viewPos) {
+            val gameView = viewModel.retroGameView.retroGameViewFlow()
+            if (fullPos == null || viewPos == null) return@LaunchedEffect
+            val viewport =
+                RectF(
+                    (viewPos.left - fullPos.left) / fullPos.width,
+                    (viewPos.top - fullPos.top) / fullPos.height,
+                    (viewPos.right - fullPos.left) / fullPos.width,
+                    (viewPos.bottom - fullPos.top) / fullPos.height,
+                )
+            gameView.viewport = viewport
+        }
+
         // PadKit has no intensity API; touch haptics are played in GameViewModelTouchControls.
+        // Touchscreen overlay is a sibling (not nested) so its pointerInput cannot break
+        // PadKit multi-touch for virtual buttons.
         PadKit(
             modifier = Modifier.fillMaxSize(),
             onInputEvents = { viewModel.handleVirtualInputEvent(it) },
@@ -107,13 +137,6 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             simulatedState = tiltSimulatedStates,
             simulatedControlIds = tiltSimulatedControls,
         ) {
-            val localContext = LocalContext.current
-            val lifecycle = LocalLifecycleOwner.current
-
-            val fullScreenPosition = remember { mutableStateOf<Rect?>(null) }
-            val viewportPosition = remember { mutableStateOf<Rect?>(null) }
-            val retroViewState = remember { mutableStateOf<GLRetroView?>(null) }
-
             AndroidView(
                 modifier =
                     Modifier
@@ -125,22 +148,6 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                     }
                 },
             )
-
-            val fullPos = fullScreenPosition.value
-            val viewPos = viewportPosition.value
-
-            LaunchedEffect(fullPos, viewPos) {
-                val gameView = viewModel.retroGameView.retroGameViewFlow()
-                if (fullPos == null || viewPos == null) return@LaunchedEffect
-                val viewport =
-                    RectF(
-                        (viewPos.left - fullPos.left) / fullPos.width,
-                        (viewPos.top - fullPos.top) / fullPos.height,
-                        (viewPos.right - fullPos.left) / fullPos.width,
-                        (viewPos.bottom - fullPos.top) / fullPos.height,
-                    )
-                gameView.viewport = viewport
-            }
 
             ConstraintLayout(
                 modifier = Modifier.fillMaxSize(),
@@ -156,14 +163,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                             .layoutId(GameScreenLayout.CONSTRAINTS_GAME_VIEW)
                             .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top))
                             .onGloballyPositioned { viewportPosition.value = it.boundsInRoot() },
-                ) {
-                    TouchScreenPointerOverlay(
-                        enabled = viewModel.hasTouchScreen,
-                        retroView = retroViewState.value,
-                        retroViewBoundsInRoot = fullPos,
-                        touchScreenBoundsInRoot = viewPos,
-                    )
-                }
+                )
 
                 val isVisible =
                     touchControllerSettings != null &&
@@ -205,6 +205,26 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                     }
                 }
             }
+        }
+
+        // Viewport-sized sibling above the game image only (NDS/3DS pads sit beside/below it).
+        // Kept outside PadKit so its pointerInput cannot collapse PadKit multi-touch.
+        if (viewModel.hasTouchScreen && viewPos != null) {
+            TouchScreenPointerOverlay(
+                enabled = true,
+                retroView = retroViewState.value,
+                retroViewBoundsInRoot = fullPos,
+                touchScreenBoundsInRoot = viewPos,
+                modifier =
+                    Modifier
+                        .offset {
+                            IntOffset(viewPos.left.roundToInt(), viewPos.top.roundToInt())
+                        }
+                        .size(
+                            width = with(density) { viewPos.width.toDp() },
+                            height = with(density) { viewPos.height.toDp() },
+                        ),
+            )
         }
 
         val isLoading =
