@@ -3,7 +3,6 @@ plugins {
     id("kotlin-android")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
-    id("androidx.navigation.safeargs.kotlin")
     id("kotlinx-serialization")
     id("androidx.baselineprofile")
     id("org.jetbrains.kotlin.plugin.compose")
@@ -114,6 +113,7 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
+            isShrinkResources = true
             signingConfig = signingConfigs["release"]
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             resValue("string", "omnidroid_name", "Omnidroid")
@@ -159,8 +159,6 @@ dependencies {
     "freeImplementation"(project(":omnidroid-app-ext-free"))
     "playImplementation"(project(":omnidroid-app-ext-play"))
 
-    implementation(deps.libs.androidx.navigation.navigationFragment)
-    implementation(deps.libs.androidx.navigation.navigationUi)
     implementation(deps.libs.androidx.navigation.compose)
     implementation(deps.libs.material)
     implementation(deps.libs.coil.coil)
@@ -177,7 +175,6 @@ dependencies {
 
     implementation(deps.libs.androidx.leanback.leanback)
     implementation(deps.libs.androidx.leanback.leanbackPreference)
-    implementation(deps.libs.androidx.leanback.leanbackPaging)
 
     implementation(deps.libs.androidx.appcompat.recyclerView)
     implementation(deps.libs.androidx.paging.common)
@@ -191,7 +188,6 @@ dependencies {
     implementation(deps.libs.okio)
     implementation(deps.libs.retrofit)
     implementation(deps.libs.flowPreferences)
-    implementation(deps.libs.guava)
     implementation(deps.libs.androidx.documentfile)
     implementation(deps.libs.androidx.leanback.tvProvider)
     implementation(deps.libs.harmony)

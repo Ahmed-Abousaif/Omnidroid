@@ -10,19 +10,22 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.omnidroid.R
+import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 object HdModeBatteryMonitor {
     const val MIN_PERCENT = 15
 
     @Volatile
-    private var started = false
+    private var monitorJob: Job? = null
 
     fun isAllowed(percent: Int): Boolean = percent > MIN_PERCENT
 
@@ -39,53 +42,24 @@ object HdModeBatteryMonitor {
         return sticky?.let(::percentFrom) ?: 100
     }
 
+    /**
+     * Process-lifetime monitor that auto-disables HD mode on low battery.
+     * Uses [OmnidroidApplication.scope] so the receiver is unregistered when the job ends.
+     */
     fun start(context: Context) {
         val app = context.applicationContext
         apply(app)
-        if (started) return
-        started = true
-
-        val receiver =
-            object : BroadcastReceiver() {
-                override fun onReceive(
-                    context: Context,
-                    intent: Intent,
-                ) {
-                    apply(app, percentFrom(intent))
-                }
+        if (monitorJob?.isActive == true) return
+        monitorJob =
+            OmnidroidApplication.scope(app).launch {
+                batteryPercentFlow(app).collect { percent -> apply(app, percent) }
             }
-        ContextCompat.registerReceiver(
-            app,
-            receiver,
-            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
-            ContextCompat.RECEIVER_NOT_EXPORTED,
-        )
     }
 
     fun allowedFlow(context: Context): Flow<Boolean> {
-        val app = context.applicationContext
-        return callbackFlow {
-            val receiver =
-                object : BroadcastReceiver() {
-                    override fun onReceive(
-                        context: Context,
-                        intent: Intent,
-                    ) {
-                        trySend(percentFrom(intent))
-                    }
-                }
-            val sticky =
-                ContextCompat.registerReceiver(
-                    app,
-                    receiver,
-                    IntentFilter(Intent.ACTION_BATTERY_CHANGED),
-                    ContextCompat.RECEIVER_NOT_EXPORTED,
-                )
-            if (sticky != null) {
-                trySend(percentFrom(sticky))
-            }
-            awaitClose { app.unregisterReceiver(receiver) }
-        }.distinctUntilChanged().map(::isAllowed)
+        return batteryPercentFlow(context.applicationContext)
+            .distinctUntilChanged()
+            .map(::isAllowed)
     }
 
     fun apply(context: Context) {
@@ -105,6 +79,30 @@ object HdModeBatteryMonitor {
             prefs.edit().putBoolean(key, false).apply()
         }
     }
+
+    private fun batteryPercentFlow(appContext: Context): Flow<Int> =
+        callbackFlow {
+            val receiver =
+                object : BroadcastReceiver() {
+                    override fun onReceive(
+                        context: Context,
+                        intent: Intent,
+                    ) {
+                        trySend(percentFrom(intent))
+                    }
+                }
+            val sticky =
+                ContextCompat.registerReceiver(
+                    appContext,
+                    receiver,
+                    IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+                    ContextCompat.RECEIVER_NOT_EXPORTED,
+                )
+            if (sticky != null) {
+                trySend(percentFrom(sticky))
+            }
+            awaitClose { appContext.unregisterReceiver(receiver) }
+        }
 
     private fun percentFrom(intent: Intent): Int {
         val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)

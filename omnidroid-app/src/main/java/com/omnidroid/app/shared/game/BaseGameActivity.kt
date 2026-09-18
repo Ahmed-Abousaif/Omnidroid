@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.omnidroid.R
+import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.app.mobile.feature.game.GameActivity
 import com.omnidroid.app.mobile.feature.game.GameService
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
@@ -45,15 +46,12 @@ import com.omnidroid.lib.saves.StatesManager
 import com.omnidroid.lib.saves.StatesPreviewManager
 import com.omnidroid.touchinput.radial.sensors.TiltConfiguration
 import dagger.Lazy
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-@OptIn(DelicateCoroutinesApi::class)
 abstract class BaseGameActivity : ImmersiveActivity() {
     protected lateinit var game: Game
     private lateinit var system: GameSystem
@@ -362,7 +360,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
     private fun finishAndExitProcess() {
         onFinishTriggered()
-        GlobalScope.launch {
+        OmnidroidApplication.scope(this).launch {
             delay(animationDuration().toLong())
             GameService.requestTermination()
         }
@@ -397,17 +395,17 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         if (requestCode == DIALOG_REQUEST) {
             Timber.i("Game menu dialog response: ${data?.extras.dump()}")
             if (data?.getBooleanExtra(GameMenuContract.RESULT_RESET, false) == true) {
-                GlobalScope.launch {
+                lifecycleScope.launch {
                     baseGameScreenViewModel.reset()
                 }
             }
             if (data?.hasExtra(GameMenuContract.RESULT_SAVE) == true) {
-                GlobalScope.launch {
+                lifecycleScope.launch {
                     baseGameScreenViewModel.saveSlot(data.getIntExtra(GameMenuContract.RESULT_SAVE, 0))
                 }
             }
             if (data?.hasExtra(GameMenuContract.RESULT_LOAD) == true) {
-                GlobalScope.launch {
+                lifecycleScope.launch {
                     baseGameScreenViewModel.loadSlot(data.getIntExtra(GameMenuContract.RESULT_LOAD, 0))
                 }
             }

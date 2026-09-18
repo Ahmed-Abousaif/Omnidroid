@@ -10,7 +10,6 @@ plugins {
     id("com.google.devtools.ksp") version deps.versions.ksp apply false
     id("com.google.dagger.hilt.android") version deps.versions.dagger apply false
     id("androidx.baselineprofile") version "1.5.0-rc02" apply false
-    id("androidx.navigation.safeargs.kotlin") version deps.versions.navigation apply false
     id("com.github.ben-manes.versions") version "0.51.0"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.0" apply false
 }

@@ -5,13 +5,9 @@ import android.content.Intent
 import android.view.InputDevice
 import android.view.KeyEvent
 import com.omnidroid.R
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
-@OptIn(DelicateCoroutinesApi::class)
 class InputBindingUpdater(private val inputDeviceManager: InputDeviceManager, intent: Intent) {
     val extras = parseExtras(intent)
 
@@ -41,9 +37,7 @@ class InputBindingUpdater(private val inputDeviceManager: InputDeviceManager, in
         if (!isTargetedDevice(event.device)) return false
 
         runBlocking {
-            GlobalScope.async {
-                inputDeviceManager.updateBinding(event.device, RetroKey(extras.retroKey), InputKey(event.keyCode))
-            }
+            inputDeviceManager.updateBinding(event.device, RetroKey(extras.retroKey), InputKey(event.keyCode))
         }
 
         return true

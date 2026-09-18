@@ -35,13 +35,18 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
     @Inject
     lateinit var settingsManager: SettingsManager
 
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val workManagerConfiguration: Configuration
         get() =
             Configuration.Builder()
                 .setWorkerFactory(workerFactory)
                 .build()
+
+    companion object {
+        fun scope(context: Context): CoroutineScope =
+            (context.applicationContext as OmnidroidApplication).applicationScope
+    }
 
     @SuppressLint("CheckResult")
     override fun onCreate() {
