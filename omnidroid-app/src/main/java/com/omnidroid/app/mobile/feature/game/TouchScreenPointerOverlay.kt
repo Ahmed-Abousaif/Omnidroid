@@ -9,7 +9,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.pointerInput
 import com.swordfish.libretrodroid.GLRetroView
@@ -19,11 +18,12 @@ import com.swordfish.libretrodroid.GLRetroView
  *
  * LibretroDroid only handles the primary pointer in [GLRetroView.onTouchEvent]. When a finger is
  * already holding a virtual button, a second finger arrives as a secondary pointer and is ignored.
- * This overlay lives in Compose (where each new pointer is hit-tested independently) and injects
- * synthetic single-pointer events so the DS/3DS stylus keeps working while buttons are held.
+ *
+ * This overlay must be placed **outside** PadKit as a sibling sized to the game viewport only.
+ * Nesting a consuming `pointerInput` inside PadKit breaks simultaneous virtual-button presses.
  *
  * @param retroViewBoundsInRoot Bounds of the full-screen [GLRetroView] in Compose root coordinates.
- * @param touchScreenBoundsInRoot Bounds of the game image / touchscreen area in root coordinates.
+ * @param touchScreenBoundsInRoot Bounds of this overlay / game viewport in root coordinates.
  */
 @Composable
 fun TouchScreenPointerOverlay(
@@ -48,12 +48,13 @@ fun TouchScreenPointerOverlay(
                                 var stylusPointerId: PointerId? = null
 
                                 while (true) {
-                                    val event = awaitPointerEvent(PointerEventPass.Main)
+                                    val event = awaitPointerEvent()
                                     val view = currentRetroView.value ?: continue
                                     val retroBounds = currentRetroBounds.value ?: continue
                                     val touchBounds = currentTouchBounds.value ?: continue
 
                                     event.changes.forEach { change ->
+                                        // Local to this overlay, which is positioned on the viewport.
                                         val rootPosition =
                                             Offset(
                                                 touchBounds.left + change.position.x,
@@ -64,11 +65,9 @@ fun TouchScreenPointerOverlay(
                                             stylusPointerId == null &&
                                                 change.pressed &&
                                                 !change.previousPressed -> {
-                                                if (!touchBounds.contains(rootPosition)) {
-                                                    return@forEach
-                                                }
                                                 stylusPointerId = change.id
-                                                change.consume()
+                                                // Do not consume: PadKit is a sibling, not a parent,
+                                                // and consuming is unnecessary for viewport-only hits.
                                                 forwardTouch(
                                                     retroView = view,
                                                     retroViewBoundsInRoot = retroBounds,
@@ -78,7 +77,6 @@ fun TouchScreenPointerOverlay(
                                             }
 
                                             change.id == stylusPointerId && change.pressed -> {
-                                                change.consume()
                                                 forwardTouch(
                                                     retroView = view,
                                                     retroViewBoundsInRoot = retroBounds,
@@ -88,7 +86,6 @@ fun TouchScreenPointerOverlay(
                                             }
 
                                             change.id == stylusPointerId && !change.pressed -> {
-                                                change.consume()
                                                 forwardTouch(
                                                     retroView = view,
                                                     retroViewBoundsInRoot = retroBounds,
