@@ -18,9 +18,9 @@
   </table>
 </p>
 
-Everything you loved about [Lemuroid](https://github.com/Swordfish90/Lemuroid), rebuilt into a faster, cleaner, more capable Android game launcher.
+Omnidroid is an open-source Libretro frontend for Android, forked from [Lemuroid](https://github.com/Swordfish90/Lemuroid).
 
-Omnidroid is an open-source Libretro frontend for Android. It keeps the parts that made Lemuroid great — simple ROM scanning, automatic saves, strong Android integration, and a wide set of cores — then layers on a landscape-first launcher, full controller navigation, richer cloud saves, and a game page that actually tells you something about what you are about to play.
+It keeps the core that made Lemuroid solid — ROM scanning, automatic saves, strong Android integration, and a wide set of cores — and builds on top of it with a landscape-first launcher, full controller navigation, richer cloud saves, and a game page that actually tells you something about what you're about to play.
 
 It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://github.com/retrograde/retrograde-android) with [LibretroDroid](https://github.com/Swordfish90/LibretroDroid)). The emulation stack is the same. The product around it is not.
 
@@ -102,6 +102,7 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 
 - **melonDS (NDS):** Screens layout includes **Top Only** and **Bottom Only**, alongside Top–Bottom and Left–Right.
 - **Citra (3DS):** Screens layout includes **Single Screen**, plus **Displayed screen** (Top or Bottom) to choose which one shows.
+- On the virtual pad (melonDS / Citra), tap the **screen layout** button to toggle dual ↔ **Top only** without opening the menu. Portrait dual uses Top–Bottom; landscape dual uses Left–Right / Side by Side. The same core option as in-game Settings is updated, so the menu stays in sync.
 
 ### Vibration intensity
 
@@ -111,6 +112,7 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 ### NDS and 3DS touchscreen with virtual buttons
 
 - You can use the emulated touchscreen while holding on-screen buttons — a second finger on the game screen still registers as the stylus.
+- Tap the **hide pads** button on the DS/3DS virtual pad to slide the controls away and give the game more screen space (handy for stylus-only moments). A small edge tab at the bottom brings the pads back.
 
 ### Your profile
 
