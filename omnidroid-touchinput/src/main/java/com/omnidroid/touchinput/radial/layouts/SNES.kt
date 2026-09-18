@@ -28,7 +28,7 @@ fun PadKitScope.SNESLeft(
     BaseLayoutLeft(
         settings = settings,
         modifier = modifier,
-        primaryDial = { OmnidroidControlCross(id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD)) },
+        primaryDial = { OmnidroidControlCross(id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD), allowDiagonals = settings.allowDiagonals) },
         secondaryDials = {
             SecondaryButtonL()
             SecondaryButtonSelect(position = 2)

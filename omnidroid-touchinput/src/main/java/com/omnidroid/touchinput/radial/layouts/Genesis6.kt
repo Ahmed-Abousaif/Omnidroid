@@ -30,7 +30,7 @@ fun PadKitScope.Genesis6Left(
     BaseLayoutLeft(
         settings = settings,
         modifier = modifier,
-        primaryDial = { OmnidroidControlCross(id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD)) },
+        primaryDial = { OmnidroidControlCross(id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD), allowDiagonals = settings.allowDiagonals) },
         secondaryDials = {
             SecondaryButtonSelect(position = 0)
             SecondaryButtonStart(position = 1)

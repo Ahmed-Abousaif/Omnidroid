@@ -64,6 +64,7 @@
     <string name="setting_wswan_mono_palette">Colorization</string>
     <string name="setting_handy_rot">Display rotation</string>
     <string name="setting_citra_layout_option">Screens layout</string>
+    <string name="setting_citra_swap_screen">Displayed screen</string>
     <string name="setting_citra_resolution_factor">Resolution scaling</string>
     <string name="setting_citra_use_acc_mul">Accurate shaders multiplication</string>
     <string name="setting_citra_use_acc_geo_shaders">Accurate geometry shaders</string>
@@ -120,6 +121,8 @@
 
     <string name="value_melonds_screen_layout_topbottom">Top - Bottom</string>
     <string name="value_melonds_screen_layout_leftright">Left - Right</string>
+    <string name="value_melonds_screen_layout_toponly">Top Only</string>
+    <string name="value_melonds_screen_layout_bottomonly">Bottom Only</string>
     <string name="value_melonds_screen_layout_hybridtop">Hybrid Top</string>
     <string name="value_melonds_screen_layout_hybridbottom">Hybrid Bottom</string>
     <string name="value_melonds_mic_input_microphone">Real microphone</string>
@@ -127,6 +130,9 @@
 
     <string name="value_citra_layout_option_topbottom">Top - Bottom</string>
     <string name="value_citra_layout_option_sidebyside">Left - Right</string>
+    <string name="value_citra_layout_option_single">Single Screen</string>
+    <string name="value_citra_swap_screen_top">Top</string>
+    <string name="value_citra_swap_screen_bottom">Bottom</string>
 
     <string name="value_desmume_screens_layout_topbottom">Top - Bottom</string>
     <string name="value_desmume_screens_layout_leftright">Left - Right</string>
