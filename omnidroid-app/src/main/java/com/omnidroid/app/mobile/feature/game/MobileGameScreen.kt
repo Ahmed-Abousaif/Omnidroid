@@ -61,6 +61,7 @@ import com.omnidroid.touchinput.radial.sensors.TiltConfiguration
 import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
 import com.omnidroid.touchinput.radial.ui.GlassSurface
 import com.omnidroid.touchinput.radial.ui.OmnidroidButtonPressFeedback
+import com.swordfish.libretrodroid.GLRetroView
 import gg.padkit.PadKit
 import gg.padkit.config.HapticFeedbackType
 import gg.padkit.inputstate.InputState
@@ -111,6 +112,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
             val fullScreenPosition = remember { mutableStateOf<Rect?>(null) }
             val viewportPosition = remember { mutableStateOf<Rect?>(null) }
+            val retroViewState = remember { mutableStateOf<GLRetroView?>(null) }
 
             AndroidView(
                 modifier =
@@ -118,7 +120,9 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                         .fillMaxSize()
                         .onGloballyPositioned { fullScreenPosition.value = it.boundsInRoot() },
                 factory = {
-                    viewModel.createRetroView(localContext, lifecycle)
+                    viewModel.createRetroView(localContext, lifecycle).also {
+                        retroViewState.value = it
+                    }
                 },
             )
 
@@ -152,7 +156,14 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                             .layoutId(GameScreenLayout.CONSTRAINTS_GAME_VIEW)
                             .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top))
                             .onGloballyPositioned { viewportPosition.value = it.boundsInRoot() },
-                )
+                ) {
+                    TouchScreenPointerOverlay(
+                        enabled = viewModel.hasTouchScreen,
+                        retroView = retroViewState.value,
+                        retroViewBoundsInRoot = fullPos,
+                        touchScreenBoundsInRoot = viewPos,
+                    )
+                }
 
                 val isVisible =
                     touchControllerSettings != null &&

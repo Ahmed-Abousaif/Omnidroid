@@ -103,6 +103,15 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 - **melonDS (NDS):** Screens layout includes **Top Only** and **Bottom Only**, alongside Top–Bottom and Left–Right.
 - **Citra (3DS):** Screens layout includes **Single Screen**, plus **Displayed screen** (Top or Bottom) to choose which one shows.
 
+### Vibration intensity
+
+- Under **Settings → Controllers** (and Advanced → Input), a **Vibration intensity** slider (0–100, default 50) controls strength for both touch feedback and rumble.
+- Applies to on-screen control haptics and gamepad / device rumble together.
+
+### NDS and 3DS touchscreen with virtual buttons
+
+- You can use the emulated touchscreen while holding on-screen buttons — a second finger on the game screen still registers as the stylus.
+
 ### Your profile
 
 - Open **Profile** from the library top bar. A gamer tag and robot avatar are created on first launch; change either anytime.

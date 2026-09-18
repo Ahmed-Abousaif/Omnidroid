@@ -59,6 +59,8 @@ class BaseGameScreenViewModel(
     coreVariablesManager: CoreVariablesManager,
     rumbleManager: RumbleManager,
 ) : ViewModel(), DefaultLifecycleObserver {
+    val hasTouchScreen: Boolean = system.hasTouchScreen
+
     class Factory(
         private val appContext: Context,
         private val game: Game,
