@@ -1,6 +1,7 @@
 package com.omnidroid.touchinput.radial.layouts
 
 import android.view.KeyEvent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
@@ -47,6 +48,9 @@ fun PadKitScope.MelonDSLeft(
                 id = Id.Key(KeyEvent.KEYCODE_BUTTON_THUMBL),
                 icon = R.drawable.button_close_screen,
             )
+            Box(
+                modifier = Modifier.radialPosition(-90f),
+            )
         },
     )
 }
@@ -80,9 +84,9 @@ fun PadKitScope.MelonDSRight(
         secondaryDials = {
             SecondaryButtonR()
             SecondaryButtonStart(position = 2)
-            SecondaryButtonMenu(settings)
             SecondaryButtonScreenLayout(positionDegrees = -120f)
             SecondaryButtonHidePads(positionDegrees = -90f)
+            SecondaryButtonMenu(settings)
         },
     )
 }
