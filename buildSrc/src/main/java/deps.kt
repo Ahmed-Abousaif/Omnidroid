@@ -96,6 +96,7 @@ object deps {
                 const val geometry = "androidx.compose.ui:ui-geometry"
                 const val runtime = "androidx.compose.runtime:runtime"
                 const val constraintLayout = "androidx.constraintlayout:constraintlayout-compose:1.1.1"
+                const val animation = "androidx.compose.animation:animation"
                 const val unit = "androidx.compose.ui:ui-unit-android"
                 const val ui = "androidx.compose.ui:ui"
 
