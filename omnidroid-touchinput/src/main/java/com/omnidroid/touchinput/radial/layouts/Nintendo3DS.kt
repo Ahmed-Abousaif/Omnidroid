@@ -1,6 +1,7 @@
 package com.omnidroid.touchinput.radial.layouts
 
 import android.view.KeyEvent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
@@ -70,7 +71,13 @@ fun PadKitScope.Nintendo3DSRight(
         secondaryDials = {
             SecondaryButtonR()
             SecondaryButtonStart(position = 2)
-            SecondaryButtonScreenLayout(positionDegrees = +80f - 180f)
+            Box(
+                modifier =
+                    Modifier
+                        .radialPosition(+80f - 180f)
+                        .radialScale(2.0f),
+            )
+            SecondaryButtonScreenLayout(positionDegrees = -120f)
             SecondaryButtonHidePads(positionDegrees = -90f)
             SecondaryButtonMenu(settings)
         },
