@@ -252,6 +252,23 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
             val waitingForDest = remember { mutableStateOf(false) }
             val closingDetails = remember { mutableStateOf(false) }
 
+            suspend fun clearHeroTransition() {
+                heroProgress.snapTo(0f)
+                heroGame.value = null
+                heroFrom.value = Rect.Zero
+                heroTo.value = Rect.Zero
+                waitingForDest.value = false
+                closingDetails.value = false
+            }
+
+            // Leaving game details without closeGameDetails() (search, deep back stack,
+            // return-from-game races) can leave heroProgress≈1 on HOME: dimmed grid + no sidebar.
+            LaunchedEffect(currentRoute) {
+                if (currentRoute == MainRoute.HOME && !closingDetails.value && heroGame.value != null) {
+                    clearHeroTransition()
+                }
+            }
+
             val onGameLongClick = { game: Game ->
                 selectedGameState.value = game
             }
@@ -283,9 +300,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                             )
                         }
                         navController.popBackStack()
-                        heroGame.value = null
-                        heroTo.value = Rect.Zero
-                        closingDetails.value = false
+                        clearHeroTransition()
                     }
                 }
             }
@@ -401,8 +416,10 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 }
             }
             controllerNav.onSearch = {
-                if (currentRoute != MainRoute.HOME) {
-                    navigateToLibraryHome(navController)
+                when (currentRoute) {
+                    MainRoute.HOME -> { }
+                    MainRoute.GAME_DETAILS -> closeGameDetails()
+                    else -> navigateToLibraryHome(navController)
                 }
                 controllerNav.searchArmed.value = true
             }
@@ -461,6 +478,10 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
             CompositionLocalProvider(LocalControllerNavigation provides controllerNav) {
             Box(modifier = Modifier.fillMaxSize()) {
+            val heroActive = heroGame.value != null
+            val heroOnDetails =
+                heroActive &&
+                    (currentRoute == MainRoute.GAME_DETAILS || closingDetails.value)
             Scaffold(
                 containerColor = HomeChromeBackground,
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -473,7 +494,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     }
                 },
             ) { padding ->
-                val heroActive = heroGame.value != null
                 val showLibraryUnderlay =
                     currentRoute == MainRoute.HOME || currentRoute == MainRoute.GAME_DETAILS
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -494,8 +514,9 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                             onGameLongClick = onGameLongClick,
                             onAddConsole = { navController.navigateToRoute(MainRoute.ADD_CONSOLES) },
                             controllerConnected = gamepadConnected,
-                            transitionProgress = if (heroActive) heroProgress.value else 0f,
-                            transitioningGameId = heroGame.value?.id,
+                            transitionProgress = if (heroOnDetails) heroProgress.value else 0f,
+                            transitioningGameId =
+                                if (heroOnDetails) heroGame.value?.id else null,
                             onCoverBounds = { id, rect -> coverBounds[id] = rect },
                         )
                     }
@@ -547,8 +568,10 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                             onOpenSettings = { selectedGameState.value = it },
                             onSetCustomName = { game, name -> gameInteractor.onSetCustomName(game, name) },
                             onSetCustomThumbnail = { game, uri -> gameInteractor.onSetCustomCover(game, uri) },
-                            transitionProgress = if (heroActive) heroProgress.value else 1f,
-                            hideCover = heroActive && (heroProgress.value < 0.97f || closingDetails.value),
+                            transitionProgress = if (heroOnDetails) heroProgress.value else 1f,
+                            hideCover =
+                                heroOnDetails &&
+                                    (heroProgress.value < 0.97f || closingDetails.value),
                             onCoverBounds = { rect ->
                                 heroTo.value = rect
                                 if (waitingForDest.value && rect.width > 8f && !closingDetails.value) {
@@ -819,7 +842,10 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 consoleGameCount = libraryState.selectedSystemGameCount,
             )
             val hero = heroGame.value
-            if (hero != null && (heroProgress.value < 0.97f || closingDetails.value)) {
+            if (hero != null &&
+                heroOnDetails &&
+                (heroProgress.value < 0.97f || closingDetails.value)
+            ) {
                 GameHeroCover(
                     game = hero,
                     from = heroFrom.value,
