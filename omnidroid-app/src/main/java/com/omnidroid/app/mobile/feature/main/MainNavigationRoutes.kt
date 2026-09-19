@@ -14,8 +14,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.omnidroid.R
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+
 fun NavGraphBuilder.composable(
     route: MainRoute,
+    enterTransition: (@JvmSuppressWildcards AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition?)? = null,
+    exitTransition: (@JvmSuppressWildcards AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition?)? = null,
+    popEnterTransition: (@JvmSuppressWildcards AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition?)? = enterTransition,
+    popExitTransition: (@JvmSuppressWildcards AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition?)? = exitTransition,
     instant: Boolean = false,
     content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit,
 ) {
@@ -30,7 +36,15 @@ fun NavGraphBuilder.composable(
             content = content,
         )
     } else {
-        this.composable(route = route.route, arguments = route.arguments, content = content)
+        this.composable(
+            route = route.route,
+            arguments = route.arguments,
+            enterTransition = enterTransition,
+            exitTransition = exitTransition,
+            popEnterTransition = popEnterTransition,
+            popExitTransition = popExitTransition,
+            content = content,
+        )
     }
 }
 
