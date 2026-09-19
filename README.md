@@ -20,9 +20,11 @@
 
 Omnidroid is an open-source Libretro frontend for Android, forked from [Lemuroid](https://github.com/Swordfish90/Lemuroid).
 
-It keeps the core that made Lemuroid solid — ROM scanning, automatic saves, strong Android integration, and a wide set of cores — and builds on top of it with a landscape-first launcher, full controller navigation, richer cloud saves, and a game page that actually tells you something about what you're about to play.
+It keeps the core that made Lemuroid solid — ROM scanning, strong Android integration, and a wide set of cores and builds on top of it with a landscape-first launcher, full controller navigation, richer cloud saves, and many more changes to both UI, functionality and performance. All while making the release build (free dynamic flavor) 16% smaller than Lemuroid's.
 
 It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://github.com/retrograde/retrograde-android) with [LibretroDroid](https://github.com/Swordfish90/LibretroDroid)). The emulation stack is the same. The product around it is not.
+
+Despite the added features, the release build (free dynamic flavor) is about 16% smaller than Lemuroid's.
 
 ## Newly added features
 
