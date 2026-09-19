@@ -24,8 +24,6 @@ It keeps the core that made Lemuroid solid — ROM scanning, strong Android inte
 
 It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://github.com/retrograde/retrograde-android) with [LibretroDroid](https://github.com/Swordfish90/LibretroDroid)). The emulation stack is the same. The product around it is not.
 
-Despite the added features, the release build (free dynamic flavor) is about 16% smaller than Lemuroid's.
-
 ## Newly added features
 
 ### A real game launcher
