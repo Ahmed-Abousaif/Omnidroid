@@ -2,9 +2,13 @@ package com.omnidroid.app.mobile.feature.library
 
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -53,6 +57,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -193,45 +198,48 @@ private fun LibrarySidebar(
                 .focusGroup(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-            SidebarIconButton(
-                selected = filter is LibraryFilter.Favorites,
-                icon = if (filter is LibraryFilter.Favorites) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                contentDescription = stringResource(R.string.favorites),
-                onClick = { onFilterSelected(LibraryFilter.Favorites) },
-            )
-            SidebarIconButton(
-                selected = filter is LibraryFilter.All,
-                icon = Icons.Filled.GridView,
-                contentDescription = stringResource(R.string.show_all),
-                onClick = { onFilterSelected(LibraryFilter.All) },
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            HorizontalDivider(
-                modifier = Modifier.width(28.dp),
-                color = Color.White.copy(alpha = 0.12f),
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Column(
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                systems.forEach { system ->
-                    SidebarSystemLogoButton(
-                        meta = system,
-                        selected = (filter as? LibraryFilter.System)?.metaSystemID == system,
-                        onClick = { onFilterSelected(LibraryFilter.System(system)) },
-                    )
-                }
+        SidebarIconButton(
+            selected = filter is LibraryFilter.Favorites,
+            icon = if (filter is LibraryFilter.Favorites) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+            contentDescription = stringResource(R.string.favorites),
+            onClick = { onFilterSelected(LibraryFilter.Favorites) },
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        SidebarIconButton(
+            selected = filter is LibraryFilter.All,
+            icon = Icons.Filled.GridView,
+            contentDescription = stringResource(R.string.show_all),
+            onClick = { onFilterSelected(LibraryFilter.All) },
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        HorizontalDivider(
+            modifier = Modifier.width(28.dp),
+            color = Color.White.copy(alpha = 0.12f),
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Column(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            systems.forEach { system ->
+                SidebarSystemLogoButton(
+                    meta = system,
+                    selected = (filter as? LibraryFilter.System)?.metaSystemID == system,
+                    onClick = { onFilterSelected(LibraryFilter.System(system)) },
+                )
             }
-            SidebarIconButton(
-                selected = false,
-                icon = Icons.Filled.Add,
-                contentDescription = stringResource(R.string.title_add_console),
-                onClick = onAddConsole,
-            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        SidebarIconButton(
+            selected = false,
+            icon = Icons.Filled.Add,
+            contentDescription = stringResource(R.string.title_add_console),
+            onClick = onAddConsole,
+        )
     }
 }
 
@@ -448,15 +456,24 @@ private fun LibraryGameCardItem(
                     Modifier.aspectRatio(LibraryGameCardAspectRatio, matchHeightConstraintsFirst = true)
                 },
             )
+    val cornerAnim by animatedVisibilityScope.transition.animateDp(
+        label = "coverCorner-${game.id}",
+        transitionSpec = { tween(durationMillis = 400, easing = FastOutSlowInEasing) },
+    ) { targetState ->
+        if (targetState == EnterExitState.Visible) 4.dp else 16.dp
+    }
     val coverSharedModifier =
         with(sharedTransitionScope) {
-            Modifier.sharedElement(
+            Modifier.sharedBounds(
                 sharedContentState = rememberSharedContentState(key = "game-cover-${game.id}"),
                 animatedVisibilityScope = animatedVisibilityScope,
+                enter = EnterTransition.None,
+                exit = ExitTransition.None,
+                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
                 boundsTransform = { _, _ ->
-                    tween(durationMillis = 480, easing = FastOutSlowInEasing)
+                    tween(durationMillis = 400, easing = FastOutSlowInEasing)
                 },
-                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(4.dp)),
+                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(cornerAnim)),
             )
         }
     OmnidroidGameCard(
@@ -466,6 +483,7 @@ private fun LibraryGameCardItem(
         continueAction = continueAction,
         infoStyle = infoStyle,
         fillCard = true,
+        cornerRadius = cornerAnim,
         onClick = onClick,
         onLongClick = onLongClick,
     )

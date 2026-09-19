@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
@@ -62,15 +63,18 @@ fun OmnidroidGameCard(
     showTitles: Boolean = true,
     infoStyle: GameCardInfoStyle = GameCardInfoStyle.OVERLAY,
     fillCard: Boolean = false,
+    cornerRadius: androidx.compose.ui.unit.Dp = 4.dp,
     onClick: () -> Unit = { },
     onLongClick: () -> Unit = { },
 ) {
+    val cardShape = RoundedCornerShape(cornerRadius)
     if (fillCard && infoStyle == GameCardInfoStyle.BELOW) {
         CaptionBelowGameCard(
             modifier = modifier,
             coverModifier = coverModifier,
             game = game,
             continueAction = continueAction,
+            cornerRadius = cornerRadius,
             onClick = onClick,
             onLongClick = onLongClick,
         )
@@ -80,13 +84,13 @@ fun OmnidroidGameCard(
     Surface(
         modifier =
             modifier
-                .controllerFocusGlow(CardCorner)
+                .controllerFocusGlow(cardShape)
                 .reportControllerGame(game)
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick,
                 ),
-        shape = CardCorner,
+        shape = cardShape,
         color = Color(0xFF161616),
         shadowElevation = 4.dp,
         tonalElevation = 0.dp,
@@ -117,9 +121,11 @@ private fun CaptionBelowGameCard(
     coverModifier: Modifier = Modifier,
     game: Game,
     continueAction: Boolean,
+    cornerRadius: androidx.compose.ui.unit.Dp = 4.dp,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
+    val cardShape = RoundedCornerShape(cornerRadius)
     BoxWithConstraints(modifier = modifier) {
         val coverHeight = (maxHeight - CaptionFooterHeight).coerceAtLeast(48.dp)
         val coverWidth = coverHeight * LibraryGameCardAspectRatio
@@ -128,13 +134,13 @@ private fun CaptionBelowGameCard(
                 Modifier
                     .width(coverWidth)
                     .fillMaxHeight()
-                    .controllerFocusGlow(CardCorner)
+                    .controllerFocusGlow(cardShape)
                     .reportControllerGame(game)
                     .combinedClickable(
                         onClick = onClick,
                         onLongClick = onLongClick,
                     ),
-            shape = CardCorner,
+            shape = cardShape,
             color = Color(0xFF161616),
             shadowElevation = 4.dp,
             tonalElevation = 0.dp,
