@@ -6,9 +6,16 @@ import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -66,6 +73,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
@@ -131,13 +139,56 @@ fun GameDetailsScreen(
         return
     }
 
+    val context = LocalContext.current
+    val initialAspect = remember(game.id) {
+        CoverUtils.getCachedCoverAspectRatio(context, game, state.metadata.coverImageUrl)
+            ?: com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
+    }
+    var naturalAspect by remember(game.id) { mutableStateOf(initialAspect) }
+
+    val cornerAnim by animatedVisibilityScope.transition.animateDp(
+        label = "detailsCoverCorner",
+        transitionSpec = { tween(durationMillis = 400, easing = FastOutSlowInEasing) },
+    ) { targetState ->
+        if (targetState == EnterExitState.Visible) 16.dp else 4.dp
+    }
+    val backdropAlpha by animatedVisibilityScope.transition.animateFloat(
+        label = "backdropAlpha",
+        transitionSpec = {
+            tween(durationMillis = 500, delayMillis = 50, easing = FastOutSlowInEasing)
+        },
+    ) { targetState ->
+        if (targetState == EnterExitState.Visible) 1f else 0f
+    }
+    val infoAlpha by animatedVisibilityScope.transition.animateFloat(
+        label = "infoAlpha",
+        transitionSpec = {
+            tween(durationMillis = 350, delayMillis = 50, easing = FastOutSlowInEasing)
+        },
+    ) { targetState ->
+        if (targetState == EnterExitState.Visible) 1f else 0f
+    }
+    val infoOffset by animatedVisibilityScope.transition.animateFloat(
+        label = "infoOffset",
+        transitionSpec = {
+            tween(durationMillis = 350, delayMillis = 50, easing = FastOutSlowInEasing)
+        },
+    ) { targetState ->
+        if (targetState == EnterExitState.Visible) 0f else 28f
+    }
+
     Box(
         modifier =
             modifier
                 .fillMaxSize()
                 .background(HomeChromeBackground),
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = backdropAlpha },
+        ) {
             GameBackdrop(game, state.metadata.backgroundImageUrl)
         }
         Row(
@@ -148,6 +199,7 @@ fun GameDetailsScreen(
                         start = GameDetailsScreenPadding,
                         end = GameDetailsScreenPadding,
                         bottom = GameDetailsScreenPadding,
+                        top = 10.dp,
                     ),
             horizontalArrangement = Arrangement.spacedBy(GameDetailsColumnGap),
         ) {
@@ -155,8 +207,7 @@ fun GameDetailsScreen(
                 modifier =
                     Modifier
                         .fillMaxHeight()
-                        .weight(GameDetailsCoverWeight)
-                        .padding(top = GameDetailsScreenPadding),
+                        .weight(GameDetailsCoverWeight),
                 contentAlignment = Alignment.Center,
             ) {
                 GameCoverOrTrailer(
@@ -167,6 +218,9 @@ fun GameDetailsScreen(
                     preferredCoverUrl = state.metadata.coverImageUrl,
                     trailerUrl = state.metadata.trailerUrl,
                     playingTrailer = state.playingTrailer,
+                    cornerRadius = cornerAnim,
+                    aspectRatio = naturalAspect,
+                    onAspectRatio = { naturalAspect = it },
                     onToggleTrailer = { viewModel.toggleTrailer() },
                     onStopTrailer = { viewModel.stopTrailer() },
                     onEditCover = {
@@ -180,7 +234,10 @@ fun GameDetailsScreen(
                     Modifier
                         .weight(GameDetailsInfoWeight)
                         .fillMaxHeight()
-                        .padding(top = LibraryTopBarRowHeight),
+                        .graphicsLayer {
+                            alpha = infoAlpha
+                            translationX = infoOffset
+                        },
                 game = game,
                 state = state,
                 onPlay = { onPlay(game) },
@@ -226,7 +283,6 @@ fun GameDetailsScreen(
 }
 
 private val GameCoverCorner = RoundedCornerShape(16.dp)
-private const val DefaultCoverAspect = 2f / 3f
 
 @Composable
 private fun GameBackdrop(
@@ -236,7 +292,7 @@ private fun GameBackdrop(
     val context = LocalContext.current
     val fallback = remember(game) { CoverUtils.getFallbackDrawable(game) }
     val fallbackPainter = rememberDrawablePainter(drawable = fallback)
-    val blurModifier = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) Modifier.blur(18.dp) else Modifier
+    val blurModifier = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) Modifier.blur(24.dp) else Modifier
 
     AsyncImage(
         model = CoverUtils.coverRequest(context, game, preferredImageUrl),
@@ -245,7 +301,7 @@ private fun GameBackdrop(
         fallback = fallbackPainter,
         error = fallbackPainter,
         contentScale = ContentScale.Crop,
-        alpha = 0.22f,
+        alpha = 0.18f,
     )
     Box(
         modifier =
@@ -254,8 +310,8 @@ private fun GameBackdrop(
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            HomeChromeBackground.copy(alpha = 0.72f),
-                            HomeChromeBackground.copy(alpha = 0.92f),
+                            HomeChromeBackground.copy(alpha = 0.82f),
+                            HomeChromeBackground.copy(alpha = 0.96f),
                         ),
                     ),
                 ),
@@ -272,21 +328,27 @@ private fun GameCoverOrTrailer(
     preferredCoverUrl: String?,
     trailerUrl: String?,
     playingTrailer: Boolean,
+    cornerRadius: Dp,
+    aspectRatio: Float,
+    onAspectRatio: (Float) -> Unit,
     onToggleTrailer: () -> Unit,
     onStopTrailer: () -> Unit,
     onEditCover: () -> Unit,
 ) {
     val hasTrailer = !trailerUrl.isNullOrBlank()
-    var coverAspect by remember(game.id) { mutableStateOf(DefaultCoverAspect) }
+    val coverShape = RoundedCornerShape(cornerRadius)
     val coverSharedModifier =
         with(sharedTransitionScope) {
-            Modifier.sharedElement(
+            Modifier.sharedBounds(
                 sharedContentState = rememberSharedContentState(key = "game-cover-${game.id}"),
                 animatedVisibilityScope = animatedVisibilityScope,
+                enter = EnterTransition.None,
+                exit = ExitTransition.None,
+                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
                 boundsTransform = { _, _ ->
-                    tween(durationMillis = 480, easing = FastOutSlowInEasing)
+                    tween(durationMillis = 400, easing = FastOutSlowInEasing)
                 },
-                clipInOverlayDuringTransition = OverlayClip(GameCoverCorner),
+                clipInOverlayDuringTransition = OverlayClip(coverShape),
             )
         }
     BoxWithConstraints(
@@ -297,10 +359,10 @@ private fun GameCoverOrTrailer(
             Modifier
                 .fillMaxHeight()
                 .then(
-                    if (maxHeight * coverAspect <= maxWidth) {
-                        Modifier.aspectRatio(coverAspect, matchHeightConstraintsFirst = true)
+                    if (maxHeight * aspectRatio <= maxWidth) {
+                        Modifier.aspectRatio(aspectRatio, matchHeightConstraintsFirst = true)
                     } else {
-                        Modifier.fillMaxWidth().aspectRatio(coverAspect)
+                        Modifier.fillMaxWidth().aspectRatio(aspectRatio)
                     },
                 )
         Box(modifier = coverModifier) {
@@ -308,11 +370,10 @@ private fun GameCoverOrTrailer(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .clip(GameCoverCorner)
                         .then(coverSharedModifier),
-                shape = GameCoverCorner,
+                shape = coverShape,
                 tonalElevation = 6.dp,
-                color = Color.Black,
+                color = Color(0xFF161616),
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -327,8 +388,8 @@ private fun GameCoverOrTrailer(
                             onClick = onStopTrailer,
                             modifier =
                                 Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(4.dp),
+                                .align(Alignment.TopEnd)
+                                .padding(4.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Close,
@@ -354,7 +415,7 @@ private fun GameCoverOrTrailer(
                                 game = game,
                                 preferredCoverUrl = preferredCoverUrl,
                                 modifier = Modifier.fillMaxSize(),
-                                onAspectRatio = { coverAspect = it },
+                                onAspectRatio = onAspectRatio,
                             )
                             if (hasTrailer) {
                                 Icon(
@@ -400,7 +461,7 @@ private fun OmnidroidPoster(
         modifier = modifier,
         fallback = fallbackPainter,
         error = fallbackPainter,
-        contentScale = ContentScale.Fit,
+        contentScale = ContentScale.Crop,
         onSuccess = { state ->
             val size = state.painter.intrinsicSize
             if (size.width > 0f && size.height > 0f) {
