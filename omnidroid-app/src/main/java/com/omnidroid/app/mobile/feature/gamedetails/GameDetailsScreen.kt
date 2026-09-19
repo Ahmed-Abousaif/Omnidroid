@@ -1,10 +1,15 @@
-﻿package com.omnidroid.app.mobile.feature.gamedetails
+package com.omnidroid.app.mobile.feature.gamedetails
 
 import android.net.Uri
 import android.os.Build
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -56,8 +61,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -85,9 +88,12 @@ val GameDetailsColumnGap = 24.dp
 const val GameDetailsCoverWeight = 0.42f
 const val GameDetailsInfoWeight = 0.58f
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun GameDetailsScreen(
     modifier: Modifier = Modifier,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     viewModel: GameDetailsViewModel,
     onBack: () -> Unit,
     onPlay: (Game) -> Unit,
@@ -95,9 +101,6 @@ fun GameDetailsScreen(
     onOpenSettings: (Game) -> Unit,
     onSetCustomName: (Game, String) -> Unit = { _, _ -> },
     onSetCustomThumbnail: (Game, Uri) -> Unit = { _, _ -> },
-    transitionProgress: Float = 1f,
-    hideCover: Boolean = false,
-    onCoverBounds: (Rect) -> Unit = {},
 ) {
     val state = viewModel.state.collectAsState().value
     val game = state.game
@@ -128,15 +131,13 @@ fun GameDetailsScreen(
         return
     }
 
-    val contentFade = ((transitionProgress - 0.42f) / 0.58f).coerceIn(0f, 1f)
-
     Box(
         modifier =
             modifier
                 .fillMaxSize()
                 .background(HomeChromeBackground),
     ) {
-        Box(modifier = Modifier.fillMaxSize().graphicsLayer { alpha = transitionProgress }) {
+        Box(modifier = Modifier.fillMaxSize()) {
             GameBackdrop(game, state.metadata.backgroundImageUrl)
         }
         Row(
@@ -160,12 +161,12 @@ fun GameDetailsScreen(
             ) {
                 GameCoverOrTrailer(
                     modifier = Modifier.fillMaxHeight(),
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
                     game = game,
                     preferredCoverUrl = state.metadata.coverImageUrl,
                     trailerUrl = state.metadata.trailerUrl,
                     playingTrailer = state.playingTrailer,
-                    hideCover = hideCover,
-                    onCoverBounds = onCoverBounds,
                     onToggleTrailer = { viewModel.toggleTrailer() },
                     onStopTrailer = { viewModel.stopTrailer() },
                     onEditCover = {
@@ -179,8 +180,7 @@ fun GameDetailsScreen(
                     Modifier
                         .weight(GameDetailsInfoWeight)
                         .fillMaxHeight()
-                        .padding(top = LibraryTopBarRowHeight)
-                        .graphicsLayer { alpha = contentFade },
+                        .padding(top = LibraryTopBarRowHeight),
                 game = game,
                 state = state,
                 onPlay = { onPlay(game) },
@@ -262,21 +262,33 @@ private fun GameBackdrop(
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun GameCoverOrTrailer(
     modifier: Modifier,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     game: Game,
     preferredCoverUrl: String?,
     trailerUrl: String?,
     playingTrailer: Boolean,
-    hideCover: Boolean,
-    onCoverBounds: (Rect) -> Unit,
     onToggleTrailer: () -> Unit,
     onStopTrailer: () -> Unit,
     onEditCover: () -> Unit,
 ) {
     val hasTrailer = !trailerUrl.isNullOrBlank()
     var coverAspect by remember(game.id) { mutableStateOf(DefaultCoverAspect) }
+    val coverSharedModifier =
+        with(sharedTransitionScope) {
+            Modifier.sharedElement(
+                sharedContentState = rememberSharedContentState(key = "game-cover-${game.id}"),
+                animatedVisibilityScope = animatedVisibilityScope,
+                boundsTransform = { _, _ ->
+                    tween(durationMillis = 480, easing = FastOutSlowInEasing)
+                },
+                clipInOverlayDuringTransition = OverlayClip(GameCoverCorner),
+            )
+        }
     BoxWithConstraints(
         modifier = modifier,
         contentAlignment = Alignment.Center,
@@ -297,8 +309,7 @@ private fun GameCoverOrTrailer(
                     Modifier
                         .fillMaxSize()
                         .clip(GameCoverCorner)
-                        .onGloballyPositioned { onCoverBounds(it.boundsInRoot()) }
-                        .graphicsLayer { alpha = if (hideCover) 0f else 1f },
+                        .then(coverSharedModifier),
                 shape = GameCoverCorner,
                 tonalElevation = 6.dp,
                 color = Color.Black,
@@ -365,7 +376,6 @@ private fun GameCoverOrTrailer(
                     Modifier
                         .align(Alignment.TopEnd)
                         .padding(8.dp)
-                        .graphicsLayer { alpha = if (hideCover) 0f else 1f }
                         .size(18.dp)
                         .clip(RoundedCornerShape(4.dp))
                         .clickable(onClick = onEditCover),

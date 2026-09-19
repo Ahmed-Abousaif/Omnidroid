@@ -18,9 +18,13 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -40,6 +43,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -85,7 +89,6 @@ import com.omnidroid.app.mobile.feature.settings.savesync.SaveSyncSettingsScreen
 import com.omnidroid.app.mobile.feature.settings.savesync.SaveSyncSettingsViewModel
 import com.omnidroid.app.mobile.feature.shortcuts.ShortcutsGenerator
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
-import com.omnidroid.app.mobile.shared.compose.ui.GameHeroCover
 import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
 import com.omnidroid.app.mobile.shared.controller.ControllerHintBar
 import com.omnidroid.app.mobile.shared.controller.ControllerHints
@@ -196,7 +199,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
     @Composable
     private fun MainScreen(navController: NavHostController) {
         AppTheme {
@@ -244,65 +247,17 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     mutableStateOf<Game?>(null)
                 }
             val scope = rememberCoroutineScope()
-            val heroProgress = remember { Animatable(0f) }
-            val heroGame = remember { mutableStateOf<Game?>(null) }
-            val heroFrom = remember { mutableStateOf(Rect.Zero) }
-            val heroTo = remember { mutableStateOf(Rect.Zero) }
-            val coverBounds = remember { mutableMapOf<Int, Rect>() }
-            val waitingForDest = remember { mutableStateOf(false) }
-            val closingDetails = remember { mutableStateOf(false) }
-
-            suspend fun clearHeroTransition() {
-                heroProgress.snapTo(0f)
-                heroGame.value = null
-                heroFrom.value = Rect.Zero
-                heroTo.value = Rect.Zero
-                waitingForDest.value = false
-                closingDetails.value = false
-            }
-
-            // Leaving game details without closeGameDetails() (search, deep back stack,
-            // return-from-game races) can leave heroProgress≈1 on HOME: dimmed grid + no sidebar.
-            LaunchedEffect(currentRoute) {
-                if (currentRoute == MainRoute.HOME && !closingDetails.value && heroGame.value != null) {
-                    clearHeroTransition()
-                }
-            }
 
             val onGameLongClick = { game: Game ->
                 selectedGameState.value = game
             }
 
             val openGameDetails = { game: Game ->
-                if (currentRoute == MainRoute.HOME) {
-                    val from = coverBounds[game.id]
-                    if (from != null && from.width > 8f) {
-                        heroGame.value = game
-                        heroFrom.value = from
-                        heroTo.value = Rect.Zero
-                        waitingForDest.value = true
-                        closingDetails.value = false
-                        scope.launch { heroProgress.snapTo(0f) }
-                    }
-                }
                 navController.navigateToGameDetails(game.id)
             }
 
             val closeGameDetails = {
-                if (currentRoute == MainRoute.GAME_DETAILS && !closingDetails.value) {
-                    closingDetails.value = true
-                    waitingForDest.value = false
-                    scope.launch {
-                        if (heroGame.value != null) {
-                            heroProgress.animateTo(
-                                0f,
-                                tween(durationMillis = 480, easing = FastOutSlowInEasing),
-                            )
-                        }
-                        navController.popBackStack()
-                        clearHeroTransition()
-                    }
-                }
+                navController.popBackStack()
             }
 
             val onGameClick = { game: Game ->
@@ -478,10 +433,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
             CompositionLocalProvider(LocalControllerNavigation provides controllerNav) {
             Box(modifier = Modifier.fillMaxSize()) {
-            val heroActive = heroGame.value != null
-            val heroOnDetails =
-                heroActive &&
-                    (currentRoute == MainRoute.GAME_DETAILS || closingDetails.value)
             Scaffold(
                 containerColor = HomeChromeBackground,
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -494,98 +445,82 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     }
                 },
             ) { padding ->
-                val showLibraryUnderlay =
-                    currentRoute == MainRoute.HOME || currentRoute == MainRoute.GAME_DETAILS
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (showLibraryUnderlay) {
-                        LibraryScreen(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(padding)
-                                    .padding(top = LibraryTopBarRowHeight)
-                                    .zIndex(if (currentRoute == MainRoute.HOME) 1f else 0f),
-                            viewModel = libraryViewModel,
-                            onGameClick = onGameClick,
-                            onContinueClick = {
-                                libraryViewModel.clearSearchQuery()
-                                gameInteractor.onGamePlay(it)
-                            },
-                            onGameLongClick = onGameLongClick,
-                            onAddConsole = { navController.navigateToRoute(MainRoute.ADD_CONSOLES) },
-                            controllerConnected = gamepadConnected,
-                            transitionProgress = if (heroOnDetails) heroProgress.value else 0f,
-                            transitioningGameId =
-                                if (heroOnDetails) heroGame.value?.id else null,
-                            onCoverBounds = { id, rect -> coverBounds[id] = rect },
-                        )
-                    }
-                NavHost(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .zIndex(if (currentRoute == MainRoute.HOME) 0f else 1f)
-                            .padding(
-                                top =
-                                    if (currentRoute == MainRoute.GAME_DETAILS) {
-                                        0.dp
-                                    } else {
-                                        LibraryTopBarRowHeight
-                                    },
-                            ),
-                    navController = navController,
-                    startDestination = MainRoute.HOME.route,
-                ) {
-                    composable(MainRoute.HOME, instant = true) {
-                        Box(modifier = Modifier.fillMaxSize())
-                    }
-                    composable(MainRoute.GAME_DETAILS, instant = true) { entry ->
-                        val gameId = entry.arguments?.getInt("gameId") ?: return@composable
-                        GameDetailsScreen(
-                            modifier = Modifier.padding(padding),
-                            viewModel =
-                                viewModel(
-                                    factory =
-                                        GameDetailsViewModel.Factory(
-                                            applicationContext,
-                                            retrogradeDb,
-                                            settingsManager,
-                                            gameId,
-                                        ),
+                SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+                    NavHost(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(
+                                    top =
+                                        if (currentRoute == MainRoute.GAME_DETAILS) {
+                                            0.dp
+                                        } else {
+                                            LibraryTopBarRowHeight
+                                        },
                                 ),
-                            onBack = {
-                                if (heroGame.value != null) {
-                                    closeGameDetails()
-                                } else {
+                        navController = navController,
+                        startDestination = MainRoute.HOME.route,
+                    ) {
+                        composable(
+                            MainRoute.HOME,
+                            enterTransition = { fadeIn(animationSpec = tween(350, easing = FastOutSlowInEasing)) },
+                            exitTransition = { fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing)) },
+                            popEnterTransition = { fadeIn(animationSpec = tween(350, easing = FastOutSlowInEasing)) },
+                            popExitTransition = { fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing)) },
+                        ) {
+                            LibraryScreen(
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(padding),
+                                sharedTransitionScope = this@SharedTransitionLayout,
+                                animatedVisibilityScope = this,
+                                viewModel = libraryViewModel,
+                                onGameClick = onGameClick,
+                                onContinueClick = {
+                                    libraryViewModel.clearSearchQuery()
+                                    gameInteractor.onGamePlay(it)
+                                },
+                                onGameLongClick = onGameLongClick,
+                                onAddConsole = { navController.navigateToRoute(MainRoute.ADD_CONSOLES) },
+                                controllerConnected = gamepadConnected,
+                            )
+                        }
+                        composable(
+                            MainRoute.GAME_DETAILS,
+                            enterTransition = { fadeIn(animationSpec = tween(350, easing = FastOutSlowInEasing)) },
+                            exitTransition = { fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing)) },
+                            popEnterTransition = { fadeIn(animationSpec = tween(350, easing = FastOutSlowInEasing)) },
+                            popExitTransition = { fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing)) },
+                        ) { entry ->
+                            val gameId = entry.arguments?.getInt("gameId") ?: return@composable
+                            GameDetailsScreen(
+                                modifier = Modifier.padding(padding),
+                                sharedTransitionScope = this@SharedTransitionLayout,
+                                animatedVisibilityScope = this,
+                                viewModel =
+                                    viewModel(
+                                        factory =
+                                            GameDetailsViewModel.Factory(
+                                                applicationContext,
+                                                retrogradeDb,
+                                                settingsManager,
+                                                gameId,
+                                            ),
+                                    ),
+                                onBack = {
                                     navController.popBackStack()
-                                }
-                            },
-                            onPlay = {
-                                libraryViewModel.clearSearchQuery()
-                                gameInteractor.onGamePlay(it)
-                            },
-                            onFavoriteToggle = onGameFavoriteToggle,
-                            onOpenSettings = { selectedGameState.value = it },
-                            onSetCustomName = { game, name -> gameInteractor.onSetCustomName(game, name) },
-                            onSetCustomThumbnail = { game, uri -> gameInteractor.onSetCustomCover(game, uri) },
-                            transitionProgress = if (heroOnDetails) heroProgress.value else 1f,
-                            hideCover =
-                                heroOnDetails &&
-                                    (heroProgress.value < 0.97f || closingDetails.value),
-                            onCoverBounds = { rect ->
-                                heroTo.value = rect
-                                if (waitingForDest.value && rect.width > 8f && !closingDetails.value) {
-                                    waitingForDest.value = false
-                                    scope.launch {
-                                        heroProgress.animateTo(
-                                            1f,
-                                            tween(durationMillis = 520, easing = FastOutSlowInEasing),
-                                        )
-                                    }
-                                }
-                            },
-                        )
-                    }
+                                },
+                                onPlay = {
+                                    libraryViewModel.clearSearchQuery()
+                                    gameInteractor.onGamePlay(it)
+                                },
+                                onFavoriteToggle = onGameFavoriteToggle,
+                                onOpenSettings = { selectedGameState.value = it },
+                                onSetCustomName = { game, name -> gameInteractor.onSetCustomName(game, name) },
+                                onSetCustomThumbnail = { game, uri -> gameInteractor.onSetCustomCover(game, uri) },
+                            )
+                        }
                     composable(MainRoute.ADD_CONSOLES) {
                         AddConsoleScreen(
                             modifier = Modifier.fillMaxSize().padding(padding),
@@ -802,13 +737,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 ExtendedBenchmarkProgressDialog(progress = extendedBenchmarkProgress.value)
             }
 
-            val compactProgress =
-                when {
-                    currentRoute == MainRoute.GAME_DETAILS && heroGame.value != null ->
-                        heroProgress.value
-                    currentRoute == MainRoute.GAME_DETAILS -> 1f
-                    else -> 0f
-                }
+            val compactProgress by animateFloatAsState(
+                targetValue = if (currentRoute == MainRoute.GAME_DETAILS) 1f else 0f,
+                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                label = "topBarCompactProgress",
+            )
             LibraryTopBar(
                 modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(),
                 operationInProgress =
@@ -826,11 +759,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         it != MainRoute.HOME && it != MainRoute.GAME_DETAILS
                     }?.titleId,
                 onBackPressed = {
-                    if (currentRoute == MainRoute.GAME_DETAILS) {
-                        closeGameDetails()
-                    } else {
-                        navController.popBackStack()
-                    }
+                    navController.popBackStack()
                 },
                 compactProgress = compactProgress,
                 searchQuery = libraryState.searchQuery,
@@ -841,18 +770,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     (libraryState.filter as? LibraryFilter.System)?.metaSystemID?.titleResId,
                 consoleGameCount = libraryState.selectedSystemGameCount,
             )
-            val hero = heroGame.value
-            if (hero != null &&
-                heroOnDetails &&
-                (heroProgress.value < 0.97f || closingDetails.value)
-            ) {
-                GameHeroCover(
-                    game = hero,
-                    from = heroFrom.value,
-                    to = heroTo.value,
-                    progress = heroProgress.value,
-                )
-            }
             }
             }
         }

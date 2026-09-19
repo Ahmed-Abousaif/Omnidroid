@@ -5,10 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.geometry.Rect
 import coil.compose.AsyncImage
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.omnidroid.app.shared.covers.CoverUtils
@@ -19,7 +16,6 @@ fun OmnidroidGameImage(
     modifier: Modifier = Modifier,
     game: Game,
     aspectRatio: Float? = LibraryGameCardAspectRatio,
-    onCoverPositioned: ((Rect) -> Unit)? = null,
 ) {
     val fallbackDrawable =
         remember(game) {
@@ -37,15 +33,6 @@ fun OmnidroidGameImage(
                 .then(
                     if (aspectRatio != null) {
                         Modifier.aspectRatio(aspectRatio)
-                    } else {
-                        Modifier
-                    },
-                )
-                .then(
-                    if (onCoverPositioned != null) {
-                        Modifier.onGloballyPositioned { coords ->
-                            onCoverPositioned(coords.boundsInRoot())
-                        }
                     } else {
                         Modifier
                     },
