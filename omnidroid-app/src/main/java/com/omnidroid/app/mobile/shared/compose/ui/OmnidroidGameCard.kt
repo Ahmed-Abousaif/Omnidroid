@@ -55,22 +55,22 @@ private val CaptionFooterHeight = 52.dp
 @OptIn(ExperimentalFoundationApi::class)
 fun OmnidroidGameCard(
     modifier: Modifier = Modifier,
+    coverModifier: Modifier = Modifier,
     game: Game,
     badge: String? = null,
     continueAction: Boolean = false,
     showTitles: Boolean = true,
     infoStyle: GameCardInfoStyle = GameCardInfoStyle.OVERLAY,
     fillCard: Boolean = false,
-    onCoverPositioned: ((androidx.compose.ui.geometry.Rect) -> Unit)? = null,
     onClick: () -> Unit = { },
     onLongClick: () -> Unit = { },
 ) {
     if (fillCard && infoStyle == GameCardInfoStyle.BELOW) {
         CaptionBelowGameCard(
             modifier = modifier,
+            coverModifier = coverModifier,
             game = game,
             continueAction = continueAction,
-            onCoverPositioned = onCoverPositioned,
             onClick = onClick,
             onLongClick = onLongClick,
         )
@@ -93,10 +93,11 @@ fun OmnidroidGameCard(
     ) {
         Box(modifier = if (fillCard) Modifier.fillMaxSize() else Modifier.fillMaxWidth()) {
             OmnidroidGameImage(
-                modifier = if (fillCard) Modifier.fillMaxSize() else Modifier.fillMaxWidth(),
+                modifier =
+                    (if (fillCard) Modifier.fillMaxSize() else Modifier.fillMaxWidth())
+                        .then(coverModifier),
                 game = game,
                 aspectRatio = if (fillCard) null else LibraryGameCardAspectRatio,
-                onCoverPositioned = onCoverPositioned,
             )
             CoverForeground(
                 game = game,
@@ -113,9 +114,9 @@ fun OmnidroidGameCard(
 @OptIn(ExperimentalFoundationApi::class)
 private fun CaptionBelowGameCard(
     modifier: Modifier,
+    coverModifier: Modifier = Modifier,
     game: Game,
     continueAction: Boolean,
-    onCoverPositioned: ((androidx.compose.ui.geometry.Rect) -> Unit)?,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
@@ -143,10 +144,10 @@ private fun CaptionBelowGameCard(
                     modifier =
                         Modifier
                             .weight(1f)
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
+                            .then(coverModifier),
                     game = game,
                     aspectRatio = null,
-                    onCoverPositioned = onCoverPositioned,
                 )
                 Box(
                     modifier =

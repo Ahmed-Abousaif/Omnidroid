@@ -1,6 +1,11 @@
 package com.omnidroid.app.mobile.feature.library
 
 import android.content.Context
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -30,6 +35,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -40,6 +46,7 @@ import androidx.compose.material.icons.outlined.ZoomIn
 import androidx.compose.material.icons.outlined.ZoomOut
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -123,25 +130,22 @@ fun libraryGridRows(zoomDensity: Int, availableHeight: Dp): Int {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun LibraryScreen(
     modifier: Modifier = Modifier,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     viewModel: LibraryViewModel,
     onGameClick: (Game) -> Unit,
     onContinueClick: (Game) -> Unit,
     onGameLongClick: (Game) -> Unit,
     onAddConsole: () -> Unit,
     controllerConnected: Boolean = false,
-    transitionProgress: Float = 0f,
-    transitioningGameId: Int? = null,
-    onCoverBounds: (Int, Rect) -> Unit = { _, _ -> },
 ) {
     val state = viewModel.state.collectAsState().value
     val games = viewModel.games.collectAsLazyPagingItems()
 
-    val density = LocalDensity.current
-    val sidebarSlide = with(density) { LibrarySidebarWidth.toPx() } * transitionProgress
-    val zoomSlide = with(density) { 48.dp.toPx() } * transitionProgress
     Row(
         modifier =
             modifier
@@ -149,11 +153,7 @@ fun LibraryScreen(
                 .background(HomeChromeBackground),
     ) {
         LibrarySidebar(
-            modifier =
-                Modifier.graphicsLayer {
-                    translationX = -sidebarSlide
-                    alpha = 1f - transitionProgress
-                },
+            modifier = Modifier,
             filter = state.filter,
             systems = state.sidebarSystems,
             onFilterSelected = { viewModel.selectFilter(it) },
@@ -161,6 +161,8 @@ fun LibraryScreen(
         )
         LibraryGrid(
             modifier = Modifier.weight(1f),
+            sharedTransitionScope = sharedTransitionScope,
+            animatedVisibilityScope = animatedVisibilityScope,
             state = state,
             games = games,
             onGameClick = onGameClick,
@@ -170,10 +172,6 @@ fun LibraryScreen(
             onZoomDensityChange = { viewModel.setZoomDensity(it) },
             requestInitialFocus = controllerConnected,
             showZoomBar = !controllerConnected,
-            transitionProgress = transitionProgress,
-            zoomSlide = zoomSlide,
-            transitioningGameId = transitioningGameId,
-            onCoverBounds = onCoverBounds,
         )
     }
 }
@@ -201,26 +199,29 @@ private fun LibrarySidebar(
                 contentDescription = stringResource(R.string.favorites),
                 onClick = { onFilterSelected(LibraryFilter.Favorites) },
             )
-            Spacer(modifier = Modifier.height(8.dp))
             SidebarIconButton(
                 selected = filter is LibraryFilter.All,
                 icon = Icons.Filled.GridView,
                 contentDescription = stringResource(R.string.show_all),
                 onClick = { onFilterSelected(LibraryFilter.All) },
             )
+            Spacer(modifier = Modifier.height(6.dp))
+            HorizontalDivider(
+                modifier = Modifier.width(28.dp),
+                color = Color.White.copy(alpha = 0.12f),
+            )
+            Spacer(modifier = Modifier.height(6.dp))
             Column(
                 modifier =
                     Modifier
                         .weight(1f)
-                        .verticalScroll(rememberScrollState())
-                        .padding(vertical = 8.dp),
+                        .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 systems.forEach { system ->
-                    SidebarSystemButton(
-                        system = system,
-                        selected = filter is LibraryFilter.System && filter.metaSystemID == system,
+                    SidebarSystemLogoButton(
+                        meta = system,
+                        selected = (filter as? LibraryFilter.System)?.metaSystemID == system,
                         onClick = { onFilterSelected(LibraryFilter.System(system)) },
                     )
                 }
@@ -262,8 +263,8 @@ private fun SidebarIconButton(
 }
 
 @Composable
-private fun SidebarSystemButton(
-    system: MetaSystemID,
+private fun SidebarSystemLogoButton(
+    meta: MetaSystemID,
     selected: Boolean,
     onClick: () -> Unit,
 ) {
@@ -271,15 +272,15 @@ private fun SidebarSystemButton(
         onClick = onClick,
         modifier = Modifier.size(LibrarySidebarButtonSize).controllerFocusGlow(CircleShape),
         shape = CircleShape,
-        color = Color(system.color()),
+        color = Color(meta.color()),
         shadowElevation = 6.dp,
         tonalElevation = 0.dp,
         border = sidebarSelectionBorder(selected),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Image(
-                painter = painterResource(id = system.imageResId),
-                contentDescription = stringResource(id = system.titleResId),
+                painter = painterResource(id = meta.imageResId),
+                contentDescription = stringResource(id = meta.titleResId),
                 modifier = Modifier.fillMaxSize(0.84f),
                 contentScale = ContentScale.Fit,
             )
@@ -293,9 +294,12 @@ private fun sidebarSelectionBorder(selected: Boolean) =
         color = if (selected) LibraryNeonGreen else Color(0xFF2E2E2E),
     )
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun LibraryGrid(
     modifier: Modifier,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     state: LibraryViewModel.UiState,
     games: LazyPagingItems<Game>,
     onGameClick: (Game) -> Unit,
@@ -305,10 +309,6 @@ private fun LibraryGrid(
     onZoomDensityChange: (Int) -> Unit,
     requestInitialFocus: Boolean = false,
     showZoomBar: Boolean = true,
-    transitionProgress: Float = 0f,
-    zoomSlide: Float = 0f,
-    transitioningGameId: Int? = null,
-    onCoverBounds: (Int, Rect) -> Unit = { _, _ -> },
 ) {
     val context = LocalContext.current
     val firstItemRequester = remember { FocusRequester() }
@@ -369,8 +369,7 @@ private fun LibraryGrid(
                         modifier =
                             Modifier
                                 .fillMaxSize()
-                                .focusGroup()
-                                .graphicsLayer { alpha = 1f - (0.88f * transitionProgress) },
+                                .focusGroup(),
                         rows = GridCells.Fixed(rows),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -380,12 +379,12 @@ private fun LibraryGrid(
                         if (featured != null) {
                             item(key = "continue-${featured.id}") {
                                 LibraryGameCardItem(
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedVisibilityScope = animatedVisibilityScope,
                                     game = featured,
                                     modifier = Modifier.focusRequester(firstItemRequester),
                                     continueAction = true,
                                     infoStyle = infoStyle,
-                                    hidden = featured.id == transitioningGameId,
-                                    onCoverBounds = { onCoverBounds(featured.id, it) },
                                     onClick = { onContinueClick(featured) },
                                     onLongClick = { onGameLongClick(featured) },
                                 )
@@ -398,6 +397,8 @@ private fun LibraryGrid(
                         ) { index ->
                             val game = games[index] ?: return@items
                             LibraryGameCardItem(
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = animatedVisibilityScope,
                                 game = game,
                                 modifier =
                                     if (!showContinue && index == 0) {
@@ -407,8 +408,6 @@ private fun LibraryGrid(
                                     },
                                 continueAction = false,
                                 infoStyle = infoStyle,
-                                hidden = game.id == transitioningGameId,
-                                onCoverBounds = { onCoverBounds(game.id, it) },
                                 onClick = { onGameClick(game) },
                                 onLongClick = { onGameLongClick(game) },
                             )
@@ -419,11 +418,7 @@ private fun LibraryGrid(
                     LibraryZoomBar(
                         density = state.zoomDensity,
                         onDensityChange = onZoomDensityChange,
-                        modifier =
-                            Modifier.graphicsLayer {
-                                translationY = zoomSlide
-                                alpha = 1f - transitionProgress
-                            },
+                        modifier = Modifier,
                     )
                 }
             }
@@ -431,14 +426,15 @@ private fun LibraryGrid(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun LibraryGameCardItem(
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     game: Game,
     modifier: Modifier = Modifier,
     continueAction: Boolean,
     infoStyle: GameCardInfoStyle,
-    hidden: Boolean = false,
-    onCoverBounds: (Rect) -> Unit = {},
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
@@ -452,16 +448,24 @@ private fun LibraryGameCardItem(
                     Modifier.aspectRatio(LibraryGameCardAspectRatio, matchHeightConstraintsFirst = true)
                 },
             )
+    val coverSharedModifier =
+        with(sharedTransitionScope) {
+            Modifier.sharedElement(
+                sharedContentState = rememberSharedContentState(key = "game-cover-${game.id}"),
+                animatedVisibilityScope = animatedVisibilityScope,
+                boundsTransform = { _, _ ->
+                    tween(durationMillis = 480, easing = FastOutSlowInEasing)
+                },
+                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(4.dp)),
+            )
+        }
     OmnidroidGameCard(
-        modifier =
-            modifier
-                .then(sizeModifier)
-                .graphicsLayer { alpha = if (hidden) 0f else 1f },
+        modifier = modifier.then(sizeModifier),
+        coverModifier = coverSharedModifier,
         game = game,
         continueAction = continueAction,
         infoStyle = infoStyle,
         fillCard = true,
-        onCoverPositioned = onCoverBounds,
         onClick = onClick,
         onLongClick = onLongClick,
     )
