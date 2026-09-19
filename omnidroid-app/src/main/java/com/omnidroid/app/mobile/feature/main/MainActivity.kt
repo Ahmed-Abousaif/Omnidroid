@@ -47,6 +47,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
@@ -248,11 +249,14 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 }
             val scope = rememberCoroutineScope()
 
+            var lastClickedGame by remember { mutableStateOf<Game?>(null) }
+
             val onGameLongClick = { game: Game ->
                 selectedGameState.value = game
             }
 
             val openGameDetails = { game: Game ->
+                lastClickedGame = game
                 navController.navigateToGameDetails(game.id)
             }
 
@@ -447,32 +451,23 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
             ) { padding ->
                 SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
                     NavHost(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .padding(
-                                    top =
-                                        if (currentRoute == MainRoute.GAME_DETAILS) {
-                                            0.dp
-                                        } else {
-                                            LibraryTopBarRowHeight
-                                        },
-                                ),
+                        modifier = Modifier.fillMaxSize(),
                         navController = navController,
                         startDestination = MainRoute.HOME.route,
                     ) {
                         composable(
                             MainRoute.HOME,
-                            enterTransition = { fadeIn(animationSpec = tween(350, easing = FastOutSlowInEasing)) },
-                            exitTransition = { fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing)) },
-                            popEnterTransition = { fadeIn(animationSpec = tween(350, easing = FastOutSlowInEasing)) },
-                            popExitTransition = { fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing)) },
+                            enterTransition = { fadeIn(animationSpec = tween(400, easing = FastOutSlowInEasing)) },
+                            exitTransition = { fadeOut(animationSpec = tween(400, easing = FastOutSlowInEasing)) },
+                            popEnterTransition = { fadeIn(animationSpec = tween(400, easing = FastOutSlowInEasing)) },
+                            popExitTransition = { fadeOut(animationSpec = tween(400, easing = FastOutSlowInEasing)) },
                         ) {
                             LibraryScreen(
                                 modifier =
                                     Modifier
                                         .fillMaxSize()
-                                        .padding(padding),
+                                        .padding(padding)
+                                        .padding(top = LibraryTopBarRowHeight),
                                 sharedTransitionScope = this@SharedTransitionLayout,
                                 animatedVisibilityScope = this,
                                 viewModel = libraryViewModel,
@@ -488,14 +483,19 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         }
                         composable(
                             MainRoute.GAME_DETAILS,
-                            enterTransition = { fadeIn(animationSpec = tween(350, easing = FastOutSlowInEasing)) },
-                            exitTransition = { fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing)) },
-                            popEnterTransition = { fadeIn(animationSpec = tween(350, easing = FastOutSlowInEasing)) },
-                            popExitTransition = { fadeOut(animationSpec = tween(300, easing = FastOutSlowInEasing)) },
+                            enterTransition = { fadeIn(animationSpec = tween(400, easing = FastOutSlowInEasing)) },
+                            exitTransition = { fadeOut(animationSpec = tween(400, easing = FastOutSlowInEasing)) },
+                            popEnterTransition = { fadeIn(animationSpec = tween(400, easing = FastOutSlowInEasing)) },
+                            popExitTransition = { fadeOut(animationSpec = tween(400, easing = FastOutSlowInEasing)) },
                         ) { entry ->
                             val gameId = entry.arguments?.getInt("gameId") ?: return@composable
+                            val initialGame = lastClickedGame?.takeIf { it.id == gameId }
                             GameDetailsScreen(
-                                modifier = Modifier.padding(padding),
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(padding)
+                                        .padding(top = LibraryTopBarRowHeight),
                                 sharedTransitionScope = this@SharedTransitionLayout,
                                 animatedVisibilityScope = this,
                                 viewModel =
@@ -506,6 +506,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                                 retrogradeDb,
                                                 settingsManager,
                                                 gameId,
+                                                initialGame = initialGame,
                                             ),
                                     ),
                                 onBack = {
@@ -523,7 +524,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         }
                     composable(MainRoute.ADD_CONSOLES) {
                         AddConsoleScreen(
-                            modifier = Modifier.fillMaxSize().padding(padding),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(top = LibraryTopBarRowHeight),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -539,7 +544,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     }
                     composable(MainRoute.SETTINGS) {
                         SettingsScreen(
-                            modifier = Modifier.padding(padding),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(top = LibraryTopBarRowHeight),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -559,7 +568,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     }
                     composable(MainRoute.SETTINGS_ADVANCED) {
                         AdvancedSettingsScreen(
-                            modifier = Modifier.padding(padding),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(top = LibraryTopBarRowHeight),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -573,7 +586,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     }
                     composable(MainRoute.SETTINGS_BIOS) {
                         BiosScreen(
-                            modifier = Modifier.padding(padding),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(top = LibraryTopBarRowHeight),
                             viewModel =
                                 viewModel(
                                     factory = BiosSettingsViewModel.Factory(biosManager),
@@ -582,7 +599,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     }
                     composable(MainRoute.SETTINGS_CORES_SELECTION) {
                         CoresSelectionScreen(
-                            modifier = Modifier.padding(padding),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(top = LibraryTopBarRowHeight),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -595,7 +616,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     }
                     composable(MainRoute.SETTINGS_INPUT_DEVICES) {
                         InputDevicesSettingsScreen(
-                            modifier = Modifier.padding(padding),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(top = LibraryTopBarRowHeight),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -608,7 +633,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     }
                     composable(MainRoute.SETTINGS_SAVE_SYNC) {
                         SaveSyncSettingsScreen(
-                            modifier = Modifier.padding(padding),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(top = LibraryTopBarRowHeight),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -621,7 +650,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     }
                     composable(MainRoute.SETTINGS_DEVICE_PROFILE) {
                         DeviceProfileScreen(
-                            modifier = Modifier.padding(padding),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(top = LibraryTopBarRowHeight),
                             viewModel =
                                 viewModel(
                                     factory = DeviceProfileViewModel.Factory(applicationContext),
@@ -630,7 +663,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     }
                     composable(MainRoute.PROFILE) {
                         ProfileScreen(
-                            modifier = Modifier.padding(padding),
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(top = LibraryTopBarRowHeight),
                             viewModel =
                                 viewModel(
                                     factory =

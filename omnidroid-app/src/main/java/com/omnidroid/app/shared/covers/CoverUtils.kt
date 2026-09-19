@@ -27,10 +27,9 @@ object CoverUtils {
             val fallbackDrawable = getFallbackDrawable(game)
             fallback(fallbackDrawable)
             error(fallbackDrawable)
-            customCoverCacheKey(game)?.let { key ->
-                memoryCacheKey(key)
-                diskCacheKey(key)
-            }
+            val key = coverCacheKey(game)
+            memoryCacheKey(key)
+            diskCacheKey(key)
         }
     }
 
@@ -46,20 +45,58 @@ object CoverUtils {
             ?: RawgCoverStore.get(game.id)
             ?: game.coverFrontUrl
 
+    fun coverCacheKey(
+        game: Game,
+        preferredCoverUrl: String? = null,
+    ): String {
+        val file = resolveCustomCoverFile(game)
+        if (file != null) {
+            return "custom:${game.id}:${file.absolutePath}:${file.lastModified()}"
+        }
+        val data = coverData(game, preferredCoverUrl)?.toString() ?: "game:${game.id}"
+        return "cover:${game.id}:$data"
+    }
+
     fun coverRequest(
         context: Context,
         game: Game,
         preferredCoverUrl: String? = null,
     ): ImageRequest {
+        val key = coverCacheKey(game, preferredCoverUrl)
         return ImageRequest.Builder(context)
             .data(coverData(game, preferredCoverUrl))
-            .apply {
-                customCoverCacheKey(game)?.let { key ->
-                    memoryCacheKey(key)
-                    diskCacheKey(key)
-                }
-            }
+            .memoryCacheKey(key)
+            .diskCacheKey(key)
             .build()
+    }
+
+    fun getCachedCoverAspectRatio(
+        context: Context,
+        game: Game,
+        preferredCoverUrl: String? = null,
+    ): Float? {
+        val file = resolveCustomCoverFile(game)
+        if (file != null && file.isFile && file.length() > 0L) {
+            val options = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            android.graphics.BitmapFactory.decodeFile(file.absolutePath, options)
+            if (options.outWidth > 0 && options.outHeight > 0) {
+                return options.outWidth.toFloat() / options.outHeight.toFloat()
+            }
+        }
+        val key = coverCacheKey(game, preferredCoverUrl)
+        val imageLoader = coil.Coil.imageLoader(context)
+        val cachedBitmap = imageLoader.memoryCache?.get(MemoryCache.Key(key))?.bitmap
+        if (cachedBitmap != null && cachedBitmap.width > 0 && cachedBitmap.height > 0) {
+            return cachedBitmap.width.toFloat() / cachedBitmap.height.toFloat()
+        }
+        val data = coverData(game, preferredCoverUrl)?.toString()
+        if (!data.isNullOrBlank()) {
+            val rawBitmap = imageLoader.memoryCache?.get(MemoryCache.Key(data))?.bitmap
+            if (rawBitmap != null && rawBitmap.width > 0 && rawBitmap.height > 0) {
+                return rawBitmap.width.toFloat() / rawBitmap.height.toFloat()
+            }
+        }
+        return null
     }
 
     fun hasCustomCover(game: Game): Boolean = resolveCustomCoverFile(game) != null
@@ -121,7 +158,7 @@ object CoverUtils {
         return ColorUtils.randomColor(game.title)
     }
 
-    private fun customCoverCacheKey(game: Game): String? {
+    fun customCoverCacheKey(game: Game): String? {
         val file = resolveCustomCoverFile(game) ?: return null
         return "${file.absolutePath}:${file.lastModified()}"
     }

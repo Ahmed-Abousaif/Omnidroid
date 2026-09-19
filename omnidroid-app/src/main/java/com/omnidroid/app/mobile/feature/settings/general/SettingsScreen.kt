@@ -6,6 +6,8 @@ import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -234,6 +236,7 @@ private fun SettingsSidebar(
             modifier
                 .width(SettingsSidebarWidth)
                 .fillMaxHeight()
+                .verticalScroll(rememberScrollState())
                 .padding(top = 8.dp, bottom = 16.dp),
     ) {
         SettingsSection.values().forEach { item ->
