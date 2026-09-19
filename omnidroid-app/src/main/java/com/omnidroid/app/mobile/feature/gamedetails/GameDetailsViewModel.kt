@@ -21,15 +21,17 @@ class GameDetailsViewModel(
     private val retrogradeDb: RetrogradeDatabase,
     private val settingsManager: SettingsManager,
     gameId: Int,
+    initialGame: Game? = null,
 ) : ViewModel() {
     class Factory(
         private val appContext: Context,
         private val retrogradeDb: RetrogradeDatabase,
         private val settingsManager: SettingsManager,
         private val gameId: Int,
+        private val initialGame: Game? = null,
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return GameDetailsViewModel(appContext, retrogradeDb, settingsManager, gameId) as T
+            return GameDetailsViewModel(appContext, retrogradeDb, settingsManager, gameId, initialGame) as T
         }
     }
 
@@ -61,7 +63,7 @@ class GameDetailsViewModel(
                 loadingMetadata = loadingMetadata,
                 playingTrailer = playingTrailer,
             )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState(game = initialGame))
 
     init {
         viewModelScope.launch {
