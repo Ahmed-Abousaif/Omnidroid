@@ -1,6 +1,7 @@
 package com.omnidroid.touchinput.radial.layouts
 
 import android.view.KeyEvent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
@@ -14,6 +15,7 @@ import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonL
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonMenu
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonMenuPlaceholder
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonR
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonScreenLayout
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonSelect
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonStart
 import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
@@ -45,6 +47,9 @@ fun PadKitScope.DesmumeLeft(
                 modifier = Modifier.radialPosition(-60f),
                 id = Id.Key(KeyEvent.KEYCODE_BUTTON_L2),
                 icon = R.drawable.button_close_screen,
+            )
+            Box(
+                modifier = Modifier.radialPosition(-90f),
             )
         },
     )
@@ -79,8 +84,9 @@ fun PadKitScope.DesmumeRight(
         secondaryDials = {
             SecondaryButtonR()
             SecondaryButtonStart(position = 2)
+            SecondaryButtonScreenLayout(positionDegrees = -120f)
+            SecondaryButtonHidePads(positionDegrees = -90f)
             SecondaryButtonMenu(settings)
-            SecondaryButtonHidePads(positionDegrees = -120f)
         },
     )
 }
