@@ -149,13 +149,13 @@ class GameViewModelSaves(
         }
 
         if (system.hasMultiDiskSupport &&
-            retroGameView.getAvailableDisks() > 1 &&
-            retroGameView.getCurrentDisk() != saveState.metadata.diskIndex
+            retroGameView.getAvailableDisks(false) > 1 &&
+            retroGameView.getCurrentDisk(false) != saveState.metadata.diskIndex
         ) {
-            retroGameView.changeDisk(saveState.metadata.diskIndex)
+            retroGameView.changeDisk(saveState.metadata.diskIndex, false)
         }
 
-        return retroGameView.unserializeState(saveState.state)
+        return retroGameView.unserializeState(saveState.state, false)
     }
 
     fun saveQuickSave() {

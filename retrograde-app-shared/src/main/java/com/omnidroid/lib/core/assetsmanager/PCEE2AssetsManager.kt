@@ -82,9 +82,10 @@ class PCEE2AssetsManager : CoreID.AssetsManager {
                     val entry = zipInputStream.nextEntry ?: break
                     Timber.d("PCEE2AssetsManager: Extracting ${entry.name}")
 
-                    val destFile = if (entry.name.endsWith(".bin", ignoreCase = true)) {
+                    val entryName = entry.name.replace('\\', '/')
+                    val destFile = if (entryName.endsWith(".bin", ignoreCase = true)) {
                         // Place BIOS binary in pcsx2/bios/ and mirror to system/
-                        val baseName = entry.name.substringAfterLast("/")
+                        val baseName = entryName.substringAfterLast("/")
                         val pcsx2File = File(pcsx2BiosDir, baseName)
                         val systemFile = File(systemDir, baseName)
 
@@ -103,13 +104,13 @@ class PCEE2AssetsManager : CoreID.AssetsManager {
                             Timber.e(e, "Error copying extracted bios to system root")
                         }
                         continue
-                    } else if (entry.name.startsWith("pcsx2/", ignoreCase = true)) {
-                        File(systemDir, entry.name)
+                    } else if (entryName.startsWith("pcsx2/", ignoreCase = true)) {
+                        File(systemDir, entryName)
                     } else {
-                        File(systemDir, "pcsx2/${entry.name}")
+                        File(systemDir, "pcsx2/$entryName")
                     }
 
-                    if (entry.isDirectory) {
+                    if (entry.isDirectory || entryName.endsWith("/")) {
                         destFile.mkdirs()
                     } else {
                         destFile.parentFile?.mkdirs()

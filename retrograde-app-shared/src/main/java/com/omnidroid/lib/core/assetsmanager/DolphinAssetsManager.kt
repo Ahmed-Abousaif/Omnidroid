@@ -53,20 +53,24 @@ class DolphinAssetsManager : CoreID.AssetsManager {
             throw Exception(response.errorBody()?.use { it.string() } ?: "Dolphin assets download failed")
         }
 
+        sysDir.deleteRecursively()
+        sysDir.mkdirs()
+
         response.body()?.use { responseBody ->
             ZipInputStream(responseBody.byteStream()).use { zipInputStream ->
                 while (true) {
                     val entry = zipInputStream.nextEntry ?: break
                     Timber.d("DolphinAssetsManager: Extracting ${entry.name}")
 
+                    val entryName = entry.name.replace('\\', '/')
                     val normalizedName = when {
-                        entry.name.startsWith("dolphin-emu/", ignoreCase = true) -> entry.name.substring("dolphin-emu/".length)
-                        entry.name.startsWith("Sys/", ignoreCase = true) -> entry.name
-                        else -> "Sys/${entry.name}"
+                        entryName.startsWith("dolphin-emu/", ignoreCase = true) -> entryName.substring("dolphin-emu/".length)
+                        entryName.startsWith("Sys/", ignoreCase = true) -> entryName
+                        else -> "Sys/$entryName"
                     }
 
                     val destFile = File(dolphinDir, normalizedName)
-                    if (entry.isDirectory) {
+                    if (entry.isDirectory || normalizedName.endsWith("/")) {
                         destFile.mkdirs()
                     } else {
                         destFile.parentFile?.mkdirs()
@@ -100,7 +104,7 @@ class DolphinAssetsManager : CoreID.AssetsManager {
     }
 
     companion object {
-        const val DOLPHIN_ASSETS_VERSION = "omnidroid-1"
+        const val DOLPHIN_ASSETS_VERSION = "omnidroid-3"
 
         val DOLPHIN_ASSETS_URL: Uri =
             Uri.parse("https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/")

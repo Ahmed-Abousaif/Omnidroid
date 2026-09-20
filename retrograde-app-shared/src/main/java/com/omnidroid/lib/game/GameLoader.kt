@@ -162,9 +162,6 @@ class GameLoader(
         context: Context,
         coreID: CoreID,
     ): String {
-        CoreLibraryLocator.find(context, coreID)?.let { return it.absolutePath }
-
-        Timber.i("Core ${coreID.coreName} is missing, downloading")
         coreUpdater.downloadCores(context, listOf(coreID))
 
         return CoreLibraryLocator.find(context, coreID)?.absolutePath

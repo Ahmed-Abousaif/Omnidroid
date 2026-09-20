@@ -48,17 +48,19 @@ fun CoresSelectionScreen(
         }
         OmnidroidCardSettingsGroup {
             cores.forEach { (system, core) ->
-                val state = rememberMemoryIntSettingState(system.systemCoreConfigs.indexOf(core))
+                androidx.compose.runtime.key(system.id) {
+                    val state = rememberMemoryIntSettingState(system.systemCoreConfigs.indexOf(core))
 
-                OmnidroidSettingsList(
-                    state = state,
-                    title = { Text(text = stringResource(system.titleResId)) },
-                    items = system.systemCoreConfigs.map { it.coreID.coreDisplayName },
-                    enabled = !indexingInProgress,
-                    onItemSelected = { index, _ ->
-                        viewModel.changeCore(system, system.systemCoreConfigs[index], applicationContext)
-                    },
-                )
+                    OmnidroidSettingsList(
+                        state = state,
+                        title = { Text(text = stringResource(system.titleResId)) },
+                        items = system.systemCoreConfigs.map { it.coreID.coreDisplayName },
+                        enabled = !indexingInProgress,
+                        onItemSelected = { index, _ ->
+                            viewModel.changeCore(system, system.systemCoreConfigs[index], applicationContext)
+                        },
+                    )
+                }
             }
         }
     }
