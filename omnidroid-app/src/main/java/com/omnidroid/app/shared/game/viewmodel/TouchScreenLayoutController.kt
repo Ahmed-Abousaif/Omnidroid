@@ -21,12 +21,14 @@ class TouchScreenLayoutController(
     ): List<CoreVariable> {
         return when (coreId) {
             CoreID.MELONDS -> toggleMelonDs(orientation)
+            CoreID.MELONDS_DS -> toggleMelonDsDs(orientation)
             CoreID.CITRA -> toggleCitra(orientation)
             else -> emptyList()
         }
     }
 
-    fun supportsToggle(): Boolean = coreId == CoreID.MELONDS || coreId == CoreID.CITRA
+    fun supportsToggle(): Boolean =
+        coreId == CoreID.MELONDS || coreId == CoreID.MELONDS_DS || coreId == CoreID.CITRA
 
     private fun toggleMelonDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
         val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDS_LAYOUT_KEY, systemId.dbname)
@@ -39,6 +41,19 @@ class TouchScreenLayoutController(
             }
         sharedPreferences.edit { putString(key, next) }
         return listOf(CoreVariable(MELONDS_LAYOUT_KEY, next))
+    }
+
+    private fun toggleMelonDsDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
+        val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDSDS_LAYOUT_KEY, systemId.dbname)
+        val current = sharedPreferences.getString(key, null)
+        val next =
+            if (current == MELONDS_SINGLE_TOP) {
+                melonDsDual(orientation)
+            } else {
+                MELONDS_SINGLE_TOP
+            }
+        sharedPreferences.edit { putString(key, next) }
+        return listOf(CoreVariable(MELONDSDS_LAYOUT_KEY, next))
     }
 
     private fun toggleCitra(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
@@ -79,6 +94,7 @@ class TouchScreenLayoutController(
 
     companion object {
         const val MELONDS_LAYOUT_KEY = "melonds_screen_layout1"
+        const val MELONDSDS_LAYOUT_KEY = "melondsds_screen_layout"
         const val MELONDS_DUAL_PORTRAIT = "top-bottom"
         const val MELONDS_DUAL_LANDSCAPE = "left-right"
         const val MELONDS_SINGLE_TOP = "top"

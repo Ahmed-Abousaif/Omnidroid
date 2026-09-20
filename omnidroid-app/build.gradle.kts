@@ -44,6 +44,7 @@ android {
                 ":omnidroid_core_mednafen_pce_fast",
                 ":omnidroid_core_mednafen_wswan",
                 ":omnidroid_core_melonds",
+                ":omnidroid_core_melondsds",
                 ":omnidroid_core_mgba",
                 ":omnidroid_core_mupen64plus_next_gles3",
                 ":omnidroid_core_pcsx_rearmed",

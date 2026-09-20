@@ -69,13 +69,18 @@ enum class CoreID(
     ),
     DESMUME(
         "desmume",
-        "DeSmuME (Deprecated)",
+        "DeSmuME (Legacy)",
         "libdesmume_libretro_android.so",
     ),
     MELONDS(
         "melonds",
-        "MelonDS",
+        "MelonDS (Legacy)",
         "libmelonds_libretro_android.so",
+    ),
+    MELONDS_DS(
+        "melondsds",
+        "melonDS DS",
+        "libmelondsds_libretro_android.so",
     ),
     HANDY(
         "handy",

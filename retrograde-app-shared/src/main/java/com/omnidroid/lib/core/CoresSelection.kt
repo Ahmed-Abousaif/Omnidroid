@@ -94,7 +94,7 @@ class CoresSelection(
             return if (desmumeMigrationHandler.hasPendingDesmumeSaves()) {
                 CoreID.DESMUME.coreName
             } else {
-                CoreID.MELONDS.coreName
+                CoreID.MELONDS_DS.coreName
             }
         }
         return system.systemCoreConfigs.first().coreID.coreName

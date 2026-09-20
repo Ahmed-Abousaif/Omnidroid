@@ -100,9 +100,9 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 
 ### NDS and 3DS single-screen layouts
 
-- **melonDS (NDS):** Screens layout includes **Top Only** and **Bottom Only**, alongside Top–Bottom and Left–Right.
+- **melonDS DS (NDS):** Screens layout includes **Top Only** and **Bottom Only**, alongside Top–Bottom and Left–Right.
 - **Citra (3DS):** Screens layout includes **Single Screen**, plus **Displayed screen** (Top or Bottom) to choose which one shows.
-- On the virtual pad (melonDS / Citra), tap the **screen layout** button to toggle dual ↔ **Top only** without opening the menu. Portrait dual uses Top–Bottom; landscape dual uses Left–Right / Side by Side. The same core option as in-game Settings is updated, so the menu stays in sync.
+- On the virtual pad (melonDS DS / Citra), tap the **screen layout** button to toggle dual ↔ **Top only** without opening the menu. Portrait dual uses Top–Bottom; landscape dual uses Left–Right / Side by Side. The same core option as in-game Settings is updated, so the menu stays in sync.
 
 ### Vibration intensity
 
@@ -154,7 +154,7 @@ The original Lemuroid goals still apply: ease of use, good Android integration, 
 - PlayStation (PSX) ([PCSX-ReARMed](https://docs.libretro.com/library/pcsx_rearmed/))
 - PlayStation Portable (PSP) ([ppsspp](https://docs.libretro.com/library/ppsspp/))
 - FinalBurn Neo (Arcade) ([fbneo](https://github.com/libretro/FBNeo/))
-- Nintendo DS (NDS) ([desmume](https://docs.libretro.com/library/desmume/)/[MelonDS](https://docs.libretro.com/library/melonds/))
+- Nintendo DS (NDS) ([melonDS DS](https://github.com/JesseTG/melonds-ds)/[melonDS](https://docs.libretro.com/library/melonds/)/[desmume](https://docs.libretro.com/library/desmume/))
 - NEC PC Engine (PCE) ([beetle_pce_fast](https://docs.libretro.com/library/beetle_pce_fast/))
 - Neo Geo Pocket (NGP) ([mednafen_ngp](https://docs.libretro.com/library/beetle_neopop/))
 - Neo Geo Pocket Color (NGC) ([mednafen_ngp](https://docs.libretro.com/library/beetle_neopop/))
