@@ -11,6 +11,9 @@
     <string name="controller_default">Default</string>
     <string name="controller_dualshock">DualShock</string>
     <string name="controller_dualshock2">DualShock 2</string>
+    <string name="controller_gamecube">GameCube Controller</string>
+    <string name="controller_wii_classic">Wii Classic Controller</string>
+    <string name="controller_wii_remote">Wii Remote + Nunchuk</string>
     <string name="controller_standard">Standard</string>
     <string name="controller_landscape">Landscape</string>
     <string name="controller_portrait">Portrait</string>

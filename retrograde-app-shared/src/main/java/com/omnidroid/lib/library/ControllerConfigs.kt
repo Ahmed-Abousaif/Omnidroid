@@ -406,4 +406,52 @@ object ControllerConfigs {
                     TILT_CONFIGURATION_L2_R2,
                 ),
         )
+
+    val GAMECUBE =
+        ControllerConfig(
+            "gamecube",
+            R.string.controller_gamecube,
+            TouchControllerID.GAMECUBE,
+            allowTouchRotation = true,
+            tiltConfigurations =
+                listOf(
+                    TILT_CONFIGURATION_DISABLED,
+                    TILT_CONFIGURATION_CROSS,
+                    TILT_CONFIGURATION_ANALOG_LEFT,
+                    TILT_CONFIGURATION_ANALOG_RIGHT,
+                    TILT_CONFIGURATION_L_R,
+                ),
+        )
+
+    val WII_CLASSIC =
+        ControllerConfig(
+            "wii_classic",
+            R.string.controller_wii_classic,
+            TouchControllerID.WII_CLASSIC,
+            allowTouchRotation = true,
+            tiltConfigurations =
+                listOf(
+                    TILT_CONFIGURATION_DISABLED,
+                    TILT_CONFIGURATION_CROSS,
+                    TILT_CONFIGURATION_ANALOG_LEFT,
+                    TILT_CONFIGURATION_ANALOG_RIGHT,
+                    TILT_CONFIGURATION_L1_R1,
+                    TILT_CONFIGURATION_L2_R2,
+                ),
+        )
+
+    val WII_REMOTE =
+        ControllerConfig(
+            "wii_remote",
+            R.string.controller_wii_remote,
+            TouchControllerID.WII_REMOTE,
+            allowTouchRotation = true,
+            tiltConfigurations =
+                listOf(
+                    TILT_CONFIGURATION_DISABLED,
+                    TILT_CONFIGURATION_CROSS,
+                    TILT_CONFIGURATION_ANALOG_LEFT,
+                    TILT_CONFIGURATION_L_R,
+                ),
+        )
 }
