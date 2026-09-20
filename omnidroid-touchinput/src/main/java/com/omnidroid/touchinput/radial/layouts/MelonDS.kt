@@ -10,6 +10,7 @@ import com.omnidroid.touchinput.radial.controls.OmnidroidControlButton
 import com.omnidroid.touchinput.radial.controls.OmnidroidControlCross
 import com.omnidroid.touchinput.radial.controls.OmnidroidControlFaceButtons
 import com.omnidroid.touchinput.radial.layouts.shared.ComposeTouchLayouts
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonCloseLid
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonHidePads
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonL
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonMenu
@@ -43,11 +44,7 @@ fun PadKitScope.MelonDSLeft(
                 id = Id.Key(KeyEvent.KEYCODE_BUTTON_L2),
                 icon = R.drawable.button_mic,
             )
-            OmnidroidControlButton(
-                modifier = Modifier.radialPosition(-60f),
-                id = Id.Key(KeyEvent.KEYCODE_BUTTON_THUMBL),
-                icon = R.drawable.button_close_screen,
-            )
+            SecondaryButtonCloseLid(positionDegrees = -60f)
             Box(
                 modifier = Modifier.radialPosition(-90f),
             )

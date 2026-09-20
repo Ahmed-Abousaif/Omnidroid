@@ -968,71 +968,6 @@ data class GameSystem(
                             exposedSettings =
                                 listOf(
                                     ExposedSetting(
-                                        "melondsds_screen_layout",
-                                        R.string.setting_melonds_screen_layout,
-                                        arrayListOf(
-                                            ExposedSetting.Value(
-                                                "top-bottom",
-                                                R.string.value_melonds_screen_layout_topbottom,
-                                            ),
-                                            ExposedSetting.Value(
-                                                "left-right",
-                                                R.string.value_melonds_screen_layout_leftright,
-                                            ),
-                                            ExposedSetting.Value(
-                                                "top",
-                                                R.string.value_melonds_screen_layout_toponly,
-                                            ),
-                                            ExposedSetting.Value(
-                                                "bottom",
-                                                R.string.value_melonds_screen_layout_bottomonly,
-                                            ),
-                                        ),
-                                    ),
-                                    ExposedSetting(
-                                        "melondsds_mic_input",
-                                        R.string.setting_melonds_mic_input,
-                                        arrayListOf(
-                                            ExposedSetting.Value(
-                                                "microphone",
-                                                R.string.value_melonds_mic_input_microphone,
-                                            ),
-                                            ExposedSetting.Value(
-                                                "blow",
-                                                R.string.value_melonds_mic_input_blow,
-                                            ),
-                                        ),
-                                    ),
-                                ),
-                            exposedAdvancedSettings =
-                                listOf(
-                                    ExposedSetting(
-                                        "melondsds_threaded_renderer",
-                                        R.string.setting_melonds_threaded_renderer,
-                                    ),
-                                    ExposedSetting(
-                                        "melondsds_jit_enable",
-                                        R.string.setting_melonds_jit_enable,
-                                    ),
-                                ),
-                            defaultSettings =
-                                listOf(
-                                    CoreVariable("melondsds_touch_mode", "Touch"),
-                                    CoreVariable("melondsds_threaded_renderer", "enabled"),
-                                ),
-                            controllerConfigs =
-                                hashMapOf(
-                                    0 to arrayListOf(ControllerConfigs.MELONDS),
-                                ),
-                            statesVersion = 2,
-                            supportsMicrophone = true,
-                            supportedOnlyArchitectures = setOf("arm64-v8a", "armeabi-v7a", "x86_64"),
-                        ),
-                        SystemCoreConfig(
-                            CoreID.MELONDS,
-                            exposedSettings =
-                                listOf(
-                                    ExposedSetting(
                                         "melonds_screen_layout1",
                                         R.string.setting_melonds_screen_layout,
                                         arrayListOf(
@@ -1083,6 +1018,71 @@ data class GameSystem(
                             defaultSettings =
                                 listOf(
                                     CoreVariable("melonds_number_of_screen_layouts", "1"),
+                                    CoreVariable("melonds_touch_mode", "Touch"),
+                                    CoreVariable("melonds_threaded_renderer", "enabled"),
+                                ),
+                            controllerConfigs =
+                                hashMapOf(
+                                    0 to arrayListOf(ControllerConfigs.MELONDS),
+                                ),
+                            statesVersion = 2,
+                            supportsMicrophone = true,
+                            supportedOnlyArchitectures = setOf("arm64-v8a", "armeabi-v7a", "x86_64"),
+                        ),
+                        SystemCoreConfig(
+                            CoreID.MELONDS,
+                            exposedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "melonds_screen_layout",
+                                        R.string.setting_melonds_screen_layout,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "Top/Bottom",
+                                                R.string.value_melonds_screen_layout_topbottom,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Left/Right",
+                                                R.string.value_melonds_screen_layout_leftright,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Top Only",
+                                                R.string.value_melonds_screen_layout_toponly,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Bottom Only",
+                                                R.string.value_melonds_screen_layout_bottomonly,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "melonds_mic_input",
+                                        R.string.setting_melonds_mic_input,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "Blow Noise",
+                                                R.string.value_melonds_mic_input_blow,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Microphone",
+                                                R.string.value_melonds_mic_input_microphone,
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            exposedAdvancedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "melonds_threaded_renderer",
+                                        R.string.setting_melonds_threaded_renderer,
+                                    ),
+                                    ExposedSetting(
+                                        "melonds_jit_enable",
+                                        R.string.setting_melonds_jit_enable,
+                                    ),
+                                ),
+                            defaultSettings =
+                                listOf(
                                     CoreVariable("melonds_touch_mode", "Touch"),
                                     CoreVariable("melonds_threaded_renderer", "enabled"),
                                 ),

@@ -16,6 +16,7 @@ import com.omnidroid.app.tv.shared.TVHelper
 import com.omnidroid.common.coroutines.launchOnState
 import com.omnidroid.common.coroutines.safeCollect
 import com.omnidroid.lib.controller.ControllerConfig
+import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.SystemID
 import com.swordfish.libretrodroid.GLRetroView
@@ -54,7 +55,7 @@ class GameViewModelTouchControls(
     private val sideEffects: GameViewModelSideEffects,
     private val scope: CoroutineScope,
     private val systemId: SystemID,
-    systemCoreConfig: SystemCoreConfig,
+    private val systemCoreConfig: SystemCoreConfig,
     sharedPreferences: SharedPreferences,
     private val hasTouchScreen: Boolean,
 ) : DefaultLifecycleObserver {
@@ -189,14 +190,15 @@ class GameViewModelTouchControls(
     }
 
     private fun handleHostButton(event: InputEvent.Button): Boolean {
-        if (!hasTouchScreen || !event.pressed) {
+        if (!hasTouchScreen) {
             return event.id == ComposeTouchLayouts.HOST_KEY_SCREEN_LAYOUT ||
-                event.id == ComposeTouchLayouts.HOST_KEY_HIDE_PADS
+                event.id == ComposeTouchLayouts.HOST_KEY_HIDE_PADS ||
+                event.id == ComposeTouchLayouts.HOST_KEY_CLOSE_LID
         }
 
         return when (event.id) {
             ComposeTouchLayouts.HOST_KEY_SCREEN_LAYOUT -> {
-                if (screenLayoutController.supportsToggle()) {
+                if (event.pressed && screenLayoutController.supportsToggle()) {
                     playTouchHapticForButton(true)
                     val variables = screenLayoutController.toggle(screenOrientation.value)
                     retroGameView.applyCoreVariables(variables)
@@ -204,8 +206,26 @@ class GameViewModelTouchControls(
                 true
             }
             ComposeTouchLayouts.HOST_KEY_HIDE_PADS -> {
-                playTouchHapticForButton(true)
-                toggleForceHideTouchControls()
+                if (event.pressed) {
+                    playTouchHapticForButton(true)
+                    toggleForceHideTouchControls()
+                }
+                true
+            }
+            ComposeTouchLayouts.HOST_KEY_CLOSE_LID -> {
+                playTouchHapticForButton(event.pressed)
+                val action = if (event.pressed) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP
+                if (systemCoreConfig.coreID == CoreID.MELONDS_DS) {
+                    if (event.pressed) {
+                        retroGameView.retroGameView?.sendKeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_L2)
+                        retroGameView.retroGameView?.sendKeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_Y)
+                    } else {
+                        retroGameView.retroGameView?.sendKeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_Y)
+                        retroGameView.retroGameView?.sendKeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_L2)
+                    }
+                } else {
+                    retroGameView.retroGameView?.sendKeyEvent(action, KeyEvent.KEYCODE_BUTTON_THUMBL)
+                }
                 true
             }
             else -> false

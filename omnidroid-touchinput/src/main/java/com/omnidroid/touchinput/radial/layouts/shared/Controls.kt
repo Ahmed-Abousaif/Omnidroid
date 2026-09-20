@@ -169,6 +169,16 @@ fun SecondaryButtonHidePads(positionDegrees: Float = -90f) {
     )
 }
 
+context(PadKitScope, LayoutRadialSecondaryDialsScope)
+@Composable
+fun SecondaryButtonCloseLid(positionDegrees: Float = -60f) {
+    OmnidroidControlButton(
+        modifier = Modifier.radialPosition(positionDegrees),
+        id = Id.Key(ComposeTouchLayouts.HOST_KEY_CLOSE_LID),
+        icon = R.drawable.button_close_screen,
+    )
+}
+
 object ComposeTouchLayouts {
     const val MOTION_SOURCE_DPAD = 0
     const val MOTION_SOURCE_LEFT_STICK = 1
@@ -181,4 +191,7 @@ object ComposeTouchLayouts {
 
     /** Host-only: slide virtual pads away / restore (not sent to core). */
     const val HOST_KEY_HIDE_PADS = KeyEvent.KEYCODE_BUTTON_2
+
+    /** Host-only: close/open DS lid across different core mappings. */
+    const val HOST_KEY_CLOSE_LID = KeyEvent.KEYCODE_BUTTON_3
 }
