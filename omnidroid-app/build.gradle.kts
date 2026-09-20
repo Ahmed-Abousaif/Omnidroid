@@ -54,6 +54,7 @@ android {
                 ":omnidroid_core_stella",
                 ":omnidroid_core_citra",
                 ":omnidroid_core_pcee2",
+                ":omnidroid_core_dolphin",
             ),
         )
     }

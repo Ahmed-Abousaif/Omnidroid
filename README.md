@@ -162,12 +162,27 @@ The original Lemuroid goals still apply: ease of use, good Android integration, 
 - WonderSwan Color (WSC) ([beetle_cygne](https://docs.libretro.com/library/beetle_cygne/))
 - Nintendo 3DS (3DS) ([citra](https://docs.libretro.com/library/citra/))
 - PlayStation 2 (PS2) (Beta) ([pcee2](https://github.com/WizzardSK/pcee2-libretro))
+- Nintendo GameCube (GameCube) (Beta) ([dolphin](https://docs.libretro.com/library/dolphin/))
+- Nintendo Wii (Wii) (Beta) ([dolphin](https://docs.libretro.com/library/dolphin/))
+
+## GameCube & Wii Emulation (Beta)
+
+Omnidroid includes experimental **Nintendo GameCube** and **Nintendo Wii** emulation powered by the **Dolphin** libretro core:
+
+- **Target Architecture:** Optimized for 64-bit architectures (`arm64-v8a` and `x86_64`).
+- **Core Assets Managed Automatically:** Dolphin's `Sys/` assets (game settings database, fonts, DSP engine) are automatically managed and downloaded to `system/dolphin-emu/Sys/` on first launch.
+- **Supported Disc & ROM Formats:**
+  - **GameCube:** `.iso`, `.gcm`, `.gcz`, `.rvz`, `.ciso`, `.tgc`, `.m3u`, `.dol`, `.elf`.
+  - **Wii:** `.iso`, `.wbfs`, `.gcz`, `.rvz`, `.ciso`, `.wad`, `.m3u`, `.dol`, `.elf`.
+- **Multi-Disc Support:** Multi-disc titles are supported through `.m3u` playlists.
+- **Custom Touch Layouts:** Dedicated on-screen touch layouts for GameCube (Main Stick, C-Stick, A/B/X/Y, Z trigger, L/R) and Wii (Classic Controller and Wii Remote + Nunchuk) with full physical gamepad mapping and rumble support.
+- **Save States & Memory Cards:** Native support for libretro save states and per-system virtual Memory Cards / NAND.
 
 ## PlayStation 2 Emulation (Beta)
 
 Omnidroid includes experimental **PlayStation 2 (PS2)** emulation powered by the **PCEE2** libretro core (PCSX2-based):
 
-- **Target Architecture:** Optimized and restricted to 64-bit ARM (`arm64-v8a`) devices.
+- **Target Architecture:** Optimized for 64-bit architectures (`arm64-v8a` and `x86_64`).
 - **BIOS Required:** A legally dumped PS2 BIOS is required (e.g. `scph39001.bin`, `scph70012.bin`, `scph77001.bin`). Omnidroid automatically verifies the BIOS and syncs it into the core's `system/pcsx2/bios/` directory.
 - **Supported Disc & ROM Formats:** `.iso`, `.chd`, `.cue`, `.m3u`, `.cso`, `.zso`, `.gz`, `.bin`, `.mdf`, `.nrg`, `.elf`, `.irx`.
 - **Multi-Disc Support:** Multi-disc titles are supported through `.m3u` playlists.

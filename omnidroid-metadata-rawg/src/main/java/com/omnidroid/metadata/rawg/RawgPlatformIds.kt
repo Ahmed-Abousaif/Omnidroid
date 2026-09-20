@@ -16,6 +16,7 @@ object RawgPlatformIds {
             "nds" to 9,
             "3ds" to 8,
             "gc" to 105,
+            "gamecube" to 105,
             "wii" to 11,
             "sg1000" to 11,
             "sms" to 74,

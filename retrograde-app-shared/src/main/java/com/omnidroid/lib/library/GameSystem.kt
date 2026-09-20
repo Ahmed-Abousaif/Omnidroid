@@ -1382,7 +1382,7 @@ data class GameSystem(
                                 ),
                             statesSupported = false,
                             supportsLibretroVFS = true,
-                            supportedOnlyArchitectures = setOf("arm64-v8a"),
+                            supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
                         ),
                     ),
                     uniqueExtensions = listOf("3ds"),
@@ -1400,6 +1400,8 @@ data class GameSystem(
                                 hashMapOf(
                                     0 to arrayListOf(ControllerConfigs.PS2_DUALSHOCK2),
                                     1 to arrayListOf(ControllerConfigs.PS2_DUALSHOCK2),
+                                    2 to arrayListOf(ControllerConfigs.PS2_DUALSHOCK2),
+                                    3 to arrayListOf(ControllerConfigs.PS2_DUALSHOCK2),
                                 ),
                             requiredBIOSFiles =
                                 listOf(
@@ -1415,11 +1417,81 @@ data class GameSystem(
                             statesSupported = true,
                             supportsLibretroVFS = true,
                             skipDuplicateFrames = false,
-                            supportedOnlyArchitectures = setOf("arm64-v8a"),
+                            supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
                         ),
                     ),
                     uniqueExtensions = listOf(),
                     supportedExtensions = listOf("iso", "chd", "cue", "m3u", "cso", "zso", "gz", "bin", "mdf", "nrg", "elf", "irx"),
+                    scanOptions =
+                        ScanOptions(
+                            scanByFilename = false,
+                            scanByUniqueExtension = false,
+                            scanByPathAndSupportedExtensions = true,
+                        ),
+                    hasMultiDiskSupport = true,
+                ),
+                GameSystem(
+                    SystemID.GAMECUBE,
+                    "Nintendo - GameCube",
+                    R.string.game_system_title_gamecube,
+                    R.string.game_system_abbr_gamecube,
+                    listOf(
+                        SystemCoreConfig(
+                            CoreID.DOLPHIN,
+                            controllerConfigs =
+                                hashMapOf(
+                                    0 to arrayListOf(ControllerConfigs.GAMECUBE),
+                                    1 to arrayListOf(ControllerConfigs.GAMECUBE),
+                                    2 to arrayListOf(ControllerConfigs.GAMECUBE),
+                                    3 to arrayListOf(ControllerConfigs.GAMECUBE),
+                                ),
+                            rumbleSupported = true,
+                            statesSupported = true,
+                            supportsLibretroVFS = true,
+                            supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
+                            defaultSettings =
+                                listOf(
+                                    CoreVariable("dolphin_fastmem", "enabled"),
+                                ),
+                        ),
+                    ),
+                    uniqueExtensions = listOf("gcm", "gcz", "tgc"),
+                    supportedExtensions = listOf("iso", "gcm", "gcz", "rvz", "ciso", "tgc", "m3u", "dol", "elf"),
+                    scanOptions =
+                        ScanOptions(
+                            scanByFilename = false,
+                            scanByUniqueExtension = false,
+                            scanByPathAndSupportedExtensions = true,
+                        ),
+                    hasMultiDiskSupport = true,
+                ),
+                GameSystem(
+                    SystemID.WII,
+                    "Nintendo - Wii",
+                    R.string.game_system_title_wii,
+                    R.string.game_system_abbr_wii,
+                    listOf(
+                        SystemCoreConfig(
+                            CoreID.DOLPHIN,
+                            controllerConfigs =
+                                hashMapOf(
+                                    0 to arrayListOf(ControllerConfigs.WII_CLASSIC, ControllerConfigs.WII_REMOTE),
+                                    1 to arrayListOf(ControllerConfigs.WII_CLASSIC, ControllerConfigs.WII_REMOTE),
+                                    2 to arrayListOf(ControllerConfigs.WII_CLASSIC, ControllerConfigs.WII_REMOTE),
+                                    3 to arrayListOf(ControllerConfigs.WII_CLASSIC, ControllerConfigs.WII_REMOTE),
+                                ),
+                            rumbleSupported = true,
+                            statesSupported = true,
+                            supportsLibretroVFS = true,
+                            supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
+                            defaultSettings =
+                                listOf(
+                                    CoreVariable("dolphin_fastmem", "enabled"),
+                                ),
+                        ),
+                    ),
+                    uniqueExtensions = listOf("wbfs", "wad"),
+                    supportedExtensions = listOf("iso", "wbfs", "gcz", "rvz", "ciso", "wad", "m3u", "dol", "elf"),
                     scanOptions =
                         ScanOptions(
                             scanByFilename = false,

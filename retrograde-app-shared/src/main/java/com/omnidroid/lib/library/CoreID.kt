@@ -2,6 +2,7 @@ package com.omnidroid.lib.library
 
 import android.content.SharedPreferences
 import com.omnidroid.lib.core.CoreUpdater
+import com.omnidroid.lib.core.assetsmanager.DolphinAssetsManager
 import com.omnidroid.lib.core.assetsmanager.NoAssetsManager
 import com.omnidroid.lib.core.assetsmanager.PCEE2AssetsManager
 import com.omnidroid.lib.core.assetsmanager.PPSSPPAssetsManager
@@ -122,6 +123,11 @@ enum class CoreID(
         "PCEE2",
         "libpcee2_libretro_android.so",
     ),
+    DOLPHIN(
+        "dolphin",
+        "Dolphin",
+        "libdolphin_libretro_android.so",
+    ),
     ;
 
     companion object {
@@ -129,6 +135,7 @@ enum class CoreID(
             return when (coreID) {
                 PPSSPP -> PPSSPPAssetsManager()
                 PCEE2 -> PCEE2AssetsManager()
+                DOLPHIN -> DolphinAssetsManager()
                 else -> NoAssetsManager()
             }
         }

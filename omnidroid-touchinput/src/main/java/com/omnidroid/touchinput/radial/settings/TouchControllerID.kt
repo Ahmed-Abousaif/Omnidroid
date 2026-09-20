@@ -54,6 +54,12 @@ import com.omnidroid.touchinput.radial.layouts.WSLandscapeLeft
 import com.omnidroid.touchinput.radial.layouts.WSLandscapeRight
 import com.omnidroid.touchinput.radial.layouts.WSPortraitLeft
 import com.omnidroid.touchinput.radial.layouts.WSPortraitRight
+import com.omnidroid.touchinput.radial.layouts.GameCubeLeft
+import com.omnidroid.touchinput.radial.layouts.GameCubeRight
+import com.omnidroid.touchinput.radial.layouts.WiiClassicLeft
+import com.omnidroid.touchinput.radial.layouts.WiiClassicRight
+import com.omnidroid.touchinput.radial.layouts.WiiRemoteLeft
+import com.omnidroid.touchinput.radial.layouts.WiiRemoteRight
 import gg.padkit.PadKitScope
 
 enum class TouchControllerID {
@@ -83,6 +89,9 @@ enum class TouchControllerID {
     WS_PORTRAIT,
     NINTENDO_3DS,
     PS2,
+    GAMECUBE,
+    WII_CLASSIC,
+    WII_REMOTE,
     ;
 
     class Config(
@@ -253,6 +262,24 @@ enum class TouchControllerID {
                     Config(
                         { modifier, settings -> PS2Left(modifier, settings) },
                         { modifier, settings -> PS2Right(modifier, settings) },
+                    )
+
+                GAMECUBE ->
+                    Config(
+                        { modifier, settings -> GameCubeLeft(modifier, settings) },
+                        { modifier, settings -> GameCubeRight(modifier, settings) },
+                    )
+
+                WII_CLASSIC ->
+                    Config(
+                        { modifier, settings -> WiiClassicLeft(modifier, settings) },
+                        { modifier, settings -> WiiClassicRight(modifier, settings) },
+                    )
+
+                WII_REMOTE ->
+                    Config(
+                        { modifier, settings -> WiiRemoteLeft(modifier, settings) },
+                        { modifier, settings -> WiiRemoteRight(modifier, settings) },
                     )
             }
         }

@@ -22,4 +22,5 @@
     <string name="core_name_mednafen_wswan" translatable="false">mednafen_wswan</string>
     <string name="core_name_citra" translatable="false">citra</string>
     <string name="core_name_pcee2" translatable="false">pcee2</string>
+    <string name="core_name_dolphin" translatable="false">dolphin</string>
 </resources>
