@@ -100,7 +100,7 @@ class PPSSPPAssetsManager : CoreID.AssetsManager {
         val PPSSPP_ASSETS_URL: Uri =
             Uri.parse("https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/")
                 .buildUpon()
-                .appendEncodedPath("2.0.2/assets/ppsspp.zip")
+                .appendEncodedPath("2.0.3/assets/ppsspp.zip")
                 .build()
 
         const val PPSSPP_ASSETS_VERSION_KEY = "ppsspp_assets_version_key"

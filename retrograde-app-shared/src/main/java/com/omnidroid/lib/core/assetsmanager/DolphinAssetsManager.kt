@@ -105,7 +105,7 @@ class DolphinAssetsManager : CoreID.AssetsManager {
         val DOLPHIN_ASSETS_URL: Uri =
             Uri.parse("https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/")
                 .buildUpon()
-                .appendEncodedPath("2.0.2/assets/dolphin.zip")
+                .appendEncodedPath("2.0.3/assets/dolphin.zip")
                 .build()
 
         const val DOLPHIN_ASSETS_VERSION_KEY = "dolphin_assets_version_key"
