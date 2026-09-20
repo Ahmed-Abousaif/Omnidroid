@@ -52,7 +52,13 @@ private fun CoreOptions(
     context: Context,
 ) {
     for (coreOption in coreOptions) {
-        if (coreOption.getEntriesValues().toSet() == CoreOptionsPreferenceHelper.BOOLEAN_SET) {
+        val entryValues = coreOption.getEntriesValues()
+        val entries = coreOption.getEntries(context)
+        if (entryValues.isEmpty() || entries.isEmpty()) {
+            continue
+        }
+
+        if (entryValues.toSet() == CoreOptionsPreferenceHelper.BOOLEAN_SET) {
             OmnidroidSettingsSwitch(
                 state =
                     booleanPreferenceState(
@@ -64,12 +70,12 @@ private fun CoreOptions(
         } else {
             OmnidroidSettingsList(
                 title = { Text(text = coreOption.getDisplayName(context)) },
-                items = coreOption.getEntries(context),
+                items = entries,
                 state =
                     indexPreferenceState(
                         CoreVariablesManager.computeSharedPreferenceKey(coreOption.getKey(), systemID),
-                        coreOption.getEntriesValues().first(),
-                        coreOption.getEntriesValues(),
+                        entryValues.first(),
+                        entryValues,
                     ),
             )
         }

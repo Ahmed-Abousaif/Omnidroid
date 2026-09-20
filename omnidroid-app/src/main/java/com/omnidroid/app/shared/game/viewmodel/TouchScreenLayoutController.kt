@@ -47,10 +47,10 @@ class TouchScreenLayoutController(
         val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDSDS_LAYOUT_KEY, systemId.dbname)
         val current = sharedPreferences.getString(key, null)
         val next =
-            if (current == MELONDS_SINGLE_TOP) {
-                melonDsDual(orientation)
+            if (current == MELONDSDS_SINGLE_TOP) {
+                melonDsDsDual(orientation)
             } else {
-                MELONDS_SINGLE_TOP
+                MELONDSDS_SINGLE_TOP
             }
         sharedPreferences.edit { putString(key, next) }
         return listOf(CoreVariable(MELONDSDS_LAYOUT_KEY, next))
@@ -84,6 +84,14 @@ class TouchScreenLayoutController(
         }
     }
 
+    private fun melonDsDsDual(orientation: TouchControllerSettingsManager.Orientation): String {
+        return if (orientation == TouchControllerSettingsManager.Orientation.LANDSCAPE) {
+            MELONDSDS_DUAL_LANDSCAPE
+        } else {
+            MELONDSDS_DUAL_PORTRAIT
+        }
+    }
+
     private fun citraDual(orientation: TouchControllerSettingsManager.Orientation): String {
         return if (orientation == TouchControllerSettingsManager.Orientation.LANDSCAPE) {
             CITRA_DUAL_LANDSCAPE
@@ -93,11 +101,15 @@ class TouchScreenLayoutController(
     }
 
     companion object {
-        const val MELONDS_LAYOUT_KEY = "melonds_screen_layout1"
-        const val MELONDSDS_LAYOUT_KEY = "melondsds_screen_layout"
-        const val MELONDS_DUAL_PORTRAIT = "top-bottom"
-        const val MELONDS_DUAL_LANDSCAPE = "left-right"
-        const val MELONDS_SINGLE_TOP = "top"
+        const val MELONDS_LAYOUT_KEY = "melonds_screen_layout"
+        const val MELONDS_DUAL_PORTRAIT = "Top/Bottom"
+        const val MELONDS_DUAL_LANDSCAPE = "Left/Right"
+        const val MELONDS_SINGLE_TOP = "Top Only"
+
+        const val MELONDSDS_LAYOUT_KEY = "melonds_screen_layout1"
+        const val MELONDSDS_DUAL_PORTRAIT = "top-bottom"
+        const val MELONDSDS_DUAL_LANDSCAPE = "left-right"
+        const val MELONDSDS_SINGLE_TOP = "top"
 
         const val CITRA_LAYOUT_KEY = "citra_layout_option"
         const val CITRA_SWAP_KEY = "citra_swap_screen"

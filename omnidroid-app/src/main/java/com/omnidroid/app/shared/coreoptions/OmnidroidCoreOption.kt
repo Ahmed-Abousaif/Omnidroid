@@ -17,19 +17,23 @@ data class OmnidroidCoreOption(
     }
 
     fun getEntries(context: Context): List<String> {
-        if (exposedSetting.values.isEmpty()) {
-            return coreOption.optionValues.map { it.capitalize() }
+        val settings = getCorrectExposedSettings()
+        if (settings.isNotEmpty()) {
+            return settings.map { context.getString(it.titleId) }
         }
 
-        return getCorrectExposedSettings().map { context.getString(it.titleId) }
+        return coreOption.optionValues.map {
+            it.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase() else char.toString() }
+        }
     }
 
     fun getEntriesValues(): List<String> {
-        if (exposedSetting.values.isEmpty()) {
-            return coreOption.optionValues.map { it }
+        val settings = getCorrectExposedSettings()
+        if (settings.isNotEmpty()) {
+            return settings.map { it.key }
         }
 
-        return getCorrectExposedSettings().map { it.key }
+        return coreOption.optionValues
     }
 
     fun getCurrentValue(): String {
@@ -41,7 +45,10 @@ data class OmnidroidCoreOption(
     }
 
     private fun getCorrectExposedSettings(): List<ExposedSetting.Value> {
+        if (exposedSetting.values.isEmpty()) return emptyList()
         return exposedSetting.values
-            .filter { it.key in coreOption.optionValues }
+            .filter { exposedVal ->
+                coreOption.optionValues.any { it.equals(exposedVal.key, ignoreCase = true) }
+            }
     }
 }
