@@ -65,8 +65,8 @@ object ShaderChooser {
             SystemID.WS -> ShaderConfig.LCD
             SystemID.WSC -> ShaderConfig.LCD
             SystemID.NINTENDO_3DS -> ShaderConfig.LCD
-            SystemID.PS2 -> ShaderConfig.CRT
-            SystemID.GAMECUBE -> ShaderConfig.CRT
+            SystemID.PS2 -> ShaderConfig.Default
+            SystemID.GAMECUBE -> ShaderConfig.Default
             SystemID.WII -> ShaderConfig.Default
         }
     }

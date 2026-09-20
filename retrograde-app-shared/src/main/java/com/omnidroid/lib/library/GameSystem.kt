@@ -1320,6 +1320,75 @@ data class GameSystem(
                     R.string.game_system_abbr_3ds,
                     listOf(
                         SystemCoreConfig(
+                            CoreID.AZAHAR,
+                            controllerConfigs =
+                                hashMapOf(
+                                    0 to arrayListOf(ControllerConfigs.NINTENDO_3DS),
+                                ),
+                            defaultSettings =
+                                listOf(
+                                    CoreVariable("citra_use_acc_mul", "disabled"),
+                                    CoreVariable("citra_touch_touchscreen", "enabled"),
+                                    CoreVariable("citra_mouse_touchscreen", "disabled"),
+                                    CoreVariable("citra_render_touchscreen", "disabled"),
+                                    CoreVariable("citra_use_hw_shader_cache", "disabled"),
+                                    CoreVariable("citra_shaders_accurate_mul", "disabled"),
+                                    CoreVariable("citra_enable_touch_touchscreen", "enabled"),
+                                    CoreVariable("citra_enable_mouse_touchscreen", "disabled"),
+                                    CoreVariable("citra_use_disk_shader_cache", "disabled"),
+                                ),
+                            exposedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "citra_layout_option",
+                                        R.string.setting_citra_layout_option,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "Default Top-Bottom Screen",
+                                                R.string.value_citra_layout_option_topbottom,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Side by Side",
+                                                R.string.value_citra_layout_option_sidebyside,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Single Screen Only",
+                                                R.string.value_citra_layout_option_single,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "citra_swap_screen",
+                                        R.string.setting_citra_swap_screen,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "Top",
+                                                R.string.value_citra_swap_screen_top,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Bottom",
+                                                R.string.value_citra_swap_screen_bottom,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "citra_resolution_factor",
+                                        R.string.setting_citra_resolution_factor,
+                                    ),
+                                    ExposedSetting(
+                                        "citra_use_acc_mul",
+                                        R.string.setting_citra_use_acc_mul,
+                                    ),
+                                    ExposedSetting(
+                                        "citra_use_acc_geo_shaders",
+                                        R.string.setting_citra_use_acc_geo_shaders,
+                                    ),
+                                ),
+                            statesSupported = true,
+                            supportsLibretroVFS = true,
+                            supportedOnlyArchitectures = setOf("arm64-v8a"),
+                        ),
+                        SystemCoreConfig(
                             CoreID.CITRA,
                             controllerConfigs =
                                 hashMapOf(
@@ -1451,8 +1520,10 @@ data class GameSystem(
                             supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
                             defaultSettings =
                                 listOf(
-                                    CoreVariable("dolphin_fastmem", "enabled"),
+                                    CoreVariable("dolphin_fastmem", "disabled"),
+                                    CoreVariable("dolphin_main_cpu_thread", "disabled"),
                                 ),
+                            skipDuplicateFrames = false,
                         ),
                     ),
                     uniqueExtensions = listOf("gcm", "gcz", "tgc"),
@@ -1486,8 +1557,10 @@ data class GameSystem(
                             supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
                             defaultSettings =
                                 listOf(
-                                    CoreVariable("dolphin_fastmem", "enabled"),
+                                    CoreVariable("dolphin_fastmem", "disabled"),
+                                    CoreVariable("dolphin_main_cpu_thread", "disabled"),
                                 ),
+                            skipDuplicateFrames = false,
                         ),
                     ),
                     uniqueExtensions = listOf("wbfs", "wad"),

@@ -101,8 +101,8 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 ### NDS and 3DS single-screen layouts
 
 - **melonDS DS (NDS):** Screens layout includes **Top Only** and **Bottom Only**, alongside Top–Bottom and Left–Right.
-- **Citra (3DS):** Screens layout includes **Single Screen**, plus **Displayed screen** (Top or Bottom) to choose which one shows.
-- On the virtual pad (melonDS DS / Citra), tap the **screen layout** button to toggle dual ↔ **Top only** without opening the menu. Portrait dual uses Top–Bottom; landscape dual uses Left–Right / Side by Side. The same core option as in-game Settings is updated, so the menu stays in sync.
+- **Azahar / Citra (3DS):** Screens layout includes **Single Screen**, plus **Displayed screen** (Top or Bottom) to choose which one shows.
+- On the virtual pad (melonDS DS / Azahar / Citra), tap the **screen layout** button to toggle dual ↔ **Top only** without opening the menu. Portrait dual uses Top–Bottom; landscape dual uses Left–Right / Side by Side. The same core option as in-game Settings is updated, so the menu stays in sync.
 
 ### Vibration intensity
 
@@ -160,7 +160,7 @@ The original Lemuroid goals still apply: ease of use, good Android integration, 
 - Neo Geo Pocket Color (NGC) ([mednafen_ngp](https://docs.libretro.com/library/beetle_neopop/))
 - WonderSwan (WS) ([beetle_cygne](https://docs.libretro.com/library/beetle_cygne/))
 - WonderSwan Color (WSC) ([beetle_cygne](https://docs.libretro.com/library/beetle_cygne/))
-- Nintendo 3DS (3DS) ([citra](https://docs.libretro.com/library/citra/))
+- Nintendo 3DS (3DS) ([azahar](https://github.com/azahar-emu/azahar)/[citra](https://docs.libretro.com/library/citra/))
 - PlayStation 2 (PS2) (Beta) ([pcee2](https://github.com/WizzardSK/pcee2-libretro))
 - Nintendo GameCube (GameCube) (Beta) ([dolphin](https://docs.libretro.com/library/dolphin/))
 - Nintendo Wii (Wii) (Beta) ([dolphin](https://docs.libretro.com/library/dolphin/))

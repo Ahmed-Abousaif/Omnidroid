@@ -53,14 +53,16 @@ class PPSSPPAssetsManager : CoreID.AssetsManager {
                 while (true) {
                     val entry = zipInputStream.nextEntry ?: break
                     Timber.d("Writing file: ${entry.name}")
+                    val entryName = entry.name.replace('\\', '/')
                     val destFile =
                         File(
                             coreAssetsDirectory,
-                            entry.name,
+                            entryName,
                         )
-                    if (entry.isDirectory) {
+                    if (entry.isDirectory || entryName.endsWith("/")) {
                         destFile.mkdirs()
                     } else {
+                        destFile.parentFile?.mkdirs()
                         destFile.outputStream().use { output ->
                             zipInputStream.copyTo(output)
                         }

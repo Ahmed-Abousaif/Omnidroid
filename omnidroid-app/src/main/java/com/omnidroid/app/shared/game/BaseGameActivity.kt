@@ -218,17 +218,30 @@ abstract class BaseGameActivity : ImmersiveActivity() {
             systemCoreConfig.exposedAdvancedSettings
                 .mapNotNull { transformExposedSetting(it, coreOptions) }
 
+        val currentDisk =
+            if (system.hasMultiDiskSupport) {
+                baseGameScreenViewModel.retroGameView.retroGameView?.getCurrentDisk(false) ?: 0
+            } else {
+                0
+            }
+        val availableDisks =
+            if (system.hasMultiDiskSupport) {
+                baseGameScreenViewModel.retroGameView.retroGameView?.getAvailableDisks(false) ?: 0
+            } else {
+                0
+            }
+
         val intent =
             Intent(this, getDialogClass()).apply {
                 this.putExtra(GameMenuContract.EXTRA_CORE_OPTIONS, options.toTypedArray())
                 this.putExtra(GameMenuContract.EXTRA_ADVANCED_CORE_OPTIONS, advancedOptions.toTypedArray())
                 this.putExtra(
                     GameMenuContract.EXTRA_CURRENT_DISK,
-                    baseGameScreenViewModel.retroGameView.retroGameView?.getCurrentDisk() ?: 0,
+                    currentDisk,
                 )
                 this.putExtra(
                     GameMenuContract.EXTRA_DISKS,
-                    baseGameScreenViewModel.retroGameView.retroGameView?.getAvailableDisks() ?: 0,
+                    availableDisks,
                 )
                 this.putExtra(GameMenuContract.EXTRA_GAME, game)
                 this.putExtra(GameMenuContract.EXTRA_SYSTEM_CORE_CONFIG, systemCoreConfig)
@@ -414,7 +427,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
             }
             if (data?.hasExtra(GameMenuContract.RESULT_CHANGE_DISK) == true) {
                 val index = data.getIntExtra(GameMenuContract.RESULT_CHANGE_DISK, 0)
-                baseGameScreenViewModel.retroGameView.retroGameView?.changeDisk(index)
+                baseGameScreenViewModel.retroGameView.retroGameView?.changeDisk(index, false)
             }
             if (data?.hasExtra(GameMenuContract.RESULT_ENABLE_AUDIO) == true) {
                 baseGameScreenViewModel.retroGameView.retroGameView?.apply {

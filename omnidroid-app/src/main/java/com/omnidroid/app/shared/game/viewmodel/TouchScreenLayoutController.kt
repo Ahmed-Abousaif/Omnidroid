@@ -22,13 +22,13 @@ class TouchScreenLayoutController(
         return when (coreId) {
             CoreID.MELONDS -> toggleMelonDs(orientation)
             CoreID.MELONDS_DS -> toggleMelonDsDs(orientation)
-            CoreID.CITRA -> toggleCitra(orientation)
+            CoreID.CITRA, CoreID.AZAHAR -> toggleCitra(orientation)
             else -> emptyList()
         }
     }
 
     fun supportsToggle(): Boolean =
-        coreId == CoreID.MELONDS || coreId == CoreID.MELONDS_DS || coreId == CoreID.CITRA
+        coreId == CoreID.MELONDS || coreId == CoreID.MELONDS_DS || coreId == CoreID.CITRA || coreId == CoreID.AZAHAR
 
     private fun toggleMelonDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
         val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDS_LAYOUT_KEY, systemId.dbname)
