@@ -964,6 +964,71 @@ data class GameSystem(
                             skipDuplicateFrames = false,
                         ),
                         SystemCoreConfig(
+                            CoreID.MELONDS_DS,
+                            exposedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "melondsds_screen_layout",
+                                        R.string.setting_melonds_screen_layout,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "top-bottom",
+                                                R.string.value_melonds_screen_layout_topbottom,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "left-right",
+                                                R.string.value_melonds_screen_layout_leftright,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "top",
+                                                R.string.value_melonds_screen_layout_toponly,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "bottom",
+                                                R.string.value_melonds_screen_layout_bottomonly,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "melondsds_mic_input",
+                                        R.string.setting_melonds_mic_input,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "microphone",
+                                                R.string.value_melonds_mic_input_microphone,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "blow",
+                                                R.string.value_melonds_mic_input_blow,
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            exposedAdvancedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "melondsds_threaded_renderer",
+                                        R.string.setting_melonds_threaded_renderer,
+                                    ),
+                                    ExposedSetting(
+                                        "melondsds_jit_enable",
+                                        R.string.setting_melonds_jit_enable,
+                                    ),
+                                ),
+                            defaultSettings =
+                                listOf(
+                                    CoreVariable("melondsds_touch_mode", "Touch"),
+                                    CoreVariable("melondsds_threaded_renderer", "enabled"),
+                                ),
+                            controllerConfigs =
+                                hashMapOf(
+                                    0 to arrayListOf(ControllerConfigs.MELONDS),
+                                ),
+                            statesVersion = 2,
+                            supportsMicrophone = true,
+                            supportedOnlyArchitectures = setOf("arm64-v8a", "armeabi-v7a", "x86_64"),
+                        ),
+                        SystemCoreConfig(
                             CoreID.MELONDS,
                             exposedSettings =
                                 listOf(

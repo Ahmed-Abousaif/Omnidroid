@@ -15,7 +15,7 @@ class DesmumeMigrationHandler(
         coreID: CoreID,
         defaultData: ByteArray?,
     ): SaveDataResult {
-        if (coreID != CoreID.DESMUME && coreID != CoreID.MELONDS) {
+        if (coreID != CoreID.DESMUME && coreID != CoreID.MELONDS && coreID != CoreID.MELONDS_DS) {
             return SaveDataResult(defaultData, null)
         }
 
@@ -27,7 +27,7 @@ class DesmumeMigrationHandler(
         val dsvInfo = SaveCandidate(dsvFile, dsvFile.readBytesIfValid())
 
         return when (coreID) {
-            CoreID.MELONDS -> selectRawSave(baseFileName, srmInfo, dsvInfo)
+            CoreID.MELONDS, CoreID.MELONDS_DS -> selectRawSave(baseFileName, srmInfo, dsvInfo)
             CoreID.DESMUME -> SaveDataResult(dsvInfo.data, dsvInfo.timestamp.takeIf { dsvInfo.isValid })
             else -> SaveDataResult(srmInfo.data, srmInfo.timestamp.takeIf { srmInfo.isValid })
         }
