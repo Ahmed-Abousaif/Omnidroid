@@ -25,3 +25,8 @@ release.keystore.asc
 signing.properties
 .env
 .env.*
+
+# Private native engine source (kept in separate private repo)
+libretrodroid/
+tmp-libretrodroid/
+tmp-core-test/

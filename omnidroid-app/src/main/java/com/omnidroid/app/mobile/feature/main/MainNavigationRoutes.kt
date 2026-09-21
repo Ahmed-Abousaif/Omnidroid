@@ -103,6 +103,12 @@ enum class MainRoute(
         parent = SETTINGS,
         showBottomNavigation = false,
     ),
+    SETTINGS_GRAPHICS_API(
+        route = "settings/graphicsapi",
+        titleId = R.string.settings_title_graphics_api_selection,
+        parent = SETTINGS,
+        showBottomNavigation = false,
+    ),
     SETTINGS_INPUT_DEVICES(
         route = "settings/inputdevices",
         titleId = R.string.settings_title_gamepad_settings,

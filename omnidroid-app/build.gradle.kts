@@ -250,7 +250,11 @@ dependencies {
     implementation(deps.libs.composeSettings.diskStorage)
     implementation(deps.libs.composeSettings.memoryStorage)
 
-    implementation(deps.libs.libretrodroid)
+    if (findProject(":libretrodroid") != null) {
+        implementation(project(":libretrodroid"))
+    } else {
+        implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar", "*.jar"))))
+    }
 
     // Uncomment this when using a local aar file.
     implementation(deps.libs.hilt.work)

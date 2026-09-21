@@ -33,7 +33,7 @@ import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.saves.SavesManager
 import com.omnidroid.lib.saves.StatesManager
 import com.omnidroid.lib.saves.StatesPreviewManager
-import com.swordfish.libretrodroid.GLRetroView
+import com.omnidroid.app.shared.game.view.IRetroGameView
 import com.omnidroid.touchinput.radial.sensors.TiltConfiguration
 import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
 import gg.padkit.inputevents.InputEvent
@@ -187,7 +187,7 @@ class BaseGameScreenViewModel(
     fun createRetroView(
         context: Context,
         lifecycle: LifecycleOwner,
-    ): GLRetroView {
+    ): IRetroGameView {
         val (gameData, result) = retroGameView.createRetroView(context, lifecycle)
         viewModelScope.launch {
             gameData.quickSaveData?.let {
