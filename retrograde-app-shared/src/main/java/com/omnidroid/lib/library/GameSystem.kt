@@ -1336,6 +1336,7 @@ data class GameSystem(
                                     CoreVariable("citra_enable_touch_touchscreen", "enabled"),
                                     CoreVariable("citra_enable_mouse_touchscreen", "disabled"),
                                     CoreVariable("citra_use_disk_shader_cache", "disabled"),
+                                    CoreVariable("citra_graphics_api", "OpenGL"),
                                 ),
                             exposedSettings =
                                 listOf(
