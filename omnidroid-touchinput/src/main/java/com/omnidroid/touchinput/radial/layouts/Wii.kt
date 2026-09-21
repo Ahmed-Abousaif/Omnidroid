@@ -10,12 +10,10 @@ import com.omnidroid.touchinput.radial.controls.OmnidroidControlFaceButtons
 import com.omnidroid.touchinput.radial.layouts.shared.ComposeTouchLayouts
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryAnalogLeft
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryAnalogRight
-import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonL
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonL1
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonL2
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonMenu
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonMenuPlaceholder
-import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonR
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonR1
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonR2
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonSelect
@@ -103,8 +101,21 @@ fun PadKitScope.WiiRemoteLeft(
         },
         secondaryDials = {
             SecondaryAnalogLeft()
-            SecondaryButtonL()
-            SecondaryButtonSelect(position = 2)
+            OmnidroidControlButton(
+                modifier = Modifier.radialPosition(90f),
+                id = Id.Key(KeyEvent.KEYCODE_BUTTON_X),
+                label = "C",
+            )
+            OmnidroidControlButton(
+                modifier = Modifier.radialPosition(120f),
+                id = Id.Key(KeyEvent.KEYCODE_BUTTON_Y),
+                label = "Z",
+            )
+            OmnidroidControlButton(
+                modifier = Modifier.radialPosition(60f),
+                id = Id.Key(KeyEvent.KEYCODE_BUTTON_L1),
+                label = "-",
+            )
             SecondaryButtonMenuPlaceholder(settings)
         },
     )
@@ -124,21 +135,24 @@ fun PadKitScope.WiiRemoteRight(
                     persistentListOf(
                         Id.Key(KeyEvent.KEYCODE_BUTTON_A),
                         Id.Key(KeyEvent.KEYCODE_BUTTON_B),
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_1),
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_2),
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_START),
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_SELECT),
                     ),
                 idsForegrounds =
                     persistentMapOf<Id.Key, @Composable (State<Boolean>) -> Unit>(
                         Id.Key(KeyEvent.KEYCODE_BUTTON_A) to { OmnidroidButtonForeground(pressed = it, label = "A") },
                         Id.Key(KeyEvent.KEYCODE_BUTTON_B) to { OmnidroidButtonForeground(pressed = it, label = "B") },
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_1) to { OmnidroidButtonForeground(pressed = it, label = "1") },
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_2) to { OmnidroidButtonForeground(pressed = it, label = "2") },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_START) to { OmnidroidButtonForeground(pressed = it, label = "1") },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_SELECT) to { OmnidroidButtonForeground(pressed = it, label = "2") },
                     ),
             )
         },
         secondaryDials = {
-            SecondaryButtonR()
-            SecondaryButtonStart(position = 2)
+            OmnidroidControlButton(
+                modifier = Modifier.radialPosition(60f),
+                id = Id.Key(KeyEvent.KEYCODE_BUTTON_R1),
+                label = "+",
+            )
             SecondaryButtonMenu(settings)
         },
     )

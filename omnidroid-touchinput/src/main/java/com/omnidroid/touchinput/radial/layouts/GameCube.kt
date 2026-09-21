@@ -10,10 +10,8 @@ import com.omnidroid.touchinput.radial.controls.OmnidroidControlFaceButtons
 import com.omnidroid.touchinput.radial.layouts.shared.ComposeTouchLayouts
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryAnalogLeft
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryAnalogRight
-import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonL
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonMenu
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonMenuPlaceholder
-import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonR
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonStart
 import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
 import com.omnidroid.touchinput.radial.ui.OmnidroidButtonForeground
@@ -38,7 +36,11 @@ fun PadKitScope.GameCubeLeft(
         },
         secondaryDials = {
             SecondaryAnalogLeft()
-            SecondaryButtonL()
+            OmnidroidControlButton(
+                modifier = Modifier.radialPosition(120f),
+                id = Id.Key(KeyEvent.KEYCODE_BUTTON_L2),
+                label = "L",
+            )
             SecondaryButtonMenuPlaceholder(settings)
         },
     )
@@ -71,10 +73,14 @@ fun PadKitScope.GameCubeRight(
             )
         },
         secondaryDials = {
-            SecondaryButtonR()
             OmnidroidControlButton(
                 modifier = Modifier.radialPosition(60f),
                 id = Id.Key(KeyEvent.KEYCODE_BUTTON_R2),
+                label = "R",
+            )
+            OmnidroidControlButton(
+                modifier = Modifier.radialPosition(90f),
+                id = Id.Key(KeyEvent.KEYCODE_BUTTON_R1),
                 label = "Z",
             )
             SecondaryButtonStart(position = 2)
