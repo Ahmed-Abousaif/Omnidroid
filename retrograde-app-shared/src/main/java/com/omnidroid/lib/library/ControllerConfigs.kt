@@ -413,6 +413,7 @@ object ControllerConfigs {
             R.string.controller_gamecube,
             TouchControllerID.GAMECUBE,
             allowTouchRotation = true,
+            libretroDescriptor = "GameCube Controller",
             tiltConfigurations =
                 listOf(
                     TILT_CONFIGURATION_DISABLED,
@@ -429,6 +430,7 @@ object ControllerConfigs {
             R.string.controller_wii_classic,
             TouchControllerID.WII_CLASSIC,
             allowTouchRotation = true,
+            libretroDescriptor = "WiiMote + Classic Controller",
             tiltConfigurations =
                 listOf(
                     TILT_CONFIGURATION_DISABLED,
@@ -446,6 +448,7 @@ object ControllerConfigs {
             R.string.controller_wii_remote,
             TouchControllerID.WII_REMOTE,
             allowTouchRotation = true,
+            libretroDescriptor = "WiiMote + Nunchuk",
             tiltConfigurations =
                 listOf(
                     TILT_CONFIGURATION_DISABLED,
