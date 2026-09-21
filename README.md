@@ -20,11 +20,17 @@
 
 Omnidroid is an open-source Libretro frontend for Android, forked from [Lemuroid](https://github.com/Swordfish90/Lemuroid).
 
-It keeps the core that made Lemuroid solid — ROM scanning, strong Android integration, and a wide set of cores and builds on top of it with a landscape-first launcher, full controller navigation, richer cloud saves, and many more changes to both UI, functionality and performance. All while making the release build (free dynamic flavor) 16% smaller than Lemuroid's.
+It keeps the core that made Lemuroid solid — ROM scanning, strong Android integration, and a wide set of cores — and builds on top of it with a landscape-first launcher, full controller navigation, richer cloud saves, native Vulkan hardware acceleration, and extensive improvements to UI, functionality, and performance. All while keeping the release build lightweight (universal release APK under 10 MB, ~16% smaller than Lemuroid's baseline).
 
-It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://github.com/retrograde/retrograde-android) with [LibretroDroid](https://github.com/Swordfish90/LibretroDroid)). The emulation stack is the same. The product around it is not.
+It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://github.com/retrograde/retrograde-android)). Omnidroid elevates the emulation stack with its custom-engineered [omni-libretrodroid](https://github.com/Ahmed-Abousaif/omni-libretrodroid) native engine—introducing native Vulkan hardware acceleration, 16KB memory page alignment, low-latency audio, and adaptive dual-screen rendering.
 
 ## Newly added features
+
+### Vulkan Hardware Acceleration & Graphics API Selection
+
+- **Vulkan Rendering Engine:** Powered by our custom `omni-libretrodroid` engine, offering modern Vulkan hardware acceleration alongside OpenGL ES 2/3 and Software rendering pipelines.
+- **Graphics API Selector:** Choose between **Auto**, **Vulkan**, **OpenGL**, and **Software** per console system or globally in Settings.
+- **Peak Performance:** Delivers rock-solid 60 FPS hardware rendering with low draw-call overhead on supported cores (such as Azahar / Citra 3DS, PPSSPP, Beetle PSX HW, and Dolphin).
 
 ### A real game launcher
 
@@ -37,7 +43,7 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 
 - Zoom game covers in or out to show more or fewer games.
 - The library grid picks how many rows to show from the **available screen height**, so phones, tall devices, and tablets stay readable at every zoom level.
-- Hit **Continue** to jump straight back into your last game
+- Hit **Continue** to jump straight back into your last game.
 - Search as you type, advanced search for all games and consoles.
 
 ### Play with a controller, not just in-game
@@ -98,11 +104,13 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 - On = diagonals (default); off = cardinal directions only.
 - Saved per layout and orientation with your other touch control settings.
 
-### NDS and 3DS single-screen layouts
+### NDS and 3DS dual-screen layouts & dynamic orientation flipping
 
 - **melonDS DS (NDS):** Screens layout includes **Top Only** and **Bottom Only**, alongside Top–Bottom and Left–Right.
 - **Azahar / Citra (3DS):** Screens layout includes **Single Screen**, plus **Displayed screen** (Top or Bottom) to choose which one shows.
-- On the virtual pad (melonDS DS / Azahar / Citra), tap the **screen layout** button to toggle dual ↔ **Top only** without opening the menu. Portrait dual uses Top–Bottom; landscape dual uses Left–Right / Side by Side. The same core option as in-game Settings is updated, so the menu stays in sync.
+- **Dynamic Orientation Flipping:** In dual-screen mode, Omnidroid automatically flips between **Top–Bottom** in portrait mode and **Side by Side (Left–Right)** in landscape mode as you rotate your device.
+- **Interactive 3DS Touchscreen Overlay:** Accurate touch stylus input mapped to the 3DS bottom screen with precise aspect-ratio coordinate conversion.
+- **Quick Screen Toggle:** On the virtual pad (melonDS DS / Azahar / Citra), tap the **screen layout** button to toggle dual ↔ **Top only** without opening the menu. The core option stays perfectly synchronized with in-game settings.
 
 ### Vibration intensity
 
@@ -165,6 +173,17 @@ The original Lemuroid goals still apply: ease of use, good Android integration, 
 - Nintendo GameCube (GameCube) (Beta) ([dolphin](https://docs.libretro.com/library/dolphin/))
 - Nintendo Wii (Wii) (Beta) ([dolphin](https://docs.libretro.com/library/dolphin/))
 
+## Nintendo 3DS Emulation
+
+Omnidroid includes full **Nintendo 3DS** emulation powered by the **Azahar** (modern Citra fork) and **Citra** libretro cores:
+
+- **Target Architecture:** Optimized for 64-bit architectures (`arm64-v8a` and `x86_64`).
+- **Hardware Acceleration:** Native support for both **Vulkan** and **OpenGL ES 3.0+** rendering pipelines via `omni-libretrodroid`.
+- **Supported ROM Formats:** `.3ds`, `.3dsx`, `.elf`, `.axf`, `.cci`, `.cxi`, `.app`, `.cia`.
+- **Dynamic Dual-Screen Layouts:** Seamless automatic flipping between Top–Bottom (Portrait) and Side by Side (Landscape), with instant Top-only virtual button toggle.
+- **Interactive Touchscreen:** Bottom screen touch stylus input with precise multi-touch coordinate translation while operating virtual face buttons.
+- **Decrypted & System Data:** Automatic handling of decrypted ROMs, shared system archives, and DLC/update paths.
+
 ## GameCube & Wii Emulation (Beta)
 
 Omnidroid includes experimental **Nintendo GameCube** and **Nintendo Wii** emulation powered by the **Dolphin** libretro core:
@@ -226,7 +245,7 @@ Omnidroid-specific strings (library, cast, cloud providers, controller hints, ga
 
 Toolchain and library upgrades applied on top of the Lemuroid baseline.
 
-### Build system
+### Build system & Toolchain
 
 - Android Gradle Plugin: **8.4.0 → 9.0.0**
 - Kotlin: **2.0.21 → 2.2.10**
@@ -236,7 +255,15 @@ Toolchain and library upgrades applied on top of the Lemuroid baseline.
 - Global Play Services force to `17.0.0`: **removed**
 - Pre-AndroidX `android.arch.lifecycle:reactivestreams`: **removed**
 - Optional ABI filtering via `-PabiFilters=` (default still ships all four ABIs)
-- Android support unchanged: **minSdk 23**, **targetSdk / compileSdk 35**, Java **17**
+- Android SDK & Build Tools: **minSdk 23**, **targetSdk / compileSdk 36**, Java **17**, **buildTools 36.0.0**
+- Android 15+ readiness: **16KB memory page alignment** across native C++ modules and stripped release libraries
+
+### Native Emulation Engine
+
+- Custom engine fork: **[omni-libretrodroid](https://github.com/Ahmed-Abousaif/omni-libretrodroid)** (migrated from stock LibretroDroid 0.13.2)
+- Added native **Vulkan Hardware Acceleration** pipeline (`VulkanRenderer`, `VulkanContext`, `VulkanRetroView`) alongside GLES and Software renderers
+- C++ symbol visibility minimization (`-fvisibility=hidden`) and `-O3` compilation flags for peak performance and compact binary footprint (<10 MB release universal APK)
+- Dual-mode build support (live local source module integration or standalone pre-built multi-ABI release AAR fallback)
 
 ### UI and AndroidX
 
@@ -280,7 +307,5 @@ Toolchain and library upgrades applied on top of the Lemuroid baseline.
 
 ### Unchanged pins
 
-- LibretroDroid **0.13.2**
 - PadKit **1.0.0-beta1**
 - Leanback **1.1.0-rc01**
-- Build tools **34.0.0**
