@@ -11,10 +11,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.pointerInput
-import com.swordfish.libretrodroid.GLRetroView
+import com.omnidroid.app.shared.game.view.IRetroGameView
 
 /**
- * Captures touches on the emulated touchscreen region and forwards them to [GLRetroView].
+ * Captures touches on the emulated touchscreen region and forwards them to [IRetroGameView].
  *
  * LibretroDroid only handles the primary pointer in [GLRetroView.onTouchEvent]. When a finger is
  * already holding a virtual button, a second finger arrives as a secondary pointer and is ignored.
@@ -22,13 +22,13 @@ import com.swordfish.libretrodroid.GLRetroView
  * This overlay must be placed **outside** PadKit as a sibling sized to the game viewport only.
  * Nesting a consuming `pointerInput` inside PadKit breaks simultaneous virtual-button presses.
  *
- * @param retroViewBoundsInRoot Bounds of the full-screen [GLRetroView] in Compose root coordinates.
+ * @param retroViewBoundsInRoot Bounds of the full-screen [IRetroGameView] in Compose root coordinates.
  * @param touchScreenBoundsInRoot Bounds of this overlay / game viewport in root coordinates.
  */
 @Composable
 fun TouchScreenPointerOverlay(
     enabled: Boolean,
-    retroView: GLRetroView?,
+    retroView: IRetroGameView?,
     retroViewBoundsInRoot: Rect?,
     touchScreenBoundsInRoot: Rect?,
     modifier: Modifier = Modifier,
@@ -107,13 +107,14 @@ fun TouchScreenPointerOverlay(
 }
 
 private fun forwardTouch(
-    retroView: GLRetroView,
+    retroView: IRetroGameView,
     retroViewBoundsInRoot: Rect,
     rootPosition: Offset,
     action: Int,
 ) {
-    val viewWidth = retroView.width
-    val viewHeight = retroView.height
+    val view = retroView.asView()
+    val viewWidth = view.width
+    val viewHeight = view.height
     if (viewWidth <= 0 || viewHeight <= 0 ||
         retroViewBoundsInRoot.width == 0f ||
         retroViewBoundsInRoot.height == 0f

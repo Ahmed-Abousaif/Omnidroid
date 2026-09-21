@@ -76,6 +76,59 @@ class TouchScreenLayoutController(
         }
     }
 
+    fun onOrientationChanged(
+        orientation: TouchControllerSettingsManager.Orientation,
+    ): List<CoreVariable> {
+        return when (coreId) {
+            CoreID.MELONDS -> onOrientationChangedMelonDs(orientation)
+            CoreID.MELONDS_DS -> onOrientationChangedMelonDsDs(orientation)
+            CoreID.CITRA, CoreID.AZAHAR -> onOrientationChangedCitra(orientation)
+            else -> emptyList()
+        }
+    }
+
+    private fun onOrientationChangedCitra(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
+        val layoutKey = CoreVariablesManager.computeSharedPreferenceKey(CITRA_LAYOUT_KEY, systemId.dbname)
+        val current = sharedPreferences.getString(layoutKey, null)
+        if (current == CITRA_SINGLE) {
+            return emptyList()
+        }
+        val target = citraDual(orientation)
+        if (current == target) {
+            return emptyList()
+        }
+        sharedPreferences.edit { putString(layoutKey, target) }
+        return listOf(CoreVariable(CITRA_LAYOUT_KEY, target))
+    }
+
+    private fun onOrientationChangedMelonDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
+        val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDS_LAYOUT_KEY, systemId.dbname)
+        val current = sharedPreferences.getString(key, null)
+        if (current == MELONDS_SINGLE_TOP) {
+            return emptyList()
+        }
+        val target = melonDsDual(orientation)
+        if (current == target) {
+            return emptyList()
+        }
+        sharedPreferences.edit { putString(key, target) }
+        return listOf(CoreVariable(MELONDS_LAYOUT_KEY, target))
+    }
+
+    private fun onOrientationChangedMelonDsDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
+        val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDSDS_LAYOUT_KEY, systemId.dbname)
+        val current = sharedPreferences.getString(key, null)
+        if (current == MELONDSDS_SINGLE_TOP) {
+            return emptyList()
+        }
+        val target = melonDsDsDual(orientation)
+        if (current == target) {
+            return emptyList()
+        }
+        sharedPreferences.edit { putString(key, target) }
+        return listOf(CoreVariable(MELONDSDS_LAYOUT_KEY, target))
+    }
+
     private fun melonDsDual(orientation: TouchControllerSettingsManager.Orientation): String {
         return if (orientation == TouchControllerSettingsManager.Orientation.LANDSCAPE) {
             MELONDS_DUAL_LANDSCAPE

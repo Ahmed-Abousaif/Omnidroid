@@ -10,6 +10,9 @@ import com.omnidroid.BuildConfig
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.app.shared.game.ShaderChooser
+import com.omnidroid.app.shared.game.view.GLRetroGameViewWrapper
+import com.omnidroid.app.shared.game.view.IRetroGameView
+import com.omnidroid.app.shared.game.view.VulkanRetroView
 import com.omnidroid.app.shared.rumble.RumbleManager
 import com.omnidroid.app.shared.settings.HDModeQuality
 import com.omnidroid.common.coroutines.MutableStateProperty
@@ -20,6 +23,7 @@ import com.omnidroid.lib.core.CoreVariablesManager
 import com.omnidroid.lib.game.GameLoader
 import com.omnidroid.lib.game.GameLoaderError
 import com.omnidroid.lib.game.GameLoaderException
+import com.omnidroid.lib.graphics.VulkanDetector
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.db.entity.Game
@@ -72,8 +76,8 @@ class GameViewModelRetroGameView(
 
     private val gameState: MutableStateFlow<GameState> = MutableStateFlow(GameState.Uninitialized)
 
-    private val retroGameViewFlow = MutableStateFlow<GLRetroView?>(null)
-    var retroGameView: GLRetroView? by MutableStateProperty(retroGameViewFlow)
+    private val retroGameViewFlow = MutableStateFlow<IRetroGameView?>(null)
+    var retroGameView: IRetroGameView? by MutableStateProperty(retroGameViewFlow)
     private val frameSpeedPreferences = GameFrameSpeedPreferences(appContext)
 
     fun getGameState(): Flow<GameState> {
@@ -158,16 +162,28 @@ class GameViewModelRetroGameView(
     fun createRetroView(
         context: Context,
         lifecycle: LifecycleOwner,
-    ): Pair<GameLoader.GameData, GLRetroView> {
+    ): Pair<GameLoader.GameData, IRetroGameView> {
         val currentState = gameState.value
         if (currentState !is GameState.Loaded) throw IllegalStateException("Game is not loaded.")
 
-        val result =
-            GLRetroView(context, currentState.retroViewData)
-                .apply {
+        val isVulkanPreferred = isVulkanRequested(currentState.gameData) && VulkanDetector.isVulkanSupported(context)
+
+        val result: IRetroGameView =
+            if (isVulkanPreferred) {
+                Timber.i("Initializing VulkanRetroView for core ${systemCoreConfig.coreID.coreName}")
+                VulkanRetroView(context, currentState.retroViewData).apply {
                     isFocusable = false
                     isFocusableInTouchMode = false
                 }
+            } else {
+                Timber.i("Initializing GLRetroView for core ${systemCoreConfig.coreID.coreName}")
+                GLRetroGameViewWrapper(
+                    GLRetroView(context, currentState.retroViewData).apply {
+                        isFocusable = false
+                        isFocusableInTouchMode = false
+                    },
+                )
+            }
 
         // Framework touch is disabled for all systems. Touchscreen consoles (NDS/3DS) receive
         // stylus input via TouchScreenPointerOverlay, which supports a second finger while
@@ -191,6 +207,17 @@ class GameViewModelRetroGameView(
         gameState.value = GameState.Ready
 
         return currentState.gameData to result
+    }
+
+    private fun isVulkanRequested(gameData: GameLoader.GameData): Boolean {
+        val graphicsApi =
+            gameData.coreVariables.firstOrNull {
+                it.key == "citra_graphics_api" ||
+                    it.key == "dolphin_renderer" ||
+                    it.key == "ppsspp_rendering_backend" ||
+                    it.key == "ppsspp_gpu_backend"
+            }?.value
+        return graphicsApi?.equals("Vulkan", ignoreCase = true) == true
     }
 
     suspend fun retroGameViewFlow() =
@@ -276,11 +303,11 @@ class GameViewModelRetroGameView(
         }
     }
 
-    private fun printRetroVariables(retroGameView: GLRetroView) {
+    private fun printRetroVariables(retroGameView: IRetroGameView) {
         scope.launch {
             // Some cores do not immediately call SET_VARIABLES so we might need to wait a little bit
             delay(1.seconds)
-            retroGameView.getVariables().forEach {
+            retroGameView.getVariables()?.forEach {
                 Timber.i("Libretro variable: $it")
             }
         }

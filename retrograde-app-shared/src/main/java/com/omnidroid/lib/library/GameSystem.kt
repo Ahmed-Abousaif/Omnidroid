@@ -809,6 +809,20 @@ data class GameSystem(
                             exposedSettings =
                                 listOf(
                                     ExposedSetting(
+                                        "ppsspp_rendering_backend",
+                                        R.string.setting_graphics_api,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "OpenGL",
+                                                R.string.value_graphics_api_opengl,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Vulkan",
+                                                R.string.value_graphics_api_vulkan,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
                                         "ppsspp_auto_frameskip",
                                         R.string.setting_ppsspp_auto_frameskip,
                                     ),
@@ -1341,6 +1355,20 @@ data class GameSystem(
                             exposedSettings =
                                 listOf(
                                     ExposedSetting(
+                                        "citra_graphics_api",
+                                        R.string.setting_graphics_api,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "OpenGL",
+                                                R.string.value_graphics_api_opengl,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Vulkan",
+                                                R.string.value_graphics_api_vulkan,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
                                         "citra_layout_option",
                                         R.string.setting_citra_layout_option,
                                         arrayListOf(
@@ -1521,6 +1549,7 @@ data class GameSystem(
                             supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
                             defaultSettings =
                                 listOf(
+                                    CoreVariable("dolphin_renderer", "OpenGL"),
                                     CoreVariable("dolphin_fastmem", "disabled"),
                                     CoreVariable("dolphin_main_cpu_thread", "disabled"),
                                     CoreVariable("dolphin_efb_to_texture", "enabled"),
@@ -1530,6 +1559,23 @@ data class GameSystem(
                                     CoreVariable("dolphin_wait_for_shaders", "disabled"),
                                     CoreVariable("dolphin_texture_cache_accuracy", "512"),
                                     CoreVariable("dolphin_shader_compilation_mode", "0"),
+                                ),
+                            exposedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "dolphin_renderer",
+                                        R.string.setting_graphics_api,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "OpenGL",
+                                                R.string.value_graphics_api_opengl,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Vulkan",
+                                                R.string.value_graphics_api_vulkan,
+                                            ),
+                                        ),
+                                    ),
                                 ),
                             skipDuplicateFrames = false,
                         ),
@@ -1566,6 +1612,7 @@ data class GameSystem(
                             supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
                             defaultSettings =
                                 listOf(
+                                    CoreVariable("dolphin_renderer", "OpenGL"),
                                     CoreVariable("dolphin_fastmem", "disabled"),
                                     CoreVariable("dolphin_main_cpu_thread", "disabled"),
                                     CoreVariable("dolphin_efb_to_texture", "enabled"),
@@ -1575,6 +1622,23 @@ data class GameSystem(
                                     CoreVariable("dolphin_wait_for_shaders", "disabled"),
                                     CoreVariable("dolphin_texture_cache_accuracy", "512"),
                                     CoreVariable("dolphin_shader_compilation_mode", "0"),
+                                ),
+                            exposedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "dolphin_renderer",
+                                        R.string.setting_graphics_api,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "OpenGL",
+                                                R.string.value_graphics_api_opengl,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Vulkan",
+                                                R.string.value_graphics_api_vulkan,
+                                            ),
+                                        ),
+                                    ),
                                 ),
                             skipDuplicateFrames = false,
                         ),

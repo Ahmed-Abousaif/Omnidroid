@@ -77,8 +77,8 @@ import com.omnidroid.touchinput.radial.LocalOmnidroidPadTheme
 import com.omnidroid.touchinput.radial.sensors.TiltConfiguration
 import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
 import com.omnidroid.touchinput.radial.ui.GlassSurface
+import com.omnidroid.app.shared.game.view.IRetroGameView
 import com.omnidroid.touchinput.radial.ui.OmnidroidButtonPressFeedback
-import com.swordfish.libretrodroid.GLRetroView
 import gg.padkit.PadKit
 import gg.padkit.config.HapticFeedbackType
 import gg.padkit.inputstate.InputState
@@ -123,7 +123,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
         val fullScreenPosition = remember { mutableStateOf<Rect?>(null) }
         val viewportPosition = remember { mutableStateOf<Rect?>(null) }
-        val retroViewState = remember { mutableStateOf<GLRetroView?>(null) }
+        val retroViewState = remember { mutableStateOf<IRetroGameView?>(null) }
 
         val fullPos = fullScreenPosition.value
         val viewPos = viewportPosition.value
@@ -162,8 +162,9 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                         .fillMaxSize()
                         .onGloballyPositioned { fullScreenPosition.value = it.boundsInRoot() },
                 factory = {
-                    viewModel.createRetroView(localContext, lifecycle).also {
-                        retroViewState.value = it
+                    viewModel.createRetroView(localContext, lifecycle).let { gameView ->
+                        retroViewState.value = gameView
+                        gameView.asView()
                     }
                 },
             )

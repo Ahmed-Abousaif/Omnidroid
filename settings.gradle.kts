@@ -20,6 +20,10 @@ include(
     ":baselineprofile"
 )
 
+if (file("libretrodroid").exists()) {
+    include(":libretrodroid")
+}
+
 project(":bundled-cores").projectDir = File("omnidroid-cores/bundled-cores")
 
 fun usePlayDynamicFeatures(): Boolean {
