@@ -78,6 +78,8 @@ import com.omnidroid.app.mobile.feature.settings.bios.BiosScreen
 import com.omnidroid.app.mobile.feature.settings.bios.BiosSettingsViewModel
 import com.omnidroid.app.mobile.feature.settings.coreselection.CoresSelectionScreen
 import com.omnidroid.app.mobile.feature.settings.coreselection.CoresSelectionViewModel
+import com.omnidroid.app.mobile.feature.settings.graphicsapi.GraphicsApiSelectionScreen
+import com.omnidroid.app.mobile.feature.settings.graphicsapi.GraphicsApiSelectionViewModel
 import com.omnidroid.app.mobile.feature.settings.deviceprofile.DeviceProfileScreen
 import com.omnidroid.app.mobile.feature.settings.deviceprofile.DeviceProfileViewModel
 import com.omnidroid.app.mobile.feature.settings.deviceprofile.ExtendedBenchmarkProgressDialog
@@ -161,6 +163,9 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
     @Inject
     lateinit var coreUpdater: CoreUpdater
+
+    @Inject
+    lateinit var coreVariablesManager: com.omnidroid.lib.core.CoreVariablesManager
 
     @Inject
     lateinit var castDisplayManager: CastDisplayManager
@@ -610,6 +615,23 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                         CoresSelectionViewModel.Factory(
                                             applicationContext,
                                             coresSelection,
+                                        ),
+                                ),
+                        )
+                    }
+                    composable(MainRoute.SETTINGS_GRAPHICS_API) {
+                        GraphicsApiSelectionScreen(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(top = LibraryTopBarRowHeight),
+                            viewModel =
+                                viewModel(
+                                    factory =
+                                        GraphicsApiSelectionViewModel.Factory(
+                                            applicationContext,
+                                            coreVariablesManager,
                                         ),
                                 ),
                         )

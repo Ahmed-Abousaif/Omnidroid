@@ -143,6 +143,11 @@
     <string name="settings_description_open_cores_selection">Select which core is associated to a system</string>
     <string name="settings_core_selection_ds_info">DeSmuME is deprecated and will be removed in one of the next updates. Save your progress inside the game, then switch to melonDS. In-game saves will load automatically in melonDS, but save states can only be used with the core that created them.</string>
 
+    <string name="settings_title_graphics_api_selection">Graphics API</string>
+    <string name="settings_description_graphics_api_selection">Choose OpenGL or Vulkan rendering backend per system</string>
+    <string name="settings_graphics_api_vulkan_available">Vulkan %1$s is supported by your device. Vulkan provides high-performance rendering with reduced CPU overhead and shader compilation stutter.</string>
+    <string name="settings_graphics_api_vulkan_unavailable">Vulkan is not supported on this device. Cores will default to OpenGL ES.</string>
+
     <string name="settings_title_display_bios_info">BIOS</string>
     <string name="settings_description_display_bios_info">Display detected and supported BIOS files</string>
     <string name="settings_bios_category_detected">Detected</string>

@@ -71,6 +71,9 @@
     <string name="setting_citra_resolution_factor">Resolution scaling</string>
     <string name="setting_citra_use_acc_mul">Accurate shaders multiplication</string>
     <string name="setting_citra_use_acc_geo_shaders">Accurate geometry shaders</string>
+    <string name="setting_graphics_api">Graphics API</string>
+    <string name="value_graphics_api_opengl">OpenGL</string>
+    <string name="value_graphics_api_vulkan">Vulkan</string>
 
     <!-- Core settings values. Duplicated here to ease the translation process. -->
     <string name="value_gambatte_mix_frames_disabled">Disabled</string>

@@ -3,8 +3,8 @@ package com.omnidroid.app.shared.game.viewmodel
 import android.content.Context
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
+import com.omnidroid.app.shared.game.view.takeScreenshot
 import com.omnidroid.common.graphics.GraphicsUtils
-import com.omnidroid.common.graphics.takeScreenshot
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.db.entity.Game
@@ -72,7 +72,7 @@ class GameViewModelSaves(
 
     suspend fun captureSaveSnapshot(useEmulationThread: Boolean): SaveSnapshot? {
         val retroGameView = retroGameView.retroGameView ?: return null
-        val sramState = retroGameView.serializeSRAM(useEmulationThread)
+        val sramState = retroGameView.serializeSRAM(useEmulationThread) ?: return null
         val autoSaveState = if (isAutoSaveEnabled()) getCurrentSaveState(useEmulationThread) else null
         return SaveSnapshot(sramState, autoSaveState)
     }
@@ -112,8 +112,9 @@ class GameViewModelSaves(
             } else {
                 0
             }
+        val stateBytes = retroGameView.serializeState(useEmulationThread) ?: return null
         return SaveState(
-            retroGameView.serializeState(useEmulationThread),
+            stateBytes,
             SaveState.Metadata(currentDisk, systemCoreConfig.statesVersion),
         )
     }
