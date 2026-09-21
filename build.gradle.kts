@@ -34,7 +34,7 @@ allprojects {
 }
 
 subprojects {
-    tasks.matching { it.name.contains("AarMetadata") }.configureEach {
+    tasks.matching { it.name.contains("AarMetadata") && !it.path.startsWith(":libretrodroid") }.configureEach {
         enabled = false
     }
 

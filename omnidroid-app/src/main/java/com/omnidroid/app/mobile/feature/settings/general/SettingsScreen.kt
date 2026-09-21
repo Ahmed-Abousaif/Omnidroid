@@ -392,6 +392,13 @@ private fun AdvancedLinks(
             onClick = { navController.navigateToRoute(MainRoute.SETTINGS_CORES_SELECTION) },
         )
         OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_graphics_api_selection)) },
+            subtitle = {
+                Text(text = stringResource(id = R.string.settings_description_graphics_api_selection))
+            },
+            onClick = { navController.navigateToRoute(MainRoute.SETTINGS_GRAPHICS_API) },
+        )
+        OmnidroidSettingsMenuLink(
             title = { Text(text = stringResource(id = R.string.settings_title_display_bios_info)) },
             subtitle = {
                 Text(text = stringResource(id = R.string.settings_description_display_bios_info))

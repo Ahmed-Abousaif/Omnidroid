@@ -130,6 +130,12 @@ class GameViewModelTouchControls(
 
     fun updateScreenOrientation(orientation: TouchControllerSettingsManager.Orientation) {
         screenOrientation.value = orientation
+        if (hasTouchScreen && screenLayoutController.supportsToggle()) {
+            val variables = screenLayoutController.onOrientationChanged(orientation)
+            if (variables.isNotEmpty()) {
+                retroGameView.applyCoreVariables(variables)
+            }
+        }
     }
 
     fun isTouchControllerVisible(): Flow<Boolean> {
