@@ -196,7 +196,8 @@ fun GameMenuHomeScreen(
                 )
             }
 
-            if (gameMenuRequest.advancedCoreOptions.isNotEmpty() || gameMenuRequest.coreOptions.isNotEmpty()) {
+            val hasControllers = gameMenuRequest.coreConfig.controllerConfigs.values.any { it.size >= 2 }
+            if (gameMenuRequest.advancedCoreOptions.isNotEmpty() || gameMenuRequest.coreOptions.isNotEmpty() || hasControllers) {
                 OmnidroidSettingsMenuLink(
                     title = { Text(text = stringResource(id = R.string.game_menu_settings)) },
                     icon = {

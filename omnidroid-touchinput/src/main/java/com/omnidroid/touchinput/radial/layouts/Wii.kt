@@ -157,3 +157,66 @@ fun PadKitScope.WiiRemoteRight(
         },
     )
 }
+
+@Composable
+fun PadKitScope.WiiSidewaysLeft(
+    modifier: Modifier = Modifier,
+    settings: TouchControllerSettingsManager.Settings,
+) {
+    BaseLayoutLeft(
+        settings = settings,
+        modifier = modifier,
+        primaryDial = {
+            OmnidroidControlCross(
+                id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD),
+                allowDiagonals = settings.allowDiagonals,
+            )
+        },
+        secondaryDials = {
+            OmnidroidControlButton(
+                modifier = Modifier.radialPosition(60f),
+                id = Id.Key(KeyEvent.KEYCODE_BUTTON_SELECT),
+                label = "-",
+            )
+            SecondaryButtonMenuPlaceholder(settings)
+        },
+    )
+}
+
+@Composable
+fun PadKitScope.WiiSidewaysRight(
+    modifier: Modifier = Modifier,
+    settings: TouchControllerSettingsManager.Settings,
+) {
+    BaseLayoutRight(
+        settings = settings,
+        modifier = modifier,
+        primaryDial = {
+            OmnidroidControlFaceButtons(
+                ids =
+                    persistentListOf(
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_A),
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_B),
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_X),
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_Y),
+                    ),
+                idsForegrounds =
+                    persistentMapOf<Id.Key, @Composable (State<Boolean>) -> Unit>(
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_A) to { OmnidroidButtonForeground(pressed = it, label = "2") },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_B) to { OmnidroidButtonForeground(pressed = it, label = "1") },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_X) to { OmnidroidButtonForeground(pressed = it, label = "A") },
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_Y) to { OmnidroidButtonForeground(pressed = it, label = "B") },
+                    ),
+            )
+        },
+        secondaryDials = {
+            OmnidroidControlButton(
+                modifier = Modifier.radialPosition(60f),
+                id = Id.Key(KeyEvent.KEYCODE_BUTTON_START),
+                label = "+",
+            )
+            SecondaryButtonMenu(settings)
+        },
+    )
+}
+

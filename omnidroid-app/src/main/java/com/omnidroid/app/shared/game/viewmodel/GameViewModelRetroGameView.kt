@@ -213,6 +213,7 @@ class GameViewModelRetroGameView(
         val graphicsApi =
             gameData.coreVariables.firstOrNull {
                 it.key == "citra_graphics_api" ||
+                    it.key == "dolphin_graphics_api" ||
                     it.key == "dolphin_renderer" ||
                     it.key == "ppsspp_rendering_backend" ||
                     it.key == "ppsspp_gpu_backend"

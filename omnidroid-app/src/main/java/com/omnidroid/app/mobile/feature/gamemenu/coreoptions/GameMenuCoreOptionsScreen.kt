@@ -36,12 +36,12 @@ fun GameMenuCoreOptionsScreen(
         }
 
     OmnidroidSettingsPage {
+        ControllersOptions(gameMenuRequest, maxOf(1, connectedGamePads), context)
         if (allOptions.isNotEmpty()) {
             OmnidroidCardSettingsGroup {
                 CoreOptions(gameMenuRequest.game.systemId, allOptions, context)
             }
         }
-        ControllersOptions(gameMenuRequest, maxOf(1, connectedGamePads), context)
     }
 }
 
