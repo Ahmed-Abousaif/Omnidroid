@@ -15,7 +15,13 @@ import java.util.Locale
 class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
     GameMetadataProvider {
     companion object {
-        private val THUMB_REPLACE = Regex("[&*/:`<>?\\\\|]")
+        // Disallowed filesystem, URI-special, control, and path traversal characters
+        private val THUMB_REPLACE = Regex("[&*/:`<>?\\\\|\"#'%^~;\\[\\]{}@+=!\$]")
+        private val CONTROL_CHARS = Regex("[\\p{Cntrl}\\u0000-\\u001F\\u007F-\\u009F]")
+        private val PATH_TRAVERSAL = Regex("\\.{2,}")
+        private const val MAX_TITLE_LENGTH = 200
+        private const val BASE_THUMBNAIL_URL = "http://thumbnails.libretro.com"
+        private const val IMAGE_TYPE = "Named_Boxarts"
     }
 
     private val sortedSystemIds: List<String> by lazy {
@@ -107,7 +113,7 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
             GameMetadata(
                 name = file.extensionlessName,
                 romName = file.name,
-                thumbnail = null,
+                thumbnail = computeCoverUrl(it, file.extensionlessName),
                 system = it.id.dbname,
                 developer = null,
             )
@@ -141,11 +147,12 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
 
     private fun findByKnownSystem(file: StorageFile): GameMetadata? {
         if (file.systemID == null) return null
+        val system = GameSystem.findById(file.systemID!!.dbname)
 
         return GameMetadata(
             name = file.extensionlessName,
             romName = file.name,
-            thumbnail = null,
+            thumbnail = computeCoverUrl(system, file.extensionlessName),
             system = file.systemID!!.dbname,
             developer = null,
         )
@@ -163,7 +170,7 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
                 GameMetadata(
                     name = file.extensionlessName,
                     romName = file.name,
-                    thumbnail = null,
+                    thumbnail = computeCoverUrl(it, file.extensionlessName),
                     system = it.id.dbname,
                     developer = null,
                 )
@@ -177,24 +184,35 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
     }
 
     private fun computeCoverUrl(
-        system: GameSystem,
+        system: GameSystem?,
         name: String?,
     ): String? {
-        var systemName = system.libretroFullName
+        if (system == null || name.isNullOrBlank()) {
+            return null
+        }
 
-        // Specific mame version don't have any thumbnails in Libretro database
+        var systemName = system.libretroFullName
         if (system.id == SystemID.MAME2003PLUS) {
             systemName = "MAME"
         }
 
-        if (name == null) {
+        // Validate systemName format (alphanumeric, spaces, and hyphens only)
+        if (!systemName.all { it.isLetterOrDigit() || it == ' ' || it == '-' }) {
             return null
         }
 
-        val imageType = "Named_Boxarts"
+        // Clean & sanitize title to eliminate path traversal, control codes, and illegal URI chars
+        val cleanName = name
+            .replace(CONTROL_CHARS, "")
+            .replace(PATH_TRAVERSAL, "_")
+            .replace(THUMB_REPLACE, "_")
+            .trim()
+            .trim('.', '_', ' ')
 
-        val thumbGameName = name.replace(THUMB_REPLACE, "_")
+        if (cleanName.isBlank() || cleanName.length > MAX_TITLE_LENGTH) {
+            return null
+        }
 
-        return "http://thumbnails.libretro.com/$systemName/$imageType/$thumbGameName.png"
+        return "$BASE_THUMBNAIL_URL/$systemName/$IMAGE_TYPE/$cleanName.png"
     }
 }

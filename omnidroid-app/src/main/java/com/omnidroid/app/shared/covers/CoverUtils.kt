@@ -33,17 +33,35 @@ object CoverUtils {
         }
     }
 
+    private val ALLOWED_COVER_HOSTS = setOf(
+        "thumbnails.libretro.com",
+        "media.rawg.io",
+        "rawg.io",
+        "images.igdb.com",
+    )
+
+    fun isAllowedRemoteCoverUrl(url: String?): Boolean {
+        if (url.isNullOrBlank()) return false
+        val uri = runCatching { android.net.Uri.parse(url) }.getOrNull() ?: return false
+        val scheme = uri.scheme?.lowercase() ?: return false
+        if (scheme != "http" && scheme != "https") return false
+        val host = uri.host?.lowercase() ?: return false
+        return ALLOWED_COVER_HOSTS.any { host == it || host.endsWith(".$it") }
+    }
+
     fun coverData(game: Game): Any? =
-        resolveCustomCoverFile(game) ?: RawgCoverStore.get(game.id) ?: game.coverFrontUrl
+        resolveCustomCoverFile(game)
+            ?: RawgCoverStore.get(game.id)?.takeIf(::isAllowedRemoteCoverUrl)
+            ?: game.coverFrontUrl?.takeIf(::isAllowedRemoteCoverUrl)
 
     fun coverData(
         game: Game,
         preferredCoverUrl: String?,
     ): Any? =
         resolveCustomCoverFile(game)
-            ?: preferredCoverUrl?.takeIf { it.isNotBlank() }
-            ?: RawgCoverStore.get(game.id)
-            ?: game.coverFrontUrl
+            ?: preferredCoverUrl?.takeIf(::isAllowedRemoteCoverUrl)
+            ?: RawgCoverStore.get(game.id)?.takeIf(::isAllowedRemoteCoverUrl)
+            ?: game.coverFrontUrl?.takeIf(::isAllowedRemoteCoverUrl)
 
     fun coverCacheKey(
         game: Game,
@@ -122,6 +140,7 @@ object CoverUtils {
             }
             .okHttpClient {
                 OkHttpClient.Builder()
+                    .addInterceptor(SecureCoverInterceptor)
                     .addNetworkInterceptor(ThrottleFailedThumbnailsInterceptor)
                     .build()
             }
