@@ -60,6 +60,8 @@ import com.omnidroid.touchinput.radial.layouts.WiiClassicLeft
 import com.omnidroid.touchinput.radial.layouts.WiiClassicRight
 import com.omnidroid.touchinput.radial.layouts.WiiRemoteLeft
 import com.omnidroid.touchinput.radial.layouts.WiiRemoteRight
+import com.omnidroid.touchinput.radial.layouts.WiiSidewaysLeft
+import com.omnidroid.touchinput.radial.layouts.WiiSidewaysRight
 import gg.padkit.PadKitScope
 
 enum class TouchControllerID {
@@ -92,6 +94,7 @@ enum class TouchControllerID {
     GAMECUBE,
     WII_CLASSIC,
     WII_REMOTE,
+    WII_SIDEWAYS,
     ;
 
     class Config(
@@ -280,6 +283,12 @@ enum class TouchControllerID {
                     Config(
                         { modifier, settings -> WiiRemoteLeft(modifier, settings) },
                         { modifier, settings -> WiiRemoteRight(modifier, settings) },
+                    )
+
+                WII_SIDEWAYS ->
+                    Config(
+                        { modifier, settings -> WiiSidewaysLeft(modifier, settings) },
+                        { modifier, settings -> WiiSidewaysRight(modifier, settings) },
                     )
             }
         }

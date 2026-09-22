@@ -35,7 +35,7 @@ class GameViewModelSaves(
     private var currentQuickSave: SaveState? = null
 
     data class SaveSnapshot(
-        val sram: ByteArray,
+        val sram: ByteArray?,
         val autoSave: SaveState?,
     )
 
@@ -72,7 +72,7 @@ class GameViewModelSaves(
 
     suspend fun captureSaveSnapshot(useEmulationThread: Boolean): SaveSnapshot? {
         val retroGameView = retroGameView.retroGameView ?: return null
-        val sramState = retroGameView.serializeSRAM(useEmulationThread) ?: return null
+        val sramState = runCatching { retroGameView.serializeSRAM(useEmulationThread) }.getOrNull()
         val autoSaveState = if (isAutoSaveEnabled()) getCurrentSaveState(useEmulationThread) else null
         return SaveSnapshot(sramState, autoSaveState)
     }
@@ -83,10 +83,10 @@ class GameViewModelSaves(
             "GameViewModelSaves.write game=%s core=%s writingSram=%s writingAutoSave=%s",
             game.id,
             systemCoreConfig.coreID,
-            true,
+            snapshot.sram != null,
             snapshot.autoSave != null,
         )
-        savesManager.setSaveRAM(game, snapshot.sram)
+        snapshot.sram?.takeIf { it.isNotEmpty() }?.let { savesManager.setSaveRAM(game, it) }
         snapshot.autoSave?.let { statesManager.setAutoSave(game, systemCoreConfig.coreID, it) }
     }
 
