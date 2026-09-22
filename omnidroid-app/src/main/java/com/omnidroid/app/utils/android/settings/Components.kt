@@ -48,6 +48,7 @@ fun OmnidroidSettingsPage(
 
 @Composable
 fun OmnidroidSettingsSwitch(
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     state: SettingValueState<Boolean>,
     icon: @Composable (() -> Unit)? = null,
@@ -56,7 +57,7 @@ fun OmnidroidSettingsSwitch(
     onCheckedChange: (Boolean) -> Unit = {},
 ) {
     SettingsSwitch(
-        modifier = Modifier.controllerFocusGlow(RoundedCornerShape(8.dp)),
+        modifier = modifier.controllerFocusGlow(RoundedCornerShape(8.dp)),
         enabled = enabled,
         state = state.value,
         icon = icon,
@@ -72,6 +73,7 @@ fun OmnidroidSettingsSwitch(
 
 @Composable
 fun OmnidroidSettingsMenuLink(
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     icon: (@Composable () -> Unit)? = null,
     title: @Composable () -> Unit,
@@ -80,7 +82,7 @@ fun OmnidroidSettingsMenuLink(
     onClick: () -> Unit,
 ) {
     SettingsMenuLink(
-        modifier = Modifier.controllerFocusGlow(RoundedCornerShape(8.dp)),
+        modifier = modifier.controllerFocusGlow(RoundedCornerShape(8.dp)),
         enabled = enabled,
         icon = icon,
         title = title,

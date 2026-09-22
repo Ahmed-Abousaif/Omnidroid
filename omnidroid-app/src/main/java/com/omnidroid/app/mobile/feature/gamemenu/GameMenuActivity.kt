@@ -53,8 +53,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
@@ -196,7 +194,6 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                 }
             var pendingResult by remember { mutableStateOf<Intent.() -> Unit>({}) }
             var hasOpened by remember { mutableStateOf(false) }
-            val contentFocusRequester = remember { FocusRequester() }
 
             val currentRoute =
                 navController.currentBackStackEntryAsState().value?.destination?.route
@@ -226,12 +223,16 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                 if (hasOpened && panelState.isIdle && !panelState.currentState && !panelState.targetState) {
                     onResult(pendingResult)
                 }
+                if (panelState.targetState && panelState.isIdle) {
+                    yield()
+                    runCatching { controllerNav.contentFocusRequester?.requestFocus() }
+                }
             }
 
             LaunchedEffect(currentRoute) {
                 controllerNav.setHints(hints)
                 yield()
-                runCatching { contentFocusRequester.requestFocus() }
+                runCatching { controllerNav.contentFocusRequester?.requestFocus() }
             }
 
             controllerNav.onBack = {
@@ -335,7 +336,6 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                                         modifier =
                                             Modifier
                                                 .fillMaxSize()
-                                                .focusRequester(contentFocusRequester)
                                                 .focusGroup(),
                                         navController = navController,
                                         startDestination = GameMenuRoute.HOME.route,
@@ -474,14 +474,29 @@ class GameMenuActivity : RetrogradeComponentActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN && isNavigationKey(event.keyCode)) {
+            runCatching { controllerBridge.navigation?.contentFocusRequester?.requestFocus() }
+        }
         return controllerBridge.dispatchKey(event) { super.dispatchKeyEvent(it) }
     }
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
+        runCatching { controllerBridge.navigation?.contentFocusRequester?.requestFocus() }
         if (controllerBridge.dispatchMotion(event) { super.dispatchKeyEvent(it) }) {
             return true
         }
         return super.dispatchGenericMotionEvent(event)
+    }
+
+    private fun isNavigationKey(keyCode: Int): Boolean {
+        return keyCode == KeyEvent.KEYCODE_DPAD_UP ||
+            keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
+            keyCode == KeyEvent.KEYCODE_DPAD_LEFT ||
+            keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ||
+            keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
+            keyCode == KeyEvent.KEYCODE_BUTTON_A ||
+            keyCode == KeyEvent.KEYCODE_BUTTON_1 ||
+            keyCode == KeyEvent.KEYCODE_ENTER
     }
 
     override fun onResume() {

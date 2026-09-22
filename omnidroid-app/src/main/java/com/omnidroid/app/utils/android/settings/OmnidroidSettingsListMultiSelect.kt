@@ -48,6 +48,7 @@ fun OmnidroidSettingsListMultiSelect(
     val scrollState = rememberScrollState()
 
     OmnidroidSettingsMenuLink(
+        modifier = modifier,
         enabled = enabled,
         icon = icon,
         title = title,
