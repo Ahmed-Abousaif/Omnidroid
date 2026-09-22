@@ -414,6 +414,7 @@ object ControllerConfigs {
             TouchControllerID.GAMECUBE,
             allowTouchRotation = true,
             libretroDescriptor = "GameCube Controller",
+            libretroId = 1,
             tiltConfigurations =
                 listOf(
                     TILT_CONFIGURATION_DISABLED,
@@ -431,6 +432,7 @@ object ControllerConfigs {
             TouchControllerID.WII_CLASSIC,
             allowTouchRotation = true,
             libretroDescriptor = "WiiMote + Classic Controller",
+            libretroId = 1025,
             tiltConfigurations =
                 listOf(
                     TILT_CONFIGURATION_DISABLED,
@@ -449,6 +451,7 @@ object ControllerConfigs {
             TouchControllerID.WII_REMOTE,
             allowTouchRotation = true,
             libretroDescriptor = "WiiMote + Nunchuk",
+            libretroId = 769,
             tiltConfigurations =
                 listOf(
                     TILT_CONFIGURATION_DISABLED,
@@ -457,4 +460,22 @@ object ControllerConfigs {
                     TILT_CONFIGURATION_L_R,
                 ),
         )
+
+    val WII_SIDEWAYS =
+        ControllerConfig(
+            "wii_sideways",
+            R.string.controller_wii_sideways,
+            TouchControllerID.WII_SIDEWAYS,
+            allowTouchRotation = true,
+            libretroDescriptor = "WiiMote (sideways)",
+            libretroId = 513,
+            tiltConfigurations =
+                listOf(
+                    TILT_CONFIGURATION_DISABLED,
+                    TILT_CONFIGURATION_CROSS,
+                    TILT_CONFIGURATION_ANALOG_LEFT,
+                    TILT_CONFIGURATION_ANALOG_RIGHT,
+                ),
+        )
 }
+

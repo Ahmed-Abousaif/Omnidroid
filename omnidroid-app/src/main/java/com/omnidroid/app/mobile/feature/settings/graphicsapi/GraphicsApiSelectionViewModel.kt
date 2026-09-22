@@ -50,8 +50,8 @@ class GraphicsApiSelectionViewModel(
         viewModelScope.launch {
             val supportedSystems = listOf(
                 SystemID.NINTENDO_3DS to "citra_graphics_api",
-                SystemID.GAMECUBE to "dolphin_renderer",
-                SystemID.WII to "dolphin_renderer",
+                SystemID.GAMECUBE to "dolphin_graphics_api",
+                SystemID.WII to "dolphin_graphics_api",
                 SystemID.PSP to "ppsspp_rendering_backend",
             )
 
