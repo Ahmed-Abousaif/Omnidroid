@@ -104,11 +104,10 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 - On = diagonals (default); off = cardinal directions only.
 - Saved per layout and orientation with your other touch control settings.
 
-### NDS and 3DS dual-screen layouts & dynamic orientation flipping
+### NDS and 3DS dual-screen layouts & quick controls
 
 - **melonDS DS (NDS):** Screens layout includes **Top Only** and **Bottom Only**, alongside Top–Bottom and Left–Right.
-- **Azahar / Citra (3DS):** Screens layout includes **Single Screen**, plus **Displayed screen** (Top or Bottom) to choose which one shows.
-- **Dynamic Orientation Flipping:** In dual-screen mode, Omnidroid automatically flips between **Top–Bottom** in portrait mode and **Side by Side (Left–Right)** in landscape mode as you rotate your device.
+- **Azahar / Citra (3DS):** Screens layout includes **Default Top-Bottom**, **Side by Side**, and **Single Screen** (with Top/Bottom selection), switchable via in-game settings or the touch overlay toggle button.
 - **Interactive 3DS Touchscreen Overlay:** Accurate touch stylus input mapped to the 3DS bottom screen with precise aspect-ratio coordinate conversion.
 - **Quick Screen Toggle:** On the virtual pad (melonDS DS / Azahar / Citra), tap the **screen layout** button to toggle dual ↔ **Top only** without opening the menu. The core option stays perfectly synchronized with in-game settings.
 
@@ -180,22 +179,36 @@ Omnidroid includes full **Nintendo 3DS** emulation powered by the **Azahar** (mo
 - **Target Architecture:** Optimized for 64-bit architectures (`arm64-v8a` and `x86_64`).
 - **Hardware Acceleration:** Native support for both **Vulkan** and **OpenGL ES 3.0+** rendering pipelines via `omni-libretrodroid`.
 - **Supported ROM Formats:** `.3ds`, `.3dsx`, `.elf`, `.axf`, `.cci`, `.cxi`, `.app`, `.cia`.
-- **Dynamic Dual-Screen Layouts:** Seamless automatic flipping between Top–Bottom (Portrait) and Side by Side (Landscape), with instant Top-only virtual button toggle.
+- **Resolution Scaling:** Real-time scaling factors from 1x Native (400×240) up to 6x (2400×1440 QHD).
+- **Dual-Screen Layouts:** Choose between Default Top–Bottom, Side by Side (Left–Right), or Single Screen Only (with top/bottom screen selection).
 - **Interactive Touchscreen:** Bottom screen touch stylus input with precise multi-touch coordinate translation while operating virtual face buttons.
 - **Decrypted & System Data:** Automatic handling of decrypted ROMs, shared system archives, and DLC/update paths.
 
 ## GameCube & Wii Emulation (Beta)
 
-Omnidroid includes experimental **Nintendo GameCube** and **Nintendo Wii** emulation powered by the **Dolphin** libretro core:
+Omnidroid includes full **Nintendo GameCube** and **Nintendo Wii** emulation powered by the **Dolphin** libretro core:
 
 - **Target Architecture:** Optimized for 64-bit architectures (`arm64-v8a` and `x86_64`).
-- **Core Assets Managed Automatically:** Dolphin's `Sys/` assets (game settings database, fonts, DSP engine) are automatically managed and downloaded to `system/dolphin-emu/Sys/` on first launch.
-- **Supported Disc & ROM Formats:**
+- **Core Assets Provisioned Automatically:** Dolphin's essential `Sys/` assets (game database, system fonts, DSP binary engines) are automatically downloaded and organized under `system/dolphin-emu/Sys/` on first launch.
+- **Supported Disc & Media Formats:**
   - **GameCube:** `.iso`, `.gcm`, `.gcz`, `.rvz`, `.ciso`, `.tgc`, `.m3u`, `.dol`, `.elf`.
   - **Wii:** `.iso`, `.wbfs`, `.gcz`, `.rvz`, `.ciso`, `.wad`, `.m3u`, `.dol`, `.elf`.
-- **Multi-Disc Support:** Multi-disc titles are supported through `.m3u` playlists.
-- **Custom Touch Layouts:** Dedicated on-screen touch layouts for GameCube (Main Stick, C-Stick, A/B/X/Y, Z trigger, L/R) and Wii (Classic Controller and Wii Remote + Nunchuk) with full physical gamepad mapping and rumble support.
-- **Save States & Memory Cards:** Native support for libretro save states and per-system virtual Memory Cards / NAND.
+- **Multi-Disc Support:** Seamless multi-disc changing via `.m3u` playlist files.
+- **Hardware Rendering & Adaptive Resolution Scaling:**
+  - High-performance **OpenGL ES 3.0+** and **Vulkan** pipelines.
+  - **Real-Time Internal Resolution Scaling:** 1x Native (640×528), 2x (720p), 3x (1080p), and 4x (1440p / QHD) with dynamic intermediate framebuffer reallocation—eliminating letterbox clipping and viewport shrinking artifacts.
+  - **Display Enhancements:** Native support for **Widescreen (16:9)** anamorphic modes and **Progressive Scan (480p)** toggles via in-game settings.
+- **Versatile Controller Profiles & Input Routing:**
+  - **GameCube:** Authentic GameCube layout (Analog Main Stick, C-Stick, A/B/X/Y, Z trigger, analog L/R, D-Pad, Start).
+  - **Wii Remote (Sideways):** Default configuration for classic 2D platformers and horizontal play (*Super Paper Mario*, *New Super Mario Bros. Wii*).
+  - **Wii Remote + Nunchuk:** Twin-motion and analog stick configuration for 3D adventures (*Super Mario Galaxy*, *The Legend of Zelda: Twilight Princess*).
+  - **Wii Classic Controller:** Full dual-stick gamepad layout for standard Wii titles.
+  - **Ghost Controller Prevention:** Automatically disconnects unused controller ports (ports 1–3) on boot to prevent games from detecting false multiplayer inputs.
+  - **Sensor Bar Setup:** Configurable Top / Bottom virtual sensor bar positioning.
+- **Complete Save State & Persistent Memory Support:**
+  - **Auto-Save & Quick-Resume:** Automatically snapshots state on game quit and seamlessly restores progress when tapping **Continue**.
+  - **Manual Save States:** Multiple manual save state slots with screenshot preview thumbnails.
+  - **Virtual Memory Cards & NAND:** Automatic virtual GameCube Memory Card files (`MemoryCardA.USA.raw`) and Wii internal NAND flash storage preserved in your `saves/` directory.
 
 ## PlayStation 2 Emulation (Beta)
 
