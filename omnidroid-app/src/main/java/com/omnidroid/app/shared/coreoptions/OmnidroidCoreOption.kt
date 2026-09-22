@@ -21,10 +21,17 @@ data class OmnidroidCoreOption(
         if (settings.isNotEmpty()) {
             return settings.map { context.getString(it.titleId) }
         }
-
-        return coreOption.optionValues.map {
-            it.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase() else char.toString() }
+        if (exposedSetting.values.isNotEmpty()) {
+            return exposedSetting.values.map { context.getString(it.titleId) }
         }
+
+        if (coreOption.optionValues.isNotEmpty()) {
+            return coreOption.optionValues.map {
+                it.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase() else char.toString() }
+            }
+        }
+
+        return listOf("Disabled", "Enabled")
     }
 
     fun getEntriesValues(): List<String> {
@@ -32,8 +39,15 @@ data class OmnidroidCoreOption(
         if (settings.isNotEmpty()) {
             return settings.map { it.key }
         }
+        if (exposedSetting.values.isNotEmpty()) {
+            return exposedSetting.values.map { it.key }
+        }
 
-        return coreOption.optionValues
+        if (coreOption.optionValues.isNotEmpty()) {
+            return coreOption.optionValues
+        }
+
+        return listOf("disabled", "enabled")
     }
 
     fun getCurrentValue(): String {
@@ -46,9 +60,12 @@ data class OmnidroidCoreOption(
 
     private fun getCorrectExposedSettings(): List<ExposedSetting.Value> {
         if (exposedSetting.values.isEmpty()) return emptyList()
-        return exposedSetting.values
-            .filter { exposedVal ->
-                coreOption.optionValues.any { it.equals(exposedVal.key, ignoreCase = true) }
-            }
+        if (coreOption.optionValues.isEmpty()) return exposedSetting.values
+        val filtered =
+            exposedSetting.values
+                .filter { exposedVal ->
+                    coreOption.optionValues.any { it.equals(exposedVal.key, ignoreCase = true) }
+                }
+        return if (filtered.isNotEmpty()) filtered else exposedSetting.values
     }
 }

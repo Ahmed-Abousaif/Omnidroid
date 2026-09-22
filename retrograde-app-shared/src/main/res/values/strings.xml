@@ -14,6 +14,7 @@
     <string name="controller_gamecube">GameCube Controller</string>
     <string name="controller_wii_classic">Wii Classic Controller</string>
     <string name="controller_wii_remote">Wii Remote + Nunchuk</string>
+    <string name="controller_wii_sideways">Wii Remote (Sideways)</string>
     <string name="controller_standard">Standard</string>
     <string name="controller_landscape">Landscape</string>
     <string name="controller_portrait">Portrait</string>
@@ -74,6 +75,23 @@
     <string name="setting_graphics_api">Graphics API</string>
     <string name="value_graphics_api_opengl">OpenGL</string>
     <string name="value_graphics_api_vulkan">Vulkan</string>
+
+    <string name="setting_dolphin_efb_scale">Internal Resolution</string>
+    <string name="setting_dolphin_sensor_bar_position">Sensor Bar Position</string>
+    <string name="setting_dolphin_widescreen">Widescreen (16:9)</string>
+    <string name="setting_dolphin_progressive_scan">Progressive Scan</string>
+    <string name="value_dolphin_sensor_bar_bottom">Bottom</string>
+    <string name="value_dolphin_sensor_bar_top">Top</string>
+    <string name="value_dolphin_res_1x">1x Native (640x528)</string>
+    <string name="value_dolphin_res_2x">2x (1280x1056)</string>
+    <string name="value_dolphin_res_3x">3x (1920x1584)</string>
+    <string name="value_dolphin_res_4x">4x (2560x2112)</string>
+    <string name="value_citra_res_1x">1x Native (400x240)</string>
+    <string name="value_citra_res_2x">2x (800x480)</string>
+    <string name="value_citra_res_3x">3x (1200x720)</string>
+    <string name="value_citra_res_4x">4x (1600x960)</string>
+    <string name="value_citra_res_5x">5x (2000x1200)</string>
+    <string name="value_citra_res_6x">6x (2400x1440)</string>
 
     <!-- Core settings values. Duplicated here to ease the translation process. -->
     <string name="value_gambatte_mix_frames_disabled">Disabled</string>

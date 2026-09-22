@@ -201,14 +201,34 @@ class GameViewModelInput(
     }
 
     private fun updateControllers(controllers: Map<Int, ControllerConfig>) {
-        retroGameView.retroGameView
-            ?.getControllers()?.toIndexedMap()
-            ?.zipOnKeys(controllers, this::findControllerId)
-            ?.filterNotNullValues()
-            ?.forEach { (port, controllerId) ->
-                Timber.i("Controls setting $port to $controllerId")
+        val supportedControllers = retroGameView.retroGameView?.getControllers()?.toIndexedMap()
+        if (supportedControllers.isNullOrEmpty()) {
+            controllers.forEach { (port, config) ->
+                val controllerId = config.libretroId ?: 1
+                Timber.i("Controls setting fallback $port to $controllerId")
                 retroGameView.retroGameView?.setControllerType(port, controllerId)
             }
+            for (port in 1..3) {
+                if (!controllers.containsKey(port)) {
+                    retroGameView.retroGameView?.setControllerType(port, 0)
+                }
+            }
+            return
+        }
+
+        supportedControllers.forEach { (port, supported) ->
+            val config = controllers[port]
+            if (config != null) {
+                val controllerId = findControllerId(supported, config) ?: config.libretroId
+                if (controllerId != null) {
+                    Timber.i("Controls setting $port to $controllerId (${config.libretroDescriptor})")
+                    retroGameView.retroGameView?.setControllerType(port, controllerId)
+                }
+            } else if (port > 0) {
+                Timber.i("Controls disconnecting unused port $port")
+                retroGameView.retroGameView?.setControllerType(port, 0)
+            }
+        }
     }
 
     private fun findControllerId(

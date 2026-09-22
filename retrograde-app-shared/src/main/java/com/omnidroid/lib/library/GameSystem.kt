@@ -1403,6 +1403,14 @@ data class GameSystem(
                                     ExposedSetting(
                                         "citra_resolution_factor",
                                         R.string.setting_citra_resolution_factor,
+                                        arrayListOf(
+                                            ExposedSetting.Value("1", R.string.value_citra_res_1x),
+                                            ExposedSetting.Value("2", R.string.value_citra_res_2x),
+                                            ExposedSetting.Value("3", R.string.value_citra_res_3x),
+                                            ExposedSetting.Value("4", R.string.value_citra_res_4x),
+                                            ExposedSetting.Value("5", R.string.value_citra_res_5x),
+                                            ExposedSetting.Value("6", R.string.value_citra_res_6x),
+                                        ),
                                     ),
                                     ExposedSetting(
                                         "citra_use_acc_mul",
@@ -1468,6 +1476,14 @@ data class GameSystem(
                                     ExposedSetting(
                                         "citra_resolution_factor",
                                         R.string.setting_citra_resolution_factor,
+                                        arrayListOf(
+                                            ExposedSetting.Value("1", R.string.value_citra_res_1x),
+                                            ExposedSetting.Value("2", R.string.value_citra_res_2x),
+                                            ExposedSetting.Value("3", R.string.value_citra_res_3x),
+                                            ExposedSetting.Value("4", R.string.value_citra_res_4x),
+                                            ExposedSetting.Value("5", R.string.value_citra_res_5x),
+                                            ExposedSetting.Value("6", R.string.value_citra_res_6x),
+                                        ),
                                     ),
                                     ExposedSetting(
                                         "citra_use_acc_mul",
@@ -1539,9 +1555,6 @@ data class GameSystem(
                             controllerConfigs =
                                 hashMapOf(
                                     0 to arrayListOf(ControllerConfigs.GAMECUBE),
-                                    1 to arrayListOf(ControllerConfigs.GAMECUBE),
-                                    2 to arrayListOf(ControllerConfigs.GAMECUBE),
-                                    3 to arrayListOf(ControllerConfigs.GAMECUBE),
                                 ),
                             rumbleSupported = true,
                             statesSupported = true,
@@ -1549,7 +1562,7 @@ data class GameSystem(
                             supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
                             defaultSettings =
                                 listOf(
-                                    CoreVariable("dolphin_renderer", "OpenGL"),
+                                    CoreVariable("dolphin_renderer", "Hardware"),
                                     CoreVariable("dolphin_fastmem", "disabled"),
                                     CoreVariable("dolphin_main_cpu_thread", "disabled"),
                                     CoreVariable("dolphin_efb_to_texture", "enabled"),
@@ -1563,7 +1576,7 @@ data class GameSystem(
                             exposedSettings =
                                 listOf(
                                     ExposedSetting(
-                                        "dolphin_renderer",
+                                        "dolphin_graphics_api",
                                         R.string.setting_graphics_api,
                                         arrayListOf(
                                             ExposedSetting.Value(
@@ -1573,6 +1586,28 @@ data class GameSystem(
                                             ExposedSetting.Value(
                                                 "Vulkan",
                                                 R.string.value_graphics_api_vulkan,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "dolphin_efb_scale",
+                                        R.string.setting_dolphin_efb_scale,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "1",
+                                                R.string.value_dolphin_res_1x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "2",
+                                                R.string.value_dolphin_res_2x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "3",
+                                                R.string.value_dolphin_res_3x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "4",
+                                                R.string.value_dolphin_res_4x,
                                             ),
                                         ),
                                     ),
@@ -1600,11 +1635,12 @@ data class GameSystem(
                             CoreID.DOLPHIN,
                             controllerConfigs =
                                 hashMapOf(
-                                    0 to arrayListOf(ControllerConfigs.WII_CLASSIC, ControllerConfigs.WII_REMOTE),
-                                    1 to arrayListOf(ControllerConfigs.WII_CLASSIC, ControllerConfigs.WII_REMOTE),
-                                    2 to arrayListOf(ControllerConfigs.WII_CLASSIC, ControllerConfigs.WII_REMOTE),
-                                    3 to arrayListOf(ControllerConfigs.WII_CLASSIC, ControllerConfigs.WII_REMOTE),
-                                    4 to arrayListOf(ControllerConfigs.WII_CLASSIC, ControllerConfigs.WII_REMOTE),
+                                    0 to
+                                        arrayListOf(
+                                            ControllerConfigs.WII_SIDEWAYS,
+                                            ControllerConfigs.WII_REMOTE,
+                                            ControllerConfigs.WII_CLASSIC,
+                                        ),
                                 ),
                             rumbleSupported = true,
                             statesSupported = true,
@@ -1612,7 +1648,7 @@ data class GameSystem(
                             supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
                             defaultSettings =
                                 listOf(
-                                    CoreVariable("dolphin_renderer", "OpenGL"),
+                                    CoreVariable("dolphin_renderer", "Hardware"),
                                     CoreVariable("dolphin_fastmem", "disabled"),
                                     CoreVariable("dolphin_main_cpu_thread", "disabled"),
                                     CoreVariable("dolphin_efb_to_texture", "enabled"),
@@ -1626,7 +1662,7 @@ data class GameSystem(
                             exposedSettings =
                                 listOf(
                                     ExposedSetting(
-                                        "dolphin_renderer",
+                                        "dolphin_graphics_api",
                                         R.string.setting_graphics_api,
                                         arrayListOf(
                                             ExposedSetting.Value(
@@ -1638,6 +1674,53 @@ data class GameSystem(
                                                 R.string.value_graphics_api_vulkan,
                                             ),
                                         ),
+                                    ),
+                                    ExposedSetting(
+                                        "dolphin_efb_scale",
+                                        R.string.setting_dolphin_efb_scale,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "1",
+                                                R.string.value_dolphin_res_1x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "2",
+                                                R.string.value_dolphin_res_2x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "3",
+                                                R.string.value_dolphin_res_3x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "4",
+                                                R.string.value_dolphin_res_4x,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "dolphin_sensor_bar_position",
+                                        R.string.setting_dolphin_sensor_bar_position,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "0",
+                                                R.string.value_dolphin_sensor_bar_bottom,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "1",
+                                                R.string.value_dolphin_sensor_bar_top,
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            exposedAdvancedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "dolphin_widescreen",
+                                        R.string.setting_dolphin_widescreen,
+                                    ),
+                                    ExposedSetting(
+                                        "dolphin_progressive_scan",
+                                        R.string.setting_dolphin_progressive_scan,
                                     ),
                                 ),
                             skipDuplicateFrames = false,

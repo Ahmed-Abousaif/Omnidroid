@@ -11,9 +11,18 @@ data class CoreOption(
 ) : Serializable {
     companion object {
         fun fromLibretroDroidVariable(variable: Variable): CoreOption {
-            val name = variable.description?.split(";")?.get(0)!!
-            val values = variable.description?.split(";")?.get(1)?.trim()?.split('|') ?: listOf()
-            val coreVariable = CoreVariable(variable.key!!, variable.value!!)
+            val description = variable.description ?: ""
+            val name: String
+            val values: List<String>
+            if (description.contains(";")) {
+                val parts = description.split(";", limit = 2)
+                name = parts[0].trim()
+                values = parts.getOrNull(1)?.trim()?.split('|')?.map { it.trim() }?.filter { it.isNotEmpty() } ?: listOf()
+            } else {
+                name = description.trim()
+                values = listOf()
+            }
+            val coreVariable = CoreVariable(variable.key ?: "", variable.value ?: "")
             return CoreOption(coreVariable, name, values)
         }
     }
