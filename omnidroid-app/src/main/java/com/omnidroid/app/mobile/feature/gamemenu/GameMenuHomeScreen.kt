@@ -6,7 +6,12 @@ import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
@@ -16,6 +21,7 @@ import com.alorma.compose.settings.storage.memory.rememberMemoryBooleanSettingSt
 import com.alorma.compose.settings.storage.memory.rememberMemoryIntSettingState
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.gamemenu.tilt.TiltConfigurationMenuEntry
+import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.shared.GameMenuContract
 import com.omnidroid.app.utils.android.settings.OmnidroidCardSettingsGroup
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsList
@@ -24,6 +30,7 @@ import com.omnidroid.app.utils.android.settings.OmnidroidSettingsPage
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
 import com.omnidroid.lib.savesync.GameCloudSyncOverride
 import com.omnidroid.lib.savesync.GameCloudSyncPreferences
+import kotlinx.coroutines.yield
 
 @Composable
 fun GameMenuHomeScreen(
@@ -32,10 +39,28 @@ fun GameMenuHomeScreen(
     onResult: (Intent.() -> Unit) -> Unit,
     saveSyncSupported: Boolean = false,
 ) {
+    val firstItemRequester = remember { FocusRequester() }
+    val controllerNav = LocalControllerNavigation.current
+
+    DisposableEffect(firstItemRequester) {
+        controllerNav?.contentFocusRequester = firstItemRequester
+        onDispose {
+            if (controllerNav?.contentFocusRequester == firstItemRequester) {
+                controllerNav?.contentFocusRequester = null
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        yield()
+        runCatching { firstItemRequester.requestFocus() }
+    }
+
     OmnidroidSettingsPage {
         OmnidroidCardSettingsGroup {
             if (gameMenuRequest.coreConfig.statesSupported) {
                 OmnidroidSettingsMenuLink(
+                    modifier = Modifier.focusRequester(firstItemRequester),
                     title = { Text(text = stringResource(id = R.string.game_menu_save)) },
                     icon = {
                         Icon(
@@ -59,6 +84,12 @@ fun GameMenuHomeScreen(
             }
 
             OmnidroidSettingsMenuLink(
+                modifier =
+                    if (!gameMenuRequest.coreConfig.statesSupported) {
+                        Modifier.focusRequester(firstItemRequester)
+                    } else {
+                        Modifier
+                    },
                 title = { Text(text = stringResource(id = R.string.game_menu_restart)) },
                 icon = {
                     Icon(

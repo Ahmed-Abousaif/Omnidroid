@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun OmnidroidSettingsList(
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     state: SettingValueState<Int>,
     title: @Composable () -> Unit,
@@ -59,6 +60,7 @@ fun OmnidroidSettingsList(
         }
 
     OmnidroidSettingsMenuLink(
+        modifier = modifier,
         enabled = enabled,
         icon = icon,
         title = title,

@@ -327,6 +327,7 @@ class GameViewModelInput(
 
                 if (port == 0) {
                     if (bindKeyCode == KeyEvent.KEYCODE_BUTTON_MODE && action == KeyEvent.ACTION_DOWN) {
+                        pressedKeys.clear()
                         sideEffects.showMenu(tilt, this)
                         return@safeCollect
                     }
@@ -340,7 +341,10 @@ class GameViewModelInput(
                     shortcuts[device]?.forEach { shortcut ->
                         if (shortcut.keys.isNotEmpty() && pressedKeys.containsAll(shortcut.keys)) {
                             when (shortcut.type) {
-                                GameShortcutType.MENU -> sideEffects.showMenu(tilt, this)
+                                GameShortcutType.MENU -> {
+                                    pressedKeys.clear()
+                                    sideEffects.showMenu(tilt, this)
+                                }
                                 GameShortcutType.QUICK_LOAD -> sideEffects.loadQuickSave()
                                 GameShortcutType.QUICK_SAVE -> sideEffects.saveQuickSave()
                                 GameShortcutType.TOGGLE_FAST_FORWARD -> sideEffects.toggleFastForward()
