@@ -56,6 +56,7 @@ android {
                 ":omnidroid_core_azahar",
                 ":omnidroid_core_pcee2",
                 ":omnidroid_core_dolphin",
+                ":omnidroid_core_flycast",
             ),
         )
     }

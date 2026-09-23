@@ -79,7 +79,7 @@ class ConsoleAchievementsStore(
      * | 3         | Collector        |
      * | 10        | Enthusiast       |
      * | 15        | Historian        |
-     * | 21 (all)  | Omnidroid Master |
+     * | 22 (all)  | Omnidroid Master |
      */
     fun getMilestoneBadge(unlockedCount: Int): MilestoneBadge? =
         MilestoneBadge.values()
@@ -90,6 +90,6 @@ class ConsoleAchievementsStore(
         COLLECTOR(3, "🥉", "collector"),
         ENTHUSIAST(10, "🥈", "enthusiast"),
         HISTORIAN(15, "🥇", "historian"),
-        OMNIDROID_MASTER(21, "💎", "master"),
+        OMNIDROID_MASTER(22, "💎", "master"),
     }
 }

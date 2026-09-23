@@ -113,6 +113,7 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
         Timber.i("Importing bios file: $bios")
 
         val biosFile = File(directoriesManager.getSystemDirectory(), bios.libretroFileName)
+        biosFile.parentFile?.mkdirs()
         if (biosFile.exists() && biosFile.setLastModified(normalizeTimestamp(timestampMs))) {
             Timber.d("Bios file already present. Updated last modification date.")
         } else {
@@ -261,6 +262,14 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
                     "PlayStation 2 Slim (SCPH-77001)",
                     SystemID.PS2,
                     "0B27DB79",
+                ),
+                Bios(
+                    "dc/dc_boot.bin",
+                    "E10C53C2F8B90BAB96EAD2D368858623",
+                    "Dreamcast BIOS",
+                    SystemID.DREAMCAST,
+                    null,
+                    "dc_boot.bin",
                 ),
             )
     }

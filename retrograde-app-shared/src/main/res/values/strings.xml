@@ -172,4 +172,27 @@
     <string name="value_handy_rot_90">90</string>
     <string name="value_handy_rot_270">270</string>
 
+    <!-- Flycast settings -->
+    <string name="setting_flycast_internal_resolution">Internal Resolution</string>
+    <string name="value_flycast_res_640x480">1x Native (640x480)</string>
+    <string name="value_flycast_res_1280x960">2x (1280x960)</string>
+    <string name="value_flycast_res_1920x1440">3x (1920x1440)</string>
+    <string name="value_flycast_res_2560x1920">4x (2560x1920)</string>
+    <string name="setting_flycast_widescreen_hack">Widescreen Hack</string>
+    <string name="setting_flycast_cable_type">Cable Type</string>
+    <string name="value_flycast_cable_composite">TV (Composite)</string>
+    <string name="value_flycast_cable_rgb">TV (RGB)</string>
+    <string name="value_flycast_cable_vga">VGA (RGB)</string>
+    <string name="setting_flycast_threaded_rendering">Threaded Rendering</string>
+    <string name="setting_flycast_alpha_sorting">Alpha Sorting</string>
+    <string name="value_flycast_alpha_sorting_strip">Per-Strip (Fast)</string>
+    <string name="value_flycast_alpha_sorting_triangle">Per-Triangle (Normal)</string>
+    <string name="value_flycast_alpha_sorting_pixel">Per-Pixel (Accurate)</string>
+    <string name="setting_flycast_anisotropic_filtering">Anisotropic Filtering</string>
+    <string name="value_flycast_af_off">Off</string>
+    <string name="value_flycast_af_2x">2x</string>
+    <string name="value_flycast_af_4x">4x</string>
+    <string name="value_flycast_af_8x">8x</string>
+    <string name="value_flycast_af_16x">16x</string>
+
 </resources>

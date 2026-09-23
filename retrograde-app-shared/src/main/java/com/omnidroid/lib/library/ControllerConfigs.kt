@@ -477,5 +477,20 @@ object ControllerConfigs {
                     TILT_CONFIGURATION_ANALOG_RIGHT,
                 ),
         )
+
+    val DREAMCAST =
+        ControllerConfig(
+            "default",
+            R.string.controller_default,
+            TouchControllerID.DREAMCAST,
+            allowTouchRotation = true,
+            tiltConfigurations =
+                listOf(
+                    TILT_CONFIGURATION_DISABLED,
+                    TILT_CONFIGURATION_CROSS,
+                    TILT_CONFIGURATION_ANALOG_LEFT,
+                    TILT_CONFIGURATION_L_R,
+                ),
+        )
 }
 

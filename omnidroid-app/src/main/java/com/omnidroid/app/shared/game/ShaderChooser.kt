@@ -68,6 +68,7 @@ object ShaderChooser {
             SystemID.PS2 -> ShaderConfig.Default
             SystemID.GAMECUBE -> ShaderConfig.Default
             SystemID.WII -> ShaderConfig.Default
+            SystemID.DREAMCAST -> ShaderConfig.Default
         }
     }
 
@@ -294,6 +295,7 @@ object ShaderChooser {
             SystemID.PS2 -> modern
             SystemID.GAMECUBE -> modern
             SystemID.WII -> modern
+            SystemID.DREAMCAST -> modern
         }
     }
 }

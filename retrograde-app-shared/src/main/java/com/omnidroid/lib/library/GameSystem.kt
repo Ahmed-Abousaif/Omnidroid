@@ -1736,6 +1736,124 @@ data class GameSystem(
                         ),
                     hasMultiDiskSupport = true,
                 ),
+                GameSystem(
+                    SystemID.DREAMCAST,
+                    "Sega - Dreamcast",
+                    R.string.game_system_title_dreamcast,
+                    R.string.game_system_abbr_dreamcast,
+                    listOf(
+                        SystemCoreConfig(
+                            CoreID.FLYCAST,
+                            controllerConfigs =
+                                hashMapOf(
+                                    0 to arrayListOf(ControllerConfigs.DREAMCAST),
+                                    1 to arrayListOf(ControllerConfigs.DREAMCAST),
+                                    2 to arrayListOf(ControllerConfigs.DREAMCAST),
+                                    3 to arrayListOf(ControllerConfigs.DREAMCAST),
+                                ),
+                            rumbleSupported = true,
+                            statesSupported = true,
+                            supportsLibretroVFS = false,
+                            defaultSettings =
+                                listOf(
+                                    CoreVariable("flycast_threaded_rendering", "enabled"),
+                                ),
+                            exposedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "flycast_internal_resolution",
+                                        R.string.setting_flycast_internal_resolution,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "640x480",
+                                                R.string.value_flycast_res_640x480,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "1280x960",
+                                                R.string.value_flycast_res_1280x960,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "1920x1440",
+                                                R.string.value_flycast_res_1920x1440,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "2560x1920",
+                                                R.string.value_flycast_res_2560x1920,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "flycast_cable_type",
+                                        R.string.setting_flycast_cable_type,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "TV (Composite)",
+                                                R.string.value_flycast_cable_composite,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "TV (RGB)",
+                                                R.string.value_flycast_cable_rgb,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "VGA (RGB)",
+                                                R.string.value_flycast_cable_vga,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "flycast_alpha_sorting",
+                                        R.string.setting_flycast_alpha_sorting,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "Per-Strip (fast, least accurate)",
+                                                R.string.value_flycast_alpha_sorting_strip,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Per-Triangle (normal)",
+                                                R.string.value_flycast_alpha_sorting_triangle,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Per-Pixel (accurate, but slowest)",
+                                                R.string.value_flycast_alpha_sorting_pixel,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "flycast_anisotropic_filtering",
+                                        R.string.setting_flycast_anisotropic_filtering,
+                                        arrayListOf(
+                                            ExposedSetting.Value("off", R.string.value_flycast_af_off),
+                                            ExposedSetting.Value("2", R.string.value_flycast_af_2x),
+                                            ExposedSetting.Value("4", R.string.value_flycast_af_4x),
+                                            ExposedSetting.Value("8", R.string.value_flycast_af_8x),
+                                            ExposedSetting.Value("16", R.string.value_flycast_af_16x),
+                                        ),
+                                    ),
+                                ),
+                            exposedAdvancedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "flycast_widescreen_hack",
+                                        R.string.setting_flycast_widescreen_hack,
+                                    ),
+                                    ExposedSetting(
+                                        "flycast_threaded_rendering",
+                                        R.string.setting_flycast_threaded_rendering,
+                                    ),
+                                ),
+                            skipDuplicateFrames = false,
+                        ),
+                    ),
+                    uniqueExtensions = listOf("cdi", "gdi", "lst"),
+                    supportedExtensions = listOf("cdi", "gdi", "chd", "cue", "m3u", "lst"),
+                    scanOptions =
+                        ScanOptions(
+                            scanByFilename = false,
+                            scanByUniqueExtension = true,
+                            scanByPathAndSupportedExtensions = true,
+                        ),
+                    hasMultiDiskSupport = true,
+                ),
             )
 
         private val byIdCache by lazy { mapOf(*SYSTEMS.map { it.id.dbname to it }.toTypedArray()) }
