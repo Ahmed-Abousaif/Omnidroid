@@ -1757,6 +1757,11 @@ data class GameSystem(
                             defaultSettings =
                                 listOf(
                                     CoreVariable("flycast_threaded_rendering", "enabled"),
+                                    CoreVariable("flycast_internal_resolution", "640x480"),
+                                    CoreVariable("flycast_cable_type", "TV (Composite)"),
+                                    CoreVariable("flycast_alpha_sorting", "Per-Triangle (normal)"),
+                                    CoreVariable("flycast_anisotropic_filtering", "disabled"),
+                                    CoreVariable("flycast_widescreen_hack", "disabled"),
                                 ),
                             exposedSettings =
                                 listOf(
@@ -1822,7 +1827,7 @@ data class GameSystem(
                                         "flycast_anisotropic_filtering",
                                         R.string.setting_flycast_anisotropic_filtering,
                                         arrayListOf(
-                                            ExposedSetting.Value("off", R.string.value_flycast_af_off),
+                                            ExposedSetting.Value("disabled", R.string.value_flycast_af_off),
                                             ExposedSetting.Value("2", R.string.value_flycast_af_2x),
                                             ExposedSetting.Value("4", R.string.value_flycast_af_4x),
                                             ExposedSetting.Value("8", R.string.value_flycast_af_8x),
