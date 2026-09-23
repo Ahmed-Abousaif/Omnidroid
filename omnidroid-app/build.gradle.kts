@@ -12,8 +12,8 @@ plugins {
 
 android {
     defaultConfig {
-        versionCode = 258
-        versionName = "2.1.0" // Keep in sync with OmnidroidCores when you cut version tags
+        versionCode = 259
+        versionName = "2.2.0" // Keep in sync with OmnidroidCores when you cut version tags
         applicationId = "com.omnidroid"
         // Optional: ./gradlew ... -PabiFilters=armeabi-v7a,arm64-v8a
         val abiFiltersProp = rootProject.findProperty("abiFilters") as String?
