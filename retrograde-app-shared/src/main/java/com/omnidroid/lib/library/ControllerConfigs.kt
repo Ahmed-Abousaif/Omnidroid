@@ -484,6 +484,8 @@ object ControllerConfigs {
             R.string.controller_default,
             TouchControllerID.DREAMCAST,
             allowTouchRotation = true,
+            libretroDescriptor = "Controller",
+            libretroId = 1,
             tiltConfigurations =
                 listOf(
                     TILT_CONFIGURATION_DISABLED,
