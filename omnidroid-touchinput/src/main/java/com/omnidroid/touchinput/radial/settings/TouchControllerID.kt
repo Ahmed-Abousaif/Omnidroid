@@ -62,6 +62,8 @@ import com.omnidroid.touchinput.radial.layouts.WiiRemoteLeft
 import com.omnidroid.touchinput.radial.layouts.WiiRemoteRight
 import com.omnidroid.touchinput.radial.layouts.WiiSidewaysLeft
 import com.omnidroid.touchinput.radial.layouts.WiiSidewaysRight
+import com.omnidroid.touchinput.radial.layouts.DreamcastLeft
+import com.omnidroid.touchinput.radial.layouts.DreamcastRight
 import gg.padkit.PadKitScope
 
 enum class TouchControllerID {
@@ -95,6 +97,7 @@ enum class TouchControllerID {
     WII_CLASSIC,
     WII_REMOTE,
     WII_SIDEWAYS,
+    DREAMCAST,
     ;
 
     class Config(
@@ -289,6 +292,12 @@ enum class TouchControllerID {
                     Config(
                         { modifier, settings -> WiiSidewaysLeft(modifier, settings) },
                         { modifier, settings -> WiiSidewaysRight(modifier, settings) },
+                    )
+
+                DREAMCAST ->
+                    Config(
+                        { modifier, settings -> DreamcastLeft(modifier, settings) },
+                        { modifier, settings -> DreamcastRight(modifier, settings) },
                     )
             }
         }

@@ -128,6 +128,11 @@ enum class MetaSystemID(val titleResId: Int, val imageResId: Int, val systemIDs:
         R.drawable.game_system_wii,
         listOf(SystemID.WII),
     ),
+    DREAMCAST(
+        R.string.game_system_title_dreamcast,
+        R.drawable.game_system_dreamcast,
+        listOf(SystemID.DREAMCAST),
+    ),
     ;
 
     fun color(): Int {
@@ -165,6 +170,7 @@ enum class MetaSystemID(val titleResId: Int, val imageResId: Int, val systemIDs:
                 SystemID.PS2 -> PS2
                 SystemID.GAMECUBE -> GAMECUBE
                 SystemID.WII -> WII
+                SystemID.DREAMCAST -> DREAMCAST
             }
         }
     }

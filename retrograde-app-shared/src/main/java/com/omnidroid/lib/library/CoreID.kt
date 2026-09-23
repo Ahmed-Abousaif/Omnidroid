@@ -133,6 +133,11 @@ enum class CoreID(
         "Dolphin",
         "libdolphin_libretro_android.so",
     ),
+    FLYCAST(
+        "flycast",
+        "Flycast",
+        "libflycast_libretro_android.so",
+    ),
     ;
 
     companion object {
