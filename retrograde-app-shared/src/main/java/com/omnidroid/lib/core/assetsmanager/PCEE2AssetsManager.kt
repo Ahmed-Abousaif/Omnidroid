@@ -147,7 +147,7 @@ class PCEE2AssetsManager : CoreID.AssetsManager {
         val PCEE2_ASSETS_URL: Uri =
             Uri.parse("https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/")
                 .buildUpon()
-                .appendEncodedPath("2.1.0/assets/pcee2.zip")
+                .appendEncodedPath("2.2.0/assets/pcee2.zip")
                 .build()
 
         const val PCEE2_ASSETS_VERSION_KEY = "pcee2_assets_version_key"
