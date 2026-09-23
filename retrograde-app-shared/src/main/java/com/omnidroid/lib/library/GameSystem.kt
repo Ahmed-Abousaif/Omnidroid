@@ -137,7 +137,7 @@ data class GameSystem(
                                 ),
                         ),
                     ),
-                    uniqueExtensions = listOf("smc", "sfc"),
+                    uniqueExtensions = listOf("smc", "sfc", "fig", "swc", "bs"),
                 ),
                 GameSystem(
                     SystemID.SMS,

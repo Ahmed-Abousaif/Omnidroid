@@ -11,6 +11,7 @@ Resolved
 4. Fixed issue with some consoles not getting automatic cover art (reported by u/Sans_2093)
 5. Fixed some menus not working with a controller, requiring touchscreen fallback (reported by u/Sans_2093)
 6. Fixed PSP not detecting CHD files (reported by u/Sans_2093)
+7. Fixed MSU1 ROMs not working (reported by u/Rent_Careless)
 
 Requests
 
@@ -29,10 +30,15 @@ Requests
 13. Widescreen patches for SNES games, like Retroarch (reported by u/Le_Sairo) {OP response: hadn't tested yet, will test}
 14. Winlator / PC emulation integration (reported by u/Ok_Cartoonist_1737) {OP response: working on launching Winlator via intents from inside Omnidroid}
 15. PS2 support, referencing a separate "Lemuroid PS2" fork made about 2 weeks ago (reported by u/RobinRelique)
-16. Rewind and fast-forward toggle options (reported by u/bboy_3431)
-17. Better overall touchscreen customization (reported by u/Repulsive_Cow_2470)
-18. Revise Scraping method for roms (reported by u/keithitreal)
+
+16. Consider ARMSX2 as an alternative or additional PS2 core alongside PCEE2, reportedly faster on weaker devices (reported by u/MatheusWillder) {OP response: will keep it in mind and experiment with both to find the better fit}
+17. Rewind option (reported by u/bboy_3431) {OP response: fast-forward already works, rewind isn't implemented yet and will take time given the current to-do list}
+18. Better overall touchscreen customization (reported by u/Repulsive_Cow_2470)
+19. Custom shader support at a RetroArch level (reported by u/Due-Car-6521) {OP response: a big undertaking, will be worked on in the future}
+20. 16:9 widescreen support for N64 (reported by u/SideEffect07) {OP response: will work on it}
+21. Switch-style UI layout, consoles/favorites at the bottom, search and system indicators at the top (reported by u/calm_drink) {OP response: interested, asked to see a mockup}
+22. Revise Scraping method for roms (reported by u/keithitreal)
 
 Bugs
 
-(None)
+1. UI feels cramped and scales poorly on very small screens, e.g. a 3.5 inch device (reported by u/keithitreal) {OP response: scaling for different device sizes is a known pain point, will improve over time}

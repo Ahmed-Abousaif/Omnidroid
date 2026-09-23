@@ -273,7 +273,14 @@ class OmnidroidLibrary(
     }
 
     private fun sortedFilesForScanning(groupedStorageFile: GroupedStorageFiles): List<BaseStorageFile> {
-        return groupedStorageFile.dataFiles.sortedBy { it.name } + listOf(groupedStorageFile.primaryFile)
+        return if (groupedStorageFile.primaryFile.extension.lowercase() in listOf("cue", "m3u")) {
+            groupedStorageFile.dataFiles.sortedBy { it.name } + listOf(groupedStorageFile.primaryFile)
+        } else {
+            listOf(groupedStorageFile.primaryFile) +
+                groupedStorageFile.dataFiles
+                    .filter { it.extension.lowercase() !in listOf("pcm", "msu", "msuv", "bml") }
+                    .sortedBy { it.name }
+        }
     }
 
     private fun convertGameMetadataToGame(
