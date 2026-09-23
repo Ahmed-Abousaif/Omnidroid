@@ -145,8 +145,8 @@ The original Lemuroid goals still apply: ease of use, good Android integration, 
 
 ## Supported systems
 
-- Atari 2600 (A26) ([stella](https://docs.libretro.com/library/stella/))
-- Atari 7800 (A78) ([prosystem](https://docs.libretro.com/library/prosystem/))
+- Atari 2600 (A2600) ([stella](https://docs.libretro.com/library/stella/))
+- Atari 7800 (A7800) ([prosystem](https://docs.libretro.com/library/prosystem/))
 - Atari Lynx (Lynx) ([handy](https://docs.libretro.com/library/handy/))
 - Nintendo (NES) ([fceumm](https://docs.libretro.com/library/fceumm/))
 - Super Nintendo (SNES) ([snes9x](https://docs.libretro.com/library/snes9x/))
@@ -157,6 +157,7 @@ The original Lemuroid goals still apply: ease of use, good Android integration, 
 - Sega CD (aka Mega CD) ([genesis_plus_gx](https://docs.libretro.com/library/genesis_plus_gx/))
 - Sega Master System (SMS) ([genesis_plus_gx](https://docs.libretro.com/library/genesis_plus_gx/))
 - Sega Game Gear (GG) ([genesis_plus_gx](https://docs.libretro.com/library/genesis_plus_gx/))
+- Sega Dreamcast (DREAMCAST) ([flycast](https://docs.libretro.com/library/flycast/))
 - Nintendo 64 (N64) ([mupen64plus](https://docs.libretro.com/library/mupen64plus/))
 - PlayStation (PSX) ([PCSX-ReARMed](https://docs.libretro.com/library/pcsx_rearmed/))
 - PlayStation Portable (PSP) ([ppsspp](https://docs.libretro.com/library/ppsspp/))
@@ -169,8 +170,8 @@ The original Lemuroid goals still apply: ease of use, good Android integration, 
 - WonderSwan Color (WSC) ([beetle_cygne](https://docs.libretro.com/library/beetle_cygne/))
 - Nintendo 3DS (3DS) ([azahar](https://github.com/azahar-emu/azahar)/[citra](https://docs.libretro.com/library/citra/))
 - PlayStation 2 (PS2) (Beta) ([pcee2](https://github.com/WizzardSK/pcee2-libretro))
-- Nintendo GameCube (GameCube) (Beta) ([dolphin](https://docs.libretro.com/library/dolphin/))
-- Nintendo Wii (Wii) (Beta) ([dolphin](https://docs.libretro.com/library/dolphin/))
+- Nintendo GameCube (GameCube) ([dolphin](https://docs.libretro.com/library/dolphin/))
+- Nintendo Wii (Wii) ([dolphin](https://docs.libretro.com/library/dolphin/))
 
 ## Nintendo 3DS Emulation
 
