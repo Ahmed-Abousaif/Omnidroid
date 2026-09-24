@@ -29,6 +29,13 @@ class GraphicsApiSelectionViewModel(
         }
     }
 
+    private data class GraphicsApiSystem(
+        val systemId: SystemID,
+        val variableKey: String,
+        val options: List<String>,
+        val defaultValue: String,
+    )
+
     data class SystemGraphicsApiConfig(
         val system: GameSystem,
         val variableKey: String,
@@ -49,26 +56,27 @@ class GraphicsApiSelectionViewModel(
     fun loadConfigurations() {
         viewModelScope.launch {
             val supportedSystems = listOf(
-                SystemID.NINTENDO_3DS to "citra_graphics_api",
-                SystemID.GAMECUBE to "dolphin_graphics_api",
-                SystemID.WII to "dolphin_graphics_api",
-                SystemID.PSP to "ppsspp_rendering_backend",
+                GraphicsApiSystem(SystemID.NINTENDO_3DS, "citra_graphics_api", listOf("OpenGL", "Vulkan"), "OpenGL"),
+                GraphicsApiSystem(SystemID.GAMECUBE, "dolphin_graphics_api", listOf("OpenGL", "Vulkan"), "OpenGL"),
+                GraphicsApiSystem(SystemID.WII, "dolphin_graphics_api", listOf("OpenGL", "Vulkan"), "OpenGL"),
+                GraphicsApiSystem(SystemID.PSP, "ppsspp_rendering_backend", listOf("OpenGL", "Vulkan"), "OpenGL"),
+                GraphicsApiSystem(SystemID.PS2, "pcsx2_renderer", listOf("opengl", "vulkan", "software"), "opengl"),
             )
 
             val prefs = SharedPreferencesHelper.getSharedPreferences(context)
             val list = mutableListOf<SystemGraphicsApiConfig>()
 
-            for ((sysId, varKey) in supportedSystems) {
-                val gameSystem = GameSystem.findById(sysId.dbname) ?: continue
-                val prefKey = CoreVariablesManager.computeSharedPreferenceKey(varKey, sysId.dbname)
-                val currentValue = prefs.getString(prefKey, "OpenGL") ?: "OpenGL"
-                val options = listOf("OpenGL", "Vulkan")
+            for (entry in supportedSystems) {
+                val gameSystem = GameSystem.findById(entry.systemId.dbname) ?: continue
+                val prefKey = CoreVariablesManager.computeSharedPreferenceKey(entry.variableKey, entry.systemId.dbname)
+                val saved = prefs.getString(prefKey, entry.defaultValue) ?: entry.defaultValue
+                val currentValue = saved.takeIf { it in entry.options } ?: entry.defaultValue
 
                 list.add(
                     SystemGraphicsApiConfig(
                         system = gameSystem,
-                        variableKey = varKey,
-                        options = options,
+                        variableKey = entry.variableKey,
+                        options = entry.options,
                         currentSelection = currentValue,
                     )
                 )

@@ -1509,7 +1509,7 @@ data class GameSystem(
                     R.string.game_system_abbr_ps2,
                     listOf(
                         SystemCoreConfig(
-                            CoreID.PCEE2,
+                            CoreID.ARMSX2,
                             controllerConfigs =
                                 hashMapOf(
                                     0 to arrayListOf(ControllerConfigs.PS2_DUALSHOCK2),
@@ -1527,11 +1527,36 @@ data class GameSystem(
                                     "Europe" to "scph39004.bin",
                                     "Japan" to "scph39000.bin",
                                 ),
+                            defaultSettings =
+                                listOf(
+                                    CoreVariable("pcsx2_renderer", "opengl"),
+                                ),
+                            exposedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "pcsx2_renderer",
+                                        R.string.setting_graphics_api,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "opengl",
+                                                R.string.value_graphics_api_opengl,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "vulkan",
+                                                R.string.value_graphics_api_vulkan,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "software",
+                                                R.string.value_graphics_api_software,
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             rumbleSupported = true,
                             statesSupported = true,
                             supportsLibretroVFS = true,
                             skipDuplicateFrames = false,
-                            supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
+                            supportedOnlyArchitectures = setOf("arm64-v8a"),
                         ),
                     ),
                     uniqueExtensions = listOf(),

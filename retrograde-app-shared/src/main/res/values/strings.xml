@@ -75,6 +75,7 @@
     <string name="setting_graphics_api">Graphics API</string>
     <string name="value_graphics_api_opengl">OpenGL</string>
     <string name="value_graphics_api_vulkan">Vulkan</string>
+    <string name="value_graphics_api_software">Software</string>
 
     <string name="setting_dolphin_efb_scale">Internal Resolution</string>
     <string name="setting_dolphin_sensor_bar_position">Sensor Bar Position</string>

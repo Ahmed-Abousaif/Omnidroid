@@ -16,7 +16,9 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
     GameMetadataProvider {
     companion object {
         // Disallowed filesystem, URI-special, control, and path traversal characters
-        private val THUMB_REPLACE = Regex("[&*/:`<>?\\\\|\"#'%^~;\\[\\]{}@+=!\$]")
+        // Apostrophe is kept: libretro thumbnail filenames preserve it
+        // (e.g. "Disney's Hercules.png"), and only these characters become "_".
+        private val THUMB_REPLACE = Regex("[&*/:`<>?\\\\|\"#%^~;\\[\\]{}@+=!\$]")
         private val CONTROL_CHARS = Regex("[\\p{Cntrl}\\u0000-\\u001F\\u007F-\\u009F]")
         private val PATH_TRAVERSAL = Regex("\\.{2,}")
         private const val MAX_TITLE_LENGTH = 200

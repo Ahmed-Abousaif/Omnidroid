@@ -123,10 +123,10 @@ enum class CoreID(
         "DosBox Pure",
         "libdosbox_pure_libretro_android.so",
     ),
-    PCEE2(
-        "pcee2",
-        "PCEE2",
-        "libpcee2_libretro_android.so",
+    ARMSX2(
+        "armsx2",
+        "ARMSX2",
+        "libarmsx2_libretro_android.so",
     ),
     DOLPHIN(
         "dolphin",
@@ -144,7 +144,7 @@ enum class CoreID(
         fun getAssetManager(coreID: CoreID): AssetsManager {
             return when (coreID) {
                 PPSSPP -> PPSSPPAssetsManager()
-                PCEE2 -> PCEE2AssetsManager()
+                ARMSX2 -> PCEE2AssetsManager()
                 DOLPHIN -> DolphinAssetsManager()
                 else -> NoAssetsManager()
             }
