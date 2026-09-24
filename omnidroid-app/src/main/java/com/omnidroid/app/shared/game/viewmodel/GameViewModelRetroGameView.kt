@@ -166,7 +166,8 @@ class GameViewModelRetroGameView(
         val currentState = gameState.value
         if (currentState !is GameState.Loaded) throw IllegalStateException("Game is not loaded.")
 
-        val isVulkanPreferred = isVulkanRequested(currentState.gameData) && VulkanDetector.isVulkanSupported(context)
+        val isVulkanPreferred =
+            isVulkanRequested(currentState.gameData) && VulkanDetector.isVulkanSupported(context)
 
         val result: IRetroGameView =
             if (isVulkanPreferred) {
@@ -210,15 +211,16 @@ class GameViewModelRetroGameView(
     }
 
     private fun isVulkanRequested(gameData: GameLoader.GameData): Boolean {
-        val graphicsApi =
-            gameData.coreVariables.firstOrNull {
+        return gameData.coreVariables.any {
+            (
                 it.key == "citra_graphics_api" ||
                     it.key == "dolphin_graphics_api" ||
                     it.key == "dolphin_renderer" ||
                     it.key == "ppsspp_rendering_backend" ||
-                    it.key == "ppsspp_gpu_backend"
-            }?.value
-        return graphicsApi?.equals("Vulkan", ignoreCase = true) == true
+                    it.key == "ppsspp_gpu_backend" ||
+                    it.key == "pcsx2_renderer"
+            ) && it.value.equals("vulkan", ignoreCase = true)
+        }
     }
 
     suspend fun retroGameViewFlow() =

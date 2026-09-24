@@ -55,7 +55,7 @@ if (usePlayDynamicFeatures()) {
         ":omnidroid_core_stella",
         ":omnidroid_core_citra",
         ":omnidroid_core_azahar",
-        ":omnidroid_core_pcee2",
+        ":omnidroid_core_armsx2",
         ":omnidroid_core_dolphin",
         ":omnidroid_core_flycast"
     )
@@ -82,7 +82,7 @@ if (usePlayDynamicFeatures()) {
     project(":omnidroid_core_dosbox_pure").projectDir = File("omnidroid-cores/omnidroid_core_dosbox_pure")
     project(":omnidroid_core_citra").projectDir = File("omnidroid-cores/omnidroid_core_citra")
     project(":omnidroid_core_azahar").projectDir = File("omnidroid-cores/omnidroid_core_azahar")
-    project(":omnidroid_core_pcee2").projectDir = File("omnidroid-cores/omnidroid_core_pcee2")
+    project(":omnidroid_core_armsx2").projectDir = File("omnidroid-cores/omnidroid_core_armsx2")
     project(":omnidroid_core_dolphin").projectDir = File("omnidroid-cores/omnidroid_core_dolphin")
     project(":omnidroid_core_flycast").projectDir = File("omnidroid-cores/omnidroid_core_flycast")
 }

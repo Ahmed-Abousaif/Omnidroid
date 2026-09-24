@@ -58,12 +58,13 @@ fun GraphicsApiSelectionScreen(
                 androidx.compose.runtime.key(config.system.id) {
                     val currentIndex = config.options.indexOf(config.currentSelection).coerceAtLeast(0)
                     val state = rememberMemoryIntSettingState(currentIndex)
+                    val labels = config.options.map { graphicsApiLabel(it) }
 
                     OmnidroidSettingsList(
                         state = state,
                         title = { Text(text = stringResource(config.system.titleResId)) },
-                        subtitle = { Text(text = config.currentSelection) },
-                        items = config.options,
+                        subtitle = { Text(text = graphicsApiLabel(config.currentSelection)) },
+                        items = labels,
                         onItemSelected = { index, _ ->
                             val selectedOption = config.options[index]
                             viewModel.setGraphicsApi(config.system.id, config.variableKey, selectedOption)
@@ -72,5 +73,14 @@ fun GraphicsApiSelectionScreen(
                 }
             }
         }
+    }
+}
+
+private fun graphicsApiLabel(value: String): String {
+    return when (value) {
+        "opengl" -> "OpenGL"
+        "software" -> "Software"
+        "vulkan" -> "Vulkan"
+        else -> value
     }
 }
