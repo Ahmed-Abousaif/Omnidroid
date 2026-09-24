@@ -282,25 +282,25 @@ data class GameSystem(
                             controllerConfigs =
                                 hashMapOf(
                                     0 to
-                                        arrayListOf(
-                                            ControllerConfigs.GENESIS_3,
-                                            ControllerConfigs.GENESIS_6,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.GENESIS_3,
+                                                ControllerConfigs.GENESIS_6,
+                                            ),
                                     1 to
-                                        arrayListOf(
-                                            ControllerConfigs.GENESIS_3,
-                                            ControllerConfigs.GENESIS_6,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.GENESIS_3,
+                                                ControllerConfigs.GENESIS_6,
+                                            ),
                                     2 to
-                                        arrayListOf(
-                                            ControllerConfigs.GENESIS_3,
-                                            ControllerConfigs.GENESIS_6,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.GENESIS_3,
+                                                ControllerConfigs.GENESIS_6,
+                                            ),
                                     3 to
-                                        arrayListOf(
-                                            ControllerConfigs.GENESIS_3,
-                                            ControllerConfigs.GENESIS_6,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.GENESIS_3,
+                                                ControllerConfigs.GENESIS_6,
+                                            ),
                                 ),
                         ),
                     ),
@@ -375,25 +375,25 @@ data class GameSystem(
                             controllerConfigs =
                                 hashMapOf(
                                     0 to
-                                        arrayListOf(
-                                            ControllerConfigs.GENESIS_3,
-                                            ControllerConfigs.GENESIS_6,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.GENESIS_3,
+                                                ControllerConfigs.GENESIS_6,
+                                            ),
                                     1 to
-                                        arrayListOf(
-                                            ControllerConfigs.GENESIS_3,
-                                            ControllerConfigs.GENESIS_6,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.GENESIS_3,
+                                                ControllerConfigs.GENESIS_6,
+                                            ),
                                     2 to
-                                        arrayListOf(
-                                            ControllerConfigs.GENESIS_3,
-                                            ControllerConfigs.GENESIS_6,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.GENESIS_3,
+                                                ControllerConfigs.GENESIS_6,
+                                            ),
                                     3 to
-                                        arrayListOf(
-                                            ControllerConfigs.GENESIS_3,
-                                            ControllerConfigs.GENESIS_6,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.GENESIS_3,
+                                                ControllerConfigs.GENESIS_6,
+                                            ),
                                 ),
                             regionalBIOSFiles =
                                 mapOf(
@@ -741,25 +741,25 @@ data class GameSystem(
                             controllerConfigs =
                                 hashMapOf(
                                     0 to
-                                        arrayListOf(
-                                            ControllerConfigs.PSX_STANDARD,
-                                            ControllerConfigs.PSX_DUALSHOCK,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.PSX_STANDARD,
+                                                ControllerConfigs.PSX_DUALSHOCK,
+                                            ),
                                     1 to
-                                        arrayListOf(
-                                            ControllerConfigs.PSX_STANDARD,
-                                            ControllerConfigs.PSX_DUALSHOCK,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.PSX_STANDARD,
+                                                ControllerConfigs.PSX_DUALSHOCK,
+                                            ),
                                     2 to
-                                        arrayListOf(
-                                            ControllerConfigs.PSX_STANDARD,
-                                            ControllerConfigs.PSX_DUALSHOCK,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.PSX_STANDARD,
+                                                ControllerConfigs.PSX_DUALSHOCK,
+                                            ),
                                     3 to
-                                        arrayListOf(
-                                            ControllerConfigs.PSX_STANDARD,
-                                            ControllerConfigs.PSX_DUALSHOCK,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.PSX_STANDARD,
+                                                ControllerConfigs.PSX_DUALSHOCK,
+                                            ),
                                 ),
                             exposedSettings =
                                 listOf(
@@ -920,10 +920,10 @@ data class GameSystem(
                             controllerConfigs =
                                 hashMapOf(
                                     0 to
-                                        arrayListOf(
-                                            ControllerConfigs.MAME_2003_4,
-                                            ControllerConfigs.MAME_2003_6,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.MAME_2003_4,
+                                                ControllerConfigs.MAME_2003_6,
+                                            ),
                                 ),
                         ),
                     ),
@@ -1529,38 +1529,191 @@ data class GameSystem(
                                 ),
                             defaultSettings =
                                 listOf(
-                                    CoreVariable("pcsx2_renderer", "opengl"),
+                                    CoreVariable("armsx2_renderer", "OpenGL"),
+                                    CoreVariable("armsx2_upscale", "1x"),
+                                    CoreVariable("armsx2_blending_accuracy", "Basic"),
+                                    CoreVariable("armsx2_hw_download_mode", "Disabled"),
+                                    CoreVariable("armsx2_ee_cycle_skip", "mild"),
+                                    CoreVariable("armsx2_ee_cycle_rate", "100%"),
+                                    CoreVariable("armsx2_mtvu", "enabled"),
+                                    CoreVariable("armsx2_instant_vu1", "enabled"),
+                                    CoreVariable("armsx2_fast_boot", "enabled"),
+                                    CoreVariable("armsx2_dithering", "Off"),
+                                    CoreVariable("armsx2_anisotropic_filtering", "0"),
                                 ),
                             exposedSettings =
                                 listOf(
                                     ExposedSetting(
-                                        "pcsx2_renderer",
+                                        "armsx2_renderer",
                                         R.string.setting_graphics_api,
                                         arrayListOf(
                                             ExposedSetting.Value(
-                                                "opengl",
+                                                "OpenGL",
                                                 R.string.value_graphics_api_opengl,
                                             ),
                                             ExposedSetting.Value(
-                                                "vulkan",
+                                                "Vulkan",
                                                 R.string.value_graphics_api_vulkan,
                                             ),
                                             ExposedSetting.Value(
-                                                "software",
+                                                "Software",
                                                 R.string.value_graphics_api_software,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "armsx2_upscale",
+                                        R.string.setting_armsx2_upscale,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "1x",
+                                                R.string.value_armsx2_res_1x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "2x",
+                                                R.string.value_armsx2_res_2x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "3x",
+                                                R.string.value_armsx2_res_3x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "4x",
+                                                R.string.value_armsx2_res_4x,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "armsx2_blending_accuracy",
+                                        R.string.setting_armsx2_blending_accuracy,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "Basic",
+                                                R.string.value_armsx2_blending_basic,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Minimum",
+                                                R.string.value_armsx2_blending_minimum,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Medium",
+                                                R.string.value_armsx2_blending_medium,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "High",
+                                                R.string.value_armsx2_blending_high,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Full",
+                                                R.string.value_armsx2_blending_full,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Maximum",
+                                                R.string.value_armsx2_blending_maximum,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "armsx2_hw_download_mode",
+                                        R.string.setting_armsx2_hw_download_mode,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "Disabled",
+                                                R.string.value_armsx2_hw_download_disabled,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Unsynchronized",
+                                                R.string.value_armsx2_hw_download_unsynchronized,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Disable Readbacks",
+                                                R.string.value_armsx2_hw_download_disable_readbacks,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Accurate",
+                                                R.string.value_armsx2_hw_download_accurate,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "armsx2_ee_cycle_skip",
+                                        R.string.setting_armsx2_ee_cycle_skip,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "mild",
+                                                R.string.value_armsx2_ee_cycle_skip_mild,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "disabled",
+                                                R.string.value_armsx2_ee_cycle_skip_disabled,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "moderate",
+                                                R.string.value_armsx2_ee_cycle_skip_moderate,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "maximum",
+                                                R.string.value_armsx2_ee_cycle_skip_maximum,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "armsx2_ee_cycle_rate",
+                                        R.string.setting_armsx2_ee_cycle_rate,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "100%",
+                                                R.string.value_armsx2_ee_cycle_rate_100,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "75%",
+                                                R.string.value_armsx2_ee_cycle_rate_75,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "60%",
+                                                R.string.value_armsx2_ee_cycle_rate_60,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "50%",
+                                                R.string.value_armsx2_ee_cycle_rate_50,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "130%",
+                                                R.string.value_armsx2_ee_cycle_rate_130,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "180%",
+                                                R.string.value_armsx2_ee_cycle_rate_180,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "300%",
+                                                R.string.value_armsx2_ee_cycle_rate_300,
                                             ),
                                         ),
                                     ),
                                 ),
                             rumbleSupported = true,
                             statesSupported = true,
-                            supportsLibretroVFS = true,
+                            supportsLibretroVFS = false,
                             skipDuplicateFrames = false,
                             supportedOnlyArchitectures = setOf("arm64-v8a"),
                         ),
                     ),
                     uniqueExtensions = listOf(),
-                    supportedExtensions = listOf("iso", "chd", "cue", "m3u", "cso", "zso", "gz", "bin", "mdf", "nrg", "elf", "irx"),
+                    supportedExtensions = listOf(
+                        "iso",
+                        "chd",
+                        "cue",
+                        "m3u",
+                        "cso",
+                        "zso",
+                        "gz",
+                        "bin",
+                        "mdf",
+                        "nrg",
+                        "elf",
+                        "irx"
+                    ),
                     scanOptions =
                         ScanOptions(
                             scanByFilename = false,
@@ -1661,11 +1814,11 @@ data class GameSystem(
                             controllerConfigs =
                                 hashMapOf(
                                     0 to
-                                        arrayListOf(
-                                            ControllerConfigs.WII_SIDEWAYS,
-                                            ControllerConfigs.WII_REMOTE,
-                                            ControllerConfigs.WII_CLASSIC,
-                                        ),
+                                            arrayListOf(
+                                                ControllerConfigs.WII_SIDEWAYS,
+                                                ControllerConfigs.WII_REMOTE,
+                                                ControllerConfigs.WII_CLASSIC,
+                                            ),
                                 ),
                             rumbleSupported = true,
                             statesSupported = true,

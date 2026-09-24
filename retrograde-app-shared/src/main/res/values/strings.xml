@@ -77,6 +77,44 @@
     <string name="value_graphics_api_vulkan">Vulkan</string>
     <string name="value_graphics_api_software">Software</string>
 
+    <string name="setting_armsx2_upscale">Internal Resolution</string>
+    <string name="value_armsx2_res_1x">1x Native (640x448)</string>
+    <string name="value_armsx2_res_2x">2x (1280x896)</string>
+    <string name="value_armsx2_res_3x">3x (1920x1344)</string>
+    <string name="value_armsx2_res_4x">4x (2560x1792)</string>
+
+    <string name="setting_armsx2_blending_accuracy">Blending Accuracy</string>
+    <string name="value_armsx2_blending_basic">Basic</string>
+    <string name="value_armsx2_blending_minimum">Minimum (Fastest)</string>
+    <string name="value_armsx2_blending_medium">Medium</string>
+    <string name="value_armsx2_blending_high">High</string>
+    <string name="value_armsx2_blending_full">Full</string>
+    <string name="value_armsx2_blending_maximum">Maximum (Accurate)</string>
+
+    <string name="setting_armsx2_hw_download_mode">Hardware Download Mode</string>
+    <string name="value_armsx2_hw_download_disabled">Disabled (Fastest)</string>
+    <string name="value_armsx2_hw_download_unsynchronized">Unsynchronized</string>
+    <string name="value_armsx2_hw_download_disable_readbacks">Disable Readbacks</string>
+    <string name="value_armsx2_hw_download_accurate">Accurate</string>
+
+    <string name="setting_armsx2_ee_cycle_skip">EE Cycle Skip (Underclock)</string>
+    <string name="value_armsx2_ee_cycle_skip_disabled">Disabled</string>
+    <string name="value_armsx2_ee_cycle_skip_mild">Mild (Recommended)</string>
+    <string name="value_armsx2_ee_cycle_skip_moderate">Moderate</string>
+    <string name="value_armsx2_ee_cycle_skip_maximum">Maximum</string>
+
+    <string name="setting_armsx2_ee_cycle_rate">EE Cycle Rate</string>
+    <string name="value_armsx2_ee_cycle_rate_100">100% (Normal)</string>
+    <string name="value_armsx2_ee_cycle_rate_75">75% (-1 Underclock)</string>
+    <string name="value_armsx2_ee_cycle_rate_60">60% (-2 Underclock)</string>
+    <string name="value_armsx2_ee_cycle_rate_50">50% (-3 Underclock)</string>
+    <string name="value_armsx2_ee_cycle_rate_130">130% (+1 Overclock)</string>
+    <string name="value_armsx2_ee_cycle_rate_180">180% (+2 Overclock)</string>
+    <string name="value_armsx2_ee_cycle_rate_300">300% (+3 Overclock)</string>
+
+    <string name="setting_armsx2_mtvu">MTVU (Multi-Threaded VU1)</string>
+    <string name="setting_armsx2_instant_vu1">Instant VU1</string>
+
     <string name="setting_dolphin_efb_scale">Internal Resolution</string>
     <string name="setting_dolphin_sensor_bar_position">Sensor Bar Position</string>
     <string name="setting_dolphin_widescreen">Widescreen (16:9)</string>

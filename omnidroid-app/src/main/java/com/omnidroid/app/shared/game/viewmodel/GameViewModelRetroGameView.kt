@@ -218,7 +218,7 @@ class GameViewModelRetroGameView(
                     it.key == "dolphin_renderer" ||
                     it.key == "ppsspp_rendering_backend" ||
                     it.key == "ppsspp_gpu_backend" ||
-                    it.key == "pcsx2_renderer"
+                    it.key == "armsx2_renderer"
             ) && it.value.equals("vulkan", ignoreCase = true)
         }
     }

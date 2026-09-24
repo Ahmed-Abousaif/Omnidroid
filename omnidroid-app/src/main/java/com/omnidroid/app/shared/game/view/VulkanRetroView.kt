@@ -342,6 +342,7 @@ class VulkanRetroView(
             // Initialize core and load game
             try {
                 priority = MAX_PRIORITY
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY)
 
                 LibretroDroid.setSurface(surface)
 
@@ -387,13 +388,12 @@ class VulkanRetroView(
                     } catch (t: Throwable) {
                         Timber.e(t, "Error in Vulkan LibretroDroid step")
                     }
-                }
-
-                // Target frame timing (~60Hz / 16ms)
-                try {
-                    sleep(1)
-                } catch (e: InterruptedException) {
-                    if (!isRunning.get()) break
+                } else {
+                    try {
+                        sleep(10)
+                    } catch (e: InterruptedException) {
+                        if (!isRunning.get()) break
+                    }
                 }
             }
 
