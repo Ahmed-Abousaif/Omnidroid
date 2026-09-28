@@ -12,9 +12,12 @@ import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -35,8 +38,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,10 +53,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.outlined.ScreenRotation
 import androidx.compose.material.icons.outlined.ZoomIn
 import androidx.compose.material.icons.outlined.ZoomOut
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -61,6 +72,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
@@ -75,6 +87,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
@@ -85,6 +99,7 @@ import com.omnidroid.app.mobile.shared.compose.ui.GameCardInfoStyle
 import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidEmptyView
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameCard
+import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import androidx.compose.ui.input.key.Key
@@ -94,6 +109,8 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
+import com.omnidroid.app.mobile.shared.controller.reportControllerGame
+import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.lib.library.MetaSystemID
 import com.omnidroid.lib.library.db.entity.Game
 import kotlin.math.roundToInt
@@ -135,6 +152,16 @@ fun libraryGridRows(zoomDensity: Int, availableHeight: Dp): Int {
     }
 }
 
+fun libraryPortraitColumns(zoomDensity: Int, availableWidth: Dp): Int {
+    val cardWidth =
+        when (zoomDensity) {
+            0 -> 150.dp
+            1 -> 112.dp
+            else -> 84.dp
+        }
+    return (availableWidth / cardWidth).toInt().coerceIn(2, 5)
+}
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun LibraryScreen(
@@ -147,37 +174,83 @@ fun LibraryScreen(
     onGameLongClick: (Game) -> Unit,
     onAddConsole: () -> Unit,
     controllerConnected: Boolean = false,
+    portraitColumnWidth: Dp = Dp.Unspecified,
 ) {
     val state = viewModel.state.collectAsState().value
     val games = viewModel.games.collectAsLazyPagingItems()
 
-    Row(
+    Box(
         modifier =
             modifier
                 .fillMaxSize()
                 .background(HomeChromeBackground),
     ) {
-        LibrarySidebar(
-            modifier = Modifier,
-            filter = state.filter,
-            systems = state.sidebarSystems,
-            onFilterSelected = { viewModel.selectFilter(it) },
-            onAddConsole = onAddConsole,
-        )
-        LibraryGrid(
-            modifier = Modifier.weight(1f),
-            sharedTransitionScope = sharedTransitionScope,
-            animatedVisibilityScope = animatedVisibilityScope,
-            state = state,
-            games = games,
-            onGameClick = onGameClick,
-            onContinueClick = onContinueClick,
-            onGameLongClick = onGameLongClick,
-            onSync = { viewModel.syncLibrary(it) },
-            onZoomDensityChange = { viewModel.setZoomDensity(it) },
-            requestInitialFocus = controllerConnected,
-            showZoomBar = !controllerConnected,
-        )
+        if (state.portrait) {
+            Column(
+                modifier =
+                    Modifier
+                        .then(
+                            if (portraitColumnWidth != Dp.Unspecified) {
+                                Modifier.width(portraitColumnWidth)
+                            } else {
+                                Modifier.fillMaxWidth()
+                            },
+                        )
+                        .fillMaxHeight()
+                        .align(Alignment.TopCenter),
+            ) {
+                LibraryGames(
+                    modifier = Modifier.weight(1f),
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    state = state,
+                    games = games,
+                    onGameClick = onGameClick,
+                    onContinueClick = onContinueClick,
+                    onGameLongClick = onGameLongClick,
+                    onSync = { viewModel.syncLibrary(it) },
+                    onZoomDensityChange = { viewModel.setZoomDensity(it) },
+                    onLayoutChange = { viewModel.setLayout(it) },
+                    onPortraitChange = { viewModel.setPortrait(it) },
+                    requestInitialFocus = controllerConnected,
+                    showZoomBar = !controllerConnected,
+                    portrait = true,
+                )
+                PortraitConsoleBar(
+                    filter = state.filter,
+                    systems = state.sidebarSystems,
+                    onFilterSelected = { viewModel.selectFilter(it) },
+                    onAddConsole = onAddConsole,
+                )
+            }
+        } else {
+            Row(modifier = Modifier.fillMaxSize()) {
+                LibrarySidebar(
+                    modifier = Modifier,
+                    filter = state.filter,
+                    systems = state.sidebarSystems,
+                    onFilterSelected = { viewModel.selectFilter(it) },
+                    onAddConsole = onAddConsole,
+                )
+                LibraryGames(
+                    modifier = Modifier.weight(1f),
+                    sharedTransitionScope = sharedTransitionScope,
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    state = state,
+                    games = games,
+                    onGameClick = onGameClick,
+                    onContinueClick = onContinueClick,
+                    onGameLongClick = onGameLongClick,
+                    onSync = { viewModel.syncLibrary(it) },
+                    onZoomDensityChange = { viewModel.setZoomDensity(it) },
+                    onLayoutChange = { viewModel.setLayout(it) },
+                    onPortraitChange = { viewModel.setPortrait(it) },
+                    requestInitialFocus = controllerConnected,
+                    showZoomBar = !controllerConnected,
+                    portrait = false,
+                )
+            }
+        }
     }
 }
 
@@ -232,14 +305,13 @@ private fun LibrarySidebar(
                     onClick = { onFilterSelected(LibraryFilter.System(system)) },
                 )
             }
+            SidebarIconButton(
+                selected = false,
+                icon = Icons.Filled.Add,
+                contentDescription = stringResource(R.string.title_add_console),
+                onClick = onAddConsole,
+            )
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        SidebarIconButton(
-            selected = false,
-            icon = Icons.Filled.Add,
-            contentDescription = stringResource(R.string.title_add_console),
-            onClick = onAddConsole,
-        )
     }
 }
 
@@ -302,9 +374,81 @@ private fun sidebarSelectionBorder(selected: Boolean) =
         color = if (selected) LibraryNeonGreen else Color(0xFF2E2E2E),
     )
 
+@Composable
+private fun PortraitConsoleBar(
+    filter: LibraryFilter,
+    systems: List<MetaSystemID>,
+    onFilterSelected: (LibraryFilter) -> Unit,
+    onAddConsole: () -> Unit,
+) {
+    val listState = rememberLazyListState()
+    val selectedSystemIndex =
+        (filter as? LibraryFilter.System)?.let { systems.indexOf(it.metaSystemID) } ?: -1
+    LaunchedEffect(selectedSystemIndex, systems.size) {
+        if (selectedSystemIndex >= 0) {
+            runCatching { listState.animateScrollToItem(selectedSystemIndex) }
+        }
+    }
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(68.dp)
+                .padding(horizontal = 12.dp)
+                .focusGroup(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SidebarIconButton(
+            selected = filter is LibraryFilter.Favorites,
+            icon = if (filter is LibraryFilter.Favorites) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+            contentDescription = stringResource(R.string.favorites),
+            onClick = { onFilterSelected(LibraryFilter.Favorites) },
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        SidebarIconButton(
+            selected = filter is LibraryFilter.All,
+            icon = Icons.Filled.GridView,
+            contentDescription = stringResource(R.string.show_all),
+            onClick = { onFilterSelected(LibraryFilter.All) },
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Box(
+            modifier =
+                Modifier
+                    .padding(horizontal = 2.dp)
+                    .width(1.dp)
+                    .height(28.dp)
+                    .background(Color.White.copy(alpha = 0.12f)),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        LazyRow(
+            state = listState,
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            items(systems, key = { it.name }) { system ->
+                SidebarSystemLogoButton(
+                    meta = system,
+                    selected = (filter as? LibraryFilter.System)?.metaSystemID == system,
+                    onClick = { onFilterSelected(LibraryFilter.System(system)) },
+                )
+            }
+            item(key = "add") {
+                SidebarIconButton(
+                    selected = false,
+                    icon = Icons.Filled.Add,
+                    contentDescription = stringResource(R.string.title_add_console),
+                    onClick = onAddConsole,
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun LibraryGrid(
+private fun LibraryGames(
     modifier: Modifier,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -315,8 +459,11 @@ private fun LibraryGrid(
     onGameLongClick: (Game) -> Unit,
     onSync: (Context) -> Unit,
     onZoomDensityChange: (Int) -> Unit,
+    onLayoutChange: (LibraryLayout) -> Unit,
+    onPortraitChange: (Boolean) -> Unit,
     requestInitialFocus: Boolean = false,
     showZoomBar: Boolean = true,
+    portrait: Boolean = false,
 ) {
     val context = LocalContext.current
     val firstItemRequester = remember { FocusRequester() }
@@ -327,7 +474,7 @@ private fun LibraryGrid(
         state.filter is LibraryFilter.All &&
             state.searchQuery.isBlank() &&
             continueGame != null
-    LaunchedEffect(requestInitialFocus, games.itemCount, showContinue) {
+    LaunchedEffect(requestInitialFocus, games.itemCount, showContinue, state.layout) {
         if (requestInitialFocus && (games.itemCount > 0 || showContinue)) {
             runCatching { firstItemRequester.requestFocus() }
         }
@@ -339,97 +486,204 @@ private fun LibraryGrid(
             state.searchQuery.isBlank() &&
             state.filter !is LibraryFilter.Favorites
     val infoStyle =
-        when (state.zoomDensity) {
-            0 -> GameCardInfoStyle.BELOW
-            1 -> GameCardInfoStyle.OVERLAY
-            else -> GameCardInfoStyle.MINIMAL
-        }
-
-    when {
-        isRefreshing && games.itemCount == 0 -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
+        if (portrait) {
+            if (state.zoomDensity >= 2) GameCardInfoStyle.MINIMAL else GameCardInfoStyle.OVERLAY
+        } else {
+            when (state.zoomDensity) {
+                0 -> GameCardInfoStyle.BELOW
+                1 -> GameCardInfoStyle.OVERLAY
+                else -> GameCardInfoStyle.MINIMAL
             }
         }
-        showSyncEmpty -> {
-            LibrarySyncEmpty(
-                modifier = modifier,
-                scanning = state.operationInProgress,
-                onSync = { onSync(context) },
-            )
-        }
-        isEmpty -> {
-            OmnidroidEmptyView(modifier = modifier)
-        }
-        else -> {
-            Column(modifier = modifier.fillMaxSize()) {
-                BoxWithConstraints(
-                    modifier =
-                        Modifier
-                            .weight(1f)
-                            .fillMaxWidth(),
-                ) {
-                    val rows = libraryGridRows(state.zoomDensity, maxHeight)
-                    LazyHorizontalGrid(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .focusGroup(),
-                        rows = GridCells.Fixed(rows),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+    val showViewBar = games.itemCount > 0 || showContinue || portrait
+
+    Column(modifier = modifier.fillMaxSize()) {
+        Box(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+        ) {
+            when {
+                isRefreshing && games.itemCount == 0 -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        val featured = continueGame.takeIf { showContinue }
-                        if (featured != null) {
-                            item(key = "continue-${featured.id}") {
-                                LibraryGameCardItem(
+                        CircularProgressIndicator()
+                    }
+                }
+                showSyncEmpty -> {
+                    LibrarySyncEmpty(
+                        modifier = Modifier,
+                        scanning = state.operationInProgress,
+                        onSync = { onSync(context) },
+                    )
+                }
+                isEmpty -> {
+                    OmnidroidEmptyView(modifier = Modifier)
+                }
+                else -> {
+                    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    val featured = continueGame.takeIf { showContinue }
+                    if (state.layout == LibraryLayout.LIST) {
+                        LazyColumn(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .focusGroup(),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            if (featured != null) {
+                                item(key = "continue-${featured.id}") {
+                                    LibraryGameRow(
+                                        sharedTransitionScope = sharedTransitionScope,
+                                        animatedVisibilityScope = animatedVisibilityScope,
+                                        game = featured,
+                                        modifier = Modifier.focusRequester(firstItemRequester),
+                                        continueAction = true,
+                                        onClick = { onContinueClick(featured) },
+                                        onLongClick = { onGameLongClick(featured) },
+                                    )
+                                }
+                            }
+                            items(
+                                count = games.itemCount,
+                                key = { index -> games.peek(index)?.id ?: index },
+                            ) { index ->
+                                val game = games[index] ?: return@items
+                                LibraryGameRow(
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
-                                    game = featured,
-                                    modifier = Modifier.focusRequester(firstItemRequester),
-                                    continueAction = true,
-                                    infoStyle = infoStyle,
-                                    onClick = { onContinueClick(featured) },
-                                    onLongClick = { onGameLongClick(featured) },
+                                    game = game,
+                                    modifier =
+                                        if (!showContinue && index == 0) {
+                                            Modifier.focusRequester(firstItemRequester)
+                                        } else {
+                                            Modifier
+                                        },
+                                    continueAction = false,
+                                    onClick = { onGameClick(game) },
+                                    onLongClick = { onGameLongClick(game) },
                                 )
                             }
                         }
+                    } else if (portrait) {
+                        val columns = libraryPortraitColumns(state.zoomDensity, maxWidth)
+                        LazyVerticalGrid(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .focusGroup(),
+                            columns = GridCells.Fixed(columns),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            if (featured != null) {
+                                item(key = "continue-${featured.id}") {
+                                    LibraryGameCardItem(
+                                        sharedTransitionScope = sharedTransitionScope,
+                                        animatedVisibilityScope = animatedVisibilityScope,
+                                        game = featured,
+                                        modifier = Modifier.focusRequester(firstItemRequester),
+                                        continueAction = true,
+                                        infoStyle = infoStyle,
+                                        matchHeight = false,
+                                        onClick = { onContinueClick(featured) },
+                                        onLongClick = { onGameLongClick(featured) },
+                                    )
+                                }
+                            }
+                            items(
+                                count = games.itemCount,
+                                key = { index -> games.peek(index)?.id ?: index },
+                            ) { index ->
+                                val game = games[index] ?: return@items
+                                LibraryGameCardItem(
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedVisibilityScope = animatedVisibilityScope,
+                                    game = game,
+                                    modifier =
+                                        if (!showContinue && index == 0) {
+                                            Modifier.focusRequester(firstItemRequester)
+                                        } else {
+                                            Modifier
+                                        },
+                                    continueAction = false,
+                                    infoStyle = infoStyle,
+                                    matchHeight = false,
+                                    onClick = { onGameClick(game) },
+                                    onLongClick = { onGameLongClick(game) },
+                                )
+                            }
+                        }
+                    } else {
+                        val rows = libraryGridRows(state.zoomDensity, maxHeight)
+                        LazyHorizontalGrid(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .focusGroup(),
+                            rows = GridCells.Fixed(rows),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            if (featured != null) {
+                                item(key = "continue-${featured.id}") {
+                                    LibraryGameCardItem(
+                                        sharedTransitionScope = sharedTransitionScope,
+                                        animatedVisibilityScope = animatedVisibilityScope,
+                                        game = featured,
+                                        modifier = Modifier.focusRequester(firstItemRequester),
+                                        continueAction = true,
+                                        infoStyle = infoStyle,
+                                        onClick = { onContinueClick(featured) },
+                                        onLongClick = { onGameLongClick(featured) },
+                                    )
+                                }
+                            }
 
-                        items(
-                            count = games.itemCount,
-                            key = { index -> games.peek(index)?.id ?: index },
-                        ) { index ->
-                            val game = games[index] ?: return@items
-                            LibraryGameCardItem(
-                                sharedTransitionScope = sharedTransitionScope,
-                                animatedVisibilityScope = animatedVisibilityScope,
-                                game = game,
-                                modifier =
-                                    if (!showContinue && index == 0) {
-                                        Modifier.focusRequester(firstItemRequester)
-                                    } else {
-                                        Modifier
-                                    },
-                                continueAction = false,
-                                infoStyle = infoStyle,
-                                onClick = { onGameClick(game) },
-                                onLongClick = { onGameLongClick(game) },
-                            )
+                            items(
+                                count = games.itemCount,
+                                key = { index -> games.peek(index)?.id ?: index },
+                            ) { index ->
+                                val game = games[index] ?: return@items
+                                LibraryGameCardItem(
+                                    sharedTransitionScope = sharedTransitionScope,
+                                    animatedVisibilityScope = animatedVisibilityScope,
+                                    game = game,
+                                    modifier =
+                                        if (!showContinue && index == 0) {
+                                            Modifier.focusRequester(firstItemRequester)
+                                        } else {
+                                            Modifier
+                                        },
+                                    continueAction = false,
+                                    infoStyle = infoStyle,
+                                    onClick = { onGameClick(game) },
+                                    onLongClick = { onGameLongClick(game) },
+                                )
+                            }
                         }
                     }
-                }
-                if (showZoomBar) {
-                    LibraryZoomBar(
-                        density = state.zoomDensity,
-                        onDensityChange = onZoomDensityChange,
-                        modifier = Modifier,
-                    )
+                    }
                 }
             }
+        }
+        if (showViewBar) {
+            LibraryViewBar(
+                layout = state.layout,
+                density = state.zoomDensity,
+                portrait = portrait,
+                showZoom = showZoomBar && state.layout == LibraryLayout.GRID,
+                onLayoutChange = onLayoutChange,
+                onPortraitChange = onPortraitChange,
+                onDensityChange = onZoomDensityChange,
+                modifier = Modifier,
+            )
         }
     }
 }
@@ -443,19 +697,24 @@ private fun LibraryGameCardItem(
     modifier: Modifier = Modifier,
     continueAction: Boolean,
     infoStyle: GameCardInfoStyle,
+    matchHeight: Boolean = true,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
     val sizeModifier =
-        Modifier
-            .fillMaxHeight()
-            .then(
-                if (infoStyle == GameCardInfoStyle.BELOW) {
-                    Modifier
-                } else {
-                    Modifier.aspectRatio(LibraryGameCardAspectRatio, matchHeightConstraintsFirst = true)
-                },
-            )
+        if (matchHeight) {
+            Modifier
+                .fillMaxHeight()
+                .then(
+                    if (infoStyle == GameCardInfoStyle.BELOW) {
+                        Modifier
+                    } else {
+                        Modifier.aspectRatio(LibraryGameCardAspectRatio, matchHeightConstraintsFirst = true)
+                    },
+                )
+        } else {
+            Modifier.fillMaxWidth()
+        }
     val cornerAnim by animatedVisibilityScope.transition.animateDp(
         label = "coverCorner-${game.id}",
         transitionSpec = { tween(durationMillis = 400, easing = FastOutSlowInEasing) },
@@ -482,29 +741,319 @@ private fun LibraryGameCardItem(
         game = game,
         continueAction = continueAction,
         infoStyle = infoStyle,
-        fillCard = true,
+        fillCard = matchHeight,
         cornerRadius = cornerAnim,
         onClick = onClick,
         onLongClick = onLongClick,
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalFoundationApi::class)
 @Composable
-private fun LibraryZoomBar(
+private fun LibraryGameRow(
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    game: Game,
+    modifier: Modifier = Modifier,
+    continueAction: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+) {
+    val context = LocalContext.current
+    val subtitle =
+        remember(game.id, game.systemId, game.developer, game.title, game.customName) {
+            GameUtils.getGameSubtitle(context, game)
+        }
+    val rowCorner = 10.dp
+    val coverInset = 4.dp
+    val shape = RoundedCornerShape(rowCorner)
+    val cornerAnim by animatedVisibilityScope.transition.animateDp(
+        label = "coverCorner-${game.id}",
+        transitionSpec = { tween(durationMillis = 400, easing = FastOutSlowInEasing) },
+    ) { targetState ->
+        if (targetState == EnterExitState.Visible) (rowCorner - coverInset).coerceAtLeast(0.dp) else 16.dp
+    }
+    val coverSharedModifier =
+        with(sharedTransitionScope) {
+            Modifier.sharedBounds(
+                sharedContentState = rememberSharedContentState(key = "game-cover-${game.id}"),
+                animatedVisibilityScope = animatedVisibilityScope,
+                enter = EnterTransition.None,
+                exit = ExitTransition.None,
+                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                boundsTransform = { _, _ ->
+                    tween(durationMillis = 400, easing = FastOutSlowInEasing)
+                },
+                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(cornerAnim)),
+            )
+        }
+    val thumbHeight = 56.dp
+    val thumbWidth = thumbHeight * LibraryGameCardAspectRatio
+    Surface(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .controllerFocusGlow(shape)
+                .reportControllerGame(game)
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                ),
+        shape = shape,
+        color = Color(0xFF161616),
+        shadowElevation = 4.dp,
+        tonalElevation = 0.dp,
+        border = BorderStroke(1.dp, Color(0xFF2E2E2E)),
+    ) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(thumbHeight + coverInset * 2)
+                    .padding(end = coverInset),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OmnidroidGameImage(
+                modifier =
+                    Modifier
+                        .padding(start = coverInset)
+                        .size(thumbWidth, thumbHeight)
+                        .clip(RoundedCornerShape(cornerAnim))
+                        .then(coverSharedModifier),
+                game = game,
+                aspectRatio = null,
+            )
+            Column(
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(horizontal = 12.dp),
+            ) {
+                Text(
+                    text = game.displayName,
+                    style =
+                        MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                        ),
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color(0xFFBDBDBD),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+            when {
+                continueAction -> {
+                    Text(
+                        text = stringResource(R.string.continue_playing),
+                        style =
+                            MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                            ),
+                        color = LibraryNeonGreen,
+                        maxLines = 1,
+                    )
+                }
+                game.isFavorite -> {
+                    Icon(
+                        imageVector = Icons.Filled.Favorite,
+                        contentDescription = stringResource(R.string.favorites),
+                        modifier = Modifier.size(16.dp),
+                        tint = LibraryNeonGreen,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LibraryViewBar(
+    layout: LibraryLayout,
+    density: Int,
+    portrait: Boolean,
+    showZoom: Boolean,
+    onLayoutChange: (LibraryLayout) -> Unit,
+    onPortraitChange: (Boolean) -> Unit,
+    onDensityChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (portrait) {
+        Row(
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .height(36.dp)
+                    .padding(start = 8.dp, end = 8.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (showZoom) {
+                LibraryZoomControls(
+                    density = density,
+                    onDensityChange = onDensityChange,
+                    trackWidth = null,
+                    modifier = Modifier.weight(1f),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+            LibraryViewModeButtons(
+                layout = layout,
+                portrait = portrait,
+                onLayoutChange = onLayoutChange,
+                onPortraitChange = onPortraitChange,
+            )
+        }
+    } else {
+        Box(
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .height(36.dp)
+                    .padding(bottom = 6.dp),
+        ) {
+            LibraryViewModeButtons(
+                layout = layout,
+                portrait = portrait,
+                onLayoutChange = onLayoutChange,
+                onPortraitChange = onPortraitChange,
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 8.dp),
+            )
+            if (showZoom) {
+                LibraryZoomControls(
+                    density = density,
+                    onDensityChange = onDensityChange,
+                    trackWidth = 168.dp,
+                    modifier = Modifier.align(Alignment.Center),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LibraryViewModeButtons(
+    layout: LibraryLayout,
+    portrait: Boolean,
+    onLayoutChange: (LibraryLayout) -> Unit,
+    onPortraitChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LibraryLayoutToggle(
+            layout = layout,
+            onLayoutChange = onLayoutChange,
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Box(
+            modifier =
+                Modifier
+                    .size(28.dp)
+                    .background(Color(0xFF161616), CircleShape)
+                    .border(
+                        BorderStroke(1.dp, if (portrait) LibraryNeonGreen else Color(0xFF2E2E2E)),
+                        CircleShape,
+                    ),
+        ) {
+            LayoutToggleIcon(
+                selected = portrait,
+                icon = Icons.Outlined.ScreenRotation,
+                boxSize = 28.dp,
+                iconSize = 18.dp,
+                contentDescription =
+                    stringResource(
+                        if (portrait) R.string.library_view_landscape else R.string.library_view_portrait,
+                    ),
+                onClick = { onPortraitChange(!portrait) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun LibraryLayoutToggle(
+    layout: LibraryLayout,
+    onLayoutChange: (LibraryLayout) -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .height(28.dp)
+                .background(Color(0xFF161616), CircleShape)
+                .border(BorderStroke(1.dp, Color(0xFF2E2E2E)), CircleShape)
+                .padding(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LayoutToggleIcon(
+            selected = layout == LibraryLayout.GRID,
+            icon = Icons.Filled.GridView,
+            contentDescription = stringResource(R.string.library_view_grid),
+            onClick = { onLayoutChange(LibraryLayout.GRID) },
+        )
+        LayoutToggleIcon(
+            selected = layout == LibraryLayout.LIST,
+            icon = Icons.AutoMirrored.Outlined.ViewList,
+            contentDescription = stringResource(R.string.library_view_list),
+            onClick = { onLayoutChange(LibraryLayout.LIST) },
+        )
+    }
+}
+
+@Composable
+private fun LayoutToggleIcon(
+    selected: Boolean,
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+    boxSize: Dp = 24.dp,
+    iconSize: Dp = 16.dp,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(boxSize)
+                .controllerFocusGlow(CircleShape)
+                .background(
+                    color = if (selected) Color(0xFF242424) else Color.Transparent,
+                    shape = CircleShape,
+                )
+                .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(iconSize),
+            tint = if (selected) LibraryNeonGreen else Color.White.copy(alpha = 0.72f),
+        )
+    }
+}
+
+@Composable
+private fun LibraryZoomControls(
     density: Int,
     onDensityChange: (Int) -> Unit,
+    trackWidth: Dp?,
     modifier: Modifier = Modifier,
 ) {
     val zoomOutEnabled = density < LibraryViewModel.MAX_ZOOM_DENSITY
     val zoomInEnabled = density > 0
     Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .height(36.dp)
-                .padding(bottom = 6.dp),
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
     ) {
         Box(
             modifier =
@@ -528,7 +1077,13 @@ private fun LibraryZoomBar(
             onPositionChange = { onDensityChange(LibraryViewModel.MAX_ZOOM_DENSITY - it) },
             modifier =
                 Modifier
-                    .width(168.dp)
+                    .then(
+                        if (trackWidth != null) {
+                            Modifier.width(trackWidth)
+                        } else {
+                            Modifier.weight(1f)
+                        },
+                    )
                     .height(24.dp)
                     .padding(horizontal = 8.dp)
                     .controllerFocusGlow()

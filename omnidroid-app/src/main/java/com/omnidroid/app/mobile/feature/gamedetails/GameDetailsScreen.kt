@@ -191,27 +191,18 @@ fun GameDetailsScreen(
         ) {
             GameBackdrop(game, state.metadata.backgroundImageUrl)
         }
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(
-                        start = GameDetailsScreenPadding,
-                        end = GameDetailsScreenPadding,
-                        bottom = GameDetailsScreenPadding,
-                        top = 10.dp,
-                    ),
-            horizontalArrangement = Arrangement.spacedBy(GameDetailsColumnGap),
-        ) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxHeight()
-                        .weight(GameDetailsCoverWeight),
-                contentAlignment = Alignment.Center,
-            ) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val portrait = maxHeight > maxWidth
+            val contentPadding =
+                Modifier.padding(
+                    start = GameDetailsScreenPadding,
+                    end = GameDetailsScreenPadding,
+                    bottom = GameDetailsScreenPadding,
+                    top = 10.dp,
+                )
+            val cover: @Composable (Modifier) -> Unit = { coverModifier ->
                 GameCoverOrTrailer(
-                    modifier = Modifier.fillMaxHeight(),
+                    modifier = coverModifier,
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope,
                     game = game,
@@ -229,25 +220,70 @@ fun GameDetailsScreen(
                     },
                 )
             }
-            GameDetailsInfo(
-                modifier =
-                    Modifier
-                        .weight(GameDetailsInfoWeight)
-                        .fillMaxHeight()
-                        .graphicsLayer {
-                            alpha = infoAlpha
-                            translationX = infoOffset
-                        },
-                game = game,
-                state = state,
-                onPlay = { onPlay(game) },
-                onFavoriteToggle = { onFavoriteToggle(game, !game.isFavorite) },
-                onOpenSettings = { onOpenSettings(game) },
-                onEditName = {
-                    nameDraft = game.customName ?: game.title
-                    showNameDialog = true
-                },
-            )
+            val infoModifier =
+                Modifier.graphicsLayer {
+                    alpha = infoAlpha
+                    if (portrait) {
+                        translationY = infoOffset
+                    } else {
+                        translationX = infoOffset
+                    }
+                }
+            val info: @Composable (Modifier) -> Unit = { detailsModifier ->
+                GameDetailsInfo(
+                    modifier = detailsModifier.then(infoModifier),
+                    game = game,
+                    state = state,
+                    onPlay = { onPlay(game) },
+                    onFavoriteToggle = { onFavoriteToggle(game, !game.isFavorite) },
+                    onOpenSettings = { onOpenSettings(game) },
+                    onEditName = {
+                        nameDraft = game.customName ?: game.title
+                        showNameDialog = true
+                    },
+                )
+            }
+            if (portrait) {
+                Column(
+                    modifier = Modifier.fillMaxSize().then(contentPadding),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(GameDetailsCoverWeight),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        cover(Modifier.fillMaxSize())
+                    }
+                    info(
+                        Modifier
+                            .weight(GameDetailsInfoWeight)
+                            .fillMaxWidth(),
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxSize().then(contentPadding),
+                    horizontalArrangement = Arrangement.spacedBy(GameDetailsColumnGap),
+                ) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxHeight()
+                                .weight(GameDetailsCoverWeight),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        cover(Modifier.fillMaxHeight())
+                    }
+                    info(
+                        Modifier
+                            .weight(GameDetailsInfoWeight)
+                            .fillMaxHeight(),
+                    )
+                }
+            }
         }
     }
 
