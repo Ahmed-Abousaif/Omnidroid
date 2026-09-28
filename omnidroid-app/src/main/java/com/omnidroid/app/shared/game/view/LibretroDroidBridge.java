@@ -47,6 +47,7 @@ public final class LibretroDroidBridge {
             boolean enableVirtualFileSystem,
             boolean enableMicrophone,
             boolean skipDuplicateFrames,
+            boolean allowFrameCatchUp,
             ImmersiveMode immersiveMode,
             String language
     ) {
@@ -63,6 +64,7 @@ public final class LibretroDroidBridge {
                 enableVirtualFileSystem,
                 enableMicrophone,
                 skipDuplicateFrames,
+                allowFrameCatchUp,
                 immersiveMode,
                 language
         );

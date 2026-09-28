@@ -69,6 +69,7 @@ object ShaderChooser {
             SystemID.GAMECUBE -> ShaderConfig.Default
             SystemID.WII -> ShaderConfig.Default
             SystemID.DREAMCAST -> ShaderConfig.Default
+            SystemID.WII_U -> ShaderConfig.Default
         }
     }
 
@@ -296,6 +297,7 @@ object ShaderChooser {
             SystemID.GAMECUBE -> modern
             SystemID.WII -> modern
             SystemID.DREAMCAST -> modern
+            SystemID.WII_U -> modern
         }
     }
 }
