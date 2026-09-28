@@ -52,6 +52,8 @@ data class Game(
     val isFavorite: Boolean = false,
     val customCoverPath: String? = null,
     val customName: String? = null,
+    val fileSize: Long? = null,
+    val fileLastModified: Long? = null,
 ) : Serializable {
     @get:Ignore
     val displayName: String

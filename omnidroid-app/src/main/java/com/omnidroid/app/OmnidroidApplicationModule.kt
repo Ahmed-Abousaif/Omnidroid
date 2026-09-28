@@ -39,6 +39,9 @@ import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.CoreVariablesManager
 import com.omnidroid.lib.core.CoresSelection
 import com.omnidroid.lib.game.GameLoader
+import com.omnidroid.lib.core.MetadataSliceInstaller
+import com.omnidroid.lib.core.SliceInstallListener
+import com.omnidroid.lib.library.SliceStampStore
 import com.omnidroid.lib.library.OmnidroidLibrary
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.dao.GameSearchDao
@@ -57,7 +60,9 @@ import com.omnidroid.lib.storage.StorageProvider
 import com.omnidroid.lib.storage.StorageProviderRegistry
 import com.omnidroid.lib.storage.local.LocalStorageProvider
 import com.omnidroid.lib.storage.local.StorageAccessFrameworkProvider
+import com.omnidroid.app.shared.library.LibraryIndexScheduler
 import com.omnidroid.metadata.libretrodb.LibretroDBMetadataProvider
+import com.omnidroid.metadata.libretrodb.MetadataSliceInstallerImpl
 import com.omnidroid.metadata.libretrodb.db.LibretroDBManager
 import com.omnidroid.metadata.rawg.RawgApi
 import com.omnidroid.metadata.rawg.RawgConfig
@@ -143,6 +148,7 @@ object OmnidroidApplicationModule {
                 Migrations.VERSION_11_12,
                 Migrations.VERSION_12_13,
                 Migrations.VERSION_13_14,
+                Migrations.VERSION_14_15,
             )
             .fallbackToDestructiveMigration()
             .build()
@@ -181,7 +187,14 @@ object OmnidroidApplicationModule {
         storageProviderRegistry: Lazy<StorageProviderRegistry>,
         gameMetadataProvider: Lazy<GameMetadataProvider>,
         biosManager: BiosManager,
-    ) = OmnidroidLibrary(db, storageProviderRegistry, gameMetadataProvider, biosManager)
+        @ApplicationContext context: Context,
+    ) = OmnidroidLibrary(
+        db,
+        storageProviderRegistry,
+        gameMetadataProvider,
+        biosManager,
+        SliceStampStore(SharedPreferencesHelper.getLegacySharedPreferences(context)),
+    )
 
     @Provides
     @Singleton
@@ -232,10 +245,27 @@ object OmnidroidApplicationModule {
 
     @Provides
     @Singleton
+    fun sliceInstaller(
+        @ApplicationContext context: Context,
+        dbManager: LibretroDBManager,
+        retrofit: Retrofit,
+    ): MetadataSliceInstaller =
+        MetadataSliceInstallerImpl(
+            database = dbManager.dbInstance,
+            api = retrofit.create(CoreUpdater.CoreManagerApi::class.java),
+            listener =
+                SliceInstallListener {
+                    LibraryIndexScheduler.scheduleLibrarySync(context)
+                },
+        )
+
+    @Provides
+    @Singleton
     fun coreManager(
         directoriesManager: DirectoriesManager,
         retrofit: Retrofit,
-    ): CoreUpdater = CoreUpdaterImpl(directoriesManager, retrofit)
+        sliceInstaller: MetadataSliceInstaller,
+    ): CoreUpdater = CoreUpdaterImpl(directoriesManager, retrofit, sliceInstaller)
 
     @Provides
     @Singleton

@@ -112,7 +112,7 @@ class CemuAssetsManager : CoreID.AssetsManager {
         val CEMU_ASSETS_URL: Uri =
             Uri.parse("https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/")
                 .buildUpon()
-                .appendEncodedPath("2.2.0/assets/cemu.zip")
+                .appendEncodedPath("2.4.0/assets/cemu.zip")
                 .build()
 
         const val CEMU_ASSETS_VERSION_KEY = "cemu_assets_version_key"

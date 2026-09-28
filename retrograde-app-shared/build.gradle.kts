@@ -7,6 +7,7 @@ plugins {
 
 dependencies {
     implementation(project(":retrograde-util"))
+    implementation(project(":omnidroid-chd"))
     implementation(project(":omnidroid-touchinput"))
 
     api(deps.libs.androidx.lifecycle.commonJava8)
@@ -42,6 +43,8 @@ dependencies {
     implementation(deps.libs.flowPreferences)
 
     ksp(deps.libs.androidx.room.compiler)
+
+    testImplementation("junit:junit:4.13.2")
 }
 
 android {

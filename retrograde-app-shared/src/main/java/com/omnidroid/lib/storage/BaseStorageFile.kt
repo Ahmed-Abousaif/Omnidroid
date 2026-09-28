@@ -7,9 +7,10 @@ data class BaseStorageFile(
     val size: Long,
     val uri: Uri,
     val path: String? = null,
+    val lastModified: Long = 0,
 ) {
     val extension: String
-        get() = name.substringAfterLast('.', "")
+        get() = name.substringAfterLast('.', "").lowercase()
 
     val extensionlessName: String
         get() = name.substringBeforeLast('.', "")

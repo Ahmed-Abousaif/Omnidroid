@@ -124,4 +124,29 @@ object Migrations {
                 database.execSQL("ALTER TABLE `rawg_game_metadata` ADD COLUMN `trailerUrl` TEXT")
             }
         }
+
+    val VERSION_14_15: Migration =
+        object : Migration(14, 15) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `games` ADD COLUMN `fileSize` INTEGER")
+                database.execSQL("ALTER TABLE `games` ADD COLUMN `fileLastModified` INTEGER")
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `unrecognized_files` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `fileUri` TEXT NOT NULL,
+                        `fileName` TEXT NOT NULL,
+                        `reason` TEXT NOT NULL,
+                        `lastIndexedAt` INTEGER NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+                database.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_unrecognized_files_fileUri` ON `unrecognized_files` (`fileUri`)",
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_unrecognized_files_lastIndexedAt` ON `unrecognized_files` (`lastIndexedAt`)",
+                )
+            }
+        }
 }

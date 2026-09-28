@@ -33,7 +33,6 @@ data class GameSystem(
     val shortTitleResId: Int,
     val systemCoreConfigs: List<SystemCoreConfig>,
     val uniqueExtensions: List<String>,
-    val scanOptions: ScanOptions = ScanOptions(),
     val supportedExtensions: List<String> = uniqueExtensions,
     val hasMultiDiskSupport: Boolean = false,
     val fastForwardSupport: Boolean = true,
@@ -403,13 +402,6 @@ data class GameSystem(
                                 ),
                         ),
                     ),
-                    scanOptions =
-                        ScanOptions(
-                            scanByFilename = false,
-                            scanByUniqueExtension = false,
-                            scanByPathAndSupportedExtensions = true,
-                            scanBySimilarSerial = true,
-                        ),
                     uniqueExtensions = listOf(),
                     supportedExtensions = listOf("cue", "iso", "chd"),
                 ),
@@ -728,7 +720,7 @@ data class GameSystem(
                             skipDuplicateFrames = false,
                         ),
                     ),
-                    uniqueExtensions = listOf("n64", "z64"),
+                    uniqueExtensions = listOf("n64", "z64", "v64"),
                 ),
                 GameSystem(
                     SystemID.PSX,
@@ -786,12 +778,6 @@ data class GameSystem(
                     ),
                     uniqueExtensions = listOf(),
                     supportedExtensions = listOf("iso", "pbp", "chd", "cue", "m3u"),
-                    scanOptions =
-                        ScanOptions(
-                            scanByFilename = false,
-                            scanByUniqueExtension = false,
-                            scanByPathAndSupportedExtensions = true,
-                        ),
                     hasMultiDiskSupport = true,
                 ),
                 GameSystem(
@@ -866,12 +852,6 @@ data class GameSystem(
                     ),
                     uniqueExtensions = listOf(),
                     supportedExtensions = listOf("iso", "cso", "pbp", "chd"),
-                    scanOptions =
-                        ScanOptions(
-                            scanByFilename = false,
-                            scanByUniqueExtension = false,
-                            scanByPathAndSupportedExtensions = true,
-                        ),
                 ),
                 GameSystem(
                     SystemID.FBNEO,
@@ -900,13 +880,6 @@ data class GameSystem(
                     ),
                     uniqueExtensions = listOf(),
                     supportedExtensions = listOf("zip"),
-                    scanOptions =
-                        ScanOptions(
-                            scanByFilename = false,
-                            scanByUniqueExtension = false,
-                            scanByPathAndFilename = true,
-                            scanByPathAndSupportedExtensions = false,
-                        ),
                 ),
                 GameSystem(
                     SystemID.MAME2003PLUS,
@@ -929,13 +902,6 @@ data class GameSystem(
                     ),
                     uniqueExtensions = listOf(),
                     supportedExtensions = listOf("zip"),
-                    scanOptions =
-                        ScanOptions(
-                            scanByFilename = false,
-                            scanByUniqueExtension = false,
-                            scanByPathAndFilename = true,
-                            scanByPathAndSupportedExtensions = false,
-                        ),
                 ),
                 GameSystem(
                     SystemID.NDS,
@@ -1319,13 +1285,6 @@ data class GameSystem(
                     ),
                     fastForwardSupport = false,
                     uniqueExtensions = listOf("dosz"),
-                    scanOptions =
-                        ScanOptions(
-                            scanByFilename = false,
-                            scanByUniqueExtension = true,
-                            scanByPathAndFilename = false,
-                            scanByPathAndSupportedExtensions = true,
-                        ),
                 ),
                 GameSystem(
                     SystemID.NINTENDO_3DS,
@@ -1722,12 +1681,6 @@ data class GameSystem(
                         "elf",
                         "irx"
                     ),
-                    scanOptions =
-                        ScanOptions(
-                            scanByFilename = false,
-                            scanByUniqueExtension = false,
-                            scanByPathAndSupportedExtensions = true,
-                        ),
                     hasMultiDiskSupport = true,
                 ),
                 GameSystem(
@@ -1803,14 +1756,8 @@ data class GameSystem(
                             forceStandardAudioBuffer = true,
                         ),
                     ),
-                    uniqueExtensions = listOf("gcm", "gcz", "tgc"),
+                    uniqueExtensions = listOf("gcm", "tgc"),
                     supportedExtensions = listOf("iso", "gcm", "gcz", "rvz", "ciso", "tgc", "m3u", "dol", "elf"),
-                    scanOptions =
-                        ScanOptions(
-                            scanByFilename = false,
-                            scanByUniqueExtension = false,
-                            scanByPathAndSupportedExtensions = true,
-                        ),
                     hasMultiDiskSupport = true,
                 ),
                 GameSystem(
@@ -1918,12 +1865,6 @@ data class GameSystem(
                     ),
                     uniqueExtensions = listOf("wbfs", "wad"),
                     supportedExtensions = listOf("iso", "wbfs", "gcz", "rvz", "ciso", "wad", "m3u", "dol", "elf"),
-                    scanOptions =
-                        ScanOptions(
-                            scanByFilename = false,
-                            scanByUniqueExtension = false,
-                            scanByPathAndSupportedExtensions = true,
-                        ),
                     hasMultiDiskSupport = true,
                 ),
                 GameSystem(
@@ -2041,12 +1982,6 @@ data class GameSystem(
                     ),
                     uniqueExtensions = listOf("cdi", "gdi", "lst"),
                     supportedExtensions = listOf("cdi", "gdi", "chd", "cue", "m3u", "lst"),
-                    scanOptions =
-                        ScanOptions(
-                            scanByFilename = false,
-                            scanByUniqueExtension = true,
-                            scanByPathAndSupportedExtensions = true,
-                        ),
                     hasMultiDiskSupport = true,
                 ),
                 GameSystem(
@@ -2181,12 +2116,6 @@ data class GameSystem(
                     ),
                     uniqueExtensions = listOf("wud", "wux", "wua", "rpx"),
                     supportedExtensions = listOf("wud", "wux", "wua", "iso", "rpx", "elf"),
-                    scanOptions =
-                        ScanOptions(
-                            scanByFilename = false,
-                            scanByUniqueExtension = true,
-                            scanByPathAndSupportedExtensions = true,
-                        ),
                     hasMultiDiskSupport = false,
                 ),
             )
@@ -2216,13 +2145,5 @@ data class GameSystem(
 
         fun findByUniqueFileExtension(fileExtension: String): GameSystem? =
             byExtensionCache[fileExtension.lowercase(Locale.US)]
-
-        data class ScanOptions(
-            val scanByFilename: Boolean = true,
-            val scanByUniqueExtension: Boolean = true,
-            val scanByPathAndFilename: Boolean = false,
-            val scanByPathAndSupportedExtensions: Boolean = true,
-            val scanBySimilarSerial: Boolean = false,
-        )
     }
 }

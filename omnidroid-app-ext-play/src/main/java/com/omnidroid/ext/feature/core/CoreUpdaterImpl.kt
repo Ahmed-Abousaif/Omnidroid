@@ -15,6 +15,7 @@ import com.omnidroid.common.coroutines.retry
 import com.omnidroid.lib.core.CoreLibraryLocator
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.GithubCoreDownloader
+import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.storage.DirectoriesManager
@@ -32,6 +33,7 @@ import kotlin.time.Duration.Companion.seconds
 class CoreUpdaterImpl(
     private val directoriesManager: DirectoriesManager,
     retrofit: Retrofit,
+    private val sliceInstaller: MetadataSliceInstaller,
 ) : CoreUpdater {
     private val api = retrofit.create(CoreUpdater.CoreManagerApi::class.java)
     private val githubCoreDownloader = GithubCoreDownloader(directoriesManager, api)
@@ -64,6 +66,12 @@ class CoreUpdaterImpl(
             installAssets(context, coreIDs)
         } catch (e: Throwable) {
             log("Error while installing assets: ${e.message}")
+        }
+
+        try {
+            sliceInstaller.ensureSlices(context, coreIDs)
+        } catch (e: Throwable) {
+            log("Error while installing metadata slices: ${e.message}")
         }
 
         log("downloadCores has terminated")

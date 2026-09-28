@@ -9,6 +9,7 @@ import com.omnidroid.app.mobile.shared.NotificationsManager
 import com.omnidroid.app.utils.android.createSyncForegroundInfo
 import com.omnidroid.lib.core.CoreLibraryLocator
 import com.omnidroid.lib.core.CoreUpdater
+import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.core.CoresSelection
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.GameSystem
@@ -26,6 +27,7 @@ class CoreUpdateWork
         private val retrogradeDatabase: RetrogradeDatabase,
         private val coreUpdater: CoreUpdater,
         private val coresSelection: CoresSelection,
+        private val sliceInstaller: MetadataSliceInstaller,
     ) : CoroutineWorker(context, workerParams) {
         override suspend fun doWork(): Result {
             Timber.i("Checking core existence for scanned games")
@@ -54,6 +56,7 @@ class CoreUpdateWork
                 if (missingCores.isNotEmpty()) {
                     coreUpdater.downloadCores(applicationContext, missingCores)
                 }
+                sliceInstaller.ensureSlices(applicationContext, requiredCores)
             } catch (e: Throwable) {
                 Timber.e(e, "Core update work failed with exception: ${e.message}")
             }

@@ -2,3 +2,6 @@
 	path = omnidroid-cores
 	url = https://github.com/Ahmed-Abousaif/OmnidroidCores
 	branch = master
+[submodule "omnidroid-chd/src/main/cpp/libchdr"]
+	path = omnidroid-chd/src/main/cpp/libchdr
+	url = https://github.com/rtissera/libchdr.git
