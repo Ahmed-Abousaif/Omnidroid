@@ -61,6 +61,7 @@ class GraphicsApiSelectionViewModel(
                 GraphicsApiSystem(SystemID.WII, "dolphin_graphics_api", listOf("OpenGL", "Vulkan"), "OpenGL"),
                 GraphicsApiSystem(SystemID.PSP, "ppsspp_rendering_backend", listOf("OpenGL", "Vulkan"), "OpenGL"),
                 GraphicsApiSystem(SystemID.PS2, "armsx2_renderer", listOf("OpenGL", "Vulkan", "Software"), "OpenGL"),
+                GraphicsApiSystem(SystemID.WII_U, "cemu_graphics_api", listOf("Vulkan"), "Vulkan"),
             )
 
             val prefs = SharedPreferencesHelper.getSharedPreferences(context)

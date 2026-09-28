@@ -2,6 +2,7 @@ package com.omnidroid.lib.library
 
 import android.content.SharedPreferences
 import com.omnidroid.lib.core.CoreUpdater
+import com.omnidroid.lib.core.assetsmanager.CemuAssetsManager
 import com.omnidroid.lib.core.assetsmanager.DolphinAssetsManager
 import com.omnidroid.lib.core.assetsmanager.NoAssetsManager
 import com.omnidroid.lib.core.assetsmanager.PCEE2AssetsManager
@@ -138,6 +139,11 @@ enum class CoreID(
         "Flycast",
         "libflycast_libretro_android.so",
     ),
+    CEMU(
+        "cemu",
+        "Cemu",
+        "libcemu_libretro_android.so",
+    ),
     ;
 
     companion object {
@@ -146,6 +152,7 @@ enum class CoreID(
                 PPSSPP -> PPSSPPAssetsManager()
                 ARMSX2 -> PCEE2AssetsManager()
                 DOLPHIN -> DolphinAssetsManager()
+                CEMU -> CemuAssetsManager()
                 else -> NoAssetsManager()
             }
         }
