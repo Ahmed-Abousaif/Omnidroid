@@ -26,6 +26,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -67,6 +68,7 @@ import com.omnidroid.app.mobile.feature.gamedetails.GameDetailsViewModel
 import com.omnidroid.app.mobile.feature.library.LibraryFilter
 import com.omnidroid.app.mobile.feature.library.LibraryScreen
 import com.omnidroid.app.mobile.feature.library.LibraryTopBar
+import com.omnidroid.app.mobile.feature.library.LibraryTopBarPortraitHeight
 import com.omnidroid.app.mobile.feature.library.LibraryTopBarRowHeight
 import com.omnidroid.app.mobile.feature.library.LibraryViewModel
 import com.omnidroid.app.mobile.feature.library.RegisteredSystemsStore
@@ -187,6 +189,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        requestedOrientation = LibraryViewModel.orientationFor(LibraryViewModel.readSavedPortrait(this))
         enableEdgeToEdge(
             SystemBarStyle.dark(Color.TRANSPARENT),
             SystemBarStyle.dark(Color.TRANSPARENT),
@@ -300,6 +303,12 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         ),
                 )
             val libraryState = libraryViewModel.state.collectAsState().value
+            LaunchedEffect(libraryState.portrait) {
+                val orientation = LibraryViewModel.orientationFor(libraryState.portrait)
+                if (requestedOrientation != orientation) {
+                    requestedOrientation = orientation
+                }
+            }
             val gamepadConnected =
                 inputDeviceManager.getGamePadsObservable()
                     .collectAsState(emptyList())
@@ -441,7 +450,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
             }
 
             CompositionLocalProvider(LocalControllerNavigation provides controllerNav) {
-            Box(modifier = Modifier.fillMaxSize()) {
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val portraitHome = libraryState.portrait && currentRoute == MainRoute.HOME
+            val portraitColumnWidth = maxWidth
+            val libraryTopPadding =
+                if (portraitHome) LibraryTopBarPortraitHeight else LibraryTopBarRowHeight
             Scaffold(
                 containerColor = HomeChromeBackground,
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -472,7 +485,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                     Modifier
                                         .fillMaxSize()
                                         .padding(padding)
-                                        .padding(top = LibraryTopBarRowHeight),
+                                        .padding(top = libraryTopPadding),
                                 sharedTransitionScope = this@SharedTransitionLayout,
                                 animatedVisibilityScope = this,
                                 viewModel = libraryViewModel,
@@ -484,6 +497,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 onGameLongClick = onGameLongClick,
                                 onAddConsole = { navController.navigateToRoute(MainRoute.ADD_CONSOLES) },
                                 controllerConnected = gamepadConnected,
+                                portraitColumnWidth = portraitColumnWidth,
                             )
                         }
                         composable(
@@ -828,6 +842,9 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 consoleTitleId =
                     (libraryState.filter as? LibraryFilter.System)?.metaSystemID?.titleResId,
                 consoleGameCount = libraryState.selectedSystemGameCount,
+                portrait = libraryState.portrait,
+                portraitColumnWidth = portraitColumnWidth,
+                detailsMode = currentRoute == MainRoute.GAME_DETAILS,
             )
             }
             }
@@ -847,6 +864,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
     override fun onResume() {
         super.onResume()
+        requestedOrientation = LibraryViewModel.orientationFor(LibraryViewModel.readSavedPortrait(this))
         hideSystemBars()
         castDisplayManager.refresh()
         castDisplayManager.attachHost(this)

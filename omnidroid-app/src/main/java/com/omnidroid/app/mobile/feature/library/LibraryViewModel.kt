@@ -1,6 +1,7 @@
 package com.omnidroid.app.mobile.feature.library
 
 import android.content.Context
+import android.content.pm.ActivityInfo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -12,6 +13,7 @@ import com.omnidroid.common.paging.buildFlowPaging
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.MetaSystemID
 import com.omnidroid.lib.library.db.RetrogradeDatabase
+import com.omnidroid.lib.library.db.dao.SystemCount
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.library.metaSystemID
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
@@ -49,7 +51,23 @@ class LibraryViewModel(
         val continueGame: Game? = null,
         val operationInProgress: Boolean = false,
         val zoomDensity: Int = 0,
+        val layout: LibraryLayout = LibraryLayout.GRID,
+        val portrait: Boolean = false,
         val selectedSystemGameCount: Int? = null,
+    )
+
+    private data class LibraryChrome(
+        val operationInProgress: Boolean,
+        val zoomDensity: Int,
+        val layout: LibraryLayout,
+        val portrait: Boolean,
+        val systemCounts: List<SystemCount>,
+    )
+
+    private data class LibraryPresentation(
+        val zoomDensity: Int,
+        val layout: LibraryLayout,
+        val portrait: Boolean,
     )
 
     private val preferences = SharedPreferencesHelper.getSharedPreferences(appContext)
@@ -57,6 +75,12 @@ class LibraryViewModel(
     private val searchQueryFlow = MutableStateFlow("")
     private val scanRequested = MutableStateFlow(false)
     private val zoomDensityFlow = MutableStateFlow(readZoomDensity())
+    private val layoutFlow = MutableStateFlow(readLayout())
+    private val portraitFlow = MutableStateFlow(readPortrait())
+    private val presentationFlow =
+        combine(zoomDensityFlow, layoutFlow, portraitFlow) { zoom, layout, portrait ->
+            LibraryPresentation(zoom, layout, portrait)
+        }
     private val libraryOperationInProgress =
         PendingOperationsMonitor(appContext).anyLibraryOperationInProgress()
 
@@ -66,28 +90,45 @@ class LibraryViewModel(
             searchQueryFlow,
             sidebarSystems(),
             continueGame(),
-            combine(scanRequested, libraryOperationInProgress, zoomDensityFlow, retrogradeDb.gameDao().selectSystemsWithCount()) { requested, inProgress, zoom, counts ->
-                Triple(requested || inProgress, zoom, counts)
+            combine(
+                scanRequested,
+                libraryOperationInProgress,
+                presentationFlow,
+                retrogradeDb.gameDao().selectSystemsWithCount(),
+            ) { requested, inProgress, presentation, counts ->
+                LibraryChrome(
+                    requested || inProgress,
+                    presentation.zoomDensity,
+                    presentation.layout,
+                    presentation.portrait,
+                    counts,
+                )
             },
-        ) { filter, searchQuery, sidebarSystems, continueGames, operation ->
+        ) { filter, searchQuery, sidebarSystems, continueGames, chrome ->
             val selectedCount =
                 (filter as? LibraryFilter.System)?.let { system ->
                     val ids = system.metaSystemID.systemIDs.map { it.dbname }.toSet()
-                    operation.third.filter { it.systemId in ids }.sumOf { it.count }
+                    chrome.systemCounts.filter { it.systemId in ids }.sumOf { it.count }
                 }
             UiState(
                 filter = filter,
                 searchQuery = searchQuery,
                 sidebarSystems = sidebarSystems,
                 continueGame = continueGames.firstOrNull(),
-                operationInProgress = operation.first,
-                zoomDensity = operation.second,
+                operationInProgress = chrome.operationInProgress,
+                zoomDensity = chrome.zoomDensity,
+                layout = chrome.layout,
+                portrait = chrome.portrait,
                 selectedSystemGameCount = selectedCount,
             )
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
-            UiState(zoomDensity = zoomDensityFlow.value),
+            UiState(
+                zoomDensity = zoomDensityFlow.value,
+                layout = layoutFlow.value,
+                portrait = portraitFlow.value,
+            ),
         )
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -137,15 +178,36 @@ class LibraryViewModel(
         preferences.edit().putInt(ZOOM_DENSITY_KEY, value).apply()
     }
 
+    fun setLayout(layout: LibraryLayout) {
+        layoutFlow.value = layout
+        preferences.edit().putString(LAYOUT_KEY, layout.name).apply()
+    }
+
+    fun setPortrait(enabled: Boolean) {
+        portraitFlow.value = enabled
+        preferences.edit().putBoolean(PORTRAIT_KEY, enabled).apply()
+    }
+
     private fun readZoomDensity(): Int {
         return preferences.getInt(ZOOM_DENSITY_KEY, 0).coerceIn(0, MAX_ZOOM_DENSITY)
     }
 
+    private fun readLayout(): LibraryLayout {
+        return when (preferences.getString(LAYOUT_KEY, LibraryLayout.GRID.name)) {
+            LibraryLayout.LIST.name -> LibraryLayout.LIST
+            else -> LibraryLayout.GRID
+        }
+    }
+
+    private fun readPortrait(): Boolean = preferences.getBoolean(PORTRAIT_KEY, false)
+
     fun zoomIn() {
+        if (layoutFlow.value != LibraryLayout.GRID) return
         setZoomDensity(zoomDensityFlow.value - 1)
     }
 
     fun zoomOut() {
+        if (layoutFlow.value != LibraryLayout.GRID) return
         setZoomDensity(zoomDensityFlow.value + 1)
     }
 
@@ -223,6 +285,26 @@ class LibraryViewModel(
     companion object {
         private const val PAGE_SIZE = 20
         private const val ZOOM_DENSITY_KEY = "pref_library_zoom_density"
+        private const val LAYOUT_KEY = "pref_library_layout"
+        const val PORTRAIT_KEY = "pref_library_portrait"
         const val MAX_ZOOM_DENSITY = 2
+
+        fun readSavedPortrait(context: Context): Boolean {
+            return SharedPreferencesHelper.getSharedPreferences(context)
+                .getBoolean(PORTRAIT_KEY, false)
+        }
+
+        fun orientationFor(portrait: Boolean): Int {
+            return if (portrait) {
+                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            }
+        }
     }
+}
+
+enum class LibraryLayout {
+    GRID,
+    LIST,
 }

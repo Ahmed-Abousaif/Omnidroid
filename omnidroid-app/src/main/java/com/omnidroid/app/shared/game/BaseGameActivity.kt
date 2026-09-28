@@ -2,6 +2,7 @@ package com.omnidroid.app.shared.game
 
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.KeyEvent
@@ -93,6 +94,9 @@ abstract class BaseGameActivity : ImmersiveActivity() {
     private var finishTriggered = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Library portrait/landscape is MainActivity only. Games keep sensor rotation
+        // so in-game screen layouts can still switch between portrait and landscape.
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
         super.onCreate(savedInstanceState)
         setUpExceptionsHandler()
         GameService.startService(applicationContext, intent)

@@ -1,0 +1,160 @@
+; SPIR-V
+; Version: 1.0
+; Generator: Google Shaderc over Glslang; 10
+; Bound: 103
+; Schema: 0
+               OpCapability Shader
+          %1 = OpExtInstImport "GLSL.std.450"
+               OpMemoryModel Logical GLSL450
+               OpEntryPoint Vertex %main "main" %gl_VertexIndex %outUV %_
+               OpSource GLSL 450
+               OpSourceExtension "GL_GOOGLE_cpp_style_line_directive"
+               OpSourceExtension "GL_GOOGLE_include_directive"
+               OpName %main "main"
+               OpName %uv "uv"
+               OpName %gl_VertexIndex "gl_VertexIndex"
+               OpName %outUV "outUV"
+               OpName %logicalNDC "logicalNDC"
+               OpName %mat "mat"
+               OpName %PushConstants "PushConstants"
+               OpMemberName %PushConstants 0 "transform"
+               OpMemberName %PushConstants 1 "offset"
+               OpName %push "push"
+               OpName %screenPos "screenPos"
+               OpName %gl_PerVertex "gl_PerVertex"
+               OpMemberName %gl_PerVertex 0 "gl_Position"
+               OpMemberName %gl_PerVertex 1 "gl_PointSize"
+               OpMemberName %gl_PerVertex 2 "gl_ClipDistance"
+               OpMemberName %gl_PerVertex 3 "gl_CullDistance"
+               OpName %_ ""
+               OpDecorate %gl_VertexIndex BuiltIn VertexIndex
+               OpDecorate %outUV Location 0
+               OpMemberDecorate %PushConstants 0 Offset 0
+               OpMemberDecorate %PushConstants 1 Offset 16
+               OpDecorate %PushConstants Block
+               OpMemberDecorate %gl_PerVertex 0 BuiltIn Position
+               OpMemberDecorate %gl_PerVertex 1 BuiltIn PointSize
+               OpMemberDecorate %gl_PerVertex 2 BuiltIn ClipDistance
+               OpMemberDecorate %gl_PerVertex 3 BuiltIn CullDistance
+               OpDecorate %gl_PerVertex Block
+       %void = OpTypeVoid
+          %3 = OpTypeFunction %void
+      %float = OpTypeFloat 32
+    %v2float = OpTypeVector %float 2
+%_ptr_Function_v2float = OpTypePointer Function %v2float
+       %bool = OpTypeBool
+        %int = OpTypeInt 32 1
+%_ptr_Input_int = OpTypePointer Input %int
+%gl_VertexIndex = OpVariable %_ptr_Input_int Input
+      %int_1 = OpConstant %int 1
+      %int_4 = OpConstant %int 4
+      %int_5 = OpConstant %int 5
+    %float_1 = OpConstant %float 1
+    %float_0 = OpConstant %float 0
+      %int_2 = OpConstant %int 2
+      %int_3 = OpConstant %int 3
+%_ptr_Output_v2float = OpTypePointer Output %v2float
+      %outUV = OpVariable %_ptr_Output_v2float Output
+    %float_2 = OpConstant %float 2
+%mat2v2float = OpTypeMatrix %v2float 2
+%_ptr_Function_mat2v2float = OpTypePointer Function %mat2v2float
+    %v4float = OpTypeVector %float 4
+%PushConstants = OpTypeStruct %v4float %v2float
+%_ptr_PushConstant_PushConstants = OpTypePointer PushConstant %PushConstants
+       %push = OpVariable %_ptr_PushConstant_PushConstants PushConstant
+      %int_0 = OpConstant %int 0
+%_ptr_PushConstant_v4float = OpTypePointer PushConstant %v4float
+%_ptr_PushConstant_v2float = OpTypePointer PushConstant %v2float
+       %uint = OpTypeInt 32 0
+     %uint_1 = OpConstant %uint 1
+%_arr_float_uint_1 = OpTypeArray %float %uint_1
+%gl_PerVertex = OpTypeStruct %v4float %float %_arr_float_uint_1 %_arr_float_uint_1
+%_ptr_Output_gl_PerVertex = OpTypePointer Output %gl_PerVertex
+          %_ = OpVariable %_ptr_Output_gl_PerVertex Output
+%_ptr_Output_v4float = OpTypePointer Output %v4float
+       %main = OpFunction %void None %3
+          %5 = OpLabel
+         %uv = OpVariable %_ptr_Function_v2float Function
+ %logicalNDC = OpVariable %_ptr_Function_v2float Function
+        %mat = OpVariable %_ptr_Function_mat2v2float Function
+  %screenPos = OpVariable %_ptr_Function_v2float Function
+         %14 = OpLoad %int %gl_VertexIndex
+         %16 = OpIEqual %bool %14 %int_1
+         %17 = OpLogicalNot %bool %16
+               OpSelectionMerge %19 None
+               OpBranchConditional %17 %18 %19
+         %18 = OpLabel
+         %20 = OpLoad %int %gl_VertexIndex
+         %22 = OpIEqual %bool %20 %int_4
+               OpBranch %19
+         %19 = OpLabel
+         %23 = OpPhi %bool %16 %5 %22 %18
+         %24 = OpLogicalNot %bool %23
+               OpSelectionMerge %26 None
+               OpBranchConditional %24 %25 %26
+         %25 = OpLabel
+         %27 = OpLoad %int %gl_VertexIndex
+         %29 = OpIEqual %bool %27 %int_5
+               OpBranch %26
+         %26 = OpLabel
+         %30 = OpPhi %bool %23 %19 %29 %25
+         %33 = OpSelect %float %30 %float_1 %float_0
+         %34 = OpLoad %int %gl_VertexIndex
+         %36 = OpIEqual %bool %34 %int_2
+         %37 = OpLogicalNot %bool %36
+               OpSelectionMerge %39 None
+               OpBranchConditional %37 %38 %39
+         %38 = OpLabel
+         %40 = OpLoad %int %gl_VertexIndex
+         %42 = OpIEqual %bool %40 %int_3
+               OpBranch %39
+         %39 = OpLabel
+         %43 = OpPhi %bool %36 %26 %42 %38
+         %44 = OpLogicalNot %bool %43
+               OpSelectionMerge %46 None
+               OpBranchConditional %44 %45 %46
+         %45 = OpLabel
+         %47 = OpLoad %int %gl_VertexIndex
+         %48 = OpIEqual %bool %47 %int_5
+               OpBranch %46
+         %46 = OpLabel
+         %49 = OpPhi %bool %43 %39 %48 %45
+         %50 = OpSelect %float %49 %float_1 %float_0
+         %51 = OpCompositeConstruct %v2float %33 %50
+               OpStore %uv %51
+         %54 = OpLoad %v2float %uv
+               OpStore %outUV %54
+         %56 = OpLoad %v2float %uv
+         %58 = OpVectorTimesScalar %v2float %56 %float_2
+         %59 = OpCompositeConstruct %v2float %float_1 %float_1
+         %60 = OpFSub %v2float %58 %59
+               OpStore %logicalNDC %60
+         %70 = OpAccessChain %_ptr_PushConstant_v4float %push %int_0
+         %71 = OpLoad %v4float %70
+         %72 = OpVectorShuffle %v2float %71 %71 0 1
+         %73 = OpAccessChain %_ptr_PushConstant_v4float %push %int_0
+         %74 = OpLoad %v4float %73
+         %75 = OpVectorShuffle %v2float %74 %74 2 3
+         %76 = OpCompositeExtract %float %72 0
+         %77 = OpCompositeExtract %float %72 1
+         %78 = OpCompositeExtract %float %75 0
+         %79 = OpCompositeExtract %float %75 1
+         %80 = OpCompositeConstruct %v2float %76 %77
+         %81 = OpCompositeConstruct %v2float %78 %79
+         %82 = OpCompositeConstruct %mat2v2float %80 %81
+               OpStore %mat %82
+         %84 = OpLoad %mat2v2float %mat
+         %85 = OpLoad %v2float %logicalNDC
+         %86 = OpMatrixTimesVector %v2float %84 %85
+         %88 = OpAccessChain %_ptr_PushConstant_v2float %push %int_1
+         %89 = OpLoad %v2float %88
+         %90 = OpFAdd %v2float %86 %89
+               OpStore %screenPos %90
+         %97 = OpLoad %v2float %screenPos
+         %98 = OpCompositeExtract %float %97 0
+         %99 = OpCompositeExtract %float %97 1
+        %100 = OpCompositeConstruct %v4float %98 %99 %float_0 %float_1
+        %102 = OpAccessChain %_ptr_Output_v4float %_ %int_0
+               OpStore %102 %100
+               OpReturn
+               OpFunctionEnd

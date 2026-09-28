@@ -84,6 +84,7 @@
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
             android:process=":game"
             android:resizeableActivity="true"
+            android:screenOrientation="fullUser"
             android:theme="@style/OmnidroidMaterialTheme.Game" />
 
         <service
@@ -100,6 +101,7 @@
             android:name="com.omnidroid.app.mobile.feature.gamemenu.GameMenuActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|smallestScreenSize"
             android:process=":game"
+            android:screenOrientation="behind"
             android:theme="@style/OmnidroidMaterialTheme.Menu" />
 
         <activity

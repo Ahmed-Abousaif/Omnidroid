@@ -76,19 +76,17 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import com.omnidroid.R
-import com.omnidroid.app.mobile.feature.gamedetails.GameDetailsColumnGap
-import com.omnidroid.app.mobile.feature.gamedetails.GameDetailsCoverWeight
-import com.omnidroid.app.mobile.feature.gamedetails.GameDetailsScreenPadding
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.SystemStatusIndicators
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 
 val LibraryTopBarRowHeight = 40.dp
+val LibraryTopBarPortraitHeight = 80.dp
 private val LibrarySearchCollapsedWidth = 200.dp
 private val LibrarySearchFieldHeight = 36.dp
 
@@ -110,10 +108,13 @@ fun LibraryTopBar(
     casting: Boolean = false,
     consoleTitleId: Int? = null,
     consoleGameCount: Int? = null,
+    portrait: Boolean = false,
+    portraitColumnWidth: Dp = Dp.Unspecified,
+    detailsMode: Boolean = false,
 ) {
     val overlayMode = overlayTitleId != null
     val compact = if (overlayMode) 0f else compactProgress.coerceIn(0f, 1f)
-    val showBack = !overlayMode && compact > 0.5f
+    val showBack = !overlayMode && if (portrait) detailsMode else compact > 0.5f
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val controllerNav = LocalControllerNavigation.current
@@ -157,17 +158,56 @@ fun LibraryTopBar(
     }
 
     CompositionLocalProvider(LocalContentColor provides Color.White) {
-        BoxWithConstraints(
+        if (portrait && !overlayMode && showBack) {
+            PortraitDetailsTopBar(
+                modifier = modifier,
+                gamepadConnected = gamepadConnected,
+                operationInProgress = operationInProgress,
+                onBackPressed = onBackPressed,
+            )
+        } else if (portrait && !overlayMode && !showBack) {
+            PortraitHomeTopBar(
+                modifier = modifier,
+                columnWidth = portraitColumnWidth,
+                operationInProgress = operationInProgress,
+                gamepadConnected = gamepadConnected,
+                searchQuery = searchQuery,
+                searchExpanded = searchExpanded,
+                consoleTitleId = consoleTitleId,
+                consoleGameCount = consoleGameCount,
+                dismissSearchOnOutsideTap = dismissSearchOnOutsideTap,
+                onScanPressed = onScanPressed,
+                onCastPressed = onCastPressed,
+                onSettingsPressed = onSettingsPressed,
+                onProfilePressed = onProfilePressed,
+                onSearchQueryChange = onSearchQueryChange,
+                onClearSearch = {
+                    onClearSearch()
+                    searchFocused = false
+                    controllerNav?.searchArmed?.value = false
+                    controllerNav?.textInputActive = false
+                    focusManager.clearFocus()
+                },
+                onSearchFocusChange = { focused ->
+                    searchFocused = focused
+                    controllerNav?.textInputActive = focused
+                    if (!focused && controllerNav?.searchArmed?.value == true) {
+                        controllerNav.searchArmed.value = false
+                    }
+                },
+                onSearchActivate = { controllerNav?.searchArmed?.value = true },
+                searchFocusRequester = controllerNav?.searchFocusRequester,
+                searchCanFocus = !gamepadConnected || searchArmed,
+                casting = casting,
+                onDismissSearch = { focusManager.clearFocus() },
+            )
+        } else Box(
             modifier =
                 modifier
                     .fillMaxWidth()
                     .then(if (dismissSearchOnOutsideTap) Modifier.fillMaxSize() else Modifier),
         ) {
-            val available =
-                (maxWidth - GameDetailsScreenPadding * 2 - GameDetailsColumnGap).coerceAtLeast(0.dp)
-            val detailsStart =
-                GameDetailsScreenPadding + available * GameDetailsCoverWeight + GameDetailsColumnGap
-            val backStart = if (overlayMode) 0.dp else lerp(LibrarySidebarInset, detailsStart, compact)
+            val backStart = if (overlayMode) 0.dp else LibrarySidebarInset
             if (dismissSearchOnOutsideTap) {
                 Box(
                     modifier =
@@ -350,6 +390,214 @@ fun LibraryTopBar(
                 }
             }
             }
+        }
+    }
+}
+
+@Composable
+private fun PortraitHomeTopBar(
+    modifier: Modifier,
+    columnWidth: Dp,
+    operationInProgress: Boolean,
+    gamepadConnected: Boolean,
+    searchQuery: String,
+    searchExpanded: Boolean,
+    consoleTitleId: Int?,
+    consoleGameCount: Int?,
+    dismissSearchOnOutsideTap: Boolean,
+    onScanPressed: () -> Unit,
+    onCastPressed: () -> Unit,
+    onSettingsPressed: () -> Unit,
+    onProfilePressed: () -> Unit,
+    onSearchQueryChange: (String) -> Unit,
+    onClearSearch: () -> Unit,
+    onSearchFocusChange: (Boolean) -> Unit,
+    onSearchActivate: () -> Unit,
+    searchFocusRequester: FocusRequester?,
+    searchCanFocus: Boolean,
+    casting: Boolean,
+    onDismissSearch: () -> Unit,
+) {
+    val widthModifier =
+        if (columnWidth != Dp.Unspecified) Modifier.width(columnWidth) else Modifier.fillMaxWidth()
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .then(if (dismissSearchOnOutsideTap) Modifier.fillMaxSize() else Modifier),
+    ) {
+        if (dismissSearchOnOutsideTap) {
+            Box(
+                modifier =
+                    Modifier
+                        .matchParentSize()
+                        .pointerInput(Unit) {
+                            detectTapGestures { onDismissSearch() }
+                        },
+            )
+        }
+        Column(
+            modifier =
+                widthModifier
+                    .height(LibraryTopBarPortraitHeight)
+                    .align(Alignment.TopCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color.Black,
+                            1f to Color.Transparent,
+                        ),
+                    ),
+        ) {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(LibraryTopBarRowHeight)
+                        .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PortraitActionButtons(
+                    operationInProgress = operationInProgress,
+                    casting = casting,
+                    onScanPressed = onScanPressed,
+                    onCastPressed = onCastPressed,
+                    onSettingsPressed = onSettingsPressed,
+                    onProfilePressed = onProfilePressed,
+                )
+                if (!searchExpanded && consoleTitleId != null) {
+                    val titleText =
+                        if (consoleGameCount != null) {
+                            "${stringResource(consoleTitleId)} ($consoleGameCount)"
+                        } else {
+                            stringResource(consoleTitleId)
+                        }
+                    Text(
+                        text = titleText,
+                        style =
+                            MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                            ),
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .padding(horizontal = 8.dp),
+                    )
+                } else {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+                SystemStatusIndicators(gamepadConnected = gamepadConnected)
+            }
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(LibraryTopBarRowHeight)
+                        .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                LibrarySearchField(
+                    query = searchQuery,
+                    onQueryChange = onSearchQueryChange,
+                    onClear = onClearSearch,
+                    onFocusChange = onSearchFocusChange,
+                    onActivate = onSearchActivate,
+                    focusRequester = searchFocusRequester,
+                    canFocus = searchCanFocus,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+        if (operationInProgress) {
+            LinearProgressIndicator(
+                modifier =
+                    widthModifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = LibraryTopBarPortraitHeight - 2.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PortraitDetailsTopBar(
+    modifier: Modifier,
+    gamepadConnected: Boolean,
+    operationInProgress: Boolean,
+    onBackPressed: () -> Unit,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(LibraryTopBarRowHeight)
+                    .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            FloatingChromeButton(onClick = onBackPressed) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.back),
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            SystemStatusIndicators(gamepadConnected = gamepadConnected)
+        }
+        if (operationInProgress) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+@Composable
+private fun PortraitActionButtons(
+    operationInProgress: Boolean,
+    casting: Boolean,
+    onScanPressed: () -> Unit,
+    onCastPressed: () -> Unit,
+    onSettingsPressed: () -> Unit,
+    onProfilePressed: () -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        FloatingChromeButton(onClick = onProfilePressed) {
+            Icon(
+                painter = painterResource(R.drawable.ic_profile_robot),
+                contentDescription = stringResource(R.string.title_profile),
+                tint = LibraryNeonGreen,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+        Spacer(modifier = Modifier.width(6.dp))
+        FloatingChromeButton(onClick = onSettingsPressed) {
+            Icon(
+                Icons.Outlined.Settings,
+                contentDescription = stringResource(R.string.settings),
+                modifier = Modifier.size(16.dp),
+            )
+        }
+        Spacer(modifier = Modifier.width(6.dp))
+        FloatingChromeButton(onClick = onCastPressed) {
+            Icon(
+                imageVector = if (casting) Icons.Filled.CastConnected else Icons.Filled.Cast,
+                contentDescription = stringResource(R.string.cast),
+                tint = if (casting) LibraryNeonGreen else LocalContentColor.current,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+        Spacer(modifier = Modifier.width(6.dp))
+        FloatingChromeButton(onClick = { if (!operationInProgress) onScanPressed() }) {
+            RescanIcon(
+                spinning = operationInProgress,
+                modifier = Modifier.size(16.dp),
+                contentDescription =
+                    stringResource(
+                        if (operationInProgress) R.string.library_scanning else R.string.rescan,
+                    ),
+            )
         }
     }
 }
