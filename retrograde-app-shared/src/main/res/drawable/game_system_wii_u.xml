@@ -1,0 +1,39 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="360"
+    android:viewportHeight="360">
+    <!-- Wii U GamePad Outer Body -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M90,100 C60,100 45,120 45,150 L45,210 C45,240 60,260 90,260 L270,260 C300,260 315,240 315,210 L315,150 C315,120 300,100 270,100 Z M90,112 L270,112 C292,112 303,126 303,150 L303,210 C303,234 292,248 270,248 L90,248 C68,248 57,234 57,210 L57,150 C57,126 68,112 90,112 Z"/>
+    <!-- Screen -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M110,130 H250 V230 H110 Z M118,138 V222 H242 V138 Z"/>
+    <!-- Left Analog Stick (Top Left) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M80,140 m-14,0 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0 M80,140 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0"/>
+    <!-- D-Pad (Below Left Analog) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M76,175 h8 v10 h10 v8 h-10 v10 h-8 v-10 h-10 v-8 h10 Z"/>
+    <!-- Right Analog Stick (Top Right) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M280,140 m-14,0 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0 M280,140 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0"/>
+    <!-- ABXY Face Buttons (Below Right Analog) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M280,175 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 M292,187 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 M280,199 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 M268,187 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0"/>
+    <!-- Home Button & Speakers -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M180,240 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 M130,238 h6 v2 h-6 Z M224,238 h6 v2 h-6 Z"/>
+    <!-- Camera at Top -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M180,120 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"/>
+</vector>

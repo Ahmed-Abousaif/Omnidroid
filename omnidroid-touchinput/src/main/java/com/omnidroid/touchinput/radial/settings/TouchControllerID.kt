@@ -98,6 +98,8 @@ enum class TouchControllerID {
     WII_REMOTE,
     WII_SIDEWAYS,
     DREAMCAST,
+    WII_U_GAMEPAD,
+    WII_U_PRO,
     ;
 
     class Config(
@@ -298,6 +300,12 @@ enum class TouchControllerID {
                     Config(
                         { modifier, settings -> DreamcastLeft(modifier, settings) },
                         { modifier, settings -> DreamcastRight(modifier, settings) },
+                    )
+
+                WII_U_GAMEPAD, WII_U_PRO ->
+                    Config(
+                        { modifier, settings -> WiiClassicLeft(modifier, settings) },
+                        { modifier, settings -> WiiClassicRight(modifier, settings) },
                     )
             }
         }

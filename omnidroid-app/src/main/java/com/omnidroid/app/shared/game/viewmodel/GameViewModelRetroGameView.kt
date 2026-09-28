@@ -24,6 +24,7 @@ import com.omnidroid.lib.game.GameLoader
 import com.omnidroid.lib.game.GameLoaderError
 import com.omnidroid.lib.game.GameLoaderException
 import com.omnidroid.lib.graphics.VulkanDetector
+import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.db.entity.Game
@@ -218,7 +219,8 @@ class GameViewModelRetroGameView(
                     it.key == "dolphin_renderer" ||
                     it.key == "ppsspp_rendering_backend" ||
                     it.key == "ppsspp_gpu_backend" ||
-                    it.key == "armsx2_renderer"
+                    it.key == "armsx2_renderer" ||
+                    it.key == "cemu_graphics_api"
             ) && it.value.equals("vulkan", ignoreCase = true)
         }
     }
@@ -276,9 +278,11 @@ class GameViewModelRetroGameView(
                     screenFilter,
                     GameSystem.findById(gameData.game.systemId),
                 )
-            preferLowLatencyAudio = lowLatencyAudio
+            preferLowLatencyAudio = lowLatencyAudio && !systemCoreConfig.forceStandardAudioBuffer
             rumbleEventsEnabled = requestRumble
             skipDuplicateFrames = systemCoreConfig.skipDuplicateFrames
+            allowFrameCatchUp = systemCoreConfig.allowFrameCatchUp
+            nonBlockingVulkanPresent = systemCoreConfig.nonBlockingVulkanPresent
             enableMicrophone = requestMicrophone
             immersiveMode = buildImmersiveModeConfiguration(enableImmersiveMode)
         }

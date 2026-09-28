@@ -1497,6 +1497,8 @@ data class GameSystem(
                             statesSupported = false,
                             supportsLibretroVFS = true,
                             supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
+                            allowFrameCatchUp = false,
+                            forceStandardAudioBuffer = true,
                         ),
                     ),
                     uniqueExtensions = listOf("3ds"),
@@ -1533,6 +1535,9 @@ data class GameSystem(
                                     CoreVariable("armsx2_upscale", "1x"),
                                     CoreVariable("armsx2_blending_accuracy", "Basic"),
                                     CoreVariable("armsx2_hw_download_mode", "Disabled"),
+                                    // ARM SX2 exposes no SPU2 sync or time-stretch variable, so the
+                                    // frontend stretcher is the only one. Cycle skip stays mild
+                                    // until LRDStats shows EE time is the retro_run bottleneck.
                                     CoreVariable("armsx2_ee_cycle_skip", "mild"),
                                     CoreVariable("armsx2_ee_cycle_rate", "100%"),
                                     CoreVariable("armsx2_mtvu", "enabled"),
@@ -1697,6 +1702,9 @@ data class GameSystem(
                             supportsLibretroVFS = false,
                             skipDuplicateFrames = false,
                             supportedOnlyArchitectures = setOf("arm64-v8a"),
+                            allowFrameCatchUp = false,
+                            forceStandardAudioBuffer = true,
+                            nonBlockingVulkanPresent = true,
                         ),
                     ),
                     uniqueExtensions = listOf(),
@@ -1791,6 +1799,8 @@ data class GameSystem(
                                     ),
                                 ),
                             skipDuplicateFrames = false,
+                            allowFrameCatchUp = false,
+                            forceStandardAudioBuffer = true,
                         ),
                     ),
                     uniqueExtensions = listOf("gcm", "gcz", "tgc"),
@@ -1902,6 +1912,8 @@ data class GameSystem(
                                     ),
                                 ),
                             skipDuplicateFrames = false,
+                            allowFrameCatchUp = false,
+                            forceStandardAudioBuffer = true,
                         ),
                     ),
                     uniqueExtensions = listOf("wbfs", "wad"),
@@ -2036,6 +2048,146 @@ data class GameSystem(
                             scanByPathAndSupportedExtensions = true,
                         ),
                     hasMultiDiskSupport = true,
+                ),
+                GameSystem(
+                    SystemID.WII_U,
+                    "Nintendo - Wii U",
+                    R.string.game_system_title_wii_u,
+                    R.string.game_system_abbr_wii_u,
+                    listOf(
+                        SystemCoreConfig(
+                            CoreID.CEMU,
+                            controllerConfigs =
+                                hashMapOf(
+                                    0 to
+                                        arrayListOf(
+                                            ControllerConfigs.WII_U_GAMEPAD,
+                                            ControllerConfigs.WII_U_PRO,
+                                        ),
+                                    1 to
+                                        arrayListOf(
+                                            ControllerConfigs.WII_U_PRO,
+                                            ControllerConfigs.WII_U_GAMEPAD,
+                                        ),
+                                    2 to
+                                        arrayListOf(
+                                            ControllerConfigs.WII_U_PRO,
+                                            ControllerConfigs.WII_U_GAMEPAD,
+                                        ),
+                                    3 to
+                                        arrayListOf(
+                                            ControllerConfigs.WII_U_PRO,
+                                            ControllerConfigs.WII_U_GAMEPAD,
+                                        ),
+                                ),
+                            rumbleSupported = true,
+                            statesSupported = false,
+                            supportsLibretroVFS = false,
+                            supportedOnlyArchitectures = setOf("arm64-v8a"),
+                            defaultSettings =
+                                listOf(
+                                    CoreVariable("cemu_graphics_api", "Vulkan"),
+                                    CoreVariable("cemu_cpu_mode", "recompiler_multi"),
+                                    CoreVariable("cemu_screen_view", "tv"),
+                                    CoreVariable("cemu_audio_volume", "100"),
+                                ),
+                            exposedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "cemu_graphics_api",
+                                        R.string.setting_graphics_api,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "Vulkan",
+                                                R.string.value_graphics_api_vulkan,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "cemu_cpu_mode",
+                                        R.string.setting_cemu_cpu_mode,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "recompiler_multi",
+                                                R.string.value_cemu_cpu_multi,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "recompiler_dual",
+                                                R.string.value_cemu_cpu_dual,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "recompiler_single",
+                                                R.string.value_cemu_cpu_single,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "interpreter",
+                                                R.string.value_cemu_cpu_interpreter,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "cemu_screen_view",
+                                        R.string.setting_cemu_screen_view,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "tv",
+                                                R.string.value_cemu_screen_tv,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "pad",
+                                                R.string.value_cemu_screen_pad,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "side_by_side",
+                                                R.string.value_cemu_screen_side_by_side,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "cemu_audio_volume",
+                                        R.string.setting_cemu_audio_volume,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "100",
+                                                R.string.value_cemu_volume_100,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "80",
+                                                R.string.value_cemu_volume_80,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "60",
+                                                R.string.value_cemu_volume_60,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "40",
+                                                R.string.value_cemu_volume_40,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "20",
+                                                R.string.value_cemu_volume_20,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "0",
+                                                R.string.value_cemu_volume_0,
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            skipDuplicateFrames = false,
+                            allowFrameCatchUp = false,
+                            forceStandardAudioBuffer = true,
+                        ),
+                    ),
+                    uniqueExtensions = listOf("wud", "wux", "wua", "rpx"),
+                    supportedExtensions = listOf("wud", "wux", "wua", "iso", "rpx", "elf"),
+                    scanOptions =
+                        ScanOptions(
+                            scanByFilename = false,
+                            scanByUniqueExtension = true,
+                            scanByPathAndSupportedExtensions = true,
+                        ),
+                    hasMultiDiskSupport = false,
                 ),
             )
 

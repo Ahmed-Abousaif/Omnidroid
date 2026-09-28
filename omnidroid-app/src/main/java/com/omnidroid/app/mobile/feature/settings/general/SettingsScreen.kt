@@ -30,10 +30,12 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Monitor
 import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -426,6 +428,23 @@ private fun AdvancedLinks(
 @Composable
 private fun AboutSettings() {
     val context = LocalContext.current
+    var showLicenses by remember { mutableStateOf(false) }
+    if (showLicenses) {
+        AlertDialog(
+            onDismissRequest = { showLicenses = false },
+            confirmButton = {
+                TextButton(onClick = { showLicenses = false }) {
+                    Text(text = stringResource(id = R.string.settings_action_close))
+                }
+            },
+            title = { Text(text = stringResource(id = R.string.settings_title_open_source_licenses)) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    Text(text = stringResource(id = R.string.settings_license_soundtouch))
+                }
+            },
+        )
+    }
 
     OmnidroidCardSettingsGroup(
         title = { Text(text = stringResource(id = R.string.settings_section_privacy)) },
@@ -457,6 +476,18 @@ private fun AboutSettings() {
                 Text(text = stringResource(id = R.string.settings_description_donate_ko_fi))
             },
             onClick = { openExternalUrl(context, context.getString(R.string.url_donate_ko_fi)) },
+        )
+    }
+
+    OmnidroidCardSettingsGroup(
+        title = { Text(text = stringResource(id = R.string.settings_title_open_source_licenses)) },
+    ) {
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_open_source_licenses)) },
+            subtitle = {
+                Text(text = stringResource(id = R.string.settings_description_open_source_licenses))
+            },
+            onClick = { showLicenses = true },
         )
     }
 
