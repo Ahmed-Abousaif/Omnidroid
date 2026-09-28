@@ -105,6 +105,10 @@
     <string name="settings_description_donate_buy_me_a_coffee">Tip to support continued development</string>
     <string name="settings_title_donate_ko_fi">Ko-fi</string>
     <string name="settings_description_donate_ko_fi">Support Omnidroid on Ko-fi</string>
+    <string name="settings_title_open_source_licenses">Open source licenses</string>
+    <string name="settings_description_open_source_licenses">Libraries used by Omnidroid</string>
+    <string name="settings_action_close">Close</string>
+    <string name="settings_license_soundtouch">SoundTouch audio processing library\nCopyright (c) Olli Parviainen\nLicensed under the GNU Lesser General Public License, version 2.1.\nUsed to keep audio at the correct pitch when a game runs below full speed.\nThe full license text ships with the SoundTouch sources.</string>
     <string name="settings_section_about_developer">About the developer</string>
     <string name="settings_title_about_developer">Ahmed Abousaif</string>
     <string name="settings_description_about_developer">Creator of Omnidroid — rebuilding the Lemuroid experience into a faster, better, and more seamless Android game launcher.</string>

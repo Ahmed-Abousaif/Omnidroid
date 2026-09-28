@@ -15,6 +15,7 @@ import com.swordfish.libretrodroid.Controller
 import com.swordfish.libretrodroid.GLRetroView
 import com.swordfish.libretrodroid.GLRetroViewData
 import com.swordfish.libretrodroid.LibretroDroid
+import com.swordfish.libretrodroid.RetroException
 import com.swordfish.libretrodroid.RumbleEvent
 import com.swordfish.libretrodroid.ShaderConfig
 import com.swordfish.libretrodroid.Variable
@@ -42,6 +43,7 @@ class VulkanRetroView(
 
     private val isEmulationReady = AtomicBoolean(false)
     private val isGameLoaded = AtomicBoolean(false)
+    private var isInitializationFailed = false
     private var isTouchDisabled = false
 
     override var audioEnabled: Boolean = true
@@ -70,11 +72,24 @@ class VulkanRetroView(
         set(value) {
             field = value
             if (value != null) {
-                runCatching {
-                    LibretroDroid.setViewport(value.left, value.top, value.width(), value.height())
+                val rect = RectF(value)
+                val apply = {
+                    runCatching {
+                        LibretroDroid.setViewport(rect.left, rect.top, rect.width(), rect.height())
+                    }
+                    Unit
+                }
+                val thread = emulationThread
+                if (thread != null) {
+                    thread.postAction(apply)
+                } else {
+                    apply()
                 }
             }
         }
+
+    private var pendingSurfaceWidth = 0
+    private var pendingSurfaceHeight = 0
 
     init {
         holder.addCallback(this)
@@ -86,38 +101,54 @@ class VulkanRetroView(
 
     override fun surfaceCreated(holder: SurfaceHolder) {
         Timber.i("VulkanRetroView: surfaceCreated")
+        if (isInitializationFailed) {
+            Timber.w("VulkanRetroView: skipping emulation thread start because initialization failed")
+            return
+        }
+        if (!stopEmulationThread()) {
+            Timber.e("VulkanRetroView: previous emulation thread is still running; not starting another")
+            return
+        }
         LibretroDroid.setSurface(holder.surface)
         startEmulationThread(holder.surface)
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
         Timber.i("VulkanRetroView: surfaceChanged: ${width}x$height")
+        pendingSurfaceWidth = width
+        pendingSurfaceHeight = height
         emulationThread?.onSurfaceChanged(width, height)
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         Timber.i("VulkanRetroView: surfaceDestroyed")
-        stopEmulationThread()
+        if (!stopEmulationThread()) {
+            Timber.e("VulkanRetroView: leaving the emulation thread running across surface destruction")
+            return
+        }
         LibretroDroid.onSurfaceDestroyed()
     }
 
     private fun startEmulationThread(surface: Surface) {
-        stopEmulationThread()
         val thread = EmulationThread(surface)
         emulationThread = thread
         thread.start()
     }
 
-    private fun stopEmulationThread() {
-        emulationThread?.let {
-            it.requestStop()
-            try {
-                it.join(1000)
-            } catch (e: InterruptedException) {
-                Timber.w(e, "Interrupted waiting for emulation thread")
-            }
+    private fun stopEmulationThread(): Boolean {
+        val thread = emulationThread ?: return true
+        thread.requestStop()
+        try {
+            thread.join(1000)
+        } catch (e: InterruptedException) {
+            Timber.w(e, "Interrupted waiting for emulation thread")
+        }
+        if (thread.isAlive) {
+            Timber.e("VulkanEmulationThread did not stop within 1s")
+            return false
         }
         emulationThread = null
+        return true
     }
 
     override fun onCreate(owner: LifecycleOwner) {
@@ -127,7 +158,7 @@ class VulkanRetroView(
         val refreshRate = context.display?.refreshRate ?: 60f
         val language = Locale.getDefault().language
 
-        runCatching {
+        try {
             LibretroDroidBridge.create(
                 LibretroDroid.GLES_VERSION_VULKAN,
                 data.coreFilePath,
@@ -140,13 +171,21 @@ class VulkanRetroView(
                 data.gameVirtualFiles.isNotEmpty(),
                 data.enableMicrophone,
                 data.skipDuplicateFrames,
+                data.allowFrameCatchUp,
                 data.immersiveMode,
                 language,
             )
             data.rumbleEventsEnabled.let { LibretroDroid.setRumbleEnabled(it) }
+            LibretroDroid.setNonBlockingVulkanPresent(data.nonBlockingVulkanPresent)
             LibretroDroid.setViewportAlignment(data.viewportAlignment.value)
-        }.onFailure { t ->
-            Timber.e(t, "Failed to create LibretroDroid in onCreate")
+        } catch (e: RetroException) {
+            Timber.e(e, "RetroException in VulkanRetroView onCreate (code=${e.errorCode})")
+            isInitializationFailed = true
+            errorsSubject.tryEmit(e.errorCode)
+        } catch (t: Throwable) {
+            Timber.e(t, "Failed to create LibretroDroid in VulkanRetroView onCreate")
+            isInitializationFailed = true
+            errorsSubject.tryEmit(LibretroDroid.ERROR_LOAD_LIBRARY)
         }
     }
 
@@ -163,7 +202,10 @@ class VulkanRetroView(
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
-        stopEmulationThread()
+        if (!stopEmulationThread()) {
+            Timber.e("VulkanRetroView: skipping LibretroDroid.destroy because the emulation thread is still running")
+            return
+        }
         if (isGameLoaded.get()) {
             runCatching { LibretroDroid.destroy() }
         }
@@ -346,23 +388,29 @@ class VulkanRetroView(
 
                 LibretroDroid.setSurface(surface)
 
-                // Load game
-                val gameFilePath = data.gameFilePath
-                val gameVirtualFiles = data.gameVirtualFiles
-                val gameFileBytes = data.gameFileBytes
+                if (!isGameLoaded.get()) {
+                    val gameFilePath = data.gameFilePath
+                    val gameVirtualFiles = data.gameVirtualFiles
+                    val gameFileBytes = data.gameFileBytes
 
-                when {
-                    gameFilePath != null -> LibretroDroid.loadGameFromPath(gameFilePath)
-                    gameVirtualFiles.isNotEmpty() -> LibretroDroidBridge.loadGameFromVirtualFiles(gameVirtualFiles)
-                    gameFileBytes != null -> LibretroDroid.loadGameFromBytes(gameFileBytes)
-                }
+                    when {
+                        gameFilePath != null -> LibretroDroid.loadGameFromPath(gameFilePath)
+                        gameVirtualFiles.isNotEmpty() -> LibretroDroidBridge.loadGameFromVirtualFiles(gameVirtualFiles)
+                        gameFileBytes != null -> LibretroDroid.loadGameFromBytes(gameFileBytes)
+                    }
 
-                // Restore SRAM if present
-                data.saveRAMState?.let { sram ->
-                    LibretroDroid.unserializeSRAM(sram)
+                    data.saveRAMState?.let { sram ->
+                        LibretroDroid.unserializeSRAM(sram)
+                    }
+                    isGameLoaded.set(true)
                 }
 
                 LibretroDroid.onSurfaceCreated()
+                if (pendingSurfaceWidth > 0 && pendingSurfaceHeight > 0) {
+                    runCatching {
+                        LibretroDroid.onSurfaceChanged(pendingSurfaceWidth, pendingSurfaceHeight)
+                    }
+                }
                 LibretroDroid.resume()
                 isGameLoaded.set(true)
                 isEmulationReady.set(true)

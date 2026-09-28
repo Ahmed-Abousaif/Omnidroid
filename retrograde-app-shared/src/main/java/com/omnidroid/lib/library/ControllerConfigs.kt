@@ -494,5 +494,43 @@ object ControllerConfigs {
                     TILT_CONFIGURATION_L_R,
                 ),
         )
+
+    val WII_U_GAMEPAD =
+        ControllerConfig(
+            "wii_u_gamepad",
+            R.string.controller_wii_u_gamepad,
+            TouchControllerID.WII_U_GAMEPAD,
+            allowTouchRotation = true,
+            libretroDescriptor = "Wii U GamePad",
+            libretroId = 1,
+            tiltConfigurations =
+                listOf(
+                    TILT_CONFIGURATION_DISABLED,
+                    TILT_CONFIGURATION_CROSS,
+                    TILT_CONFIGURATION_ANALOG_LEFT,
+                    TILT_CONFIGURATION_ANALOG_RIGHT,
+                    TILT_CONFIGURATION_L1_R1,
+                    TILT_CONFIGURATION_L2_R2,
+                ),
+        )
+
+    val WII_U_PRO =
+        ControllerConfig(
+            "wii_u_pro",
+            R.string.controller_wii_u_pro,
+            TouchControllerID.WII_U_PRO,
+            allowTouchRotation = true,
+            libretroDescriptor = "Wii U Pro Controller",
+            libretroId = 257,
+            tiltConfigurations =
+                listOf(
+                    TILT_CONFIGURATION_DISABLED,
+                    TILT_CONFIGURATION_CROSS,
+                    TILT_CONFIGURATION_ANALOG_LEFT,
+                    TILT_CONFIGURATION_ANALOG_RIGHT,
+                    TILT_CONFIGURATION_L1_R1,
+                    TILT_CONFIGURATION_L2_R2,
+                ),
+        )
 }
 

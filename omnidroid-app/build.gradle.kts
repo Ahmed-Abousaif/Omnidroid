@@ -57,6 +57,7 @@ android {
                 ":omnidroid_core_armsx2",
                 ":omnidroid_core_dolphin",
                 ":omnidroid_core_flycast",
+                ":omnidroid_core_cemu",
             ),
         )
     }
