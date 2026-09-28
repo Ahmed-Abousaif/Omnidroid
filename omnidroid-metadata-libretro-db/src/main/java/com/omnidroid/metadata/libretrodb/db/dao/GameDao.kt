@@ -6,15 +6,55 @@ import com.omnidroid.metadata.libretrodb.db.entity.LibretroRom
 
 @Dao
 interface GameDao {
-    @Query("SELECT * FROM games WHERE romName LIKE :romName")
-    suspend fun findByName(romName: String): List<LibretroRom>?
+    @Query(
+        """
+        SELECT * FROM games
+        WHERE system = :system AND crc32 = :crc
+        LIMIT 1
+        """,
+    )
+    suspend fun findBySystemAndCrc(
+        system: String,
+        crc: String,
+    ): LibretroRom?
 
-    @Query("SELECT * FROM games WHERE romName = :romName LIMIT 1")
-    suspend fun findByFileName(romName: String): LibretroRom?
+    @Query(
+        """
+        SELECT * FROM games
+        WHERE system = :system AND serial = :serial
+        ORDER BY CASE WHEN size = :size THEN 0 ELSE 1 END
+        LIMIT 1
+        """,
+    )
+    suspend fun findBySystemAndSerial(
+        system: String,
+        serial: String,
+        size: Long,
+    ): LibretroRom?
 
-    @Query("SELECT * FROM games WHERE crc32 = :crc LIMIT 1")
-    suspend fun findByCRC(crc: String): LibretroRom?
+    @Query(
+        """
+        SELECT * FROM games
+        WHERE system = :system AND code = :code
+        ORDER BY CASE WHEN size = :size THEN 0 ELSE 1 END
+        LIMIT 1
+        """,
+    )
+    suspend fun findBySystemAndCode(
+        system: String,
+        code: String,
+        size: Long,
+    ): LibretroRom?
 
-    @Query("SELECT * FROM games WHERE serial = :serial LIMIT 1")
-    suspend fun findBySerial(serial: String): LibretroRom?
+    @Query(
+        """
+        SELECT * FROM games
+        WHERE system = :system AND romHash = :romHash
+        LIMIT 1
+        """,
+    )
+    suspend fun findBySystemAndRomHash(
+        system: String,
+        romHash: Long,
+    ): LibretroRom?
 }

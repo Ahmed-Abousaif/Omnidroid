@@ -26,6 +26,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.main.MainRoute
+import com.omnidroid.app.mobile.feature.main.navigateToRoute
 import com.omnidroid.app.shared.covers.RawgCoverStore
 import com.omnidroid.app.shared.library.LibraryIndexScheduler
 import com.omnidroid.app.utils.android.settings.OmnidroidCardSettingsGroup
@@ -209,6 +210,16 @@ private fun GeneralSettings(
             state = booleanPreferenceState(R.string.pref_key_allow_direct_game_load, true),
             title = { Text(text = stringResource(id = R.string.settings_title_direct_game_load)) },
             subtitle = { Text(text = stringResource(id = R.string.settings_description_direct_game_load)) },
+        )
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_game_databases)) },
+            subtitle = { Text(text = stringResource(id = R.string.settings_description_game_databases)) },
+            onClick = { navController.navigateToRoute(MainRoute.SETTINGS_GAME_DATABASES) },
+        )
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_unrecognized_files)) },
+            subtitle = { Text(text = stringResource(id = R.string.settings_description_unrecognized_files)) },
+            onClick = { navController.navigateToRoute(MainRoute.SETTINGS_UNRECOGNIZED) },
         )
         OmnidroidSettingsMenuLink(
             title = { Text(text = stringResource(id = R.string.settings_title_reset_settings)) },

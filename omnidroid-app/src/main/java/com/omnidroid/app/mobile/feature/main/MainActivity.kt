@@ -92,6 +92,10 @@ import com.omnidroid.app.mobile.feature.settings.inputdevices.InputDevicesSettin
 import com.omnidroid.app.mobile.feature.settings.inputdevices.InputDevicesSettingsViewModel
 import com.omnidroid.app.mobile.feature.settings.savesync.SaveSyncSettingsScreen
 import com.omnidroid.app.mobile.feature.settings.savesync.SaveSyncSettingsViewModel
+import com.omnidroid.app.mobile.feature.settings.slices.GameDatabasesScreen
+import com.omnidroid.app.mobile.feature.settings.slices.GameDatabasesViewModel
+import com.omnidroid.app.mobile.feature.settings.unrecognized.UnrecognizedFilesScreen
+import com.omnidroid.app.mobile.feature.settings.unrecognized.UnrecognizedFilesViewModel
 import com.omnidroid.app.mobile.feature.shortcuts.ShortcutsGenerator
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
 import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
@@ -121,6 +125,7 @@ import com.omnidroid.lib.android.RetrogradeComponentActivity
 import com.omnidroid.lib.bios.BiosManager
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.CoresSelection
+import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.library.MetaSystemID
 import com.omnidroid.lib.library.SystemID
 import com.omnidroid.lib.library.db.RetrogradeDatabase
@@ -144,6 +149,12 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
     @Inject
     lateinit var retrogradeDb: RetrogradeDatabase
+
+    @Inject
+    lateinit var libretroDb: com.omnidroid.metadata.libretrodb.db.LibretroDBManager
+
+    @Inject
+    lateinit var sliceInstaller: MetadataSliceInstaller
 
     @Inject
     lateinit var settingsManager: com.omnidroid.app.mobile.feature.settings.SettingsManager
@@ -601,6 +612,40 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                         ),
                                 ),
                             navController = navController,
+                        )
+                    }
+                    composable(MainRoute.SETTINGS_GAME_DATABASES) {
+                        GameDatabasesScreen(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(top = LibraryTopBarRowHeight),
+                            viewModel =
+                                viewModel(
+                                    factory =
+                                        GameDatabasesViewModel.Factory(
+                                            applicationContext,
+                                            libretroDb,
+                                            sliceInstaller,
+                                        ),
+                                ),
+                        )
+                    }
+                    composable(MainRoute.SETTINGS_UNRECOGNIZED) {
+                        UnrecognizedFilesScreen(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(top = LibraryTopBarRowHeight),
+                            viewModel =
+                                viewModel(
+                                    factory =
+                                        UnrecognizedFilesViewModel.Factory(
+                                            retrogradeDb,
+                                        ),
+                                ),
                         )
                     }
                     composable(MainRoute.SETTINGS_BIOS) {

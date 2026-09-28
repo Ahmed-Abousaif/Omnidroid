@@ -29,6 +29,9 @@ import com.omnidroid.lib.R
 import com.omnidroid.lib.library.db.entity.DataFile
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
+import com.omnidroid.lib.library.scan.ChdSectors
+import com.omnidroid.lib.library.scan.LibraryFileFilter
+import com.omnidroid.lib.library.scan.RandomAccessBytes
 import com.omnidroid.lib.storage.BaseStorageFile
 import com.omnidroid.lib.storage.DirectoriesManager
 import com.omnidroid.lib.storage.RomFiles
@@ -57,6 +60,10 @@ class LocalStorageProvider(
     override fun listBaseStorageFiles(): Flow<List<BaseStorageFile>> =
         walkDirectory(getExternalFolder() ?: directoriesManager.getInternalRomsDirectory())
 
+    override fun openRandomAccess(uri: Uri): RandomAccessBytes? = ChannelBytes.open(context, uri)
+
+    override fun openChd(uri: Uri): ChdSectors? = ChdImages.open(context, uri)
+
     override fun getStorageFile(baseStorageFile: BaseStorageFile): StorageFile? {
         return DocumentFileParser.parseDocumentFile(context, baseStorageFile)
     }
@@ -82,7 +89,13 @@ class LocalStorageProvider(
                 val newFiles = groups[false] ?: listOf()
 
                 directories.addAll(newDirectories)
-                emit((newFiles.map { BaseStorageFile(it.name, it.length(), it.toUri(), it.path) }))
+                val accepted =
+                    newFiles.filter { LibraryFileFilter.accept(it.name, it.length()) }
+                emit(
+                    accepted.map {
+                        BaseStorageFile(it.name, it.length(), it.toUri(), it.path, it.lastModified())
+                    },
+                )
             }
         }
 

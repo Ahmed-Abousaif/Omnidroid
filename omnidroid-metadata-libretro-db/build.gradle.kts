@@ -12,6 +12,7 @@ dependencies {
     implementation(deps.libs.androidx.room.ktx)
     implementation(deps.libs.hilt.android)
     implementation(deps.libs.kotlinxCoroutinesAndroid)
+    implementation(deps.libs.retrofit)
 
     ksp(deps.libs.androidx.room.compiler)
     ksp(deps.libs.hilt.compiler)

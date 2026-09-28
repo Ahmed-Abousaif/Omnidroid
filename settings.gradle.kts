@@ -8,6 +8,8 @@ pluginManagement {
 }
 
 include(
+    ":libretro-db-builder",
+    ":omnidroid-chd",
     ":retrograde-util",
     ":retrograde-app-shared",
     ":omnidroid-touchinput",
@@ -25,6 +27,7 @@ if (file("libretrodroid").exists()) {
 }
 
 project(":bundled-cores").projectDir = File("omnidroid-cores/bundled-cores")
+project(":libretro-db-builder").projectDir = File("omnidroid-cores/tools/libretro-db-builder")
 
 fun usePlayDynamicFeatures(): Boolean {
     val task = gradle.startParameter.taskRequests.toString()

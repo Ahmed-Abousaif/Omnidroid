@@ -158,6 +158,14 @@
     <string name="settings_bios_category_not_detected">Supported</string>
 
     <string name="settings_title_reset_settings">Factory reset</string>
+    <string name="settings_title_unrecognized_files">Not recognised</string>
+    <string name="settings_title_game_databases">Game databases</string>
+    <string name="settings_description_game_databases">Downloaded title data for each console</string>
+    <string name="game_databases_missing">Not downloaded</string>
+    <string name="game_databases_retry">Retry</string>
+    <string name="game_databases_installed">%1$d games, %2$s</string>
+    <string name="settings_description_unrecognized_files">Files the scanner could not add to your library</string>
+    <string name="unrecognized_files_empty">Every scanned file was recognised.</string>
     <string name="settings_description_reset_settings">Reset Omnidroid to its factory settings</string>
 
     <string name="settings_title_advanced_settings">Advanced settings</string>

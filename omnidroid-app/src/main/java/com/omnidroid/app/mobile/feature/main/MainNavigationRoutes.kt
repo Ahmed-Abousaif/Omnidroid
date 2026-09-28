@@ -91,6 +91,18 @@ enum class MainRoute(
         parent = SETTINGS,
         showBottomNavigation = false,
     ),
+    SETTINGS_GAME_DATABASES(
+        route = "settings/databases",
+        titleId = R.string.settings_title_game_databases,
+        parent = SETTINGS_ADVANCED,
+        showBottomNavigation = false,
+    ),
+    SETTINGS_UNRECOGNIZED(
+        route = "settings/unrecognized",
+        titleId = R.string.settings_title_unrecognized_files,
+        parent = SETTINGS_ADVANCED,
+        showBottomNavigation = false,
+    ),
     SETTINGS_BIOS(
         route = "settings/bios",
         titleId = R.string.settings_title_display_bios_info,

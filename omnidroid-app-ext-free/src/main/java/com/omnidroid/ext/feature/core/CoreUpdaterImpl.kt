@@ -24,6 +24,7 @@ import android.content.SharedPreferences
 import com.omnidroid.lib.core.CoreLibraryLocator
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.GithubCoreDownloader
+import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.storage.DirectoriesManager
@@ -35,6 +36,7 @@ import retrofit2.Retrofit
 class CoreUpdaterImpl(
     private val directoriesManager: DirectoriesManager,
     retrofit: Retrofit,
+    private val sliceInstaller: MetadataSliceInstaller,
 ) : CoreUpdater {
     private val api = retrofit.create(CoreUpdater.CoreManagerApi::class.java)
     private val githubCoreDownloader = GithubCoreDownloader(directoriesManager, api)
@@ -48,6 +50,7 @@ class CoreUpdaterImpl(
             .onEach { retrieveAssets(it, sharedPreferences) }
             .onEach { retrieveFile(context, it) }
             .collect()
+        sliceInstaller.ensureSlices(context, coreIDs)
     }
 
     private suspend fun retrieveFile(

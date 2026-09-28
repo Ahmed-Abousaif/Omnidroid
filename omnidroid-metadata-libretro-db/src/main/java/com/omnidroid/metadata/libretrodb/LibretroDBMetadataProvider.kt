@@ -1,220 +1,127 @@
 package com.omnidroid.metadata.libretrodb
 
-import com.omnidroid.common.kotlin.filterNullable
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemID
 import com.omnidroid.lib.library.metadata.GameMetadata
 import com.omnidroid.lib.library.metadata.GameMetadataProvider
-import com.omnidroid.lib.storage.StorageFile
+import com.omnidroid.lib.library.scan.MetadataKey
+import com.omnidroid.lib.library.scan.MetadataKeyType
+import com.omnidroid.lib.library.scan.ScanKeys
 import com.omnidroid.metadata.libretrodb.db.LibretroDBManager
 import com.omnidroid.metadata.libretrodb.db.LibretroDatabase
 import com.omnidroid.metadata.libretrodb.db.entity.LibretroRom
-import timber.log.Timber
-import java.util.Locale
+import java.net.URLEncoder
 
-class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
-    GameMetadataProvider {
-    companion object {
-        // Disallowed filesystem, URI-special, control, and path traversal characters
-        // Apostrophe is kept: libretro thumbnail filenames preserve it
-        // (e.g. "Disney's Hercules.png"), and only these characters become "_".
-        private val THUMB_REPLACE = Regex("[&*/:`<>?\\\\|\"#%^~;\\[\\]{}@+=!\$]")
-        private val CONTROL_CHARS = Regex("[\\p{Cntrl}\\u0000-\\u001F\\u007F-\\u009F]")
-        private val PATH_TRAVERSAL = Regex("\\.{2,}")
-        private const val MAX_TITLE_LENGTH = 200
-        private const val BASE_THUMBNAIL_URL = "http://thumbnails.libretro.com"
-        private const val IMAGE_TYPE = "Named_Boxarts"
-    }
+class LibretroDBMetadataProvider(
+    private val ovgdbManager: LibretroDBManager,
+) : GameMetadataProvider {
+    override val databaseVersion: Int = LibretroDatabase.VERSION
 
-    private val sortedSystemIds: List<String> by lazy {
-        SystemID.values()
-            .map { it.dbname }
-            .sortedByDescending { it.length }
-    }
-
-    override suspend fun retrieveMetadata(storageFile: StorageFile): GameMetadata? {
-        val db = ovgdbManager.dbInstance
-
-        Timber.d("Looking metadata for file: $storageFile")
-
-        val metadata =
-            runCatching {
-                // Folder name is the intentional disambiguator for shared extensions
-                // (e.g. PS2 ISOs also match PLAYSTATION magic and would otherwise become PSX).
-                val pathSystemMetadata = findByPathAndSupportedExtension(storageFile)
-
-                findByCRC(storageFile, db)?.takeUnless { conflictsWithPath(it, pathSystemMetadata) }
-                    ?: findBySerial(storageFile, db)?.takeUnless {
-                        conflictsWithPath(it, pathSystemMetadata)
-                    }
-                    ?: findByFilename(db, storageFile)?.takeUnless {
-                        conflictsWithPath(it, pathSystemMetadata)
-                    }
-                    ?: findByPathAndFilename(db, storageFile)?.takeUnless {
-                        conflictsWithPath(it, pathSystemMetadata)
-                    }
-                    ?: findByUniqueExtension(storageFile)
-                    ?: pathSystemMetadata
-                    ?: findByKnownSystem(storageFile)
-            }.getOrElse {
-                Timber.e("Error in retrieving $storageFile metadata: $it... Skipping.")
-                null
+    override suspend fun sliceStamps(): Map<String, String> {
+        val stamps = HashMap<String, String>()
+        ovgdbManager.dbInstance.sliceDao().all().forEach { slice ->
+            slice.systems.split(',').forEach { system ->
+                stamps[system] = slice.sha256
             }
-
-        metadata?.let { Timber.d("Metadata retrieved for item: $it") }
-
-        return metadata
-    }
-
-    private fun conflictsWithPath(
-        metadata: GameMetadata,
-        pathMetadata: GameMetadata?,
-    ): Boolean {
-        return pathMetadata != null && pathMetadata.system != metadata.system
-    }
-
-    private fun convertToGameMetadata(rom: LibretroRom): GameMetadata {
-        val system = GameSystem.findById(rom.system!!)
-        return GameMetadata(
-            name = rom.name,
-            romName = rom.romName,
-            thumbnail = computeCoverUrl(system, rom.name),
-            system = rom.system,
-            developer = rom.developer,
-        )
-    }
-
-    private suspend fun findByFilename(
-        db: LibretroDatabase,
-        file: StorageFile,
-    ): GameMetadata? {
-        return db.gameDao().findByFileName(file.name)
-            .filterNullable { extractGameSystem(it).scanOptions.scanByFilename }
-            ?.let { convertToGameMetadata(it) }
-    }
-
-    private suspend fun findByPathAndFilename(
-        db: LibretroDatabase,
-        file: StorageFile,
-    ): GameMetadata? {
-        return db.gameDao().findByFileName(file.name)
-            .filterNullable { extractGameSystem(it).scanOptions.scanByPathAndFilename }
-            .filterNullable { parentContainsSystem(file.path, extractGameSystem(it).id.dbname) }
-            ?.let { convertToGameMetadata(it) }
-    }
-
-    private fun findByPathAndSupportedExtension(file: StorageFile): GameMetadata? {
-        val system =
-            sortedSystemIds
-                .filter { parentContainsSystem(file.path, it) }
-                .map { GameSystem.findById(it) }
-                .filter { it.scanOptions.scanByPathAndSupportedExtensions }
-                .firstOrNull { it.supportedExtensions.contains(file.extension) }
-
-        return system?.let {
-            GameMetadata(
-                name = file.extensionlessName,
-                romName = file.name,
-                thumbnail = computeCoverUrl(it, file.extensionlessName),
-                system = it.id.dbname,
-                developer = null,
-            )
         }
+        return stamps
     }
 
-    private fun parentContainsSystem(
-        parent: String?,
-        dbname: String,
-    ): Boolean {
-        return parent?.lowercase(Locale.getDefault())?.contains(dbname) == true
-    }
-
-    private suspend fun findByCRC(
-        file: StorageFile,
-        db: LibretroDatabase,
-    ): GameMetadata? {
-        if (file.crc == null || file.crc == "0") return null
-        return file.crc?.let { crc32 -> db.gameDao().findByCRC(crc32) }
-            ?.let { convertToGameMetadata(it) }
-    }
-
-    private suspend fun findBySerial(
-        file: StorageFile,
-        db: LibretroDatabase,
-    ): GameMetadata? {
-        if (file.serial == null) return null
-        return db.gameDao().findBySerial(file.serial!!)
-            ?.let { convertToGameMetadata(it) }
-    }
-
-    private fun findByKnownSystem(file: StorageFile): GameMetadata? {
-        if (file.systemID == null) return null
-        val system = GameSystem.findById(file.systemID!!.dbname)
-
+    override suspend fun describe(
+        systemId: String,
+        fallbackTitle: String,
+        key: MetadataKey?,
+        fileSize: Long,
+    ): GameMetadata {
+        val row = key?.let { find(systemId, it, fileSize) }
+        val title = row?.name?.takeIf { it.isNotBlank() } ?: fallbackTitle
         return GameMetadata(
-            name = file.extensionlessName,
-            romName = file.name,
-            thumbnail = computeCoverUrl(system, file.extensionlessName),
-            system = file.systemID!!.dbname,
+            name = title,
+            system = systemId,
+            romName = null,
             developer = null,
+            thumbnail = computeCoverUrl(GameSystem.findById(systemId), title),
         )
     }
 
-    private fun findByUniqueExtension(file: StorageFile): GameMetadata? {
-        val system = GameSystem.findByUniqueFileExtension(file.extension)
-
-        if (system?.scanOptions?.scanByUniqueExtension == false) {
-            return null
-        }
-
-        val result =
-            system?.let {
-                GameMetadata(
-                    name = file.extensionlessName,
-                    romName = file.name,
-                    thumbnail = computeCoverUrl(it, file.extensionlessName),
-                    system = it.id.dbname,
-                    developer = null,
-                )
+    override suspend fun resolveArcade(
+        setName: String,
+        memberCrcs: List<String>,
+    ): String? {
+        val setHash = ScanKeys.romHash(setName) ?: return null
+        val set = ovgdbManager.detectInstance.arcadeSets().find(setHash) ?: return null
+        val systems = set.systems.split(',')
+        if (systems.size == 1) return systems.first()
+        val hits = HashMap<String, Int>()
+        memberCrcs.distinct().chunked(400).forEach { chunk ->
+            ovgdbManager.detectInstance.arcadeMarkers().matching(setHash, chunk).forEach { marker ->
+                hits[marker.system] = (hits[marker.system] ?: 0) + 1
             }
-
-        return result
+        }
+        val mameHits = hits[SystemID.MAME2003PLUS.dbname] ?: 0
+        val fbneoHits = hits[SystemID.FBNEO.dbname] ?: 0
+        return if (mameHits > fbneoHits) SystemID.MAME2003PLUS.dbname else SystemID.FBNEO.dbname
     }
 
-    private fun extractGameSystem(rom: LibretroRom): GameSystem {
-        return GameSystem.findById(rom.system!!)
+    override suspend fun findCartridge(crc: String): GameMetadata? {
+        val cart = ovgdbManager.detectInstance.binCarts().find(crc) ?: return null
+        return GameMetadata(
+            name = null,
+            system = cart.system,
+            romName = null,
+            developer = null,
+            thumbnail = null,
+        )
+    }
+
+    private suspend fun find(
+        systemId: String,
+        key: MetadataKey,
+        fileSize: Long,
+    ): LibretroRom? {
+        val dao = ovgdbManager.dbInstance.gameDao()
+        return when (key.type) {
+            MetadataKeyType.CRC -> dao.findBySystemAndCrc(systemId, key.value)
+            MetadataKeyType.SERIAL -> dao.findBySystemAndSerial(systemId, key.value, fileSize)
+            MetadataKeyType.CODE -> dao.findBySystemAndCode(systemId, key.value, fileSize)
+            MetadataKeyType.ROM_BASE, MetadataKeyType.ROM_NAME -> {
+                val hash = ScanKeys.romHash(key.value) ?: return null
+                dao.findBySystemAndRomHash(systemId, hash)
+            }
+        }
     }
 
     private fun computeCoverUrl(
         system: GameSystem?,
         name: String?,
     ): String? {
-        if (system == null || name.isNullOrBlank()) {
-            return null
-        }
-
+        if (system == null || name.isNullOrBlank()) return null
         var systemName = system.libretroFullName
         if (system.id == SystemID.MAME2003PLUS) {
             systemName = "MAME"
         }
+        if (!systemName.all { it.isLetterOrDigit() || it == ' ' || it == '-' }) return null
+        val cleanName =
+            name
+                .replace(CONTROL_CHARS, "")
+                .replace(PATH_TRAVERSAL, "_")
+                .replace(THUMB_REPLACE, "_")
+                .trim()
+                .trim('.', '_', ' ')
+        if (cleanName.isBlank() || cleanName.length > MAX_TITLE_LENGTH) return null
+        return "$BASE_THUMBNAIL_URL/${encode(systemName)}/$IMAGE_TYPE/${encode(cleanName)}.png"
+    }
 
-        // Validate systemName format (alphanumeric, spaces, and hyphens only)
-        if (!systemName.all { it.isLetterOrDigit() || it == ' ' || it == '-' }) {
-            return null
-        }
+    private fun encode(value: String): String {
+        return URLEncoder.encode(value, "UTF-8").replace("+", "%20")
+    }
 
-        // Clean & sanitize title to eliminate path traversal, control codes, and illegal URI chars
-        val cleanName = name
-            .replace(CONTROL_CHARS, "")
-            .replace(PATH_TRAVERSAL, "_")
-            .replace(THUMB_REPLACE, "_")
-            .trim()
-            .trim('.', '_', ' ')
-
-        if (cleanName.isBlank() || cleanName.length > MAX_TITLE_LENGTH) {
-            return null
-        }
-
-        return "$BASE_THUMBNAIL_URL/$systemName/$IMAGE_TYPE/$cleanName.png"
+    companion object {
+        private val THUMB_REPLACE = Regex("[&*/:`<>?\\\\|\"#%^~;\\[\\]{}@+=!\$]")
+        private val CONTROL_CHARS = Regex("[\\p{Cntrl}\\u0000-\\u001F\\u007F-\\u009F]")
+        private val PATH_TRAVERSAL = Regex("\\.{2,}")
+        private const val MAX_TITLE_LENGTH = 200
+        private const val BASE_THUMBNAIL_URL = "https://thumbnails.libretro.com"
+        private const val IMAGE_TYPE = "Named_Boxarts"
     }
 }

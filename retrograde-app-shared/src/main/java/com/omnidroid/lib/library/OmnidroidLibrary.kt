@@ -1,31 +1,19 @@
-/*
- * GameLibrary.kt
- *
- * Copyright (C) 2017 Retrograde Project
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package com.omnidroid.lib.library
 
-import com.omnidroid.common.coroutines.batchWithSizeAndTime
+import android.content.SharedPreferences
 import com.omnidroid.lib.bios.BiosManager
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.DataFile
 import com.omnidroid.lib.library.db.entity.Game
-import com.omnidroid.lib.library.metadata.GameMetadata
+import com.omnidroid.lib.library.db.entity.UnrecognizedFile
 import com.omnidroid.lib.library.metadata.GameMetadataProvider
+import com.omnidroid.lib.library.scan.ChdOpener
+import com.omnidroid.lib.library.scan.Detection
+import com.omnidroid.lib.library.scan.DetectionRules
+import com.omnidroid.lib.library.scan.FolderHints
+import com.omnidroid.lib.library.scan.MetadataKey
+import com.omnidroid.lib.library.scan.MetadataKeyType
+import com.omnidroid.lib.library.scan.ScanInput
 import com.omnidroid.lib.storage.BaseStorageFile
 import com.omnidroid.lib.storage.GroupedStorageFiles
 import com.omnidroid.lib.storage.RomFiles
@@ -33,15 +21,7 @@ import com.omnidroid.lib.storage.StorageFile
 import com.omnidroid.lib.storage.StorageProvider
 import com.omnidroid.lib.storage.StorageProviderRegistry
 import dagger.Lazy
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.mapNotNull
 import timber.log.Timber
 import java.io.File
 
@@ -50,285 +30,445 @@ class OmnidroidLibrary(
     private val storageProviderRegistry: Lazy<StorageProviderRegistry>,
     private val gameMetadataProvider: Lazy<GameMetadataProvider>,
     private val biosManager: BiosManager,
+    private val sliceStamps: SliceStampStore,
 ) {
     suspend fun indexLibrary() {
         val startedAtMs = System.currentTimeMillis()
-
+        val metadata = gameMetadataProvider.get()
+        val currentStamps = metadata.sliceStamps()
+        val savedStamps = sliceStamps.get()
+        var completed = true
         try {
-            indexProviders(startedAtMs)
-        } catch (e: Throwable) {
-            Timber.e("Library indexing stopped due to exception", e)
-        } finally {
-            cleanUp(startedAtMs)
+            val providers = storageProviderRegistry.get().enabledProviders
+            for (provider in providers) {
+                try {
+                    indexProvider(provider, startedAtMs, metadata, currentStamps, savedStamps)
+                } catch (error: Throwable) {
+                    completed = false
+                    Timber.e(error, "Library indexing stopped for a storage provider")
+                }
+            }
+            if (completed) {
+                cleanUp(startedAtMs)
+                sliceStamps.set(currentStamps)
+            }
+        } catch (error: Throwable) {
+            Timber.e(error, "Library indexing stopped due to exception")
+        }
+        Timber.i("Library indexing completed in: ${System.currentTimeMillis() - startedAtMs} ms")
+    }
+
+    private suspend fun indexProvider(
+        provider: StorageProvider,
+        startedAtMs: Long,
+        metadata: GameMetadataProvider,
+        currentStamps: Map<String, String>,
+        savedStamps: Map<String, String>,
+    ) {
+        provider.listBaseStorageFiles().collect { files ->
+            val grouped = StorageFilesMerger.mergeDataFiles(provider, files)
+            grouped.forEach { group ->
+                try {
+                    indexGroup(provider, group, startedAtMs, metadata, currentStamps, savedStamps)
+                } catch (error: Throwable) {
+                    Timber.e(error, "Failed to index ${group.primaryFile.name}")
+                    keepExisting(group.primaryFile, startedAtMs)
+                }
+            }
+        }
+    }
+
+    private suspend fun indexGroup(
+        provider: StorageProvider,
+        group: GroupedStorageFiles,
+        startedAtMs: Long,
+        metadata: GameMetadataProvider,
+        currentStamps: Map<String, String>,
+        savedStamps: Map<String, String>,
+    ) {
+        val primary = group.primaryFile
+        val existing = retrogradedb.gameDao().selectByFileUri(primary.uri.toString())
+        val stampChanged =
+            existing != null &&
+                currentStamps[existing.systemId] != null &&
+                currentStamps[existing.systemId] != savedStamps[existing.systemId]
+        if (existing != null && !shouldRelookup(existing, primary, stampChanged)) {
+            touch(existing, primary, startedAtMs, backfill = existing.fileSize == null)
+            updateDataFiles(group, existing.id, startedAtMs)
+            retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
+            return
         }
 
-        val executionTime = System.currentTimeMillis() - startedAtMs
-        Timber.i("Library indexing completed in: $executionTime ms")
+        if (importBiosByName(provider, primary, startedAtMs)) {
+            retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
+            return
+        }
+
+        var insertedId = existing?.id
+        val detection =
+            DetectionRules.identify(scanInput(provider, group)) { system ->
+                if (existing == null && insertedId == null) {
+                    insertedId = insertGame(group, system, primary.extensionlessName, null, null, startedAtMs)
+                }
+            }
+        when (detection) {
+            is Detection.Ready ->
+                saveGame(
+                    provider,
+                    group,
+                    existing,
+                    insertedId,
+                    detection.system,
+                    detection.key,
+                    startedAtMs,
+                    metadata,
+                )
+            is Detection.HashedBin -> saveHashedBin(provider, group, existing, detection.crc, startedAtMs, metadata)
+            is Detection.Arcade -> saveArcade(provider, group, existing, insertedId, detection, startedAtMs, metadata)
+            is Detection.Rejected ->
+                reject(provider, group, existing, insertedId, detection.reason, startedAtMs)
+        }
     }
 
-    @OptIn(FlowPreview::class)
-    private suspend fun indexProviders(startedAtMs: Long) {
-        val gameMetadata = gameMetadataProvider.get()
-        val enabledProviders = storageProviderRegistry.get().enabledProviders
-        enabledProviders.asFlow()
-            .flatMapConcat { indexSingleProvider(it, startedAtMs, gameMetadata) }
-            .collect()
+    private fun shouldRelookup(
+        existing: Game,
+        primary: BaseStorageFile,
+        stampChanged: Boolean,
+    ): Boolean {
+        if (stampChanged) return true
+        if (existing.fileSize == null) return false
+        return existing.fileSize != primary.size || existing.fileLastModified != primary.lastModified
     }
 
-    @OptIn(FlowPreview::class)
-    private fun indexSingleProvider(
+    private suspend fun saveGame(
         provider: StorageProvider,
+        group: GroupedStorageFiles,
+        existing: Game?,
+        insertedId: Int?,
+        system: SystemID,
+        key: MetadataKey?,
         startedAtMs: Long,
-        gameMetadata: GameMetadataProvider,
-    ): Flow<Unit> {
-        return provider.listBaseStorageFiles()
-            .flatMapConcat { StorageFilesMerger.mergeDataFiles(provider, it).asFlow() }
-            .batchWithSizeAndTime(MAX_BUFFER_SIZE, MAX_TIME)
-            .flatMapMerge { processBatch(it, provider, startedAtMs, gameMetadata) }
+        metadata: GameMetadataProvider,
+    ) {
+        val primary = group.primaryFile
+        if (existing != null && existing.systemId != system.dbname) {
+            Timber.w("Keeping system ${existing.systemId} for ${primary.name}; scan found ${system.dbname}")
+            touch(existing, primary, startedAtMs, backfill = true)
+            updateDataFiles(group, existing.id, startedAtMs)
+            return
+        }
+        val described =
+            metadata.describe(
+                system.dbname,
+                primary.extensionlessName,
+                key,
+                primary.size,
+            )
+        val gameId =
+            upsert(
+                group,
+                existing,
+                insertedId,
+                system,
+                described.name ?: primary.extensionlessName,
+                described.developer,
+                described.thumbnail,
+                startedAtMs,
+            )
+        updateDataFiles(group, gameId, startedAtMs)
+        retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
     }
 
-    private suspend fun processBatch(
-        batch: List<GroupedStorageFiles>,
+    private suspend fun saveHashedBin(
         provider: StorageProvider,
+        group: GroupedStorageFiles,
+        existing: Game?,
+        crc: String,
         startedAtMs: Long,
-        gameMetadata: GameMetadataProvider,
-    ) = flow<Unit> {
-        val entries = batch.map { fetchEntriesFromDatabase(it) }
-
-        val existingEntries = entries.filterIsInstance<ScanEntry.GameFile>()
-        handleExistingEntries(existingEntries, startedAtMs)
-
-        val newEntries =
-            entries.filterIsInstance<ScanEntry.File>()
-                .map { buildEntryFromMetadata(it.file, provider, gameMetadata, startedAtMs) }
-
-        handleNewEntries(newEntries, startedAtMs, provider)
-    }
-
-    private fun fetchEntriesFromDatabase(storageFile: GroupedStorageFiles): ScanEntry {
-        Timber.d("Retrieving scan entry for uri: ${storageFile.primaryFile}")
-        val game = retrogradedb.gameDao().selectByFileUri(storageFile.primaryFile.uri.toString())
-        return buildScanEntry(storageFile, game)
-    }
-
-    private fun buildScanEntry(
-        storageFile: GroupedStorageFiles,
-        game: Game?,
-    ): ScanEntry {
-        return if (game != null) {
-            ScanEntry.GameFile(storageFile, game)
+        metadata: GameMetadataProvider,
+    ) {
+        val primary = group.primaryFile
+        if (biosManager.matchesBiosCrc(crc)) {
+            provider.getInputStream(primary.uri)?.use { stream ->
+                biosManager.tryAddBiosAfter(
+                    StorageFile(primary.name, primary.size, crc, null, primary.uri, primary.path, null),
+                    stream,
+                    startedAtMs,
+                )
+            }
+            retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
+            return
+        }
+        val cartridge = metadata.findCartridge(crc)
+        if (cartridge?.system != null) {
+            saveGame(
+                provider,
+                group,
+                existing,
+                null,
+                systemByName(cartridge.system),
+                MetadataKey(MetadataKeyType.CRC, crc),
+                startedAtMs,
+                metadata,
+            )
+            return
+        }
+        val hinted =
+            FolderHints.systemAmong(
+                primary.path,
+                setOf(SystemID.ATARI7800, SystemID.PC_ENGINE),
+            )
+        if (hinted != null) {
+            saveGame(provider, group, existing, null, hinted, null, startedAtMs, metadata)
         } else {
-            ScanEntry.File(storageFile)
+            reject(
+                provider,
+                group,
+                existing,
+                null,
+                "Headerless .bin was not in the database. Put Atari 7800 and PC Engine games in a console folder.",
+                startedAtMs,
+            )
         }
     }
 
-    private fun handleExistingEntries(
-        entries: List<ScanEntry.GameFile>,
+    private suspend fun saveArcade(
+        provider: StorageProvider,
+        group: GroupedStorageFiles,
+        existing: Game?,
+        insertedId: Int?,
+        detection: Detection.Arcade,
         startedAtMs: Long,
+        metadata: GameMetadataProvider,
     ) {
-        updateGames(entries, startedAtMs)
-        updateDataFiles(entries, startedAtMs)
+        val systemId = metadata.resolveArcade(detection.setName, detection.memberCrcs)
+        if (systemId == null) {
+            reject(
+                provider,
+                group,
+                existing,
+                insertedId,
+                "${detection.setName} is not an FBNeo or MAME 2003-Plus set",
+                startedAtMs,
+            )
+            return
+        }
+        saveGame(
+            provider,
+            group,
+            existing,
+            insertedId,
+            systemByName(systemId),
+            MetadataKey(MetadataKeyType.ROM_NAME, detection.setName),
+            startedAtMs,
+            metadata,
+        )
     }
 
-    private fun updateGames(
-        entries: List<ScanEntry.GameFile>,
+    private fun reject(
+        provider: StorageProvider,
+        group: GroupedStorageFiles,
+        existing: Game?,
+        insertedId: Int?,
+        reason: String,
         startedAtMs: Long,
     ) {
-        val updatedGames =
-            entries
-                .map { it.game.copy(lastIndexedAt = startedAtMs) }
+        val primary = group.primaryFile
+        if (existing != null) {
+            Timber.w("Leaving ${primary.name} as ${existing.systemId}: $reason")
+            touch(existing, primary, startedAtMs, backfill = true)
+            updateDataFiles(group, existing.id, startedAtMs)
+            return
+        }
+        insertedId?.let { id ->
+            retrogradedb.gameDao().selectByIdBlocking(id)?.let { game ->
+                retrogradedb.gameDao().delete(listOf(game))
+            }
+        }
+        retrogradedb.unrecognizedFileDao().insert(
+            UnrecognizedFile(
+                fileUri = primary.uri.toString(),
+                fileName = primary.name,
+                reason = reason,
+                lastIndexedAt = startedAtMs,
+            ),
+        )
+        provider.getInputStream(primary.uri)?.use { stream ->
+            biosManager.tryAddBiosAfter(
+                StorageFile(primary.name, primary.size, null, null, primary.uri, primary.path, null),
+                stream,
+                startedAtMs,
+            )
+        }
+    }
 
-        updatedGames
-            .forEach { Timber.d("Updating game: $it") }
+    private fun keepExisting(
+        primary: BaseStorageFile,
+        startedAtMs: Long,
+    ) {
+        val existing = retrogradedb.gameDao().selectByFileUri(primary.uri.toString()) ?: return
+        touch(existing, primary, startedAtMs, backfill = false)
+    }
 
-        retrogradedb.gameDao().update(updatedGames)
+    private fun touch(
+        existing: Game,
+        primary: BaseStorageFile,
+        startedAtMs: Long,
+        backfill: Boolean,
+    ) {
+        val updated =
+            existing.copy(
+                lastIndexedAt = startedAtMs,
+                fileSize = if (backfill || existing.fileSize == null) primary.size else existing.fileSize,
+                fileLastModified =
+                    if (backfill || existing.fileLastModified == null) {
+                        primary.lastModified
+                    } else {
+                        existing.fileLastModified
+                    },
+            )
+        retrogradedb.gameDao().update(listOf(updated))
+    }
+
+    private fun upsert(
+        group: GroupedStorageFiles,
+        existing: Game?,
+        insertedId: Int?,
+        system: SystemID,
+        title: String,
+        developer: String?,
+        cover: String?,
+        startedAtMs: Long,
+    ): Int {
+        val primary = group.primaryFile
+        val current = existing ?: insertedId?.let { retrogradedb.gameDao().selectByIdBlocking(it) }
+        if (current != null) {
+            val changed =
+                current.title != title || current.developer != developer || current.coverFrontUrl != cover ||
+                    current.fileSize != primary.size || current.fileLastModified != primary.lastModified
+            val updated =
+                current.copy(
+                    title = title,
+                    developer = developer,
+                    coverFrontUrl = cover,
+                    lastIndexedAt = startedAtMs,
+                    fileSize = primary.size,
+                    fileLastModified = primary.lastModified,
+                )
+            if (changed || current.lastIndexedAt != startedAtMs) {
+                retrogradedb.gameDao().update(listOf(updated))
+            }
+            return current.id
+        }
+        return insertGame(group, system, title, developer, cover, startedAtMs)
+    }
+
+    private fun insertGame(
+        group: GroupedStorageFiles,
+        system: SystemID,
+        title: String,
+        developer: String?,
+        cover: String?,
+        startedAtMs: Long,
+    ): Int {
+        val primary = group.primaryFile
+        val game =
+            Game(
+                fileName = primary.name,
+                fileUri = primary.uri.toString(),
+                title = title,
+                systemId = system.dbname,
+                developer = developer,
+                coverFrontUrl = cover,
+                lastIndexedAt = startedAtMs,
+                fileSize = primary.size,
+                fileLastModified = primary.lastModified,
+            )
+        return retrogradedb.gameDao().insert(listOf(game)).first().toInt()
     }
 
     private fun updateDataFiles(
-        entries: List<ScanEntry.GameFile>,
-        startedAtMs: Long,
-    ) {
-        val dataFiles =
-            entries.flatMap { (storageFile, game) ->
-                storageFile.dataFiles.map { convertIntoDataFile(game.id, it, startedAtMs) }
-            }
-
-        dataFiles
-            .forEach { Timber.d("Updating data file: $it") }
-
-        retrogradedb.dataFileDao().insert(dataFiles)
-    }
-
-    private fun convertIntoDataFile(
+        group: GroupedStorageFiles,
         gameId: Int,
-        baseStorageFile: BaseStorageFile,
-        startedAtMs: Long,
-    ): DataFile {
-        return DataFile(
-            gameId = gameId,
-            fileUri = baseStorageFile.uri.toString(),
-            fileName = baseStorageFile.name,
-            lastIndexedAt = startedAtMs,
-            path = baseStorageFile.path,
-        )
-    }
-
-    private fun handleNewEntries(
-        entries: List<ScanEntry>,
-        startedAtMs: Long,
-        provider: StorageProvider,
-    ) {
-        val gameFiles =
-            entries
-                .filterIsInstance<ScanEntry.GameFile>()
-
-        val unknownFiles =
-            entries
-                .filterIsInstance<ScanEntry.File>()
-                .flatMap { it.file.allFiles() }
-
-        handleNewGames(gameFiles, startedAtMs)
-        handleUnknownFiles(provider, unknownFiles, startedAtMs)
-    }
-
-    private fun handleNewGames(
-        pairs: List<ScanEntry.GameFile>,
         startedAtMs: Long,
     ) {
-        val games =
-            pairs
-                .map { it.game }
-
-        games.forEach { Timber.d("Insert: $it") }
-
-        val gameIds = retrogradedb.gameDao().insert(games)
         val dataFiles =
-            pairs
-                .map { it.file.dataFiles }
-                .zip(gameIds)
-                .flatMap { (files, gameId) ->
-                    files.map {
-                        convertIntoDataFile(gameId.toInt(), it, startedAtMs)
-                    }
-                }
-
-        retrogradedb.dataFileDao().insert(dataFiles)
-    }
-
-    private fun handleUnknownFiles(
-        provider: StorageProvider,
-        files: List<BaseStorageFile>,
-        startedAtMs: Long,
-    ) {
-        files.forEach { baseStorageFile ->
-            val storageFile = safeStorageFile(provider, baseStorageFile)
-            val inputStream = storageFile?.uri?.let { provider.getInputStream(it) }
-
-            if (storageFile != null && inputStream != null) {
-                biosManager.tryAddBiosAfter(storageFile, inputStream, startedAtMs)
+            group.dataFiles.map { file ->
+                DataFile(
+                    gameId = gameId,
+                    fileUri = file.uri.toString(),
+                    fileName = file.name,
+                    lastIndexedAt = startedAtMs,
+                    path = file.path,
+                )
             }
+        if (dataFiles.isNotEmpty()) {
+            retrogradedb.dataFileDao().insert(dataFiles)
         }
     }
 
-    private suspend fun buildEntryFromMetadata(
-        groupedStorageFile: GroupedStorageFiles,
+    private fun importBiosByName(
         provider: StorageProvider,
-        metadataProvider: GameMetadataProvider,
+        primary: BaseStorageFile,
         startedAtMs: Long,
-    ): ScanEntry {
-        val game =
-            sortedFilesForScanning(groupedStorageFile).asFlow()
-                .mapNotNull { safeStorageFile(provider, it) }
-                .mapNotNull { storageFile ->
-                    val metadata = metadataProvider.retrieveMetadata(storageFile)
-                    convertGameMetadataToGame(groupedStorageFile, storageFile, metadata, startedAtMs)
-                }
-                .firstOrNull()
-
-        return buildScanEntry(groupedStorageFile, game)
+    ): Boolean {
+        if (!BiosManager.isKnownBiosName(primary.name)) return false
+        val stream = provider.getInputStream(primary.uri) ?: return false
+        return stream.use {
+            biosManager.tryAddBiosAfter(
+                StorageFile(primary.name, primary.size, null, null, primary.uri, primary.path, null),
+                it,
+                startedAtMs,
+            )
+        }
     }
 
-    private fun safeStorageFile(
+    private fun systemByName(systemId: String): SystemID {
+        return SystemID.entries.first { it.dbname == systemId }
+    }
+
+    private fun scanInput(
         provider: StorageProvider,
-        baseStorageFile: BaseStorageFile,
-    ): StorageFile? {
-        return runCatching { provider.getStorageFile(baseStorageFile) }
-            .getOrNull()
+        group: GroupedStorageFiles,
+    ): ScanInput {
+        val primary = group.primaryFile
+        val named = (group.dataFiles + primary).associateBy { it.name.lowercase() }
+        return ScanInput(
+            name = primary.name,
+            size = primary.size,
+            path = primary.path,
+            open = { provider.openRandomAccess(primary.uri) },
+            openNamed = { name ->
+                named[name.lowercase()]?.let { provider.openRandomAccess(it.uri) }
+            },
+            openChd = if (primary.extension == "chd") ChdOpener { provider.openChd(primary.uri) } else null,
+            openNamedChd = { name ->
+                val file = named[name.lowercase()]
+                if (file == null || file.extension != "chd") {
+                    null
+                } else {
+                    ChdOpener { provider.openChd(file.uri) }
+                }
+            },
+        )
     }
 
     private fun cleanUp(startedAtMs: Long) {
+        kotlin.runCatching { biosManager.deleteBiosBefore(startedAtMs) }
         kotlin.runCatching {
-            removeDeletedBios(startedAtMs)
-        }
-        kotlin.runCatching {
-            removeDeletedGames(startedAtMs)
-        }
-        kotlin.runCatching {
-            removeDeletedDataFiles(startedAtMs)
-        }
-    }
-
-    private fun removeDeletedBios(startedAtMs: Long) {
-        biosManager.deleteBiosBefore(startedAtMs)
-    }
-
-    private fun sortedFilesForScanning(groupedStorageFile: GroupedStorageFiles): List<BaseStorageFile> {
-        return if (groupedStorageFile.primaryFile.extension.lowercase() in listOf("cue", "m3u")) {
-            groupedStorageFile.dataFiles.sortedBy { it.name } + listOf(groupedStorageFile.primaryFile)
-        } else {
-            listOf(groupedStorageFile.primaryFile) +
-                groupedStorageFile.dataFiles
-                    .filter { it.extension.lowercase() !in listOf("pcm", "msu", "msuv", "bml") }
-                    .sortedBy { it.name }
-        }
-    }
-
-    private fun convertGameMetadataToGame(
-        groupedStorageFile: GroupedStorageFiles,
-        storageFile: StorageFile,
-        gameMetadata: GameMetadata?,
-        lastIndexedAt: Long,
-    ): Game? {
-        if (gameMetadata == null) {
-            return null
-        }
-
-        val gameSystem = GameSystem.findById(gameMetadata.system!!)
-
-        // If the databased matched a data file (as with bin/cue) we force link the primary filename
-        val fileName =
-            if (groupedStorageFile.dataFiles.isNotEmpty()) {
-                groupedStorageFile.primaryFile.name
-            } else {
-                storageFile.name
+            val games = retrogradedb.gameDao().selectByLastIndexedAtLessThan(startedAtMs)
+            games.forEach { game ->
+                game.customCoverPath?.let { path ->
+                    runCatching { File(path.substringBefore('?')).delete() }
+                }
             }
-
-        return Game(
-            fileName = fileName,
-            fileUri = groupedStorageFile.primaryFile.uri.toString(),
-            title = gameMetadata.name ?: groupedStorageFile.primaryFile.name,
-            systemId = gameSystem.id.dbname,
-            developer = gameMetadata.developer,
-            coverFrontUrl = gameMetadata.thumbnail,
-            lastIndexedAt = lastIndexedAt,
-        )
-    }
-
-    private fun removeDeletedDataFiles(startedAtMs: Long) {
-        Timber.d("Deleting data files from db before: $startedAtMs")
-        val dataFiles = retrogradedb.dataFileDao().selectByLastIndexedAtLessThan(startedAtMs)
-        retrogradedb.dataFileDao().delete(dataFiles)
-    }
-
-    private fun removeDeletedGames(startedAtMs: Long) {
-        Timber.d("Deleting games from db before: $startedAtMs")
-        val games = retrogradedb.gameDao().selectByLastIndexedAtLessThan(startedAtMs)
-        games.forEach { game ->
-            game.customCoverPath?.let { path ->
-                runCatching { File(path.substringBefore('?')).delete() }
-            }
+            retrogradedb.gameDao().delete(games)
         }
-        retrogradedb.gameDao().delete(games)
+        kotlin.runCatching {
+            val dataFiles = retrogradedb.dataFileDao().selectByLastIndexedAtLessThan(startedAtMs)
+            retrogradedb.dataFileDao().delete(dataFiles)
+        }
+        kotlin.runCatching { retrogradedb.unrecognizedFileDao().deleteOlderThan(startedAtMs) }
     }
 
     fun getGameFiles(
@@ -339,16 +479,24 @@ class OmnidroidLibrary(
         val provider = storageProviderRegistry.get()
         return provider.getProvider(game).getGameRomFiles(game, dataFiles, allowVirtualFiles)
     }
+}
 
-    private sealed class ScanEntry {
-        data class GameFile(val file: GroupedStorageFiles, val game: Game) : ScanEntry()
-
-        data class File(val file: GroupedStorageFiles) : ScanEntry()
+class SliceStampStore(
+    private val preferences: SharedPreferences,
+) {
+    fun get(): Map<String, String> {
+        val raw = preferences.getString(KEY, null) ?: return emptyMap()
+        return raw.lineSequence().mapNotNull { line ->
+            val parts = line.split('=', limit = 2)
+            if (parts.size == 2) parts[0] to parts[1] else null
+        }.toMap()
     }
 
-    companion object {
-        // We batch database updates to avoid unnecessary UI updates.
-        const val MAX_BUFFER_SIZE = 200
-        const val MAX_TIME = 5000
+    fun set(stamps: Map<String, String>) {
+        preferences.edit().putString(KEY, stamps.entries.joinToString("\n") { "${it.key}=${it.value}" }).apply()
+    }
+
+    private companion object {
+        const val KEY = "libretro_slice_stamps"
     }
 }

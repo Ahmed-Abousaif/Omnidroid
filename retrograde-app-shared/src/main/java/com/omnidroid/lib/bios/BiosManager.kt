@@ -143,11 +143,24 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
         return nameLookup[storageFile.name]
     }
 
+    fun matchesBiosCrc(crc: String?): Boolean {
+        return crc != null && crcLookup.containsKey(crc)
+    }
+
     private fun normalizeTimestamp(timestamp: Long) = (timestamp / 1000) * 1000
 
     data class BiosInfo(val detected: List<Bios>, val notDetected: List<Bios>)
 
     companion object {
+        const val MAX_BIOS_CANDIDATE_BYTES = 4L * 1024 * 1024
+
+        fun isKnownBiosName(name: String): Boolean {
+            return SUPPORTED_BIOS.any { bios ->
+                bios.libretroFileName.equals(name, ignoreCase = true) ||
+                    bios.externalName?.equals(name, ignoreCase = true) == true
+            }
+        }
+
         private val SUPPORTED_BIOS =
             listOf(
                 Bios(

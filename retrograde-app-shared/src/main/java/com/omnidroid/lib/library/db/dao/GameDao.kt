@@ -34,6 +34,9 @@ interface GameDao {
     suspend fun selectById(id: Int): Game?
 
     @Query("SELECT * FROM games WHERE id = :id")
+    fun selectByIdBlocking(id: Int): Game?
+
+    @Query("SELECT * FROM games WHERE id = :id")
     fun observeById(id: Int): Flow<Game?>
 
     @Query("SELECT * FROM games")

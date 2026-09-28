@@ -23,6 +23,7 @@ import android.net.Uri
 import androidx.leanback.preference.LeanbackPreferenceFragment
 import com.omnidroid.lib.library.db.entity.DataFile
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.library.scan.ChdSectors
 import kotlinx.coroutines.flow.Flow
 import java.io.InputStream
 
@@ -40,6 +41,10 @@ interface StorageProvider {
     fun listBaseStorageFiles(): Flow<List<BaseStorageFile>>
 
     fun getInputStream(uri: Uri): InputStream?
+
+    fun openRandomAccess(uri: Uri): com.omnidroid.lib.library.scan.RandomAccessBytes?
+
+    fun openChd(uri: Uri): ChdSectors? = null
 
     fun getStorageFile(baseStorageFile: BaseStorageFile): StorageFile?
 
