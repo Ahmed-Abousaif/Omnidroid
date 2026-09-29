@@ -10,7 +10,7 @@ import com.omnidroid.metadata.libretrodb.db.entity.VerifiedManifest
 
 @Database(
     entities = [LibretroRom::class, InstalledSlice::class, VerifiedManifest::class],
-    version = 12,
+    version = LibretroDatabase.VERSION,
     exportSchema = false,
 )
 abstract class LibretroDatabase : RoomDatabase() {
