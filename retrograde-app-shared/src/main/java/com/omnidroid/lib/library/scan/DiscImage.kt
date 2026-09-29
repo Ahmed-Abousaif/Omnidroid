@@ -312,7 +312,7 @@ internal object Lz4 {
 }
 
 internal object GzipImage {
-    private const val LIMIT = 64L * 1024 * 1024
+    private const val LIMIT = 2L * 1024 * 1024
 
     fun open(source: RandomAccessBytes): RandomAccessBytes? {
         val magic = source.read(0, 2)
@@ -332,62 +332,5 @@ internal object GzipImage {
         } catch (_: Exception) {
             null
         }
-    }
-}
-
-internal object NrgImage {
-    fun fileOffset(source: RandomAccessBytes): Long? {
-        if (source.size < 12) return null
-        val tail = source.read(source.size - 12, 12)
-        if (tail.size < 12) return null
-        val marker = tail.copyOfRange(8, 12).toString(Charsets.US_ASCII)
-        val chunkStart =
-            when (marker) {
-                "NER5" -> le64(tail, 0)
-                "NERO" -> le32(tail, 4).toLong()
-                else -> return null
-            }
-        if (chunkStart < 0 || chunkStart >= source.size) return null
-        val wide = marker == "NER5"
-        var cursor = chunkStart
-        while (cursor + 8 < source.size - 12) {
-            val id = source.read(cursor, 4).toString(Charsets.US_ASCII)
-            val size = if (wide) source.u64le(cursor + 4) else source.u32le(cursor + 4)
-            val data = cursor + if (wide) 12 else 8
-            if (size < 0 || data + size > source.size) return null
-            if (id == "DAOX" || id == "DAOI") {
-                val track = source.read(data, minOf(size, 128).toInt())
-                val index1 =
-                    when {
-                        id == "DAOX" && track.size >= 32 -> le64(track, 24)
-                        track.size >= 24 -> le32(track, 20).toLong()
-                        else -> -1
-                    }
-                if (index1 >= 0) return index1
-            }
-            cursor = data + size
-        }
-        return null
-    }
-
-    private fun le32(
-        bytes: ByteArray,
-        offset: Int,
-    ): Int {
-        return (bytes[offset].toInt() and 0xFF) or
-            ((bytes[offset + 1].toInt() and 0xFF) shl 8) or
-            ((bytes[offset + 2].toInt() and 0xFF) shl 16) or
-            ((bytes[offset + 3].toInt() and 0xFF) shl 24)
-    }
-
-    private fun le64(
-        bytes: ByteArray,
-        offset: Int,
-    ): Long {
-        var value = 0L
-        for (index in 0 until 8) {
-            value = value or ((bytes[offset + index].toLong() and 0xFF) shl (8 * index))
-        }
-        return value
     }
 }

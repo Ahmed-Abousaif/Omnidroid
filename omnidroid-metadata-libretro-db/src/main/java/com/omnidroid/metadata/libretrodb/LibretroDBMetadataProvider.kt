@@ -33,14 +33,20 @@ class LibretroDBMetadataProvider(
         key: MetadataKey?,
         fileSize: Long,
     ): GameMetadata {
-        val row = key?.let { find(systemId, it, fileSize) }
-        val title = row?.name?.takeIf { it.isNotBlank() } ?: fallbackTitle
+        val row =
+            key?.let { find(systemId, it, fileSize) }
+                ?: findByLooseName(systemId, fallbackTitle)
+                ?: key?.takeIf {
+                    it.type == MetadataKeyType.ROM_BASE || it.type == MetadataKeyType.ROM_NAME
+                }?.let { findByLooseName(systemId, it.value) }
+        val title = row?.name?.takeIf(::isLibraryTitle) ?: fallbackTitle
+        val coverTitle = row?.rawName ?: row?.name ?: title
         return GameMetadata(
             name = title,
             system = systemId,
             romName = null,
             developer = null,
-            thumbnail = computeCoverUrl(GameSystem.findById(systemId), title),
+            thumbnail = computeCoverUrl(GameSystem.findById(systemId), coverTitle),
         )
     }
 
@@ -72,6 +78,69 @@ class LibretroDBMetadataProvider(
             developer = null,
             thumbnail = null,
         )
+    }
+
+    private suspend fun findByLooseName(
+        systemId: String,
+        fallbackTitle: String,
+    ): LibretroRom? {
+        val variants = titleVariants(fallbackTitle)
+        if (variants.isEmpty()) return null
+        val dao = ovgdbManager.dbInstance.gameDao()
+        for (normalized in variants) {
+            dao.findByNormalizedName(systemId, normalized)?.takeIf { isLibraryTitle(it.name) }?.let {
+                return it
+            }
+            dao.findByNormalizedNamePrefix(systemId, "$normalized ")?.takeIf { isLibraryTitle(it.name) }?.let {
+                return it
+            }
+            dao.findByNormalizedNamePrefix(systemId, "$normalized (")?.takeIf { isLibraryTitle(it.name) }?.let {
+                return it
+            }
+        }
+        return null
+    }
+
+    private fun titleVariants(value: String): List<String> {
+        val base = normalizeTitle(value) ?: return emptyList()
+        val variants = linkedSetOf(base)
+        if (base.startsWith("the ")) {
+            variants += base.removePrefix("the ").trim()
+        } else {
+            variants += "the $base"
+        }
+        if (base.endsWith(" the")) {
+            variants += "the " + base.removeSuffix(" the").trim()
+            variants += base.removeSuffix(" the").trim()
+        }
+        val withoutRegion = base.substringBefore('(').trim()
+        if (withoutRegion.isNotEmpty() && withoutRegion != base) {
+            variants += withoutRegion
+            if (withoutRegion.startsWith("the ")) {
+                variants += withoutRegion.removePrefix("the ").trim()
+            } else {
+                variants += "the $withoutRegion"
+            }
+        }
+        return variants.filter { it.isNotBlank() }
+    }
+
+    private fun normalizeTitle(value: String): String? {
+        val cleaned =
+            value
+                .lowercase()
+                .replace('_', ' ')
+                .replace(",", "")
+                .replace(Regex("\\s+"), " ")
+                .trim()
+        return cleaned.takeIf { it.isNotBlank() }
+    }
+
+    private fun isLibraryTitle(name: String?): Boolean {
+        if (name.isNullOrBlank()) return false
+        if (name.length > 160 && !name.contains('(')) return false
+        val lower = name.lowercase()
+        return " is " !in lower && " are " !in lower && " was " !in lower && " were " !in lower
     }
 
     private suspend fun find(

@@ -3,7 +3,7 @@ package com.omnidroid.lib.core
 import com.omnidroid.lib.library.CoreID
 
 object SliceCatalog {
-    const val SCHEMA_VERSION = 1
+    const val SCHEMA_VERSION = 2
 
     data class Slice(
         val id: String,

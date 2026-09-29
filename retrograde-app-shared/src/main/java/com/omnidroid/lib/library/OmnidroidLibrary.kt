@@ -7,6 +7,7 @@ import com.omnidroid.lib.library.db.entity.DataFile
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.library.db.entity.UnrecognizedFile
 import com.omnidroid.lib.library.metadata.GameMetadataProvider
+import com.omnidroid.lib.library.metadata.LibretroTitles
 import com.omnidroid.lib.library.scan.ChdOpener
 import com.omnidroid.lib.library.scan.Detection
 import com.omnidroid.lib.library.scan.DetectionRules
@@ -92,7 +93,16 @@ class OmnidroidLibrary(
             existing != null &&
                 currentStamps[existing.systemId] != null &&
                 currentStamps[existing.systemId] != savedStamps[existing.systemId]
-        if (existing != null && !shouldRelookup(existing, primary, stampChanged)) {
+        val needsTitle =
+            existing != null &&
+                currentStamps[existing.systemId] != null &&
+                (
+                    existing.coverFrontUrl.isNullOrBlank() ||
+                        '_' in existing.title ||
+                        existing.title == existing.fileName.substringBeforeLast('.') ||
+                        LibretroTitles.isArticleSorted(existing.title)
+                )
+        if (existing != null && !shouldRelookup(existing, primary, stampChanged || needsTitle)) {
             touch(existing, primary, startedAtMs, backfill = existing.fileSize == null)
             updateDataFiles(group, existing.id, startedAtMs)
             retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
@@ -122,8 +132,18 @@ class OmnidroidLibrary(
                     detection.key,
                     startedAtMs,
                     metadata,
+                    detection.archiveEntry,
                 )
-            is Detection.HashedBin -> saveHashedBin(provider, group, existing, detection.crc, startedAtMs, metadata)
+            is Detection.HashedBin ->
+                saveHashedBin(
+                    provider,
+                    group,
+                    existing,
+                    detection.crc,
+                    detection.archiveEntry,
+                    startedAtMs,
+                    metadata,
+                )
             is Detection.Arcade -> saveArcade(provider, group, existing, insertedId, detection, startedAtMs, metadata)
             is Detection.Rejected ->
                 reject(provider, group, existing, insertedId, detection.reason, startedAtMs)
@@ -149,6 +169,7 @@ class OmnidroidLibrary(
         key: MetadataKey?,
         startedAtMs: Long,
         metadata: GameMetadataProvider,
+        archiveEntry: String? = null,
     ) {
         val primary = group.primaryFile
         if (existing != null && existing.systemId != system.dbname) {
@@ -157,10 +178,17 @@ class OmnidroidLibrary(
             updateDataFiles(group, existing.id, startedAtMs)
             return
         }
+        val fallbackTitle =
+            archiveEntry
+                ?.substringAfterLast('/')
+                ?.substringAfterLast('\\')
+                ?.substringBeforeLast('.')
+                ?.takeIf { it.isNotBlank() }
+                ?: primary.extensionlessName
         val described =
             metadata.describe(
                 system.dbname,
-                primary.extensionlessName,
+                fallbackTitle,
                 key,
                 primary.size,
             )
@@ -170,10 +198,11 @@ class OmnidroidLibrary(
                 existing,
                 insertedId,
                 system,
-                described.name ?: primary.extensionlessName,
+                described.name ?: fallbackTitle,
                 described.developer,
                 described.thumbnail,
                 startedAtMs,
+                archiveEntry,
             )
         updateDataFiles(group, gameId, startedAtMs)
         retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
@@ -184,6 +213,7 @@ class OmnidroidLibrary(
         group: GroupedStorageFiles,
         existing: Game?,
         crc: String,
+        archiveEntry: String?,
         startedAtMs: Long,
         metadata: GameMetadataProvider,
     ) {
@@ -210,6 +240,7 @@ class OmnidroidLibrary(
                 MetadataKey(MetadataKeyType.CRC, crc),
                 startedAtMs,
                 metadata,
+                archiveEntry,
             )
             return
         }
@@ -219,7 +250,7 @@ class OmnidroidLibrary(
                 setOf(SystemID.ATARI7800, SystemID.PC_ENGINE),
             )
         if (hinted != null) {
-            saveGame(provider, group, existing, null, hinted, null, startedAtMs, metadata)
+            saveGame(provider, group, existing, null, hinted, null, startedAtMs, metadata, archiveEntry)
         } else {
             reject(
                 provider,
@@ -339,15 +370,19 @@ class OmnidroidLibrary(
         developer: String?,
         cover: String?,
         startedAtMs: Long,
+        archiveEntry: String? = null,
     ): Int {
         val primary = group.primaryFile
         val current = existing ?: insertedId?.let { retrogradedb.gameDao().selectByIdBlocking(it) }
         if (current != null) {
+            val fileName = archiveEntry ?: current.fileName
             val changed =
                 current.title != title || current.developer != developer || current.coverFrontUrl != cover ||
+                    current.fileName != fileName ||
                     current.fileSize != primary.size || current.fileLastModified != primary.lastModified
             val updated =
                 current.copy(
+                    fileName = fileName,
                     title = title,
                     developer = developer,
                     coverFrontUrl = cover,
@@ -360,7 +395,7 @@ class OmnidroidLibrary(
             }
             return current.id
         }
-        return insertGame(group, system, title, developer, cover, startedAtMs)
+        return insertGame(group, system, title, developer, cover, startedAtMs, archiveEntry)
     }
 
     private fun insertGame(
@@ -370,11 +405,12 @@ class OmnidroidLibrary(
         developer: String?,
         cover: String?,
         startedAtMs: Long,
+        archiveEntry: String? = null,
     ): Int {
         val primary = group.primaryFile
         val game =
             Game(
-                fileName = primary.name,
+                fileName = archiveEntry ?: primary.name,
                 fileUri = primary.uri.toString(),
                 title = title,
                 systemId = system.dbname,

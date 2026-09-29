@@ -248,11 +248,11 @@ object OmnidroidApplicationModule {
     fun sliceInstaller(
         @ApplicationContext context: Context,
         dbManager: LibretroDBManager,
-        retrofit: Retrofit,
+        okHttpClient: OkHttpClient,
     ): MetadataSliceInstaller =
         MetadataSliceInstallerImpl(
             database = dbManager.dbInstance,
-            api = retrofit.create(CoreUpdater.CoreManagerApi::class.java),
+            http = okHttpClient,
             listener =
                 SliceInstallListener {
                     LibraryIndexScheduler.scheduleLibrarySync(context)

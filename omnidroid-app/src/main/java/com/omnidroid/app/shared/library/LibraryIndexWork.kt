@@ -6,6 +6,9 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.omnidroid.app.mobile.shared.NotificationsManager
 import com.omnidroid.app.utils.android.createSyncForegroundInfo
+import com.omnidroid.lib.core.MetadataSliceInstaller
+import com.omnidroid.lib.core.SliceCatalog
+import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.OmnidroidLibrary
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -20,6 +23,7 @@ class LibraryIndexWork
         @Assisted context: Context,
         @Assisted workerParams: WorkerParameters,
         private val omnidroidLibrary: OmnidroidLibrary,
+        private val sliceInstaller: MetadataSliceInstaller,
     ) : CoroutineWorker(context, workerParams) {
         override suspend fun doWork(): Result {
             val notificationsManager = NotificationsManager(applicationContext)
@@ -34,6 +38,10 @@ class LibraryIndexWork
 
             val result =
                 withContext(Dispatchers.IO) {
+                    kotlin.runCatching {
+                        val cores = CoreID.values().filter { SliceCatalog.forCore(it).isNotEmpty() }
+                        sliceInstaller.ensureSlices(applicationContext, cores.toList())
+                    }
                     kotlin.runCatching {
                         omnidroidLibrary.indexLibrary()
                     }
