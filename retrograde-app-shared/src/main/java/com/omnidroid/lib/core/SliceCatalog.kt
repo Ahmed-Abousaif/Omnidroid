@@ -62,6 +62,7 @@ interface MetadataSliceInstaller {
     suspend fun ensureSlices(
         context: android.content.Context,
         coreIDs: List<CoreID>,
+        force: Boolean = false,
     ): Set<String>
 }
 
