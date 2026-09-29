@@ -169,7 +169,7 @@ fun GameDatabasesScreen(
             if (searchQuery.isBlank()) return@filter true
 
             val query = searchQuery.trim().lowercase(Locale.US)
-            val consoleTitle = context.getString(slice.titleRes).lowercase(Locale.US)
+            val consoleTitle = runCatching { context.getString(slice.titleRes) }.getOrDefault("").lowercase(Locale.US)
             val badge = slice.badge.lowercase(Locale.US)
             val id = slice.id.lowercase(Locale.US)
             val systems = slice.systems.joinToString(" ").lowercase(Locale.US)
@@ -496,7 +496,7 @@ private fun ConsoleDatabaseCard(
                         overflow = TextOverflow.Ellipsis,
                     )
 
-                    if (isInstalled && installed != null) {
+                    if (installed != null) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -620,7 +620,20 @@ class GameDatabasesViewModel(
                     installed = byId[slice.id],
                 )
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            SliceCatalog.slices.map { slice ->
+                val consoleInfo = getConsoleInfo(slice.id)
+                SliceUiModel(
+                    id = slice.id,
+                    titleRes = consoleInfo.titleRes,
+                    badge = consoleInfo.badge,
+                    systems = slice.systems,
+                    installed = null,
+                )
+            },
+        )
 
     fun refetch(sliceId: String) {
         val slice = SliceCatalog.byId(sliceId) ?: return
