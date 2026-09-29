@@ -57,7 +57,9 @@ class CoreUpdaterImpl(
         context: Context,
         coreID: CoreID,
     ) {
-        CoreLibraryLocator.find(context, coreID) ?: githubCoreDownloader.retrieve(coreID)
+        // Only skip the downloader for APK-bundled cores. Walking filesDir here would
+        // permanently pin a stale downloaded .so and never pick up core fixes.
+        CoreLibraryLocator.findBundled(context, coreID) ?: githubCoreDownloader.retrieve(coreID)
     }
 
     private suspend fun retrieveAssets(

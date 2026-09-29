@@ -1,3 +1,4 @@
+#include <android/log.h>
 #include <jni.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,6 +6,8 @@
 #include <unistd.h>
 
 #include <libchdr/chd.h>
+
+#define CHD_LOG_TAG "omnidroid-chd"
 
 typedef struct {
     chd_file *file;
@@ -101,13 +104,20 @@ Java_com_omnidroid_chd_ChdNative_readSector(JNIEnv *env, jclass clazz, jlong poi
     hunk = ((uint32_t) lba) / units_per_hunk;
     index = ((uint32_t) lba) % units_per_hunk;
     if (handle->cached_hunk != (int32_t) hunk) {
-        if (chd_read(handle->file, hunk, handle->hunk) != CHDERR_NONE) {
+        chd_error error = chd_read(handle->file, hunk, handle->hunk);
+        if (error != CHDERR_NONE) {
+            __android_log_print(ANDROID_LOG_WARN, CHD_LOG_TAG, "chd_read hunk %u failed: %d", hunk, error);
             return NULL;
         }
         handle->cached_hunk = (int32_t) hunk;
     }
     sector = handle->hunk + (index * handle->unit_bytes);
-    data_offset = (handle->unit_bytes >= 2352u) ? 16u : 0u;
+    if (handle->unit_bytes >= 2352u && sector[0] == 0x00 && sector[1] == 0xFF) {
+        /* Mode 2 raw frames keep an 8-byte subheader before the 2048 user bytes. */
+        data_offset = (sector[15] == 0x02) ? 24u : 16u;
+    } else {
+        data_offset = 0u;
+    }
     if (data_offset + 2048u > handle->unit_bytes) {
         return NULL;
     }

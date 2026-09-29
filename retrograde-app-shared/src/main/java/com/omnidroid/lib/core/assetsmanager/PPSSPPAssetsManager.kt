@@ -3,6 +3,7 @@ package com.omnidroid.lib.core.assetsmanager
 import android.content.SharedPreferences
 import android.net.Uri
 import com.omnidroid.lib.core.CoreUpdater
+import com.omnidroid.lib.core.GithubCoreDownloader
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.storage.DirectoriesManager
 import kotlinx.coroutines.Dispatchers
@@ -102,7 +103,7 @@ class PPSSPPAssetsManager : CoreID.AssetsManager {
         val PPSSPP_ASSETS_URL: Uri =
             Uri.parse("https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/")
                 .buildUpon()
-                .appendEncodedPath("2.4.0/assets/ppsspp.zip")
+                .appendEncodedPath("${GithubCoreDownloader.CORES_VERSION}/assets/ppsspp.zip")
                 .build()
 
         const val PPSSPP_ASSETS_VERSION_KEY = "ppsspp_assets_version_key"

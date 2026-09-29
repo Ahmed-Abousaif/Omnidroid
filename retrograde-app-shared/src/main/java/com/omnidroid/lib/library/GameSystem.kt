@@ -1461,6 +1461,7 @@ data class GameSystem(
                         ),
                     ),
                     uniqueExtensions = listOf("3ds"),
+                    supportedExtensions = listOf("3ds", "cci"),
                     hasTouchScreen = true,
                 ),
                 GameSystem(
@@ -1677,7 +1678,6 @@ data class GameSystem(
                         "gz",
                         "bin",
                         "mdf",
-                        "nrg",
                         "elf",
                         "irx"
                     ),

@@ -57,4 +57,29 @@ interface GameDao {
         system: String,
         romHash: Long,
     ): LibretroRom?
+
+    @Query(
+        """
+        SELECT * FROM games
+        WHERE system = :system AND normalizedName = :normalized
+        LIMIT 1
+        """,
+    )
+    suspend fun findByNormalizedName(
+        system: String,
+        normalized: String,
+    ): LibretroRom?
+
+    @Query(
+        """
+        SELECT * FROM games
+        WHERE system = :system AND normalizedName LIKE :prefix || '%'
+        ORDER BY length(normalizedName) ASC
+        LIMIT 1
+        """,
+    )
+    suspend fun findByNormalizedNamePrefix(
+        system: String,
+        prefix: String,
+    ): LibretroRom?
 }

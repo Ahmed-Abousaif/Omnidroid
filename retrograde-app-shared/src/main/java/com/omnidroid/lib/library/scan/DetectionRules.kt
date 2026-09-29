@@ -16,10 +16,12 @@ sealed class Detection {
     data class Ready(
         val system: SystemID,
         val key: MetadataKey?,
+        val archiveEntry: String? = null,
     ) : Detection()
 
     data class HashedBin(
         val crc: String,
+        val archiveEntry: String? = null,
     ) : Detection()
 
     data class Arcade(
@@ -99,7 +101,7 @@ object DetectionRules {
         }
         return when (extension) {
             "nds" -> headerSerial(input, SystemID.NDS) { it.ascii(0x0C, 4).takeIf(::isCode) }
-            "3ds" -> headerSerial(input, SystemID.NINTENDO_3DS) { it.ascii(0x1150, 10).ifBlank { null } }
+            "3ds", "cci" -> headerSerial(input, SystemID.NINTENDO_3DS) { it.ascii(0x1150, 10).ifBlank { null } }
             "gcm" -> nintendo(input) { NintendoDisc.fromIso(it) }
             "tgc" -> nintendo(input) { NintendoDisc.fromTgc(it) }
             "wbfs" -> nintendo(input) { NintendoDisc.fromWbfs(it) }
@@ -113,7 +115,6 @@ object DetectionRules {
             "cso", "zso" -> compressedDisc(input)
             "gz" -> gzipDisc(input)
             "mdf" -> flatDisc(input, 0)
-            "nrg" -> nrg(input)
             "pbp" -> pbp(input)
             "m3u" -> m3u(input, beforeExpensiveHash)
             "elf" -> elf(input)
@@ -178,12 +179,34 @@ object DetectionRules {
                 identifyFlat(bytes, input.name, 0)?.let { return it }
                 return folderOrReject(input, ".bin was not a recognised disc")
             }
+            if (isGenesis(bytes)) {
+                val crc = CartridgeHasher.hash(bytes, HashMode.RAW)
+                return Detection.Ready(SystemID.GENESIS, MetadataKey(MetadataKeyType.CRC, crc))
+            }
+            if (isInes(bytes)) {
+                val crc = CartridgeHasher.hash(bytes, HashMode.RAW)
+                return Detection.Ready(SystemID.NES, MetadataKey(MetadataKeyType.CRC, crc))
+            }
             if (input.size > BIN_HASH_LIMIT) {
                 return Detection.Rejected(".bin over 16 MB was not a disc image")
             }
             val crc = CartridgeHasher.hash(bytes, HashMode.RAW)
             return Detection.HashedBin(crc)
         }
+    }
+
+    private fun isGenesis(source: RandomAccessBytes): Boolean {
+        val name = source.ascii(0x100, 16).uppercase()
+        return name.startsWith("SEGA GENESIS") || name.startsWith("SEGA MEGA DRIVE") || name.startsWith("SEGA 32X")
+    }
+
+    private fun isInes(source: RandomAccessBytes): Boolean {
+        val head = source.read(0, 4)
+        return head.size >= 4 &&
+            head[0] == 'N'.code.toByte() &&
+            head[1] == 'E'.code.toByte() &&
+            head[2] == 'S'.code.toByte() &&
+            head[3] == 0x1A.toByte()
     }
 
     private fun isDisc(source: RandomAccessBytes): Boolean {
@@ -196,7 +219,8 @@ object DetectionRules {
     private fun cue(input: ScanInput): Detection {
         val sheet = input.open()?.use { it.read(0, minOf(it.size, 256 * 1024).toInt()).toString(Charsets.UTF_8) }
             ?: return Detection.Rejected("Could not read cue sheet")
-        val track = cueDataTrack(sheet) ?: return Detection.Rejected("Cue sheet has no data track")
+        val track = cueDataTrack(sheet)?.substringAfterLast('/')?.substringAfterLast('\\')
+            ?: return Detection.Rejected("Cue sheet has no data track")
         val bin = input.openNamed(track) ?: return Detection.Rejected("Cue data track $track is missing")
         bin.use { identifyFlat(it, input.name, 0)?.let { return it } }
         return Detection.Rejected("Cue data track was not a recognised disc")
@@ -237,15 +261,6 @@ object DetectionRules {
             decoded.use { identifyFlat(it, input.name, 0)?.let { hit -> return hit } }
         }
         return Detection.Rejected("${input.name} was not a recognised disc")
-    }
-
-    private fun nrg(input: ScanInput): Detection {
-        val source = input.open() ?: return Detection.Rejected("Could not open ${input.name}")
-        source.use { bytes ->
-            val offset = NrgImage.fileOffset(bytes) ?: return Detection.Rejected("${input.name} is not a Nero image")
-            return identifyFlat(bytes, input.name, offset)
-                ?: Detection.Rejected("${input.name} was not a recognised disc")
-        }
     }
 
     private fun flatDisc(
@@ -316,6 +331,30 @@ object DetectionRules {
         }
     }
 
+    private val archiveExtensions =
+        cartridge.keys +
+            fileNameSystems.keys +
+            setOf(
+                "nds",
+                "3ds",
+                "cci",
+                "gcm",
+                "tgc",
+                "wbfs",
+                "gcz",
+                "rvz",
+                "wia",
+                "ciso",
+                "iso",
+                "cso",
+                "zso",
+                "gz",
+                "mdf",
+                "pbp",
+                "elf",
+                "dol",
+            )
+
     private fun zip(
         input: ScanInput,
         beforeExpensiveHash: (SystemID) -> Unit,
@@ -323,20 +362,9 @@ object DetectionRules {
         val source = input.open() ?: return Detection.Rejected("Could not open ${input.name}")
         source.use { bytes ->
             val entries = ZipDirectory.read(bytes) ?: return Detection.Rejected("${input.name} is not a zip archive")
-            val dominant = ZipDirectory.dominantEntry(entries)
-            if (dominant != null) {
-                val inner = cartridge[dominant.extension]
-                if (inner != null) {
-                    val (system, mode) = inner
-                    beforeExpensiveHash(system)
-                    val crc =
-                        if (CartridgeHasher.needsNormalisedHash(dominant.extension, dominant.uncompressedSize)) {
-                            ZipEntryHasher.hash(bytes, dominant, mode)
-                        } else {
-                            dominant.crc
-                        }
-                    return Detection.Ready(system, crc?.let { MetadataKey(MetadataKeyType.CRC, it) })
-                }
+            val game = chooseArchiveGame(entries, input.name)
+            if (game != null) {
+                return identifyArchiveEntry(input, bytes, game, beforeExpensiveHash)
             }
             val setName =
                 input.name
@@ -345,6 +373,70 @@ object DetectionRules {
                     .lowercase()
             val crcs = entries.map { it.crc }.distinct()
             return Detection.Arcade(setName, crcs)
+        }
+    }
+
+    private fun chooseArchiveGame(
+        entries: List<ZipEntryInfo>,
+        zipName: String,
+    ): ZipEntryInfo? {
+        val files = entries.filter { !it.name.endsWith("/") && it.uncompressedSize > 0 && it.extension != "zip" }
+        val games = files.filter { it.extension in archiveExtensions }
+        if (games.isNotEmpty()) {
+            val zipBase = ScanKeys.romBase(zipName.substringAfterLast('/').substringAfterLast('\\'))
+            val named =
+                games.filter {
+                    ScanKeys.romBase(it.name.substringAfterLast('/').substringAfterLast('\\')) == zipBase
+                }
+            return (named.ifEmpty { games }).maxByOrNull { it.uncompressedSize }
+        }
+        val bins = files.filter { it.extension == "bin" }
+        if (bins.size != 1) return null
+        val only = bins.first()
+        val total = files.sumOf { it.uncompressedSize }
+        if (files.size == 1 || (total > 0 && only.uncompressedSize.toDouble() / total.toDouble() > 0.9)) {
+            return only
+        }
+        return null
+    }
+
+    private fun identifyArchiveEntry(
+        input: ScanInput,
+        bytes: RandomAccessBytes,
+        entry: ZipEntryInfo,
+        beforeExpensiveHash: (SystemID) -> Unit,
+    ): Detection {
+        cartridge[entry.extension]?.let { (system, mode) ->
+            beforeExpensiveHash(system)
+            val crc =
+                if (
+                    CartridgeHasher.needsNormalisedHash(entry.extension, entry.uncompressedSize) ||
+                        entry.crc == "00000000"
+                ) {
+                    ZipEntryHasher.hash(bytes, entry, mode)
+                } else {
+                    entry.crc
+                }
+            return Detection.Ready(system, crc?.let { MetadataKey(MetadataKeyType.CRC, it) }, entry.name)
+        }
+        val nestedName = entry.name.substringAfterLast('/').substringAfterLast('\\')
+        val result =
+            identify(
+                ScanInput(
+                    name = nestedName,
+                    size = entry.uncompressedSize,
+                    path = input.path,
+                    open = { ZipEntryHasher.open(bytes, entry) },
+                    openNamed = input.openNamed,
+                    openChd = null,
+                    openNamedChd = input.openNamedChd,
+                ),
+                beforeExpensiveHash,
+            )
+        return when (result) {
+            is Detection.Ready -> result.copy(archiveEntry = entry.name)
+            is Detection.HashedBin -> result.copy(archiveEntry = entry.name)
+            else -> result
         }
     }
 
@@ -381,7 +473,7 @@ object DetectionRules {
         val region = if (highDensity >= 0) lines.drop(highDensity + 1) else lines
         val file = Regex("FILE\\s+\"([^\"]+)\"", RegexOption.IGNORE_CASE)
         if (highDensity >= 0) {
-            return region.firstNotNullOfOrNull { file.find(it)?.groupValues?.get(1) }
+            return region.firstNotNullOfOrNull { file.find(it)?.groupValues?.get(1)?.substringAfterLast('/')?.substringAfterLast('\\') }
         }
         val dataLine =
             region.indexOfFirst {
@@ -389,10 +481,10 @@ object DetectionRules {
             }
         if (dataLine >= 0) {
             for (index in dataLine downTo 0) {
-                file.find(region[index])?.groupValues?.get(1)?.let { return it }
+                file.find(region[index])?.groupValues?.get(1)?.let { return it.substringAfterLast('/').substringAfterLast('\\') }
             }
         }
-        return region.firstNotNullOfOrNull { file.find(it)?.groupValues?.get(1) }
+        return region.firstNotNullOfOrNull { file.find(it)?.groupValues?.get(1)?.substringAfterLast('/')?.substringAfterLast('\\') }
     }
 }
 

@@ -12,12 +12,13 @@ import androidx.room.PrimaryKey
         Index(value = ["system", "serial"]),
         Index(value = ["system", "code"]),
         Index(value = ["system", "romHash"]),
+        Index(value = ["system", "normalizedName"]),
     ],
 )
 data class LibretroRom(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
-    val id: Int,
+    val id: Int = 0,
     @ColumnInfo(name = "name")
     val name: String?,
     @ColumnInfo(name = "system")
@@ -32,4 +33,8 @@ data class LibretroRom(
     val size: Long?,
     @ColumnInfo(name = "romHash")
     val romHash: Long?,
+    @ColumnInfo(name = "normalizedName")
+    val normalizedName: String? = null,
+    @ColumnInfo(name = "rawName")
+    val rawName: String? = null,
 )

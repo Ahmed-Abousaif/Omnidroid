@@ -42,6 +42,9 @@ object StorageFilesMerger {
                 val m3uFiles: List<String> =
                     runCatching {
                         storageProvider.getInputStream(m3uFile.uri)?.readLines()
+                            ?.map { it.trim() }
+                            ?.filter { it.isNotEmpty() && !it.startsWith("#") }
+                            ?.map { it.substringAfterLast('/').substringAfterLast('\\') }
                     }.getOrNull() ?: listOf()
 
                 val filesNames = allFiles[m3uFile]?.map { it.name } ?: listOf()
@@ -67,6 +70,9 @@ object StorageFilesMerger {
                 val m3uFiles =
                     runCatching {
                         storageProvider.getInputStream(m3uFile.uri)?.readLines()
+                            ?.map { it.trim() }
+                            ?.filter { it.isNotEmpty() && !it.startsWith("#") }
+                            ?.map { it.substringAfterLast('/').substringAfterLast('\\') }
                     }.getOrNull() ?: listOf()
 
                 val dataFiles = allFiles.filter { it.key.name in m3uFiles }
@@ -170,7 +176,7 @@ object StorageFilesMerger {
     ): List<String> {
         return runCatching {
             storageProvider.getInputStream(uri)?.readLines()
-                ?.mapNotNull { Regex("FILE \"(.*)\"").find(it)?.groupValues?.get(1) }
+                ?.mapNotNull { Regex("FILE \"(.*)\"", RegexOption.IGNORE_CASE).find(it)?.groupValues?.get(1)?.substringAfterLast('/')?.substringAfterLast('\\') }
                 ?: listOf()
         }.getOrDefault(listOf())
     }

@@ -13,6 +13,7 @@ dependencies {
     implementation(deps.libs.hilt.android)
     implementation(deps.libs.kotlinxCoroutinesAndroid)
     implementation(deps.libs.retrofit)
+    implementation(deps.libs.okHttp3)
 
     ksp(deps.libs.androidx.room.compiler)
     ksp(deps.libs.hilt.compiler)

@@ -5,8 +5,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.util.zip.CRC32
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 class DetectionRulesTest {
     @Test
@@ -127,8 +130,90 @@ class DetectionRulesTest {
         header[58] = 0x80.toByte()
         header[59] = 0
         assertTrue(ChdHeader.isVersion5(ByteArraySource(header)))
+        header[58] = 0x4C
+        header[59] = 0x80.toByte()
+        assertTrue(ChdHeader.isVersion5(ByteArraySource(header)))
         header[15] = 4
         assertTrue(!ChdHeader.isVersion5(ByteArraySource(header)))
+    }
+
+    @Test
+    fun zipWithTwoRomsUsesTheEntryNamedLikeTheArchive() {
+        val keep = "keep-me".toByteArray()
+        val other = "other-dump".toByteArray()
+        val zip =
+            zipOf(
+                "Pokemon - Emerald Version (U).gba" to keep,
+                "1986 - Pokemon Emerald (U)(TrashMan).gba" to other,
+            )
+        val detection =
+            DetectionRules.identify(
+                ScanInput("Pokemon - Emerald Version (U).zip", zip.size.toLong(), null, { ByteArraySource(zip) }),
+            )
+        val ready = detection as Detection.Ready
+        assertEquals(SystemID.GBA, ready.system)
+        assertEquals(crc(keep), ready.key?.value)
+        assertEquals("Pokemon - Emerald Version (U).gba", ready.archiveEntry)
+    }
+
+    @Test
+    fun zipOfNdsReadsTheGameCode() {
+        val rom = ByteArray(32)
+        "ASME".toByteArray().copyInto(rom, 0x0C)
+        val zip = zipOf("New Super Mario Bros. (USA).nds" to rom)
+        val detection =
+            DetectionRules.identify(
+                ScanInput("New Super Mario Bros. (USA).zip", zip.size.toLong(), null, { ByteArraySource(zip) }),
+            )
+        val ready = detection as Detection.Ready
+        assertEquals(SystemID.NDS, ready.system)
+        assertEquals("ASME", ready.key?.value)
+        assertEquals("New Super Mario Bros. (USA).nds", ready.archiveEntry)
+    }
+
+    @Test
+    fun zipOfRvzReadsTheWiiHeader() {
+        val rom = ByteArray(0xD8)
+        "RVZ".toByteArray().copyInto(rom, 0)
+        "RMGE".toByteArray().copyInto(rom, 0x58)
+        rom[0x70] = 0x5D
+        rom[0x71] = 0x1C
+        rom[0x72] = 0x9E.toByte()
+        rom[0x73] = 0xA3.toByte()
+        val zip = zipOf("Super Paper Mario (USA).rvz" to rom)
+        val detection =
+            DetectionRules.identify(
+                ScanInput("Super Paper Mario (USA).zip", zip.size.toLong(), null, { ByteArraySource(zip) }),
+            )
+        val ready = detection as Detection.Ready
+        assertEquals(SystemID.WII, ready.system)
+        assertEquals("RMGE", ready.key?.value)
+    }
+
+    @Test
+    fun genesisHeaderMarksBinAsGenesis() {
+        val rom = ByteArray(0x120)
+        "SEGA GENESIS".toByteArray(StandardCharsets.US_ASCII).copyInto(rom, 0x100)
+        val detection =
+            DetectionRules.identify(
+                ScanInput("The Lion King.bin", rom.size.toLong(), null, { ByteArraySource(rom) }),
+            )
+        assertEquals(SystemID.GENESIS, (detection as Detection.Ready).system)
+    }
+
+    @Test
+    fun zipWithZeroCrcHashesTheEntry() {
+        val payload = ByteArray(1024) { 0x42 }
+        val zip = storedZip("game.gba", payload, crcValue = 0)
+        val entries = ZipDirectory.read(ByteArraySource(zip))!!
+        assertEquals("00000000", entries[0].crc)
+        val detection =
+            DetectionRules.identify(
+                ScanInput("game.zip", zip.size.toLong(), null, { ByteArraySource(zip) }),
+            )
+        val ready = detection as Detection.Ready
+        assertEquals(SystemID.GBA, ready.system)
+        assertEquals(crc(payload), ready.key?.value)
     }
 
     @Test
@@ -166,6 +251,72 @@ class DetectionRulesTest {
                 ),
             )
         assertEquals(SystemID.SEGACD, (result as Detection.Ready).system)
+    }
+
+    @Test
+    fun cueWithDirectoryPathsAndBackslashesIsSanitized() {
+        val sheet =
+            """
+            FILE "C:\Games\PSX\Tracks\game_track01.bin" BINARY
+              TRACK 01 MODE2/2352
+              INDEX 01 00:00:00
+            """.trimIndent()
+        val image = playstationImage("BOOT = cdrom:\\SLUS_005.94;1\n")
+        val result =
+            DetectionRules.identify(
+                ScanInput(
+                    name = "game.cue",
+                    size = sheet.length.toLong(),
+                    path = null,
+                    open = { ByteArraySource(sheet.toByteArray()) },
+                    openNamed = { name -> if (name == "game_track01.bin") ByteArraySource(image) else null },
+                ),
+            )
+        val ready = result as Detection.Ready
+        assertEquals(SystemID.PSX, ready.system)
+        assertEquals("SLUS-00594", ready.key?.value)
+    }
+
+    @Test
+    fun cueWithUnixPathIsSanitized() {
+        val sheet =
+            """
+            FILE "./subfolder/nested/track.bin" BINARY
+              TRACK 01 MODE1/2352
+            """.trimIndent()
+        val bin = segaCdSector()
+        val result =
+            DetectionRules.identify(
+                ScanInput(
+                    name = "game.cue",
+                    size = sheet.length.toLong(),
+                    path = null,
+                    open = { ByteArraySource(sheet.toByteArray()) },
+                    openNamed = { name -> if (name == "track.bin") ByteArraySource(bin) else null },
+                ),
+            )
+        assertEquals(SystemID.SEGACD, (result as Detection.Ready).system)
+    }
+
+    @Test
+    fun nrgFileIsRejected() {
+        val bytes = ByteArray(64)
+        val result = DetectionRules.identify(ScanInput("game.nrg", 64, null, { ByteArraySource(bytes) }))
+        assertTrue(result is Detection.Rejected)
+    }
+
+    @Test
+    fun deflateZipStreamsHeaderForDiscIdentification() {
+        val psxIso = playstationImage("BOOT = cdrom:\\SLUS_005.94;1\n")
+        val zip = zipOf("Final Fantasy VII (USA).iso" to psxIso)
+        val result =
+            DetectionRules.identify(
+                ScanInput("Final Fantasy VII (USA).zip", zip.size.toLong(), null, { ByteArraySource(zip) }),
+            )
+        val ready = result as Detection.Ready
+        assertEquals(SystemID.PSX, ready.system)
+        assertEquals("SLUS-00594", ready.key?.value)
+        assertEquals("Final Fantasy VII (USA).iso", ready.archiveEntry)
     }
 
     private fun playstationImage(config: String): ByteArray {
@@ -217,11 +368,12 @@ class DetectionRulesTest {
     private fun storedZip(
         name: String,
         payload: ByteArray,
+        crcValue: Int = crc(payload).toLong(16).toInt(),
     ): ByteArray {
         val nameBytes = name.toByteArray(StandardCharsets.UTF_8)
         val local = ByteArray(30 + nameBytes.size + payload.size)
         putLe32(local, 0, 0x04034b50)
-        putLe32(local, 14, crc(payload).toLong(16).toInt())
+        putLe32(local, 14, crcValue)
         putLe32(local, 18, payload.size)
         putLe32(local, 22, payload.size)
         local[26] = nameBytes.size.toByte()
@@ -229,7 +381,7 @@ class DetectionRulesTest {
         payload.copyInto(local, 30 + nameBytes.size)
         val central = ByteArray(46 + nameBytes.size)
         putLe32(central, 0, 0x02014b50)
-        putLe32(central, 16, crc(payload).toLong(16).toInt())
+        putLe32(central, 16, crcValue)
         putLe32(central, 20, payload.size)
         putLe32(central, 24, payload.size)
         central[28] = nameBytes.size.toByte()
@@ -241,6 +393,18 @@ class DetectionRulesTest {
         putLe32(eocd, 12, central.size)
         putLe32(eocd, 16, local.size)
         return local + central + eocd
+    }
+
+    private fun zipOf(vararg entries: Pair<String, ByteArray>): ByteArray {
+        val out = ByteArrayOutputStream()
+        ZipOutputStream(out).use { zip ->
+            entries.forEach { (name, payload) ->
+                zip.putNextEntry(ZipEntry(name))
+                zip.write(payload)
+                zip.closeEntry()
+            }
+        }
+        return out.toByteArray()
     }
 
     private fun crc(bytes: ByteArray): String {

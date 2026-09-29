@@ -1,7 +1,7 @@
 package com.omnidroid.metadata.libretrodb
 
 import android.content.Context
-import com.omnidroid.lib.core.CoreUpdater
+import android.util.Log
 import com.omnidroid.lib.core.GithubCoreDownloader
 import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.core.SliceCatalog
@@ -9,8 +9,12 @@ import com.omnidroid.lib.core.SliceInstallListener
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.metadata.libretrodb.db.LibretroDatabase
 import com.omnidroid.metadata.libretrodb.db.entity.VerifiedManifest
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.json.JSONObject
 import timber.log.Timber
 import java.io.File
@@ -19,7 +23,7 @@ import java.util.zip.GZIPInputStream
 
 class MetadataSliceInstallerImpl(
     private val database: LibretroDatabase,
-    private val api: CoreUpdater.CoreManagerApi,
+    private val http: OkHttpClient,
     private val listener: SliceInstallListener,
 ) : MetadataSliceInstaller {
     private val mutex = Mutex()
@@ -27,17 +31,20 @@ class MetadataSliceInstallerImpl(
     override suspend fun ensureSlices(
         context: Context,
         coreIDs: List<CoreID>,
-    ): Set<String> =
-        mutex.withLock {
-            val installed = mutableSetOf<String>()
-            coreIDs.distinct().forEach { core ->
-                installed += ensureCore(context, core)
-            }
-            if (installed.isNotEmpty()) {
-                listener.onSlicesInstalled(installed)
-            }
-            installed
+    ): Set<String> {
+        val installed = mutableSetOf<String>()
+        coreIDs.distinct().forEach { core ->
+            runCatching { installed += ensureCore(context, core) }
+                .onFailure {
+                    Log.e(TAG, "Slice install failed for ${core.coreName}", it)
+                    Timber.w(it, "Slice install failed for %s", core.coreName)
+                }
         }
+        if (installed.isNotEmpty()) {
+            listener.onSlicesInstalled(installed)
+        }
+        return installed
+    }
 
     private suspend fun ensureCore(
         context: Context,
@@ -46,13 +53,21 @@ class MetadataSliceInstallerImpl(
         val expected = SliceCatalog.forCore(core)
         if (expected.isEmpty()) return emptySet()
         val dao = database.sliceDao()
-        if (dao.verified(core.coreName, GithubCoreDownloader.CORES_VERSION) != null) {
+        val missing =
+            expected.any { slice ->
+                dao.find(slice.id)?.takeIf { it.schemaVersion == SliceCatalog.SCHEMA_VERSION } == null
+            }
+        if (!missing && dao.verified(core.coreName, GithubCoreDownloader.CORES_VERSION) != null) {
             return emptySet()
         }
-        val bundle = openBundle(context, core) ?: return emptySet()
+        val bundle = openBundle(context, core)
+        if (bundle == null) {
+            Log.e(TAG, "No slice source for ${core.coreName}")
+            return emptySet()
+        }
         val manifest =
             runCatching { SliceManifest.parse(bundle.manifestJson) }.getOrElse {
-                Timber.w(it, "Bad slice manifest for %s", core.coreName)
+                Log.e(TAG, "Bad slice manifest for ${core.coreName}", it)
                 return emptySet()
             }
         val installed = mutableSetOf<String>()
@@ -73,7 +88,6 @@ class MetadataSliceInstallerImpl(
                 )
             ) {
                 if (entry.schemaVersion != SliceCatalog.SCHEMA_VERSION) {
-                    Timber.w("Skipping slice %s schema %d", slice.id, entry.schemaVersion)
                     complete = false
                 }
                 return@forEach
@@ -82,18 +96,21 @@ class MetadataSliceInstallerImpl(
                 runCatching {
                     import(context, core, slice, entry, bundle)
                 }.onFailure {
+                    Log.e(TAG, "Failed to install slice ${slice.id}", it)
                     Timber.w(it, "Failed to install slice %s", slice.id)
                 }.isSuccess
             if (imported) installed += slice.id else complete = false
         }
         if (complete) {
-            dao.insertVerified(
-                VerifiedManifest(
-                    coreName = core.coreName,
-                    coresVersion = GithubCoreDownloader.CORES_VERSION,
-                    manifestSha = manifest.manifestSha,
-                ),
-            )
+            mutex.withLock {
+                dao.insertVerified(
+                    VerifiedManifest(
+                        coreName = core.coreName,
+                        coresVersion = GithubCoreDownloader.CORES_VERSION,
+                        manifestSha = manifest.manifestSha,
+                    ),
+                )
+            }
         }
         return installed
     }
@@ -107,46 +124,55 @@ class MetadataSliceInstallerImpl(
     ) {
         val gzip = bundle.read(entry.file)
         if (gzip.size != entry.size || sha256(gzip) != entry.sha256) {
-            error("Slice ${slice.id} checksum or size did not match")
+            error("Slice ${slice.id} checksum or size did not match (got ${gzip.size}, expected ${entry.size})")
         }
         val sqlite = File(context.cacheDir, "slices/${slice.id}.sqlite")
         sqlite.parentFile?.mkdirs()
         GZIPInputStream(gzip.inputStream()).use { input ->
             sqlite.outputStream().use { output -> input.copyTo(output) }
         }
-        val db = database.openHelper.writableDatabase
-        val path = sqlite.absolutePath.replace("'", "''")
-        val systems = slice.systems.joinToString(",") { "'$it'" }
-        db.beginTransaction()
-        try {
-            db.execSQL("ATTACH DATABASE '$path' AS slice")
-            db.execSQL("DELETE FROM games WHERE system IN ($systems)")
-            db.execSQL(
-                """
-                INSERT INTO games (name, system, crc32, serial, code, size, romHash)
-                SELECT name, system, crc32, serial, code, size, romHash FROM slice.games
-                """.trimIndent(),
-            )
-            db.execSQL(
-                """
-                INSERT OR REPLACE INTO installed_slices
-                (sliceId, sha256, schemaVersion, rows, sourceCore, installedAt, systems)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """.trimIndent(),
-                arrayOf(
-                    slice.id,
-                    entry.sha256,
-                    entry.schemaVersion,
-                    entry.rows,
-                    core.coreName,
-                    System.currentTimeMillis(),
-                    slice.systems.joinToString(","),
-                ),
-            )
-            db.setTransactionSuccessful()
-        } finally {
+        mutex.withLock {
+            val db = database.openHelper.writableDatabase
+            val path = sqlite.absolutePath.replace("'", "''")
+            val systems = slice.systems.joinToString(",") { "'$it'" }
+            // ATTACH/DETACH must sit outside the write transaction. DETACH inside an open
+            // transaction fails with "database slice is locked", leaving the alias attached
+            // so every later slice hits "database slice is already in use".
             runCatching { db.execSQL("DETACH DATABASE slice") }
-            db.endTransaction()
+            db.execSQL("ATTACH DATABASE '$path' AS slice")
+            try {
+                db.beginTransaction()
+                try {
+                    db.execSQL("DELETE FROM games WHERE system IN ($systems)")
+                    db.execSQL(
+                        """
+                        INSERT INTO games (name, system, crc32, serial, code, size, romHash, normalizedName, rawName)
+                        SELECT name, system, crc32, serial, code, size, romHash, normalizedName, rawName FROM slice.games
+                        """.trimIndent(),
+                    )
+                    db.execSQL(
+                        """
+                        INSERT OR REPLACE INTO installed_slices
+                        (sliceId, sha256, schemaVersion, rows, sourceCore, installedAt, systems)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """.trimIndent(),
+                        arrayOf(
+                            slice.id,
+                            entry.sha256,
+                            entry.schemaVersion,
+                            entry.rows,
+                            core.coreName,
+                            System.currentTimeMillis(),
+                            slice.systems.joinToString(","),
+                        ),
+                    )
+                    db.setTransactionSuccessful()
+                } finally {
+                    db.endTransaction()
+                }
+            } finally {
+                runCatching { db.execSQL("DETACH DATABASE slice") }
+            }
         }
         sqlite.delete()
     }
@@ -157,7 +183,7 @@ class MetadataSliceInstallerImpl(
     ): SliceBundle? {
         assetBundle(context, "libretro-db/${core.coreName}")?.let { return it }
         assetBundle(context, "libretro-db/bundled")?.let { return it }
-        return githubBundle(context, core)
+        return githubBundle(core)
     }
 
     private fun assetBundle(
@@ -171,34 +197,50 @@ class MetadataSliceInstallerImpl(
             override val manifestJson = manifest
 
             override suspend fun read(fileName: String): ByteArray =
-        context.assets.open("$directory/$fileName").use { it.readBytes() }
+                context.assets.open("$directory/$fileName").use { it.readBytes() }
         }
     }
 
-    private suspend fun githubBundle(
-        context: Context,
-        core: CoreID,
-    ): SliceBundle? {
+    private suspend fun githubBundle(core: CoreID): SliceBundle? {
         val base =
             GithubCoreDownloader.BASE_URI.buildUpon()
                 .appendEncodedPath(
                     "${GithubCoreDownloader.CORES_VERSION}/omnidroid_core_${core.coreName}/src/main/assets/libretro-db/${core.coreName}",
                 )
                 .build()
-        val manifestResponse = api.downloadFile(base.buildUpon().appendPath("manifest.json").build().toString())
-        if (!manifestResponse.isSuccessful) return null
-        val manifest = manifestResponse.body()?.use { it.string() } ?: return null
+                .toString()
+                .trimEnd('/')
+        val manifestUrl = "$base/manifest.json"
+        val manifest =
+            runCatching { httpGet(manifestUrl) }.getOrElse {
+                Log.e(TAG, "Slice manifest failed for ${core.coreName}: $manifestUrl", it)
+                return null
+            }?.toString(Charsets.UTF_8) ?: return null
         return object : SliceBundle {
             override val manifestJson = manifest
 
             override suspend fun read(fileName: String): ByteArray {
-                val response = api.downloadFile(base.buildUpon().appendPath(fileName).build().toString())
-                if (!response.isSuccessful) error("Slice download failed")
-                return response.body()?.use { it.bytes() } ?: error("Empty slice download")
+                return httpGet("$base/$fileName")
+                    ?: error("Empty slice download for $fileName")
             }
         }
     }
+
+    private suspend fun httpGet(url: String): ByteArray? =
+        withContext(Dispatchers.IO) {
+            val response =
+                http.newCall(Request.Builder().url(url).get().build()).execute()
+            response.use {
+                if (!it.isSuccessful) {
+                    Log.e(TAG, "HTTP ${it.code} for $url")
+                    return@withContext null
+                }
+                it.body?.bytes()
+            }
+        }
 }
+
+private const val TAG = "OmnidroidSlices"
 
 private interface SliceBundle {
     val manifestJson: String

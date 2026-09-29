@@ -23,41 +23,50 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
         game: Game,
     ): List<String> {
         val regionalBiosFiles = coreConfig.regionalBIOSFiles
-
-        val gameLabels =
-            Regex("\\([A-Za-z]+\\)")
-                .findAll(game.title)
-                .map { it.value.drop(1).dropLast(1) }
-                .filter { it.isNotBlank() }
-                .toSet()
-
-        Timber.d("Found game labels: $gameLabels")
-
-        val requiredRegionalFiles =
-            gameLabels.intersect(regionalBiosFiles.keys)
-                .ifEmpty { regionalBiosFiles.keys }
-                .mapNotNull { regionalBiosFiles[it] }
-
-        Timber.d("Required regional files for game: $requiredRegionalFiles")
-
         val systemDir = directoriesManager.getSystemDirectory()
-        return (coreConfig.requiredBIOSFiles + requiredRegionalFiles)
-            .filter { biosName ->
-                !File(systemDir, biosName).exists() &&
-                    !File(systemDir, "pcsx2/bios/$biosName").exists()
+
+        fun present(biosName: String): Boolean {
+            return File(systemDir, biosName).exists() ||
+                File(systemDir, "pcsx2/bios/$biosName").exists()
+        }
+
+        val gameLabels = regionLabels(game.title)
+        val matchedRegions = gameLabels.intersect(regionalBiosFiles.keys)
+        Timber.d("Found game labels: $gameLabels matched=$matchedRegions")
+
+        // Prefer the BIOS for the title's region(s). When the region is unknown, only the
+        // core's default requiredBIOSFiles apply — never "every regional BIOS".
+        val required =
+            if (matchedRegions.isNotEmpty()) {
+                matchedRegions.mapNotNull { regionalBiosFiles[it] }.distinct()
+            } else {
+                coreConfig.requiredBIOSFiles
             }
+
+        // Multi-region titles (e.g. "USA, Europe") only need one of the matched BIOS files.
+        if (matchedRegions.size > 1 && required.any(::present)) {
+            return emptyList()
+        }
+
+        return required.filterNot(::present)
+    }
+
+    private fun regionLabels(title: String): Set<String> {
+        return Regex("""\(([^)]+)\)""")
+            .findAll(title)
+            .flatMap { match -> match.groupValues[1].split(',', '/', '+') }
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .toSet()
     }
 
     fun deleteBiosBefore(timestampMs: Long) {
         Timber.i("Pruning old bios files")
         val systemDir = directoriesManager.getSystemDirectory()
+        // Only prune scan-imported copies in the system root. Asset-managed copies under
+        // pcsx2/bios/ must survive rescans or PS2 loses its downloaded BIOS every index.
         SUPPORTED_BIOS
-            .flatMap {
-                listOf(
-                    File(systemDir, it.libretroFileName),
-                    File(systemDir, "pcsx2/bios/${it.libretroFileName}"),
-                )
-            }
+            .map { File(systemDir, it.libretroFileName) }
             .filter { it.exists() && it.lastModified() < normalizeTimestamp(timestampMs) }
             .forEach {
                 Timber.d("Pruning old bios file: ${it.path}")

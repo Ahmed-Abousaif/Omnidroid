@@ -42,7 +42,7 @@ class CoreUpdaterImpl(
         context: Context,
         coreIDs: List<CoreID>,
     ) {
-        val missing = coreIDs.filter { CoreLibraryLocator.find(context, it) == null }
+        val missing = coreIDs.filter { CoreLibraryLocator.findBundled(context, it) == null }
 
         if (missing.isNotEmpty() && isInstalledFromPlayStore(context)) {
             val installManager = SplitInstallManagerFactory.create(context)
@@ -56,7 +56,7 @@ class CoreUpdaterImpl(
         }
 
         coreIDs
-            .filter { CoreLibraryLocator.find(context, it) == null }
+            .filter { CoreLibraryLocator.findBundled(context, it) == null }
             .forEach { coreID ->
                 log("Falling back to GitHub download for ${coreID.coreName}")
                 githubCoreDownloader.retrieve(coreID)

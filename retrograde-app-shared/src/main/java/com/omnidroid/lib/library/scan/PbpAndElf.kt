@@ -139,7 +139,8 @@ internal object ChdHeader {
         val version = be32(header, 12)
         val hunk = be32(header, 56)
         if (version != 5L) return false
-        return hunk in 512..(16L * 1024 * 1024) && hunk % 512L == 0L
+        // CD images use a hunk of 8 frames (19584 bytes for 2448-byte sectors), which is not a multiple of 512.
+        return hunk in 512..(16L * 1024 * 1024)
     }
 
     private fun be32(
