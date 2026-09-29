@@ -31,10 +31,11 @@ class MetadataSliceInstallerImpl(
     override suspend fun ensureSlices(
         context: Context,
         coreIDs: List<CoreID>,
+        force: Boolean,
     ): Set<String> {
         val installed = mutableSetOf<String>()
         coreIDs.distinct().forEach { core ->
-            runCatching { installed += ensureCore(context, core) }
+            runCatching { installed += ensureCore(context, core, force) }
                 .onFailure {
                     Log.e(TAG, "Slice install failed for ${core.coreName}", it)
                     Timber.w(it, "Slice install failed for %s", core.coreName)
@@ -49,6 +50,7 @@ class MetadataSliceInstallerImpl(
     private suspend fun ensureCore(
         context: Context,
         core: CoreID,
+        force: Boolean = false,
     ): Set<String> {
         val expected = SliceCatalog.forCore(core)
         if (expected.isEmpty()) return emptySet()
@@ -57,7 +59,7 @@ class MetadataSliceInstallerImpl(
             expected.any { slice ->
                 dao.find(slice.id)?.takeIf { it.schemaVersion == SliceCatalog.SCHEMA_VERSION } == null
             }
-        if (!missing && dao.verified(core.coreName, GithubCoreDownloader.CORES_VERSION) != null) {
+        if (!force && !missing && dao.verified(core.coreName, GithubCoreDownloader.CORES_VERSION) != null) {
             return emptySet()
         }
         val bundle = openBundle(context, core)
@@ -80,6 +82,7 @@ class MetadataSliceInstallerImpl(
             }
             val current = dao.find(slice.id)
             if (
+                !force &&
                 !SliceCatalog.needsInstall(
                     current?.sha256,
                     current?.schemaVersion,
