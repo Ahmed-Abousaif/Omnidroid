@@ -10,6 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -148,80 +152,179 @@ fun SettingsScreen(
         runCatching { contentFocusRequester.requestFocus() }
     }
 
-    Row(
+    BoxWithConstraints(
         modifier =
             modifier
                 .fillMaxSize()
                 .background(HomeChromeBackground),
     ) {
-        SettingsSidebar(
-            modifier =
-                Modifier
-                    .focusGroup()
-                    .focusProperties { right = contentFocusRequester },
-            selected = section,
-            focusRequesters = sidebarFocusRequesters,
-            onFocused = { section = it },
-            onActivate = {
-                section = it
-                pendingContentFocus = true
-            },
-        )
-        Box(
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .focusGroup()
-                    .focusProperties {
-                        left = sidebarFocusRequesters.getValue(section)
+        val isLandscape = maxWidth > maxHeight
+
+        if (isLandscape) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                SettingsSidebar(
+                    modifier =
+                        Modifier
+                            .focusGroup()
+                            .focusProperties { right = contentFocusRequester },
+                    selected = section,
+                    focusRequesters = sidebarFocusRequesters,
+                    onFocused = { section = it },
+                    onActivate = {
+                        section = it
+                        pendingContentFocus = true
                     },
-        ) {
-            val paneModifier = Modifier.fillMaxSize().focusRequester(contentFocusRequester)
-            when (section) {
-                SettingsSection.GENERAL ->
-                    GeneralHub(
+                )
+                Box(
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .focusGroup()
+                            .focusProperties {
+                                left = sidebarFocusRequesters.getValue(section)
+                            },
+                ) {
+                    val paneModifier = Modifier.fillMaxSize().focusRequester(contentFocusRequester)
+                    SettingsContentPane(
+                        section = section,
+                        state = state,
+                        scanInProgress = scanInProgress,
+                        indexingInProgress = indexingInProgress,
+                        viewModel = viewModel,
+                        navController = navController,
                         modifier = paneModifier,
                         onSelectSection = {
                             section = it
                             pendingContentFocus = true
                         },
                     )
-                SettingsSection.LIBRARY ->
-                    OmnidroidSettingsPage(modifier = paneModifier) {
-                        RomsSettings(
-                            state = state,
-                            onChangeFolder = { viewModel.changeLocalStorageFolder() },
-                            indexingInProgress = indexingInProgress,
-                            scanInProgress = scanInProgress,
-                        )
-                    }
-                SettingsSection.DISPLAY ->
-                    OmnidroidSettingsPage(modifier = paneModifier) { DisplaySettings() }
-                SettingsSection.CONTROLLERS ->
-                    OmnidroidSettingsPage(modifier = paneModifier) {
-                        ControllerSettings(navController = navController)
-                    }
-                SettingsSection.SAVES ->
-                    OmnidroidSettingsPage(modifier = paneModifier) {
-                        SavesSettings(
-                            isSaveSyncSupported = state.isSaveSyncSupported,
-                            navController = navController,
-                        )
-                    }
-                SettingsSection.ADVANCED ->
-                    OmnidroidSettingsPage(modifier = paneModifier) {
-                        AdvancedLinks(
-                            indexingInProgress = indexingInProgress,
-                            navController = navController,
-                        )
-                    }
-                SettingsSection.ABOUT ->
-                    OmnidroidSettingsPage(modifier = paneModifier) {
-                        AboutSettings()
-                    }
+                }
+            }
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                SettingsTopMenu(
+                    modifier =
+                        Modifier
+                            .focusGroup()
+                            .focusProperties { down = contentFocusRequester },
+                    selected = section,
+                    focusRequesters = sidebarFocusRequesters,
+                    onFocused = { section = it },
+                    onActivate = {
+                        section = it
+                        pendingContentFocus = true
+                    },
+                )
+                Box(
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .focusGroup()
+                            .focusProperties {
+                                up = sidebarFocusRequesters.getValue(section)
+                            },
+                ) {
+                    val paneModifier = Modifier.fillMaxSize().focusRequester(contentFocusRequester)
+                    SettingsContentPane(
+                        section = section,
+                        state = state,
+                        scanInProgress = scanInProgress,
+                        indexingInProgress = indexingInProgress,
+                        viewModel = viewModel,
+                        navController = navController,
+                        modifier = paneModifier,
+                        onSelectSection = {
+                            section = it
+                            pendingContentFocus = true
+                        },
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun SettingsTopMenu(
+    modifier: Modifier = Modifier,
+    selected: SettingsSection,
+    focusRequesters: Map<SettingsSection, FocusRequester>,
+    onFocused: (SettingsSection) -> Unit,
+    onActivate: (SettingsSection) -> Unit,
+) {
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(selected) {
+        val index = SettingsSection.values().indexOf(selected)
+        if (index >= 0) {
+            listState.animateScrollToItem(index)
+        }
+    }
+
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(HomeChromeBackground),
+    ) {
+        LazyRow(
+            state = listState,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+            contentPadding = PaddingValues(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            items(SettingsSection.values()) { item ->
+                val isSelected = item == selected
+                Surface(
+                    onClick = { onActivate(item) },
+                    modifier =
+                        Modifier
+                            .fillMaxHeight()
+                            .focusRequester(focusRequesters.getValue(item))
+                            .onFocusChanged { if (it.isFocused) onFocused(item) },
+                    shape = RectangleShape,
+                    color = if (isSelected) Color.White.copy(alpha = 0.08f) else Color.Transparent,
+                ) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxHeight()
+                                .padding(horizontal = 14.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(item.titleId),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.72f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(3.dp)
+                                    .align(Alignment.BottomCenter)
+                                    .background(if (isSelected) LibraryNeonGreen else Color.Transparent),
+                        )
+                    }
+                }
+            }
+        }
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Color.White.copy(alpha = 0.08f)),
+        )
     }
 }
 
@@ -280,58 +383,114 @@ private fun SettingsSidebar(
 }
 
 @Composable
+private fun SettingsContentPane(
+    section: SettingsSection,
+    state: SettingsViewModel.State,
+    scanInProgress: Boolean,
+    indexingInProgress: Boolean,
+    viewModel: SettingsViewModel,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    onSelectSection: (SettingsSection) -> Unit,
+) {
+    when (section) {
+        SettingsSection.GENERAL ->
+            GeneralHub(
+                modifier = modifier,
+                onSelectSection = onSelectSection,
+            )
+        SettingsSection.LIBRARY ->
+            OmnidroidSettingsPage(modifier = modifier) {
+                RomsSettings(
+                    state = state,
+                    onChangeFolder = { viewModel.changeLocalStorageFolder() },
+                    indexingInProgress = indexingInProgress,
+                    scanInProgress = scanInProgress,
+                )
+            }
+        SettingsSection.DISPLAY ->
+            OmnidroidSettingsPage(modifier = modifier) { DisplaySettings() }
+        SettingsSection.CONTROLLERS ->
+            OmnidroidSettingsPage(modifier = modifier) {
+                ControllerSettings(navController = navController)
+            }
+        SettingsSection.SAVES ->
+            OmnidroidSettingsPage(modifier = modifier) {
+                SavesSettings(
+                    isSaveSyncSupported = state.isSaveSyncSupported,
+                    navController = navController,
+                )
+            }
+        SettingsSection.ADVANCED ->
+            OmnidroidSettingsPage(modifier = modifier) {
+                AdvancedLinks(
+                    indexingInProgress = indexingInProgress,
+                    navController = navController,
+                )
+            }
+        SettingsSection.ABOUT ->
+            OmnidroidSettingsPage(modifier = modifier) {
+                AboutSettings()
+            }
+    }
+}
+
+@Composable
 private fun GeneralHub(
     modifier: Modifier = Modifier,
     onSelectSection: (SettingsSection) -> Unit,
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = modifier,
-        contentPadding = PaddingValues(20.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item {
-            SettingsHubCard(
-                title = stringResource(R.string.settings_category_library),
-                icon = Icons.Outlined.Folder,
-                onClick = { onSelectSection(SettingsSection.LIBRARY) },
-            )
-        }
-        item {
-            SettingsHubCard(
-                title = stringResource(R.string.settings_category_display),
-                icon = Icons.Outlined.Monitor,
-                onClick = { onSelectSection(SettingsSection.DISPLAY) },
-            )
-        }
-        item {
-            SettingsHubCard(
-                title = stringResource(R.string.settings_category_controllers),
-                icon = Icons.Outlined.SportsEsports,
-                onClick = { onSelectSection(SettingsSection.CONTROLLERS) },
-            )
-        }
-        item {
-            SettingsHubCard(
-                title = stringResource(R.string.settings_category_saves),
-                icon = Icons.Outlined.CloudSync,
-                onClick = { onSelectSection(SettingsSection.SAVES) },
-            )
-        }
-        item {
-            SettingsHubCard(
-                title = stringResource(R.string.settings_title_advanced_settings),
-                icon = Icons.Outlined.Tune,
-                onClick = { onSelectSection(SettingsSection.ADVANCED) },
-            )
-        }
-        item {
-            SettingsHubCard(
-                title = stringResource(R.string.settings_category_about),
-                icon = Icons.Outlined.Info,
-                onClick = { onSelectSection(SettingsSection.ABOUT) },
-            )
+    BoxWithConstraints(modifier = modifier) {
+        val columns = if (maxWidth < 480.dp) GridCells.Fixed(1) else GridCells.Fixed(2)
+        LazyVerticalGrid(
+            columns = columns,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                SettingsHubCard(
+                    title = stringResource(R.string.settings_category_library),
+                    icon = Icons.Outlined.Folder,
+                    onClick = { onSelectSection(SettingsSection.LIBRARY) },
+                )
+            }
+            item {
+                SettingsHubCard(
+                    title = stringResource(R.string.settings_category_display),
+                    icon = Icons.Outlined.Monitor,
+                    onClick = { onSelectSection(SettingsSection.DISPLAY) },
+                )
+            }
+            item {
+                SettingsHubCard(
+                    title = stringResource(R.string.settings_category_controllers),
+                    icon = Icons.Outlined.SportsEsports,
+                    onClick = { onSelectSection(SettingsSection.CONTROLLERS) },
+                )
+            }
+            item {
+                SettingsHubCard(
+                    title = stringResource(R.string.settings_category_saves),
+                    icon = Icons.Outlined.CloudSync,
+                    onClick = { onSelectSection(SettingsSection.SAVES) },
+                )
+            }
+            item {
+                SettingsHubCard(
+                    title = stringResource(R.string.settings_title_advanced_settings),
+                    icon = Icons.Outlined.Tune,
+                    onClick = { onSelectSection(SettingsSection.ADVANCED) },
+                )
+            }
+            item {
+                SettingsHubCard(
+                    title = stringResource(R.string.settings_category_about),
+                    icon = Icons.Outlined.Info,
+                    onClick = { onSelectSection(SettingsSection.ABOUT) },
+                )
+            }
         }
     }
 }
