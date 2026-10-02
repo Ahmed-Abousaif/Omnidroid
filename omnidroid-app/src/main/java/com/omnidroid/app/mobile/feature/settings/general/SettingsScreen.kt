@@ -66,6 +66,10 @@ import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import androidx.navigation.NavController
 import com.omnidroid.R
+import com.omnidroid.app.mobile.feature.library.LibraryStartupStore
+import com.omnidroid.app.mobile.feature.library.StartupDestinationPickerDialog
+import com.omnidroid.app.mobile.feature.library.startupDestinationLabel
+import com.omnidroid.app.mobile.feature.library.startupDestinations
 import com.omnidroid.app.mobile.feature.main.MainRoute
 import com.omnidroid.app.mobile.feature.main.navigateToRoute
 import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
@@ -83,7 +87,9 @@ import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
 import com.omnidroid.app.utils.android.settings.booleanPreferenceState
 import com.omnidroid.app.utils.android.settings.indexPreferenceState
 import com.omnidroid.app.utils.android.settings.intPreferenceState
+import com.omnidroid.app.utils.android.settings.stringPreferenceState
 import com.omnidroid.app.utils.android.stringListResource
+import com.omnidroid.lib.library.MetaSystemID
 import kotlinx.coroutines.yield
 
 private val SettingsSidebarWidth = 220.dp
@@ -108,6 +114,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel,
     navController: NavController,
+    availableConsoles: List<MetaSystemID> = emptyList(),
 ) {
     val state =
         viewModel.uiState
@@ -193,6 +200,7 @@ fun SettingsScreen(
                         indexingInProgress = indexingInProgress,
                         viewModel = viewModel,
                         navController = navController,
+                        availableConsoles = availableConsoles,
                         modifier = paneModifier,
                         onSelectSection = {
                             section = it
@@ -234,6 +242,7 @@ fun SettingsScreen(
                         indexingInProgress = indexingInProgress,
                         viewModel = viewModel,
                         navController = navController,
+                        availableConsoles = availableConsoles,
                         modifier = paneModifier,
                         onSelectSection = {
                             section = it
@@ -390,6 +399,7 @@ private fun SettingsContentPane(
     indexingInProgress: Boolean,
     viewModel: SettingsViewModel,
     navController: NavController,
+    availableConsoles: List<MetaSystemID>,
     modifier: Modifier = Modifier,
     onSelectSection: (SettingsSection) -> Unit,
 ) {
@@ -407,6 +417,7 @@ private fun SettingsContentPane(
                     indexingInProgress = indexingInProgress,
                     scanInProgress = scanInProgress,
                 )
+                StartupScreenSettings(availableConsoles = availableConsoles)
             }
         SettingsSection.DISPLAY ->
             OmnidroidSettingsPage(modifier = modifier) { DisplaySettings() }
@@ -677,6 +688,38 @@ private fun openExternalUrl(
     runCatching {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     }
+}
+
+@Composable
+private fun StartupScreenSettings(availableConsoles: List<MetaSystemID>) {
+    val startupState =
+        stringPreferenceState(R.string.pref_key_startup_destination, LibraryStartupStore.ALL)
+    var showPicker by remember { mutableStateOf(false) }
+
+    val destinations = remember(availableConsoles) { startupDestinations(availableConsoles) }
+    val selected = LibraryStartupStore.decode(startupState.value)
+
+    OmnidroidCardSettingsGroup(
+        title = { Text(text = stringResource(id = R.string.settings_section_startup)) },
+    ) {
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_startup_destination)) },
+            subtitle = { Text(text = startupDestinationLabel(selected)) },
+            onClick = { showPicker = true },
+        )
+    }
+
+    if (!showPicker) return
+
+    StartupDestinationPickerDialog(
+        destinations = destinations,
+        selected = selected,
+        onSelected = { destination ->
+            startupState.value = LibraryStartupStore.encode(destination)
+            showPicker = false
+        },
+        onDismiss = { showPicker = false },
+    )
 }
 
 @Composable
