@@ -67,6 +67,7 @@ class GameViewModelTouchControls(
     private val showEditControls = MutableStateFlow(false)
     private val hapticFeedbackMode = MutableStateFlow(HapticFeedbackMode.NONE)
     private val vibrationIntensity = MutableStateFlow(RumbleManager.DEFAULT_RUMBLE_STRENGTH)
+    private val virtualPadOpacity = MutableStateFlow(DEFAULT_PAD_OPACITY)
     private val touchHapticPlayer = TouchHapticPlayer(appContext)
     private val activeDiscreteDirections = mutableSetOf<Int>()
     private val forceHideTouchControls = MutableStateFlow(false)
@@ -97,6 +98,7 @@ class GameViewModelTouchControls(
             withContext(Dispatchers.IO) {
                 hapticFeedbackMode.value = HapticFeedbackMode.parse(settingsManager.hapticFeedbackMode())
                 vibrationIntensity.value = settingsManager.vibrationIntensity()
+                virtualPadOpacity.value = settingsManager.virtualPadOpacity()
             }
         }
     }
@@ -121,6 +123,10 @@ class GameViewModelTouchControls(
 
     fun getTouchHapticFeedbackMode(): Flow<HapticFeedbackMode> {
         return hapticFeedbackMode
+    }
+
+    fun getVirtualPadOpacity(): Flow<Float> {
+        return virtualPadOpacity
     }
 
     fun updateTouchControllerSettings(touchControllerSettings: TouchControllerSettingsManager.Settings) {
@@ -415,5 +421,6 @@ class GameViewModelTouchControls(
         const val MENU_LOADING_ANIMATION_MILLIS = 500
         private const val DIRECTION_ACTIVE_THRESHOLD = 0.01f
         private const val ANALOG_DPAD_DEADZONE = 0.25f
+        private const val DEFAULT_PAD_OPACITY = 1f
     }
 }

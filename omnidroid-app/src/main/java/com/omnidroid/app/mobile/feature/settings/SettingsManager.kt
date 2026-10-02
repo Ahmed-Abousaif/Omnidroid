@@ -25,6 +25,8 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
 
     suspend fun vibrationIntensity() = floatPreference(R.string.pref_key_vibration_intensity, 100, 50)
 
+    suspend fun virtualPadOpacity() = floatPreference(R.string.pref_key_virtual_pad_opacity, 100, 100)
+
     suspend fun lowLatencyAudio() = booleanPreference(R.string.pref_key_low_latency_audio, false)
 
     suspend fun screenFilter() =

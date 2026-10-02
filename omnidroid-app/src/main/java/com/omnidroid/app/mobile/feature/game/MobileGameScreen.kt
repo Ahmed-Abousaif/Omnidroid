@@ -59,6 +59,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -114,6 +115,8 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             viewModel
                 .getTouchControlsSettings(LocalDensity.current, WindowInsets.displayCutout)
                 .collectAsState(null)
+
+        val padOpacity = viewModel.getVirtualPadOpacity().collectAsState(1f).value
 
         val touchControllerSettings = touchControllerSettingsState.value
         val currentControllerConfig = controllerConfigState.value
@@ -229,25 +232,38 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                     CompositionLocalProvider(LocalOmnidroidPadTheme provides OmnidroidPadTheme()) {
                         if (!isLandscape) {
                             PadContainer(
-                                modifier = Modifier.layoutId(GameScreenLayout.CONSTRAINTS_BOTTOM_CONTAINER),
+                                modifier =
+                                    Modifier
+                                        .layoutId(GameScreenLayout.CONSTRAINTS_BOTTOM_CONTAINER)
+                                        .alpha(padOpacity),
                             )
                         } else if (!currentControllerConfig.allowTouchOverlay) {
                             PadContainer(
-                                modifier = Modifier.layoutId(GameScreenLayout.CONSTRAINTS_LEFT_CONTAINER),
+                                modifier =
+                                    Modifier
+                                        .layoutId(GameScreenLayout.CONSTRAINTS_LEFT_CONTAINER)
+                                        .alpha(padOpacity),
                             )
                             PadContainer(
-                                modifier = Modifier.layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_CONTAINER),
+                                modifier =
+                                    Modifier
+                                        .layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_CONTAINER)
+                                        .alpha(padOpacity),
                             )
                         }
 
                         leftGamePad?.invoke(
                             this,
-                            Modifier.layoutId(GameScreenLayout.CONSTRAINTS_LEFT_PAD),
+                            Modifier
+                                .layoutId(GameScreenLayout.CONSTRAINTS_LEFT_PAD)
+                                .alpha(padOpacity),
                             touchControllerSettings,
                         )
                         rightGamePad?.invoke(
                             this,
-                            Modifier.layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_PAD),
+                            Modifier
+                                .layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_PAD)
+                                .alpha(padOpacity),
                             touchControllerSettings,
                         )
 
