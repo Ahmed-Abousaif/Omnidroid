@@ -33,14 +33,16 @@ class LibraryViewModel(
     private val appContext: Context,
     private val retrogradeDb: RetrogradeDatabase,
     private val registeredSystemsStore: RegisteredSystemsStore,
+    private val startupStore: LibraryStartupStore,
 ) : ViewModel() {
     class Factory(
         private val appContext: Context,
         private val retrogradeDb: RetrogradeDatabase,
         private val registeredSystemsStore: RegisteredSystemsStore,
+        private val startupStore: LibraryStartupStore,
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return LibraryViewModel(appContext, retrogradeDb, registeredSystemsStore) as T
+            return LibraryViewModel(appContext, retrogradeDb, registeredSystemsStore, startupStore) as T
         }
     }
 
@@ -54,6 +56,7 @@ class LibraryViewModel(
         val layout: LibraryLayout = LibraryLayout.GRID,
         val portrait: Boolean = false,
         val selectedSystemGameCount: Int? = null,
+        val startupFilter: LibraryFilter = LibraryFilter.All,
     )
 
     private data class LibraryChrome(
@@ -62,6 +65,7 @@ class LibraryViewModel(
         val layout: LibraryLayout,
         val portrait: Boolean,
         val systemCounts: List<SystemCount>,
+        val startupFilter: LibraryFilter,
     )
 
     private data class LibraryPresentation(
@@ -71,7 +75,8 @@ class LibraryViewModel(
     )
 
     private val preferences = SharedPreferencesHelper.getSharedPreferences(appContext)
-    private val filterFlow = MutableStateFlow<LibraryFilter>(LibraryFilter.All)
+    private val startupFilterFlow = startupStore.observe()
+    private val filterFlow = MutableStateFlow(startupStore.get())
     private val searchQueryFlow = MutableStateFlow("")
     private val scanRequested = MutableStateFlow(false)
     private val zoomDensityFlow = MutableStateFlow(readZoomDensity())
@@ -95,13 +100,15 @@ class LibraryViewModel(
                 libraryOperationInProgress,
                 presentationFlow,
                 retrogradeDb.gameDao().selectSystemsWithCount(),
-            ) { requested, inProgress, presentation, counts ->
+                startupFilterFlow,
+            ) { requested, inProgress, presentation, counts, startup ->
                 LibraryChrome(
                     requested || inProgress,
                     presentation.zoomDensity,
                     presentation.layout,
                     presentation.portrait,
                     counts,
+                    startup,
                 )
             },
         ) { filter, searchQuery, sidebarSystems, continueGames, chrome ->
@@ -120,6 +127,7 @@ class LibraryViewModel(
                 layout = chrome.layout,
                 portrait = chrome.portrait,
                 selectedSystemGameCount = selectedCount,
+                startupFilter = chrome.startupFilter,
             )
         }.stateIn(
             viewModelScope,
@@ -128,6 +136,8 @@ class LibraryViewModel(
                 zoomDensity = zoomDensityFlow.value,
                 layout = layoutFlow.value,
                 portrait = portraitFlow.value,
+                filter = filterFlow.value,
+                startupFilter = startupStore.get(),
             ),
         )
 
@@ -140,8 +150,27 @@ class LibraryViewModel(
                 }
             }
 
+    init {
+        // Leave the startup view if the user changes it while already looking at it.
+        viewModelScope.launch {
+            var previous = startupStore.get()
+            startupFilterFlow.collect { startup ->
+                if (startup != previous) {
+                    if (filterFlow.value == previous) {
+                        filterFlow.value = LibraryFilter.All
+                    }
+                    previous = startup
+                }
+            }
+        }
+    }
+
     fun selectFilter(filter: LibraryFilter) {
         filterFlow.value = filter
+    }
+
+    fun setStartupFilter(filter: LibraryFilter) {
+        startupStore.set(filter)
     }
 
     fun cycleFilter(delta: Int) {
@@ -242,14 +271,15 @@ class LibraryViewModel(
         return combine(
             registeredSystemsStore.observe(),
             retrogradeDb.gameDao().selectSystemsWithCount(),
-        ) { registered, counts ->
+            startupFilterFlow,
+        ) { registered, counts, startup ->
             val withGames =
                 counts.mapNotNull { count ->
                     if (count.count <= 0) return@mapNotNull null
                     runCatching { GameSystem.findById(count.systemId).metaSystemID() }.getOrNull()
                 }.toSet()
 
-            (registered + withGames)
+            (registered + withGames + listOfNotNull((startup as? LibraryFilter.System)?.metaSystemID))
                 .distinct()
                 .sortedBy { appContext.getString(it.titleResId) }
         }

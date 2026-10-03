@@ -25,6 +25,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -55,6 +56,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.ScreenRotation
 import androidx.compose.material.icons.outlined.ZoomIn
 import androidx.compose.material.icons.outlined.ZoomOut
@@ -69,7 +71,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -178,6 +182,7 @@ fun LibraryScreen(
 ) {
     val state = viewModel.state.collectAsState().value
     val games = viewModel.games.collectAsLazyPagingItems()
+    var startupTarget by remember { mutableStateOf<MetaSystemID?>(null) }
 
     Box(
         modifier =
@@ -219,7 +224,9 @@ fun LibraryScreen(
                 PortraitConsoleBar(
                     filter = state.filter,
                     systems = state.sidebarSystems,
+                    startupFilter = state.startupFilter,
                     onFilterSelected = { viewModel.selectFilter(it) },
+                    onConsoleLongClick = { startupTarget = it },
                     onAddConsole = onAddConsole,
                 )
             }
@@ -229,7 +236,9 @@ fun LibraryScreen(
                     modifier = Modifier,
                     filter = state.filter,
                     systems = state.sidebarSystems,
+                    startupFilter = state.startupFilter,
                     onFilterSelected = { viewModel.selectFilter(it) },
+                    onConsoleLongClick = { startupTarget = it },
                     onAddConsole = onAddConsole,
                 )
                 LibraryGames(
@@ -251,6 +260,24 @@ fun LibraryScreen(
                 )
             }
         }
+
+        startupTarget?.let { target ->
+            SetStartupScreenDialog(
+                console = target,
+                isStartupScreen = state.startupFilter == LibraryFilter.System(target),
+                onConfirm = {
+                    viewModel.setStartupFilter(
+                        if (state.startupFilter == LibraryFilter.System(target)) {
+                            LibraryFilter.All
+                        } else {
+                            LibraryFilter.System(target)
+                        },
+                    )
+                    startupTarget = null
+                },
+                onDismiss = { startupTarget = null },
+            )
+        }
     }
 }
 
@@ -259,7 +286,9 @@ private fun LibrarySidebar(
     modifier: Modifier = Modifier,
     filter: LibraryFilter,
     systems: List<MetaSystemID>,
+    startupFilter: LibraryFilter,
     onFilterSelected: (LibraryFilter) -> Unit,
+    onConsoleLongClick: (MetaSystemID) -> Unit,
     onAddConsole: () -> Unit,
 ) {
     Column(
@@ -276,6 +305,7 @@ private fun LibrarySidebar(
             icon = if (filter is LibraryFilter.Favorites) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
             contentDescription = stringResource(R.string.favorites),
             onClick = { onFilterSelected(LibraryFilter.Favorites) },
+            pinned = startupFilter is LibraryFilter.Favorites,
         )
         Spacer(modifier = Modifier.height(4.dp))
         SidebarIconButton(
@@ -302,7 +332,9 @@ private fun LibrarySidebar(
                 SidebarSystemLogoButton(
                     meta = system,
                     selected = (filter as? LibraryFilter.System)?.metaSystemID == system,
+                    pinned = startupFilter == LibraryFilter.System(system),
                     onClick = { onFilterSelected(LibraryFilter.System(system)) },
+                    onLongClick = { onConsoleLongClick(system) },
                 )
             }
             SidebarIconButton(
@@ -321,6 +353,7 @@ private fun SidebarIconButton(
     icon: ImageVector,
     contentDescription: String,
     onClick: () -> Unit,
+    pinned: Boolean = false,
 ) {
     Surface(
         onClick = onClick,
@@ -338,19 +371,37 @@ private fun SidebarIconButton(
                 modifier = Modifier.size(26.dp),
                 tint = if (selected) LibraryNeonGreen else Color.White,
             )
+            StartupBadge(visible = pinned)
         }
     }
 }
 
 @Composable
+private fun BoxScope.StartupBadge(visible: Boolean) {
+    if (!visible) return
+    Icon(
+        imageVector = Icons.Filled.Star,
+        contentDescription = null,
+        modifier = Modifier.align(Alignment.TopEnd).size(14.dp).padding(1.dp),
+        tint = LibraryNeonGreen,
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
 private fun SidebarSystemLogoButton(
     meta: MetaSystemID,
     selected: Boolean,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+    pinned: Boolean = false,
 ) {
     Surface(
-        onClick = onClick,
-        modifier = Modifier.size(LibrarySidebarButtonSize).controllerFocusGlow(CircleShape),
+        modifier =
+            Modifier
+                .size(LibrarySidebarButtonSize)
+                .controllerFocusGlow(CircleShape)
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick),
         shape = CircleShape,
         color = Color(meta.color()),
         shadowElevation = 6.dp,
@@ -364,6 +415,7 @@ private fun SidebarSystemLogoButton(
                 modifier = Modifier.fillMaxSize(0.84f),
                 contentScale = ContentScale.Fit,
             )
+            StartupBadge(visible = pinned)
         }
     }
 }
@@ -378,7 +430,9 @@ private fun sidebarSelectionBorder(selected: Boolean) =
 private fun PortraitConsoleBar(
     filter: LibraryFilter,
     systems: List<MetaSystemID>,
+    startupFilter: LibraryFilter,
     onFilterSelected: (LibraryFilter) -> Unit,
+    onConsoleLongClick: (MetaSystemID) -> Unit,
     onAddConsole: () -> Unit,
 ) {
     val listState = rememberLazyListState()
@@ -403,6 +457,7 @@ private fun PortraitConsoleBar(
             icon = if (filter is LibraryFilter.Favorites) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
             contentDescription = stringResource(R.string.favorites),
             onClick = { onFilterSelected(LibraryFilter.Favorites) },
+            pinned = startupFilter is LibraryFilter.Favorites,
         )
         Spacer(modifier = Modifier.width(8.dp))
         SidebarIconButton(
@@ -431,7 +486,9 @@ private fun PortraitConsoleBar(
                 SidebarSystemLogoButton(
                     meta = system,
                     selected = (filter as? LibraryFilter.System)?.metaSystemID == system,
+                    pinned = startupFilter == LibraryFilter.System(system),
                     onClick = { onFilterSelected(LibraryFilter.System(system)) },
+                    onLongClick = { onConsoleLongClick(system) },
                 )
             }
             item(key = "add") {
