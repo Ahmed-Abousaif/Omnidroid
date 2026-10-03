@@ -192,7 +192,8 @@ dependencies {
     "baselineProfile"(project(":baselineprofile"))
     implementation(deps.libs.androidx.profileInstaller)
 
-    "bundleImplementation"(project(":bundled-cores"))
+    // Only wired up when the omnidroid-cores submodule is checked out (see settings.gradle.kts).
+    findProject(":bundled-cores")?.let { add("bundleImplementation", project(it.path)) }
 
     "freeImplementation"(project(":omnidroid-app-ext-free"))
     "playImplementation"(project(":omnidroid-app-ext-play"))

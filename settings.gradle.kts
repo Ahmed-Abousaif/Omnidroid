@@ -8,7 +8,6 @@ pluginManagement {
 }
 
 include(
-    ":libretro-db-builder",
     ":omnidroid-chd",
     ":retrograde-util",
     ":retrograde-app-shared",
@@ -18,16 +17,21 @@ include(
     ":omnidroid-metadata-rawg",
     ":omnidroid-app-ext-free",
     ":omnidroid-app-ext-play",
-    ":bundled-cores",
     ":baselineprofile"
 )
+
+// Optional modules that depend on the omnidroid-cores submodule. Skip them when it is not
+// checked out so non-bundle flavors still configure.
+val hasCoresSubmodule = file("omnidroid-cores/bundled-cores").exists()
+if (hasCoresSubmodule) {
+    include(":bundled-cores", ":libretro-db-builder")
+    project(":bundled-cores").projectDir = File("omnidroid-cores/bundled-cores")
+    project(":libretro-db-builder").projectDir = File("omnidroid-cores/tools/libretro-db-builder")
+}
 
 if (file("libretrodroid").exists()) {
     include(":libretrodroid")
 }
-
-project(":bundled-cores").projectDir = File("omnidroid-cores/bundled-cores")
-project(":libretro-db-builder").projectDir = File("omnidroid-cores/tools/libretro-db-builder")
 
 fun usePlayDynamicFeatures(): Boolean {
     val task = gradle.startParameter.taskRequests.toString()

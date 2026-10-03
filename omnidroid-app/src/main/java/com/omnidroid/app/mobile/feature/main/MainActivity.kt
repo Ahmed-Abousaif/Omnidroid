@@ -71,6 +71,7 @@ import com.omnidroid.app.mobile.feature.library.LibraryTopBar
 import com.omnidroid.app.mobile.feature.library.LibraryTopBarPortraitHeight
 import com.omnidroid.app.mobile.feature.library.LibraryTopBarRowHeight
 import com.omnidroid.app.mobile.feature.library.LibraryViewModel
+import com.omnidroid.app.mobile.feature.library.LibraryStartupStore
 import com.omnidroid.app.mobile.feature.library.RegisteredSystemsStore
 import com.omnidroid.app.mobile.feature.profile.ProfileScreen
 import com.omnidroid.app.mobile.feature.profile.ProfileViewModel
@@ -304,6 +305,10 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 remember {
                     RegisteredSystemsStore(applicationContext)
                 }
+            val startupStore =
+                remember {
+                    LibraryStartupStore(applicationContext)
+                }
             val libraryViewModel =
                 viewModel<LibraryViewModel>(
                     factory =
@@ -311,6 +316,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                             applicationContext,
                             retrogradeDb,
                             registeredSystemsStore,
+                            startupStore,
                         ),
                 )
             val libraryState = libraryViewModel.state.collectAsState().value
@@ -594,6 +600,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                         ),
                                 ),
                             navController = navController,
+                            availableConsoles = libraryState.sidebarSystems,
                         )
                     }
                     composable(MainRoute.SETTINGS_ADVANCED) {
