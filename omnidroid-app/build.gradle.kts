@@ -180,6 +180,23 @@ android {
         jvmTarget = "17"
     }
     namespace = "com.omnidroid"
+
+    applicationVariants.all {
+        val variant = this
+        val isPlay = variant.flavorName.contains("play", ignoreCase = true)
+        val isBundled = variant.flavorName.contains("bundle", ignoreCase = true)
+        val coresType = if (isBundled) "bundled" else "dynamic"
+        val buildTypeName = variant.buildType.name
+        val baseVersion = variant.versionName?.removeSuffix("-DEBUG") ?: defaultConfig.versionName
+
+        val prefix = if (isPlay) "Omnidroid-play" else "Omnidroid"
+        val apkName = "$prefix-$coresType-$buildTypeName-v$baseVersion.apk"
+
+        outputs.all {
+            val output = this as? com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            output?.outputFileName = apkName
+        }
+    }
 }
 
 dependencies {

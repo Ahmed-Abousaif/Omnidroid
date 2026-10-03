@@ -100,6 +100,8 @@ import com.omnidroid.app.mobile.feature.settings.unrecognized.UnrecognizedFilesV
 import com.omnidroid.app.mobile.feature.shortcuts.ShortcutsGenerator
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
 import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
+import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
+import com.omnidroid.app.mobile.shared.compose.ui.calculateAdaptiveLayoutSpec
 import com.omnidroid.app.mobile.shared.controller.ControllerHintBar
 import com.omnidroid.app.mobile.shared.controller.ControllerHints
 import com.omnidroid.app.mobile.shared.controller.ControllerInputBridge
@@ -466,12 +468,17 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 }
             }
 
-            CompositionLocalProvider(LocalControllerNavigation provides controllerNav) {
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val adaptiveSpec = remember(maxWidth, maxHeight) { calculateAdaptiveLayoutSpec(maxWidth, maxHeight) }
             val portraitHome = libraryState.portrait && currentRoute == MainRoute.HOME
             val portraitColumnWidth = maxWidth
             val libraryTopPadding =
-                if (portraitHome) LibraryTopBarPortraitHeight else LibraryTopBarRowHeight
+                if (portraitHome) adaptiveSpec.topBarPortraitHeight else adaptiveSpec.topBarRowHeight
+            val standardTopPadding = adaptiveSpec.topBarRowHeight
+            CompositionLocalProvider(
+                LocalControllerNavigation provides controllerNav,
+                LocalAdaptiveLayout provides adaptiveSpec,
+            ) {
             Scaffold(
                 containerColor = HomeChromeBackground,
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -531,7 +538,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                     Modifier
                                         .fillMaxSize()
                                         .padding(padding)
-                                        .padding(top = LibraryTopBarRowHeight),
+                                        .padding(top = standardTopPadding),
                                 sharedTransitionScope = this@SharedTransitionLayout,
                                 animatedVisibilityScope = this,
                                 viewModel =
@@ -564,7 +571,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 Modifier
                                     .fillMaxSize()
                                     .padding(padding)
-                                    .padding(top = LibraryTopBarRowHeight),
+                                    .padding(top = standardTopPadding),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -584,7 +591,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 Modifier
                                     .fillMaxSize()
                                     .padding(padding)
-                                    .padding(top = LibraryTopBarRowHeight),
+                                    .padding(top = standardTopPadding),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -609,7 +616,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 Modifier
                                     .fillMaxSize()
                                     .padding(padding)
-                                    .padding(top = LibraryTopBarRowHeight),
+                                    .padding(top = standardTopPadding),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -627,7 +634,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 Modifier
                                     .fillMaxSize()
                                     .padding(padding)
-                                    .padding(top = LibraryTopBarRowHeight),
+                                    .padding(top = standardTopPadding),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -645,7 +652,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 Modifier
                                     .fillMaxSize()
                                     .padding(padding)
-                                    .padding(top = LibraryTopBarRowHeight),
+                                    .padding(top = standardTopPadding),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -661,7 +668,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 Modifier
                                     .fillMaxSize()
                                     .padding(padding)
-                                    .padding(top = LibraryTopBarRowHeight),
+                                    .padding(top = standardTopPadding),
                             viewModel =
                                 viewModel(
                                     factory = BiosSettingsViewModel.Factory(biosManager),
@@ -674,7 +681,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 Modifier
                                     .fillMaxSize()
                                     .padding(padding)
-                                    .padding(top = LibraryTopBarRowHeight),
+                                    .padding(top = standardTopPadding),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -691,7 +698,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 Modifier
                                     .fillMaxSize()
                                     .padding(padding)
-                                    .padding(top = LibraryTopBarRowHeight),
+                                    .padding(top = standardTopPadding),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -708,7 +715,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 Modifier
                                     .fillMaxSize()
                                     .padding(padding)
-                                    .padding(top = LibraryTopBarRowHeight),
+                                    .padding(top = standardTopPadding),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -725,7 +732,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 Modifier
                                     .fillMaxSize()
                                     .padding(padding)
-                                    .padding(top = LibraryTopBarRowHeight),
+                                    .padding(top = standardTopPadding),
                             viewModel =
                                 viewModel(
                                     factory =
@@ -742,7 +749,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 Modifier
                                     .fillMaxSize()
                                     .padding(padding)
-                                    .padding(top = LibraryTopBarRowHeight),
+                                    .padding(top = standardTopPadding),
                             viewModel =
                                 viewModel(
                                     factory = DeviceProfileViewModel.Factory(applicationContext),
@@ -755,7 +762,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 Modifier
                                     .fillMaxSize()
                                     .padding(padding)
-                                    .padding(top = LibraryTopBarRowHeight),
+                                    .padding(top = standardTopPadding),
                             viewModel =
                                 viewModel(
                                     factory =

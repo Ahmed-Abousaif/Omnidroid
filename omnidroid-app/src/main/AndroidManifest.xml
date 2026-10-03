@@ -45,7 +45,7 @@
             android:name="com.omnidroid.app.mobile.feature.main.MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
-            android:screenOrientation="sensorLandscape"
+            android:screenOrientation="unspecified"
             android:stateNotNeeded="true"
             android:theme="@style/OmnidroidMaterialTheme.Launcher">
             <intent-filter>

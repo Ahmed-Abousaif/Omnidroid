@@ -20,7 +20,7 @@
 
 Omnidroid is an open-source Libretro-powered multi-console emulation platform for Android, forked from [Lemuroid](https://github.com/Swordfish90/Lemuroid).
 
-It keeps the core that made Lemuroid solid (ROM scanning, strong Android integration, and a wide set of cores) and builds on top of it with a landscape-first launcher, full controller navigation, richer cloud saves, native Vulkan hardware acceleration, and extensive improvements to UI, functionality, and performance. All while keeping the release build lightweight (universal release APK under 10 MB, ~16% smaller than Lemuroid's baseline).
+It keeps the core that made Lemuroid solid (ROM scanning, strong Android integration, and a wide set of cores) and builds on top of it with a landscape-first launcher, full controller navigation, richer cloud saves, native Vulkan hardware acceleration, and extensive improvements to UI, functionality, and performance. All while keeping the release build lightweight (universal release APK just over 8 MB, ~27% smaller than Lemuroid's baseline).
 
 It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://github.com/retrograde/retrograde-android)). Omnidroid elevates the emulation stack with its custom-engineered [omni-libretrodroid](https://github.com/Ahmed-Abousaif/omni-libretrodroid) native engine, introducing native Vulkan hardware acceleration, 16KB memory page alignment, low-latency audio, and adaptive dual-screen rendering.
 
@@ -208,8 +208,8 @@ Omnidroid includes full **Nintendo GameCube** and **Nintendo Wii** emulation pow
   - **Display Enhancements:** Native support for **Widescreen (16:9)** anamorphic modes and **Progressive Scan (480p)** toggles via in-game settings.
 - **Versatile Controller Profiles & Input Routing:**
   - **GameCube:** Authentic GameCube layout (Analog Main Stick, C-Stick, A/B/X/Y, Z trigger, analog L/R, D-Pad, Start).
-  - **Wii Remote (Sideways):** Default configuration for classic 2D platformers and horizontal play (*Super Paper Mario*, *New Super Mario Bros. Wii*).
-  - **Wii Remote + Nunchuk:** Twin-motion and analog stick configuration for 3D adventures (*Super Mario Galaxy*, *The Legend of Zelda: Twilight Princess*).
+  - **Wii Remote (Sideways):** Default configuration for classic 2D platformers and horizontal play (_Super Paper Mario_, _New Super Mario Bros. Wii_).
+  - **Wii Remote + Nunchuk:** Twin-motion and analog stick configuration for 3D adventures (_Super Mario Galaxy_, _The Legend of Zelda: Twilight Princess_).
   - **Wii Classic Controller:** Full dual-stick gamepad layout for standard Wii titles.
   - **Ghost Controller Prevention:** Automatically disconnects unused controller ports (ports 1-3) on boot to prevent games from detecting false multiplayer inputs.
   - **Sensor Bar Setup:** Configurable Top / Bottom virtual sensor bar positioning.

@@ -38,6 +38,18 @@ data class GameSystem(
     val fastForwardSupport: Boolean = true,
     val hasTouchScreen: Boolean = false,
 ) {
+    val aspectRatio: Float
+        get() = when (id) {
+            SystemID.GB, SystemID.GBC, SystemID.GG -> 10f / 9f
+            SystemID.GBA -> 3f / 2f
+            SystemID.PSP, SystemID.WII_U -> 16f / 9f
+            SystemID.NDS, SystemID.NINTENDO_3DS -> 4f / 6f
+            SystemID.WS, SystemID.WSC -> 14f / 9f
+            SystemID.NGP -> 20f / 19f
+            SystemID.LYNX -> 160f / 102f
+            else -> 4f / 3f
+        }
+
     companion object {
         private val SYSTEMS =
             listOf(

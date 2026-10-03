@@ -29,6 +29,39 @@ class TouchScreenLayoutController(
     fun supportsToggle(): Boolean =
         coreId == CoreID.MELONDS_DS || coreId == CoreID.CITRA || coreId == CoreID.AZAHAR
 
+    fun getAspectRatio(orientation: TouchControllerSettingsManager.Orientation): Float {
+        val isLandscape = orientation == TouchControllerSettingsManager.Orientation.LANDSCAPE
+        return when (coreId) {
+            CoreID.MELONDS_DS -> {
+                val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDSDS_LAYOUT_KEY, systemId.dbname)
+                val current = sharedPreferences.getString(key, null)
+                when {
+                    current == MELONDSDS_SINGLE_TOP -> 4f / 3f
+                    isLandscape -> 8f / 3f
+                    else -> 4f / 6f
+                }
+            }
+            CoreID.CITRA, CoreID.AZAHAR -> {
+                val layoutKey = CoreVariablesManager.computeSharedPreferenceKey(CITRA_LAYOUT_KEY, systemId.dbname)
+                val current = sharedPreferences.getString(layoutKey, null)
+                when {
+                    current == CITRA_SINGLE -> 5f / 3f
+                    isLandscape -> 2.5f
+                    else -> 5f / 6f
+                }
+            }
+            else -> when (systemId) {
+                SystemID.GB, SystemID.GBC, SystemID.GG -> 10f / 9f
+                SystemID.GBA -> 3f / 2f
+                SystemID.PSP, SystemID.WII_U -> 16f / 9f
+                SystemID.WS, SystemID.WSC -> 14f / 9f
+                SystemID.NGP -> 20f / 19f
+                SystemID.LYNX -> 160f / 102f
+                else -> 4f / 3f
+            }
+        }
+    }
+
     private fun toggleMelonDsDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
         val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDSDS_LAYOUT_KEY, systemId.dbname)
         val current = sharedPreferences.getString(key, null)

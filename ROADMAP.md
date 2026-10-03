@@ -6,35 +6,53 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ## Completed
 
-### Bug fixes
+### v2.4.2
 
-- Fixed screen dimming when leaving a game (*u/pulin_o_burrin*)
-- Fixed 3DS touch button positioning (*u/RiverSorry2643*)
-- Fixed settings sidebar scroll (*u/Shitandroidowner*)
-- Fixed missing automatic cover art on some consoles (*u/Sans_2093*)
-- Fixed menus that required touchscreen when using a controller (*u/Sans_2093*)
-- Fixed PSP CHD file detection (*u/Sans_2093*)
-- Fixed MSU-1 ROM support (*u/Rent_Careless*)
-
-### Features & Emulation
-
-- Added Sega Dreamcast support via Flycast (*u/dogwater80085*, *u/milosmisic89*)
-- Added PS2 support and upgraded core to ARMSX2 (*u/RobinRelique*, *u/MatheusWillder*)
-- Added Nintendo Wii U support via Cemu
-- Added Nintendo 3DS (Azahar / Citra) and GameCube / Wii (Dolphin) emulation
-- Revised ROM scraping with content-based header scanning and modular title database slices (*u/keithitreal*)
-- Added Portrait layout mode and compact List view alongside Grid view (*u/Kwametoure1*, *u/AfroKenTheAfroDog*, *u/Fat_Stacks1*, *u/JungleRollers*)
-- Added analog stick to D-pad directional routing on retro consoles (*Satto*)
 - Added customizable startup screen (launch directly into All Games, Favorites, or a chosen console)
+- Added analog stick to D-pad directional routing on retro consoles (_Satto_)
+- Added N64 16:9 widescreen support (_u/SideEffect07_)
+- Added compact adaptive layout & square screen scaling for 3.5" handhelds and 1:1 displays (_u/keithitreal_)
+- Added in-game screen positioning (_u/GhiStale_)
+- Fixed portrait startup flicker (eliminated landscape window initialization flash)
+
+### v2.4.1
+
+- Added Portrait layout mode and compact List view alongside Grid view (_u/Kwametoure1_, _u/AfroKenTheAfroDog_, _u/Fat_Stacks1_, _u/JungleRollers_)
+- Migrated settings screen to portrait view and enhanced list view navigation
+
+### v2.4.0
+
+- Revised ROM scraping with content-based header scanning and modular title database slices (_u/keithitreal_)
+- Added unrecognized files inspector and database slice management UI
+
+### v2.2.0
+
+- Added Nintendo Wii U support via Cemu
+- Upgraded PS2 emulation core to ARMSX2 with OpenGL, Vulkan, and Software renderers (_u/RobinRelique_, _u/MatheusWillder_)
+- Added Sega Dreamcast support via Flycast (_u/dogwater80085_, _u/milosmisic89_)
+
+### v2.1.0
+
+- Custom native engine fork (`omni-libretrodroid`) with Vulkan hardware acceleration
+- Fixed MSU-1 ROM support (_u/Rent_Careless_)
+- Fixed PSP CHD file detection (_u/Sans_2093_)
+- Fixed menus that required touchscreen when using a controller (_u/Sans_2093_)
+- Fixed missing automatic cover art on some consoles (_u/Sans_2093_)
+- Fixed settings sidebar scroll (_u/Shitandroidowner_)
+
+### v2.0.x
+
+- Added Nintendo 3DS (Azahar / Citra) and GameCube / Wii (Dolphin) emulation
+- Added quick dual-to-single screen layout toggle and hide virtual buttons for DS and 3DS
+- Fixed 3DS touch button positioning (_u/RiverSorry2643_)
+- Fixed screen dimming when leaving a game (_u/pulin_o_burrin_)
 
 ---
 
 ## In progress
 
-- External launcher integration / intent support (present in an earlier alpha; returning in a minor update) (*u/Jeno_Jodi*)
-- Winlator / PC emulation launch via intents from Omnidroid (*u/Ok_Cartoonist_1737*)
-- Google Play Store release (closed testing) (*u/Kwametoure1*)
-- N64 16:9 widescreen support (*u/SideEffect07*)
+- Two-way launcher & intent integration: launch Omnidroid games from external frontends, and launch standalone emulator apps (such as Winlator for PC emulation) from Omnidroid for unsupported systems (_u/Jeno_Jodi_, _u/Ok_Cartoonist_1737_)
+- Google Play Store release (closed testing) (_u/Kwametoure1_)
 
 ---
 
@@ -42,35 +60,33 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ### Emulation & cores
 
-- Upscaling / higher resolution with finer control, plus more shader options (upscaling already works for Wii / GameCube / 3DS) (*u/Mr2Sexy*, *u/Abdallah_player1*, *u/bboy_3431*)
-- Custom shaders at a RetroArch-like level (*u/Due-Car-6521*)
-- Cheat codes (*u/madzleng*)
-- RetroAchievements (planned after full release) (*u/Fein_shit*, *u/Abdallah_player1*, *u/Repulsive_Cow_2470*)
-- DOS (DOSBox Pure), Pico-8, and Sega Saturn (*u/milosmisic89*, *u/Kwametoure1*)
-- PSP custom texture support (needed for some English patches) (*u/DragonBane52*)
-- SNES widescreen patches (*u/Le_Sairo*)
-- Rewind (fast-forward already available) (*u/bboy_3431*)
+- Upscaling / higher resolution with finer control, plus more shader options (upscaling already works for Wii / GameCube / 3DS) (_u/Mr2Sexy_, _u/Abdallah_player1_, _u/bboy_3431_)
+- Custom shaders at a RetroArch-like level (_u/Due-Car-6521_)
+- Cheat codes (_u/madzleng_)
+- RetroAchievements (planned after full release) (_u/Fein_shit_, _u/Abdallah_player1_, _u/Repulsive_Cow_2470_)
+- DOS (DOSBox Pure), Pico-8, and Sega Saturn (_u/milosmisic89_, _u/Kwametoure1_)
+- PSP custom texture support (needed for some English patches) (_u/DragonBane52_)
+- SNES widescreen patches (_u/Le_Sairo_)
+- Rewind (fast-forward already available) (_u/bboy_3431_)
 
 ### Controls & display
 
-- Better touchscreen customization overall (*u/Repulsive_Cow_2470*)
-- In-game screen size and positioning (*u/GhiStale*)
-- Adjustable left/top safe borders for camera cutouts (*u/-BMX-*)
-- Square screen scaling for the UI
+- Better touchscreen customization overall (_u/Repulsive_Cow_2470_)
+- In-game screen size (_u/GhiStale_)
+- Top and/or sidebar depending on screen orientation interfere with the front camera hole (_u/-BMX-_)
 
 ### Library & UI
 
-- Bulk import of RetroArch game covers (migration feature planned) (*u/JungleRollers*)
-- Switch-style UI layout (consoles/favorites at the bottom; search and system indicators at the top) (*u/calm_drink*)
-- Better scaling on very small screens (e.g. 3.5" devices) (*u/keithitreal*)
+- Bulk import of RetroArch game covers (migration feature planned) (_u/JungleRollers_)
+- Switch-style UI layout (consoles/favorites at the bottom; search and system indicators at the top) (_u/calm_drink_)
 
 ### Platform & distribution
 
-- Transfer saves from Lemuroid (simpler for GitHub installs; Play Store path still unclear) (*u/Kwametoure1*)
-- Donation option in the Play Store build (support links already exist on GitHub and in About) (*u/Tall-Average5330*)
+- Transfer saves from Lemuroid (simpler for GitHub installs; Play Store path still unclear) (_u/Kwametoure1_)
+- Donation option in the Play Store build (support links already exist on GitHub and in About) (_u/Tall-Average5330_)
 
 ---
 
 ## Known issues
 
-- Immersive mode not working on select OEM configurations (*u/-BMX-*)
+- Immersive mode (dynamic background coloring based on game visuals) not working on some devices ([#8](https://github.com/Ahmed-Abousaif/Omnidroid/issues/8)) (_u/-BMX-_)

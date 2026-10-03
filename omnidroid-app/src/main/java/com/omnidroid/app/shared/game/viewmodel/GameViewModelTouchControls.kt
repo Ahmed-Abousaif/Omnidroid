@@ -78,6 +78,7 @@ class GameViewModelTouchControls(
             systemId = systemId,
             coreId = systemCoreConfig.coreID,
         )
+    private val screenLayoutRevision = MutableStateFlow(0)
 
     private var loadingMenuJob: Job? = null
 
@@ -131,8 +132,15 @@ class GameViewModelTouchControls(
         }
     }
 
+    fun getGameAspectRatio(): Flow<Float> {
+        return combine(screenOrientation, screenLayoutRevision) { orientation, _ ->
+            screenLayoutController.getAspectRatio(orientation)
+        }.distinctUntilChanged()
+    }
+
     fun updateScreenOrientation(orientation: TouchControllerSettingsManager.Orientation) {
         screenOrientation.value = orientation
+        screenLayoutRevision.value++
         if (hasTouchScreen && screenLayoutController.supportsToggle()) {
             val variables = screenLayoutController.onOrientationChanged(orientation)
             if (variables.isNotEmpty()) {
@@ -224,6 +232,7 @@ class GameViewModelTouchControls(
                 if (event.pressed && screenLayoutController.supportsToggle()) {
                     playTouchHapticForButton(true)
                     val variables = screenLayoutController.toggle(screenOrientation.value)
+                    screenLayoutRevision.value++
                     retroGameView.applyCoreVariables(variables)
                 }
                 true

@@ -81,6 +81,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.SystemStatusIndicators
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
@@ -112,6 +113,7 @@ fun LibraryTopBar(
     portraitColumnWidth: Dp = Dp.Unspecified,
     detailsMode: Boolean = false,
 ) {
+    val adaptiveSpec = LocalAdaptiveLayout.current
     val overlayMode = overlayTitleId != null
     val compact = if (overlayMode) 0f else compactProgress.coerceIn(0f, 1f)
     val showBack = !overlayMode && if (portrait) detailsMode else compact > 0.5f
@@ -207,7 +209,8 @@ fun LibraryTopBar(
                     .fillMaxWidth()
                     .then(if (dismissSearchOnOutsideTap) Modifier.fillMaxSize() else Modifier),
         ) {
-            val backStart = if (overlayMode) 0.dp else LibrarySidebarInset
+            val sidebarInset = (adaptiveSpec.sidebarWidth - adaptiveSpec.sidebarButtonSize) / 2
+            val backStart = if (overlayMode) 0.dp else sidebarInset
             if (dismissSearchOnOutsideTap) {
                 Box(
                     modifier =
@@ -224,7 +227,7 @@ fun LibraryTopBar(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .height(LibraryTopBarRowHeight)
+                                .height(adaptiveSpec.topBarRowHeight)
                                 .background(
                                     Brush.verticalGradient(
                                         0f to Color.Black,
@@ -251,7 +254,7 @@ fun LibraryTopBar(
                             Spacer(modifier = Modifier.weight(1f))
                         }
                         else -> {
-                            Spacer(modifier = Modifier.width(LibrarySidebarInset))
+                            Spacer(modifier = Modifier.width(sidebarInset))
                             BoxWithConstraints(
                                 modifier = Modifier.weight(1f),
                                 contentAlignment = Alignment.CenterStart,
@@ -260,7 +263,7 @@ fun LibraryTopBar(
                                     if (searchExpanded) {
                                         maxWidth
                                     } else {
-                                        LibrarySearchCollapsedWidth.coerceAtMost(maxWidth)
+                                        adaptiveSpec.searchWidth.coerceAtMost(maxWidth)
                                     }
                                 val searchWidth by animateDpAsState(
                                     targetValue = targetWidth,
@@ -436,10 +439,11 @@ private fun PortraitHomeTopBar(
                         },
             )
         }
+        val adaptiveSpec = LocalAdaptiveLayout.current
         Column(
             modifier =
                 widthModifier
-                    .height(LibraryTopBarPortraitHeight)
+                    .height(adaptiveSpec.topBarPortraitHeight)
                     .align(Alignment.TopCenter)
                     .background(
                         Brush.verticalGradient(
@@ -452,7 +456,7 @@ private fun PortraitHomeTopBar(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(LibraryTopBarRowHeight)
+                        .height(adaptiveSpec.topBarRowHeight)
                         .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -494,7 +498,7 @@ private fun PortraitHomeTopBar(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(LibraryTopBarRowHeight)
+                        .height(adaptiveSpec.topBarRowHeight)
                         .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -515,7 +519,7 @@ private fun PortraitHomeTopBar(
                 modifier =
                     widthModifier
                         .align(Alignment.TopCenter)
-                        .padding(top = LibraryTopBarPortraitHeight - 2.dp),
+                        .padding(top = adaptiveSpec.topBarPortraitHeight - 2.dp),
             )
         }
     }
@@ -528,12 +532,13 @@ private fun PortraitDetailsTopBar(
     operationInProgress: Boolean,
     onBackPressed: () -> Unit,
 ) {
+    val adaptiveSpec = LocalAdaptiveLayout.current
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(LibraryTopBarRowHeight)
+                    .height(adaptiveSpec.topBarRowHeight)
                     .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -781,9 +786,11 @@ fun FloatingChromeButton(
     onClick: () -> Unit,
     content: @Composable () -> Unit,
 ) {
+    val adaptiveSpec = LocalAdaptiveLayout.current
+    val buttonSize = if (adaptiveSpec.isCompact) 32.dp else 36.dp
     Surface(
         onClick = onClick,
-        modifier = Modifier.size(36.dp).controllerFocusGlow(CircleShape),
+        modifier = Modifier.size(buttonSize).controllerFocusGlow(CircleShape),
         shape = CircleShape,
         color = Color(0xFF161616),
         shadowElevation = 6.dp,
@@ -791,7 +798,7 @@ fun FloatingChromeButton(
         border = BorderStroke(1.dp, Color(0xFF2E2E2E)),
     ) {
         Row(
-            modifier = Modifier.size(36.dp),
+            modifier = Modifier.size(buttonSize),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
