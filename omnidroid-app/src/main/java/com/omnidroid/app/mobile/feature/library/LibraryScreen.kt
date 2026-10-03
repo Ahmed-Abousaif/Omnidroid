@@ -91,6 +91,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -401,7 +402,12 @@ private fun SidebarSystemLogoButton(
             Modifier
                 .size(LibrarySidebarButtonSize)
                 .controllerFocusGlow(CircleShape)
-                .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+                .clip(CircleShape)
+                .combinedClickable(
+                    role = Role.Button,
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                ),
         shape = CircleShape,
         color = Color(meta.color()),
         shadowElevation = 6.dp,

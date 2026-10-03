@@ -692,12 +692,12 @@ private fun openExternalUrl(
 
 @Composable
 private fun StartupScreenSettings(availableConsoles: List<MetaSystemID>) {
-    val startupState =
-        stringPreferenceState(R.string.pref_key_startup_destination, LibraryStartupStore.ALL)
+    val context = LocalContext.current
+    val startupStore = remember { LibraryStartupStore(context) }
+    val selected by startupStore.observe().collectAsState(initial = startupStore.get())
     var showPicker by remember { mutableStateOf(false) }
 
     val destinations = remember(availableConsoles) { startupDestinations(availableConsoles) }
-    val selected = LibraryStartupStore.decode(startupState.value)
 
     OmnidroidCardSettingsGroup(
         title = { Text(text = stringResource(id = R.string.settings_section_startup)) },
@@ -715,7 +715,7 @@ private fun StartupScreenSettings(availableConsoles: List<MetaSystemID>) {
         destinations = destinations,
         selected = selected,
         onSelected = { destination ->
-            startupState.value = LibraryStartupStore.encode(destination)
+            startupStore.set(destination)
             showPicker = false
         },
         onDismiss = { showPicker = false },

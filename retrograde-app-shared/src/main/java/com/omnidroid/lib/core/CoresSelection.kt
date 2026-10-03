@@ -7,6 +7,17 @@ import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.SystemID
+import dagger.Lazy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+
 class CoresSelection(
     private val sharedPreferencesFactory: Lazy<SharedPreferences>,
 ) {
