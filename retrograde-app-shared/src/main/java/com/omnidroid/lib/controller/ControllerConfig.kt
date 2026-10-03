@@ -12,10 +12,14 @@ data class ControllerConfig(
     val allowTouchOverlay: Boolean = true,
     val allowDpadDiagonalsToggle: Boolean = true,
     val mergeDPADAndLeftStickEvents: Boolean = false,
+    val hasAnalogStick: Boolean = false,
     val libretroDescriptor: String? = null,
     val libretroId: Int? = null,
     val tiltConfigurations: List<TiltConfiguration> = emptyList(),
 ) : Serializable {
+    val allowDpadAsAnalog: Boolean
+        get() = !hasAnalogStick
+
     fun getTouchControllerConfig(): TouchControllerID.Config {
         return TouchControllerID.getConfig(touchControllerID)
     }

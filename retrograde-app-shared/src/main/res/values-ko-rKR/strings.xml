@@ -48,8 +48,6 @@
     <string name="setting_ppsspp_texture_filtering">텍스쳐 필터링</string>
     <string name="setting_fbneo_frameskip">프레임 스킵</string>
     <string name="setting_fbneo_cpu_speed_adjust">CPU 속도</string>
-    <string name="setting_desmume_screens_layout">화면 구성</string>
-    <string name="setting_desmume_frameskip">프레임 스킵</string>
     <string name="setting_melonds_screen_layout">화면 구성</string>
     <string name="setting_melonds_threaded_renderer">멀티스레드 렌더러</string>
     <string name="setting_melonds_jit_enable">다이내믹 리컴파일러</string>
@@ -108,8 +106,6 @@
     <string name="value_melonds_mic_input_blow">바람 소리 시뮬레이션</string>
     <string name="value_citra_layout_option_topbottom">위 - 아래</string>
     <string name="value_citra_layout_option_sidebyside">좌 - 우</string>
-    <string name="value_desmume_screens_layout_topbottom">위 - 아래</string>
-    <string name="value_desmume_screens_layout_leftright">좌 - 우</string>
     <string name="value_ppsspp_cpu_core_jit">JIT</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>
     <string name="value_ppsspp_cpu_core_interpreter">인터프리터</string>

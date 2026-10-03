@@ -48,8 +48,6 @@
     <string name="setting_ppsspp_texture_filtering">Tekstuurin suodatus</string>
     <string name="setting_fbneo_frameskip">Frameskip</string>
     <string name="setting_fbneo_cpu_speed_adjust">Suorittimen nopeus</string>
-    <string name="setting_desmume_screens_layout">Näytön asettelu</string>
-    <string name="setting_desmume_frameskip">Frameskip</string>
     <string name="setting_melonds_screen_layout">Näytön asettelu</string>
     <string name="setting_melonds_threaded_renderer">Kierrätetty renderoija</string>
     <string name="setting_melonds_jit_enable">Dynaaminen kääntäjä</string>
@@ -108,8 +106,6 @@
     <string name="value_melonds_mic_input_blow">Simuloi puhallusäänet</string>
     <string name="value_citra_layout_option_topbottom">Ylhäällä - Alhaalla</string>
     <string name="value_citra_layout_option_sidebyside">Vasen - Oikea</string>
-    <string name="value_desmume_screens_layout_topbottom">Ylhäällä - Alhaalla</string>
-    <string name="value_desmume_screens_layout_leftright">Vasen - Oikea</string>
     <string name="value_ppsspp_cpu_core_jit">JIT</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>
     <string name="value_ppsspp_cpu_core_interpreter">Tulkki</string>

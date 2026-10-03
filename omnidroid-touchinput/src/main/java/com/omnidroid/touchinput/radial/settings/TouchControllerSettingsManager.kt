@@ -24,12 +24,19 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
     }
 
     @Serializable
+    enum class DpadStyle {
+        CROSS,
+        ANALOG,
+    }
+
+    @Serializable
     data class Settings(
         val scale: Float = DEFAULT_SCALE,
         val rotation: Float = DEFAULT_ROTATION,
         val marginX: Float = DEFAULT_MARGIN_X,
         val marginY: Float = DEFAULT_MARGIN_Y,
         val allowDiagonals: Boolean = DEFAULT_ALLOW_DIAGONALS,
+        val dpadStyle: DpadStyle = DEFAULT_DPAD_STYLE,
     )
 
     private fun computeInsetsPaddings(
@@ -125,6 +132,7 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
         const val DEFAULT_MARGIN_X = 0.0f
         const val DEFAULT_MARGIN_Y = 0.0f
         const val DEFAULT_ALLOW_DIAGONALS = true
+        val DEFAULT_DPAD_STYLE = DpadStyle.CROSS
 
         const val MAX_ROTATION = 45f
         const val MIN_SCALE = 0.75f

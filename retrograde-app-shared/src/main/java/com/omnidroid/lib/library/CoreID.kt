@@ -69,16 +69,6 @@ enum class CoreID(
         "MAME2003 Plus",
         "libmame2003_plus_libretro_android.so",
     ),
-    DESMUME(
-        "desmume",
-        "DeSmuME (Legacy)",
-        "libdesmume_libretro_android.so",
-    ),
-    MELONDS(
-        "melonds",
-        "MelonDS (Legacy)",
-        "libmelonds_libretro_android.so",
-    ),
     MELONDS_DS(
         "melondsds",
         "melonDS DS",

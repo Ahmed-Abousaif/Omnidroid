@@ -48,8 +48,6 @@
     <string name="setting_ppsspp_texture_filtering">Tekstur filtrering</string>
     <string name="setting_fbneo_frameskip">Frameskip</string>
     <string name="setting_fbneo_cpu_speed_adjust">CPU hastighet</string>
-    <string name="setting_desmume_screens_layout">Skjermoppsett</string>
-    <string name="setting_desmume_frameskip">Frameskip</string>
     <string name="setting_melonds_screen_layout">Skjermoppsett</string>
     <string name="setting_melonds_threaded_renderer">Tråd-basert renderingsmotor</string>
     <string name="setting_melonds_jit_enable">Dynamisk re-kompilator</string>
@@ -108,8 +106,6 @@
     <string name="value_melonds_mic_input_blow">Simuler klyder</string>
     <string name="value_citra_layout_option_topbottom">Topp - Bunn</string>
     <string name="value_citra_layout_option_sidebyside">Venstre - Høyre</string>
-    <string name="value_desmume_screens_layout_topbottom">Topp - Bunn</string>
-    <string name="value_desmume_screens_layout_leftright">Venstre - Høyre</string>
     <string name="value_ppsspp_cpu_core_jit">JIT</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>
     <string name="value_ppsspp_cpu_core_interpreter">Tolk</string>

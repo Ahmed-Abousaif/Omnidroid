@@ -418,6 +418,38 @@ private fun MenuEditTouchControls(
                         )
                     }
                 }
+                if (controllerConfig.allowDpadAsAnalog) {
+                    val dpadAnalogLabel = stringResource(R.string.touch_customize_dpad_as_analog)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SportsEsports,
+                            contentDescription = dpadAnalogLabel,
+                        )
+                        Text(
+                            text = dpadAnalogLabel,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Switch(
+                            checked = touchControllerSettings.dpadStyle == TouchControllerSettingsManager.DpadStyle.ANALOG,
+                            onCheckedChange = { isAnalog ->
+                                viewModel.updateTouchControllerSettings(
+                                    touchControllerSettings.copy(
+                                        dpadStyle =
+                                            if (isAnalog) {
+                                                TouchControllerSettingsManager.DpadStyle.ANALOG
+                                            } else {
+                                                TouchControllerSettingsManager.DpadStyle.CROSS
+                                            },
+                                    ),
+                                )
+                            },
+                        )
+                    }
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,

@@ -140,6 +140,7 @@ object ControllerConfigs {
             R.string.controller_default,
             TouchControllerID.N64,
             allowTouchRotation = true,
+            hasAnalogStick = true,
             tiltConfigurations =
                 listOf(
                     TILT_CONFIGURATION_DISABLED,
@@ -171,6 +172,7 @@ object ControllerConfigs {
             R.string.controller_dualshock,
             TouchControllerID.PSX_DUALSHOCK,
             allowTouchRotation = true,
+            hasAnalogStick = true,
             libretroDescriptor = "dualshock",
             tiltConfigurations =
                 listOf(
@@ -189,6 +191,7 @@ object ControllerConfigs {
             R.string.controller_default,
             TouchControllerID.PSP,
             allowTouchRotation = true,
+            hasAnalogStick = true,
             tiltConfigurations =
                 listOf(
                     TILT_CONFIGURATION_DISABLED,
@@ -247,20 +250,6 @@ object ControllerConfigs {
                 listOf(
                     TILT_CONFIGURATION_DISABLED,
                     TILT_CONFIGURATION_CROSS,
-                ),
-        )
-
-    val DESMUME =
-        ControllerConfig(
-            "default",
-            R.string.controller_default,
-            TouchControllerID.DESMUME,
-            allowTouchOverlay = false,
-            tiltConfigurations =
-                listOf(
-                    TILT_CONFIGURATION_DISABLED,
-                    TILT_CONFIGURATION_CROSS,
-                    TILT_CONFIGURATION_L_R,
                 ),
         )
 
@@ -338,6 +327,7 @@ object ControllerConfigs {
             R.string.controller_dos_auto,
             TouchControllerID.DOS,
             allowTouchRotation = true,
+            hasAnalogStick = true,
             tiltConfigurations =
                 listOf(
                     TILT_CONFIGURATION_DISABLED,
@@ -381,6 +371,7 @@ object ControllerConfigs {
             R.string.controller_default,
             TouchControllerID.NINTENDO_3DS,
             allowTouchOverlay = false,
+            hasAnalogStick = true,
             tiltConfigurations =
                 listOf(
                     TILT_CONFIGURATION_DISABLED,
@@ -396,6 +387,7 @@ object ControllerConfigs {
             R.string.controller_dualshock2,
             TouchControllerID.PS2,
             allowTouchRotation = true,
+            hasAnalogStick = true,
             tiltConfigurations =
                 listOf(
                     TILT_CONFIGURATION_DISABLED,
@@ -413,6 +405,7 @@ object ControllerConfigs {
             R.string.controller_gamecube,
             TouchControllerID.GAMECUBE,
             allowTouchRotation = true,
+            hasAnalogStick = true,
             libretroDescriptor = "GameCube Controller",
             libretroId = 1,
             tiltConfigurations =
@@ -431,6 +424,7 @@ object ControllerConfigs {
             R.string.controller_wii_classic,
             TouchControllerID.WII_CLASSIC,
             allowTouchRotation = true,
+            hasAnalogStick = true,
             libretroDescriptor = "WiiMote + Classic Controller",
             libretroId = 1025,
             tiltConfigurations =
@@ -450,6 +444,7 @@ object ControllerConfigs {
             R.string.controller_wii_remote,
             TouchControllerID.WII_REMOTE,
             allowTouchRotation = true,
+            hasAnalogStick = true,
             libretroDescriptor = "WiiMote + Nunchuk",
             libretroId = 769,
             tiltConfigurations =
@@ -467,6 +462,7 @@ object ControllerConfigs {
             R.string.controller_wii_sideways,
             TouchControllerID.WII_SIDEWAYS,
             allowTouchRotation = true,
+            hasAnalogStick = true,
             libretroDescriptor = "WiiMote (sideways)",
             libretroId = 513,
             tiltConfigurations =
@@ -484,6 +480,7 @@ object ControllerConfigs {
             R.string.controller_default,
             TouchControllerID.DREAMCAST,
             allowTouchRotation = true,
+            hasAnalogStick = true,
             libretroDescriptor = "Controller",
             libretroId = 1,
             tiltConfigurations =
@@ -501,6 +498,7 @@ object ControllerConfigs {
             R.string.controller_wii_u_gamepad,
             TouchControllerID.WII_U_GAMEPAD,
             allowTouchRotation = true,
+            hasAnalogStick = true,
             libretroDescriptor = "Wii U GamePad",
             libretroId = 1,
             tiltConfigurations =
@@ -520,6 +518,7 @@ object ControllerConfigs {
             R.string.controller_wii_u_pro,
             TouchControllerID.WII_U_PRO,
             allowTouchRotation = true,
+            hasAnalogStick = true,
             libretroDescriptor = "Wii U Pro Controller",
             libretroId = 257,
             tiltConfigurations =

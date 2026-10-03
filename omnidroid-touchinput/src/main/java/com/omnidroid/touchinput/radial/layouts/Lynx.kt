@@ -25,7 +25,7 @@ fun PadKitScope.LynxLeft(
     BaseLayoutLeft(
         settings = settings,
         modifier = modifier,
-        primaryDial = { OmnidroidControlCross(id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD), allowDiagonals = settings.allowDiagonals) },
+        primaryDial = { OmnidroidControlCross(id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD), allowDiagonals = settings.allowDiagonals, dpadStyle = settings.dpadStyle) },
         secondaryDials = {
             OmnidroidControlButton(
                 modifier = Modifier.radialPosition(120f),

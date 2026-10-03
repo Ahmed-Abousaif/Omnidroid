@@ -48,8 +48,6 @@
     <string name="setting_ppsspp_texture_filtering">Texturfiltrering</string>
     <string name="setting_fbneo_frameskip">Hoppa över bildrutor</string>
     <string name="setting_fbneo_cpu_speed_adjust">CPU-hastighet</string>
-    <string name="setting_desmume_screens_layout">Skärmlayout</string>
-    <string name="setting_desmume_frameskip">Hoppa över bildrutor</string>
     <string name="setting_melonds_screen_layout">Skärmlayout</string>
     <string name="setting_melonds_threaded_renderer">Trådad renderare</string>
     <string name="setting_melonds_jit_enable">Dynamisk omkompilator</string>
@@ -108,8 +106,6 @@
     <string name="value_melonds_mic_input_blow">Simulera blåsljud</string>
     <string name="value_citra_layout_option_topbottom">Topp - botten</string>
     <string name="value_citra_layout_option_sidebyside">Vänster - höger</string>
-    <string name="value_desmume_screens_layout_topbottom">Topp - botten</string>
-    <string name="value_desmume_screens_layout_leftright">Vänster - höger</string>
     <string name="value_ppsspp_cpu_core_jit">JIT</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>
     <string name="value_ppsspp_cpu_core_interpreter">Tolk</string>

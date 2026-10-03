@@ -27,7 +27,7 @@ object SliceCatalog {
             Slice("psx", listOf("psx"), listOf("pcsx_rearmed")),
             Slice("psp", listOf("psp"), listOf("ppsspp")),
             Slice("arcade", listOf("fbneo", "mame2003plus"), listOf("fbneo", "mame2003_plus")),
-            Slice("nds", listOf("nds"), listOf("desmume", "melondsds", "melonds")),
+            Slice("nds", listOf("nds"), listOf("melondsds")),
             Slice("3ds", listOf("3ds"), listOf("azahar", "citra")),
             Slice("atari7800", listOf("atari7800"), listOf("prosystem")),
             Slice("lynx", listOf("lynx"), listOf("handy")),

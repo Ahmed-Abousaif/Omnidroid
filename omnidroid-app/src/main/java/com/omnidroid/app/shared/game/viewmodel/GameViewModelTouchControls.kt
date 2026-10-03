@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.view.KeyEvent
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
@@ -68,6 +70,7 @@ class GameViewModelTouchControls(
     private val touchHapticPlayer = TouchHapticPlayer(appContext)
     private val activeDiscreteDirections = mutableSetOf<Int>()
     private val forceHideTouchControls = MutableStateFlow(false)
+    private var lastQuantizedDpadDirection: Pair<Float, Float> = 0f to 0f
 
     private val screenLayoutController =
         TouchScreenLayoutController(
@@ -184,12 +187,26 @@ class GameViewModelTouchControls(
                 }
 
                 is InputEvent.DiscreteDirection -> {
-                    playTouchHapticForDirection(event.id, event.direction.x, event.direction.y)
-                    handleVirtualInputDirection(event.id, event.direction.x, -event.direction.y)
+                    val dir = if (event.direction.isSpecified) event.direction else Offset.Zero
+                    playTouchHapticForDirection(event.id, dir.x, dir.y)
+                    handleVirtualInputDirection(event.id, dir.x, -dir.y)
                 }
 
                 is InputEvent.ContinuousDirection -> {
-                    handleVirtualInputDirection(event.id, event.direction.x, -event.direction.y)
+                    val dir = if (event.direction.isSpecified) event.direction else Offset.Zero
+                    if (event.id == ComposeTouchLayouts.MOTION_SOURCE_DPAD ||
+                        event.id == ComposeTouchLayouts.MOTION_SOURCE_DPAD_AND_LEFT_STICK
+                    ) {
+                        val (qX, qY) = translateAnalogToDpad(dir.x, -dir.y)
+                        val prev = lastQuantizedDpadDirection
+                        if (prev != (qX to qY)) {
+                            lastQuantizedDpadDirection = qX to qY
+                            playTouchHapticForDirection(event.id, qX, qY)
+                        }
+                        handleVirtualInputDirection(event.id, qX, qY)
+                    } else {
+                        handleVirtualInputDirection(event.id, dir.x, -dir.y)
+                    }
                 }
             }
         }
@@ -348,8 +365,32 @@ class GameViewModelTouchControls(
         }
     }
 
+    private fun translateAnalogToDpad(x: Float, y: Float): Pair<Float, Float> {
+        if (x.isNaN() || y.isNaN()) {
+            return 0f to 0f
+        }
+        val magnitude = kotlin.math.hypot(x, y)
+        if (magnitude < ANALOG_DPAD_DEADZONE) {
+            return 0f to 0f
+        }
+
+        val angle = Math.toDegrees(kotlin.math.atan2(y.toDouble(), x.toDouble())).toFloat()
+
+        return when {
+            angle in -22.5f..22.5f -> 1f to 0f
+            angle in 22.5f..67.5f -> 1f to -1f
+            angle in 67.5f..112.5f -> 0f to -1f
+            angle in 112.5f..157.5f -> -1f to -1f
+            angle in -67.5f..-22.5f -> 1f to 1f
+            angle in -112.5f..-67.5f -> 0f to 1f
+            angle in -157.5f..-112.5f -> -1f to 1f
+            else -> -1f to 0f
+        }
+    }
+
     companion object {
         const val MENU_LOADING_ANIMATION_MILLIS = 500
         private const val DIRECTION_ACTIVE_THRESHOLD = 0.01f
+        private const val ANALOG_DPAD_DEADZONE = 0.25f
     }
 }

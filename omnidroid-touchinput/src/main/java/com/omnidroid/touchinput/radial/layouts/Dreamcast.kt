@@ -31,6 +31,7 @@ fun PadKitScope.DreamcastLeft(
             OmnidroidControlCross(
                 id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD),
                 allowDiagonals = settings.allowDiagonals,
+                dpadStyle = settings.dpadStyle,
             )
         },
         secondaryDials = {

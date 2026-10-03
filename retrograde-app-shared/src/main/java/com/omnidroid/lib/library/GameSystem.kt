@@ -639,24 +639,94 @@ data class GameSystem(
                             exposedSettings =
                                 listOf(
                                     ExposedSetting(
-                                        "mupen64plus-43screensize",
-                                        R.string.setting_mupen64plus_43screensize,
-                                    ),
-                                    ExposedSetting(
-                                        "mupen64plus-cpucore",
-                                        R.string.setting_mupen64plus_cpucore,
+                                        "mupen64plus-aspect",
+                                        R.string.setting_mupen64plus_aspect,
                                         arrayListOf(
                                             ExposedSetting.Value(
-                                                "dynamic_recompiler",
-                                                R.string.value_mupen64plus_cpucore_dynamicrecompiler,
+                                                "4:3",
+                                                R.string.value_mupen64plus_aspect_4_3,
                                             ),
                                             ExposedSetting.Value(
-                                                "pure_interpreter",
-                                                R.string.value_mupen64plus_cpucore_pureinterpreter,
+                                                "16:9",
+                                                R.string.value_mupen64plus_aspect_16_9,
                                             ),
                                             ExposedSetting.Value(
-                                                "cached_interpreter",
-                                                R.string.value_mupen64plus_cpucore_cachedinterpreter,
+                                                "16:9 adjusted",
+                                                R.string.value_mupen64plus_aspect_16_9_adjusted,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "mupen64plus-43screensize",
+                                        R.string.setting_mupen64plus_43screensize,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "320x240",
+                                                R.string.value_mupen64plus_res_320x240,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "640x480",
+                                                R.string.value_mupen64plus_res_640x480,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "960x720",
+                                                R.string.value_mupen64plus_res_960x720,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "1280x960",
+                                                R.string.value_mupen64plus_res_1280x960,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "1600x1200",
+                                                R.string.value_mupen64plus_res_1600x1200,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "1920x1440",
+                                                R.string.value_mupen64plus_res_1920x1440,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "2560x1920",
+                                                R.string.value_mupen64plus_res_2560x1920,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "mupen64plus-CropMode",
+                                        R.string.setting_mupen64plus_crop_mode,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "Auto",
+                                                R.string.value_mupen64plus_crop_mode_auto,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "Off",
+                                                R.string.value_mupen64plus_crop_mode_off,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "mupen64plus-MSAA",
+                                        R.string.setting_mupen64plus_msaa,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "0",
+                                                R.string.value_mupen64plus_msaa_0,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "2",
+                                                R.string.value_mupen64plus_msaa_2,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "4",
+                                                R.string.value_mupen64plus_msaa_4,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "8",
+                                                R.string.value_mupen64plus_msaa_8,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "16",
+                                                R.string.value_mupen64plus_msaa_16,
                                             ),
                                         ),
                                     ),
@@ -707,9 +777,34 @@ data class GameSystem(
                                         ),
                                     ),
                                 ),
+                            exposedAdvancedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "mupen64plus-cpucore",
+                                        R.string.setting_mupen64plus_cpucore,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "dynamic_recompiler",
+                                                R.string.value_mupen64plus_cpucore_dynamicrecompiler,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "pure_interpreter",
+                                                R.string.value_mupen64plus_cpucore_pureinterpreter,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "cached_interpreter",
+                                                R.string.value_mupen64plus_cpucore_cachedinterpreter,
+                                            ),
+                                        ),
+                                    ),
+                                ),
                             defaultSettings =
                                 listOf(
+                                    CoreVariable("mupen64plus-aspect", "4:3"),
                                     CoreVariable("mupen64plus-43screensize", "320x240"),
+                                    CoreVariable("mupen64plus-169screensize", "640x360"),
+                                    CoreVariable("mupen64plus-MSAA", "0"),
+                                    CoreVariable("mupen64plus-CropMode", "Auto"),
                                     CoreVariable("mupen64plus-FrameDuping", "True"),
                                 ),
                             controllerConfigs =
@@ -910,40 +1005,6 @@ data class GameSystem(
                     R.string.game_system_abbr_nds,
                     listOf(
                         SystemCoreConfig(
-                            CoreID.DESMUME,
-                            exposedSettings =
-                                listOf(
-                                    ExposedSetting(
-                                        "desmume_screens_layout",
-                                        R.string.setting_desmume_screens_layout,
-                                        arrayListOf(
-                                            ExposedSetting.Value(
-                                                "top/bottom",
-                                                R.string.value_desmume_screens_layout_topbottom,
-                                            ),
-                                            ExposedSetting.Value(
-                                                "left/right",
-                                                R.string.value_desmume_screens_layout_leftright,
-                                            ),
-                                        ),
-                                    ),
-                                    ExposedSetting(
-                                        "desmume_frameskip",
-                                        R.string.setting_desmume_frameskip,
-                                    ),
-                                ),
-                            defaultSettings =
-                                listOf(
-                                    CoreVariable("desmume_pointer_type", "touch"),
-                                    CoreVariable("desmume_frameskip", "1"),
-                                ),
-                            controllerConfigs =
-                                hashMapOf(
-                                    0 to arrayListOf(ControllerConfigs.DESMUME),
-                                ),
-                            skipDuplicateFrames = false,
-                        ),
-                        SystemCoreConfig(
                             CoreID.MELONDS_DS,
                             exposedSettings =
                                 listOf(
@@ -1008,70 +1069,6 @@ data class GameSystem(
                             statesVersion = 2,
                             supportsMicrophone = true,
                             supportedOnlyArchitectures = setOf("arm64-v8a", "armeabi-v7a", "x86_64"),
-                        ),
-                        SystemCoreConfig(
-                            CoreID.MELONDS,
-                            exposedSettings =
-                                listOf(
-                                    ExposedSetting(
-                                        "melonds_screen_layout",
-                                        R.string.setting_melonds_screen_layout,
-                                        arrayListOf(
-                                            ExposedSetting.Value(
-                                                "Top/Bottom",
-                                                R.string.value_melonds_screen_layout_topbottom,
-                                            ),
-                                            ExposedSetting.Value(
-                                                "Left/Right",
-                                                R.string.value_melonds_screen_layout_leftright,
-                                            ),
-                                            ExposedSetting.Value(
-                                                "Top Only",
-                                                R.string.value_melonds_screen_layout_toponly,
-                                            ),
-                                            ExposedSetting.Value(
-                                                "Bottom Only",
-                                                R.string.value_melonds_screen_layout_bottomonly,
-                                            ),
-                                        ),
-                                    ),
-                                    ExposedSetting(
-                                        "melonds_mic_input",
-                                        R.string.setting_melonds_mic_input,
-                                        arrayListOf(
-                                            ExposedSetting.Value(
-                                                "Blow Noise",
-                                                R.string.value_melonds_mic_input_blow,
-                                            ),
-                                            ExposedSetting.Value(
-                                                "Microphone",
-                                                R.string.value_melonds_mic_input_microphone,
-                                            ),
-                                        ),
-                                    ),
-                                ),
-                            exposedAdvancedSettings =
-                                listOf(
-                                    ExposedSetting(
-                                        "melonds_threaded_renderer",
-                                        R.string.setting_melonds_threaded_renderer,
-                                    ),
-                                    ExposedSetting(
-                                        "melonds_jit_enable",
-                                        R.string.setting_melonds_jit_enable,
-                                    ),
-                                ),
-                            defaultSettings =
-                                listOf(
-                                    CoreVariable("melonds_touch_mode", "Touch"),
-                                    CoreVariable("melonds_threaded_renderer", "enabled"),
-                                ),
-                            controllerConfigs =
-                                hashMapOf(
-                                    0 to arrayListOf(ControllerConfigs.MELONDS),
-                                ),
-                            statesVersion = 2,
-                            supportsMicrophone = true,
                         ),
                     ),
                     uniqueExtensions = listOf("nds"),

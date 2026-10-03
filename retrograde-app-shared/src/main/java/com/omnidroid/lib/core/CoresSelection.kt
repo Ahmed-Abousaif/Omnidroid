@@ -7,21 +7,8 @@ import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.SystemID
-import com.omnidroid.lib.migration.DesmumeMigrationHandler
-import dagger.Lazy
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
-
 class CoresSelection(
     private val sharedPreferencesFactory: Lazy<SharedPreferences>,
-    private val desmumeMigrationHandler: DesmumeMigrationHandler,
 ) {
     private val sharedPreferences by lazy { sharedPreferencesFactory.get() }
 
@@ -90,15 +77,7 @@ class CoresSelection(
         }.flowOn(Dispatchers.IO)
     }
 
-    // TODO Also get rid of this when desmume is gone
     private fun getDefaultCoreForSystem(system: GameSystem): String {
-        if (system.id == SystemID.NDS) {
-            return if (desmumeMigrationHandler.hasPendingDesmumeSaves()) {
-                CoreID.DESMUME.coreName
-            } else {
-                CoreID.MELONDS_DS.coreName
-            }
-        }
         return system.systemCoreConfigs.first().coreID.coreName
     }
 

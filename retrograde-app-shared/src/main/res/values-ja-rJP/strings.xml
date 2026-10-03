@@ -48,8 +48,6 @@
     <string name="setting_ppsspp_texture_filtering">テクスチャフィルタリング</string>
     <string name="setting_fbneo_frameskip">Frameskip</string>
     <string name="setting_fbneo_cpu_speed_adjust">CPU速度</string>
-    <string name="setting_desmume_screens_layout">画面のレイアウト</string>
-    <string name="setting_desmume_frameskip">Frameskip</string>
     <string name="setting_melonds_screen_layout">画面のレイアウト</string>
     <string name="setting_melonds_threaded_renderer">スレッドレンダラー</string>
     <string name="setting_melonds_jit_enable">Dynamic recompiler</string>
@@ -108,8 +106,6 @@
     <string name="value_melonds_mic_input_blow">吹き出し音をシミュレートする</string>
     <string name="value_citra_layout_option_topbottom">上 - 下</string>
     <string name="value_citra_layout_option_sidebyside">左 - 右</string>
-    <string name="value_desmume_screens_layout_topbottom">上 - 下</string>
-    <string name="value_desmume_screens_layout_leftright">左 - 右</string>
     <string name="value_ppsspp_cpu_core_jit">JIT</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>
     <string name="value_ppsspp_cpu_core_interpreter">インタープリター</string>

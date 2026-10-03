@@ -48,8 +48,6 @@
     <string name="setting_ppsspp_texture_filtering">纹理过滤</string>
     <string name="setting_fbneo_frameskip">跳帧</string>
     <string name="setting_fbneo_cpu_speed_adjust">CPU 速度</string>
-    <string name="setting_desmume_screens_layout">屏幕布局</string>
-    <string name="setting_desmume_frameskip">跳帧</string>
     <string name="setting_melonds_screen_layout">屏幕布局</string>
     <string name="setting_melonds_threaded_renderer">多线程渲染</string>
     <string name="setting_melonds_jit_enable">动态重编译器</string>
@@ -108,8 +106,6 @@
     <string name="value_melonds_mic_input_blow">模拟吹气声</string>
     <string name="value_citra_layout_option_topbottom">上 - 下</string>
     <string name="value_citra_layout_option_sidebyside">左 - 右</string>
-    <string name="value_desmume_screens_layout_topbottom">上 - 下</string>
-    <string name="value_desmume_screens_layout_leftright">左 - 右</string>
     <string name="value_ppsspp_cpu_core_jit">JIT</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>
     <string name="value_ppsspp_cpu_core_interpreter">解释器</string>
