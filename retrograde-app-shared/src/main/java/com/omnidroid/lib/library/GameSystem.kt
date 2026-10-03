@@ -2118,6 +2118,119 @@ data class GameSystem(
                     supportedExtensions = listOf("wud", "wux", "wua", "iso", "rpx", "elf"),
                     hasMultiDiskSupport = false,
                 ),
+                GameSystem(
+                    SystemID.XBOX360,
+                    "Microsoft - Xbox 360",
+                    R.string.game_system_title_xbox360,
+                    R.string.game_system_abbr_xbox360,
+                    listOf(
+                        SystemCoreConfig(
+                            CoreID.XENIA,
+                            controllerConfigs =
+                                hashMapOf(
+                                    0 to arrayListOf(ControllerConfigs.XBOX_360),
+                                    1 to arrayListOf(ControllerConfigs.XBOX_360),
+                                    2 to arrayListOf(ControllerConfigs.XBOX_360),
+                                    3 to arrayListOf(ControllerConfigs.XBOX_360),
+                                ),
+                            rumbleSupported = true,
+                            statesSupported = false,
+                            supportsLibretroVFS = false,
+                            supportedOnlyArchitectures = setOf("arm64-v8a"),
+                            defaultSettings =
+                                listOf(
+                                    CoreVariable("xenia_resolution_scale", "1280x720 (1x)"),
+                                    CoreVariable("xenia_postprocess_antialiasing", "none"),
+                                    CoreVariable("xenia_postprocess_scaling", "bilinear"),
+                                    CoreVariable("xenia_readback_resolve", "fast"),
+                                    CoreVariable("xenia_mount_scratch", "disabled"),
+                                    CoreVariable("xenia_mount_cache", "enabled"),
+                                    CoreVariable("xenia_audio_volume", "100%"),
+                                ),
+                            exposedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "xenia_resolution_scale",
+                                        R.string.setting_xenia_resolution_scale,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "1280x720 (1x)",
+                                                R.string.value_xenia_res_720p,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "1920x1080 (1.5x)",
+                                                R.string.value_xenia_res_1080p,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "2560x1440 (2x)",
+                                                R.string.value_xenia_res_1440p,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "640x360 (0.5x)",
+                                                R.string.value_xenia_res_360p,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "xenia_postprocess_antialiasing",
+                                        R.string.setting_xenia_postprocess_aa,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "none",
+                                                R.string.value_xenia_aa_none,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "fxaa",
+                                                R.string.value_xenia_aa_fxaa,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "fxaa_extreme",
+                                                R.string.value_xenia_aa_fxaa_extreme,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "xenia_postprocess_scaling",
+                                        R.string.setting_xenia_postprocess_scaling,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "bilinear",
+                                                R.string.value_xenia_scale_bilinear,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "cas",
+                                                R.string.value_xenia_scale_cas,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "fsr",
+                                                R.string.value_xenia_scale_fsr,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "xenia_readback_resolve",
+                                        R.string.setting_xenia_readback_resolve,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "fast",
+                                                R.string.value_xenia_readback_disabled,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "accurate",
+                                                R.string.value_xenia_readback_fast,
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            skipDuplicateFrames = false,
+                            allowFrameCatchUp = false,
+                            forceStandardAudioBuffer = true,
+                        ),
+                    ),
+                    uniqueExtensions = listOf("xex", "zar"),
+                    supportedExtensions = listOf("xex", "zar", "iso"),
+                    hasMultiDiskSupport = false,
+                ),
             )
 
         private val byIdCache by lazy { mapOf(*SYSTEMS.map { it.id.dbname to it }.toTypedArray()) }

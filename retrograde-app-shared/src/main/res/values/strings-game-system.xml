@@ -49,6 +49,7 @@
     <string name="game_system_abbr_wii">Wii</string>
     <string name="game_system_abbr_dreamcast">Dreamcast</string>
     <string name="game_system_abbr_wii_u">Wii U</string>
+    <string name="game_system_abbr_xbox360">Xbox 360</string>
 
     <string name="game_system_title_nes">Nintendo</string>
     <string name="game_system_title_atari2600">Atari 2600</string>
@@ -80,6 +81,7 @@
     <string name="game_system_title_wii">Wii (Beta)</string>
     <string name="game_system_title_dreamcast">Sega Dreamcast (Beta)</string>
     <string name="game_system_title_wii_u">Wii U (Beta)</string>
+    <string name="game_system_title_xbox360">Xbox 360 (Beta)</string>
 
     <string name="game_system_title_arcade">Arcade</string>
 </resources>

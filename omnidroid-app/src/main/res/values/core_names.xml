@@ -26,4 +26,5 @@
     <string name="core_name_dolphin" translatable="false">dolphin</string>
     <string name="core_name_flycast" translatable="false">flycast</string>
     <string name="core_name_cemu" translatable="false">cemu</string>
+    <string name="core_name_xenia" translatable="false">xenia</string>
 </resources>

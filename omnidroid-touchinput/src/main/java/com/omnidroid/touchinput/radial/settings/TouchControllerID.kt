@@ -100,6 +100,7 @@ enum class TouchControllerID {
     DREAMCAST,
     WII_U_GAMEPAD,
     WII_U_PRO,
+    XBOX_360,
     ;
 
     class Config(
@@ -302,7 +303,7 @@ enum class TouchControllerID {
                         { modifier, settings -> DreamcastRight(modifier, settings) },
                     )
 
-                WII_U_GAMEPAD, WII_U_PRO ->
+                WII_U_GAMEPAD, WII_U_PRO, XBOX_360 ->
                     Config(
                         { modifier, settings -> WiiClassicLeft(modifier, settings) },
                         { modifier, settings -> WiiClassicRight(modifier, settings) },
