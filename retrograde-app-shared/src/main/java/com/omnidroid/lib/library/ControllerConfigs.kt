@@ -532,5 +532,24 @@ object ControllerConfigs {
                     TILT_CONFIGURATION_L2_R2,
                 ),
         )
+
+    val XBOX_360 =
+        ControllerConfig(
+            "xbox_360_pad",
+            R.string.controller_xbox_360,
+            TouchControllerID.XBOX_360,
+            allowTouchRotation = true,
+            libretroDescriptor = "Xbox 360 Controller",
+            libretroId = 1,
+            tiltConfigurations =
+                listOf(
+                    TILT_CONFIGURATION_DISABLED,
+                    TILT_CONFIGURATION_CROSS,
+                    TILT_CONFIGURATION_ANALOG_LEFT,
+                    TILT_CONFIGURATION_ANALOG_RIGHT,
+                    TILT_CONFIGURATION_L1_R1,
+                    TILT_CONFIGURATION_L2_R2,
+                ),
+        )
 }
 

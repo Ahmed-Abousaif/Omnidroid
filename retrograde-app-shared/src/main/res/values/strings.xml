@@ -254,4 +254,23 @@
     <string name="value_cemu_volume_20">20%</string>
     <string name="value_cemu_volume_0">Mute</string>
 
+    <!-- Xenia Xbox 360 settings -->
+    <string name="controller_xbox_360">Xbox 360 Controller</string>
+    <string name="setting_xenia_resolution_scale">Internal Resolution</string>
+    <string name="value_xenia_res_720p">1280x720 (1x Native)</string>
+    <string name="value_xenia_res_1080p">1920x1080 (1.5x)</string>
+    <string name="value_xenia_res_1440p">2560x1440 (2x)</string>
+    <string name="value_xenia_res_360p">640x360 (0.5x Fast)</string>
+    <string name="setting_xenia_postprocess_aa">Anti-Aliasing</string>
+    <string name="value_xenia_aa_none">None</string>
+    <string name="value_xenia_aa_fxaa">FXAA</string>
+    <string name="value_xenia_aa_fxaa_extreme">FXAA Extreme</string>
+    <string name="setting_xenia_postprocess_scaling">Post-Processing Scaling</string>
+    <string name="value_xenia_scale_bilinear">Bilinear</string>
+    <string name="value_xenia_scale_cas">AMD FidelityFX CAS</string>
+    <string name="value_xenia_scale_fsr">AMD FidelityFX FSR</string>
+    <string name="setting_xenia_readback_resolve">Readback Resolve</string>
+    <string name="value_xenia_readback_disabled">Disabled (Fast)</string>
+    <string name="value_xenia_readback_fast">Enabled (Accurate)</string>
+
 </resources>

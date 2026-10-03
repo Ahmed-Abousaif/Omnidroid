@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="360"
+    android:viewportHeight="360">
+    <!-- Xbox 360 Console Body Silhouette -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M110,60 C130,60 140,65 145,100 C150,140 150,220 145,260 C140,295 130,300 110,300 L250,300 C230,300 220,295 215,260 C210,220 210,140 215,100 C220,65 230,60 250,60 Z M122,72 C138,72 144,76 149,105 C154,142 154,218 149,255 C144,284 138,288 122,288 L238,288 C222,288 216,284 211,255 C206,218 206,142 211,105 C216,76 222,72 238,72 Z"/>
+    <!-- Disc Drive Bezel -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M165,100 H195 V160 H165 Z M170,105 V155 H190 V105 Z"/>
+    <!-- Power Button & Ring of Light (4 Quadrants) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M180,210 m-16,0 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0 M180,210 m-11,0 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0"/>
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M180,210 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0"/>
+    <!-- Ring divider crosses -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M179,192 H181 V228 H179 Z M162,209 H198 V211 H162 Z"/>
+    <!-- Memory Unit Slots / USB Doors -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M172,245 H188 V252 H172 Z M172,258 H188 V265 H172 Z"/>
+</vector>

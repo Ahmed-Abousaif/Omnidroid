@@ -144,6 +144,11 @@ enum class CoreID(
         "Cemu",
         "libcemu_libretro_android.so",
     ),
+    XENIA(
+        "xenia",
+        "Xenia",
+        "libxenia_libretro_android.so",
+    ),
     ;
 
     companion object {

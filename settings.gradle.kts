@@ -61,7 +61,8 @@ if (usePlayDynamicFeatures()) {
         ":omnidroid_core_armsx2",
         ":omnidroid_core_dolphin",
         ":omnidroid_core_flycast",
-        ":omnidroid_core_cemu"
+        ":omnidroid_core_cemu",
+        ":omnidroid_core_xenia"
     )
 
     project(":omnidroid_core_gambatte").projectDir = File("omnidroid-cores/omnidroid_core_gambatte")
@@ -90,4 +91,5 @@ if (usePlayDynamicFeatures()) {
     project(":omnidroid_core_dolphin").projectDir = File("omnidroid-cores/omnidroid_core_dolphin")
     project(":omnidroid_core_flycast").projectDir = File("omnidroid-cores/omnidroid_core_flycast")
     project(":omnidroid_core_cemu").projectDir = File("omnidroid-cores/omnidroid_core_cemu")
+    project(":omnidroid_core_xenia").projectDir = File("omnidroid-cores/omnidroid_core_xenia")
 }
