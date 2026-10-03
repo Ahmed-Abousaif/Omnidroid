@@ -111,7 +111,7 @@
     <string name="settings_license_soundtouch">SoundTouch audio processing library\nCopyright (c) Olli Parviainen\nLicensed under the GNU Lesser General Public License, version 2.1.\nUsed to keep audio at the correct pitch when a game runs below full speed.\nThe full license text ships with the SoundTouch sources.</string>
     <string name="settings_section_about_developer">About the developer</string>
     <string name="settings_title_about_developer">Ahmed Abousaif</string>
-    <string name="settings_description_about_developer">Creator of Omnidroid — rebuilding the Lemuroid experience into a faster, better, and more seamless Android game launcher.</string>
+    <string name="settings_description_about_developer">Creator of Omnidroid, rebuilding the Lemuroid experience into a faster, better, and more seamless Android game launcher.</string>
     <string name="settings_title_developer_github">GitHub</string>
     <string name="settings_description_developer_github">Source code and other projects</string>
     <string name="url_privacy_policy" translatable="false">https://github.com/Ahmed-Abousaif/Omnidroid/blob/master/PRIVACY.md</string>

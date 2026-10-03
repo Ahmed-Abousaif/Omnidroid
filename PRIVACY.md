@@ -12,10 +12,10 @@ Omnidroid is built to run locally on your device. It does not require an account
 
 ### On your device
 
-- **Game library data** — ROM paths, titles, covers, play time, favorites, custom names, and similar library metadata are stored on your device.
-- **Save states and save files** — stored locally unless you enable cloud saves.
-- **Settings and preferences** — stored on your device.
-- **Optional profile data** — gamer tag, avatar, XP, and related profile details stay on your device unless cloud saves sync is enabled.
+- **Game library data:** ROM paths, titles, covers, play time, favorites, custom names, and similar library metadata are stored on your device.
+- **Save states and save files:** Stored locally unless you enable cloud saves.
+- **Settings and preferences:** Stored on your device.
+- **Optional profile data:** Gamer tag, avatar, XP, and related profile details stay on your device unless cloud saves sync is enabled.
 
 ### Optional cloud saves
 
@@ -41,7 +41,7 @@ Permissions are requested only as needed for features such as storage access for
 
 ## Children’s privacy
 
-Omnidroid is a general-purpose emulator frontend. Parents and guardians should supervise device and content use as appropriate.
+Omnidroid is a general-purpose multi-console emulation platform. Parents and guardians should supervise device and content use as appropriate.
 
 ## Changes
 

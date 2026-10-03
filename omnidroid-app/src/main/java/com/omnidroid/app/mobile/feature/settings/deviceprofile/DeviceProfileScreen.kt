@@ -255,7 +255,7 @@ private fun CpuPanel(
 ) {
     val freqSummary =
         if (cpu.frequenciesKHz.isEmpty()) {
-            "—"
+            "-"
         } else {
             cpu.frequenciesKHz
                 .distinct()
@@ -273,9 +273,9 @@ private fun CpuPanel(
             items =
                 listOf(
                     stringResource(R.string.settings_device_profile_cpu_name) to
-                        cpu.processorName.ifBlank { "—" },
+                        cpu.processorName.ifBlank { "-" },
                     stringResource(R.string.settings_device_profile_cpu_hardware) to
-                        cpu.hardwareName.ifBlank { "—" },
+                        cpu.hardwareName.ifBlank { "-" },
                     stringResource(R.string.settings_device_profile_cpu_cores) to
                         cpu.cores.toString(),
                     stringResource(R.string.settings_device_profile_cpu_freq) to freqSummary,
@@ -331,11 +331,11 @@ private fun GpuPanel(
             items =
                 listOf(
                     stringResource(R.string.settings_device_profile_gl_renderer) to
-                        gpu.glRenderer.ifBlank { "—" },
+                        gpu.glRenderer.ifBlank { "-" },
                     stringResource(R.string.settings_device_profile_gl_vendor) to
-                        gpu.glVendor.ifBlank { "—" },
+                        gpu.glVendor.ifBlank { "-" },
                     stringResource(R.string.settings_device_profile_gles_version) to
-                        gpu.glesVersionLabel.ifBlank { "—" },
+                        gpu.glesVersionLabel.ifBlank { "-" },
                     stringResource(R.string.settings_device_profile_gl_version) to
                         shortenGlVersion(gpu.glVersion),
                     stringResource(R.string.settings_device_profile_vulkan) to vulkanLabel,
@@ -464,7 +464,7 @@ private fun ScoreTile(
                 text = score,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = if (score == "—") MutedText else Color.White,
+                color = if (score == "-") MutedText else Color.White,
                 modifier = Modifier.padding(top = 4.dp),
             )
             Text(
@@ -543,7 +543,7 @@ private fun SpecCell(
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            text = value.ifBlank { "—" },
+            text = value.ifBlank { "-" },
             style = MaterialTheme.typography.bodyMedium,
             color = ValueText,
             fontWeight = FontWeight.Medium,
@@ -674,7 +674,7 @@ fun WelcomeBenchmarkDialog(
 }
 
 private fun formatScore(result: BenchmarkResult?): String {
-    if (result == null) return "—"
+    if (result == null) return "-"
     return String.format(Locale.US, "%.1fM", result.scoreOpsPerSec / 1_000_000.0)
 }
 
@@ -688,7 +688,7 @@ private fun formatDetail(
 }
 
 private fun shortenGlVersion(version: String): String {
-    if (version.isBlank()) return "—"
+    if (version.isBlank()) return "-"
     val trimmed = version.trim()
     return if (trimmed.length <= 36) trimmed else trimmed.take(36).trimEnd() + "…"
 }
@@ -699,7 +699,7 @@ private fun summarizeCpuFeatures(features: String): String {
             .split(Regex("\\s+"))
             .map { it.trim() }
             .filter { it.isNotEmpty() }
-    if (tokens.isEmpty()) return "—"
+    if (tokens.isEmpty()) return "-"
     val preferred =
         listOf(
             "neon", "asimd", "aes", "sha1", "sha2", "crc32", "atomics", "fp", "asimdhp",

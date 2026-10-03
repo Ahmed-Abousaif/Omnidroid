@@ -179,7 +179,7 @@
     <string name="tilt_configuration_cross">DPH</string>
     <string name="tilt_configuration_analog_left">Levý Analogový</string>
     <string name="tilt_configuration_analog_right">Pravé Analogové</string>
-    <string name="tilt_configuration_buttons_l_r">L – R</string>
-    <string name="tilt_configuration_buttons_l1_r1">L1 – R1</string>
-    <string name="tilt_configuration_buttons_l2_r2">L2 – R2</string>
+    <string name="tilt_configuration_buttons_l_r">L - R</string>
+    <string name="tilt_configuration_buttons_l1_r1">L1 - R1</string>
+    <string name="tilt_configuration_buttons_l2_r2">L2 - R2</string>
 </resources>
