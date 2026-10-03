@@ -107,6 +107,7 @@ import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameCard
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -124,23 +125,38 @@ val LibrarySidebarWidth = 80.dp
 val LibrarySidebarButtonSize = 48.dp
 val LibrarySidebarInset = (LibrarySidebarWidth - LibrarySidebarButtonSize) / 2
 
-fun libraryGridRows(zoomDensity: Int, availableHeight: Dp): Int {
+fun libraryGridRows(zoomDensity: Int, availableHeight: Dp, isSquare: Boolean = false): Int {
+    if (isSquare) {
+        return when (zoomDensity) {
+            0 -> 2
+            1 -> 3
+            else -> 4
+        }
+    }
+    val h = availableHeight.value
     return when {
-        availableHeight < 420.dp -> {
+        h < 360f -> {
+            when (zoomDensity) {
+                0 -> 1
+                1 -> 2
+                else -> 2
+            }
+        }
+        h < 440f -> {
             when (zoomDensity) {
                 0 -> 1
                 1 -> 2
                 else -> 3
             }
         }
-        availableHeight < 640.dp -> {
+        h < 640f -> {
             when (zoomDensity) {
                 0 -> 2
                 1 -> 3
                 else -> 5
             }
         }
-        availableHeight < 880.dp -> {
+        h < 880f -> {
             when (zoomDensity) {
                 0 -> 3
                 1 -> 5
@@ -150,21 +166,29 @@ fun libraryGridRows(zoomDensity: Int, availableHeight: Dp): Int {
         else -> {
             when (zoomDensity) {
                 0 -> 3
-                1 -> (availableHeight / 140.dp).toInt().coerceIn(5, 6)
-                else -> (availableHeight / 90.dp).toInt().coerceIn(7, 9)
+                1 -> (h / 140f).toInt().coerceIn(5, 6)
+                else -> (h / 90f).toInt().coerceIn(7, 9)
             }
         }
     }
 }
 
-fun libraryPortraitColumns(zoomDensity: Int, availableWidth: Dp): Int {
+fun libraryPortraitColumns(zoomDensity: Int, availableWidth: Dp, isSquare: Boolean = false): Int {
+    if (isSquare) {
+        return when (zoomDensity) {
+            0 -> 3
+            1 -> 4
+            else -> 5
+        }
+    }
+    val w = availableWidth.value
     val cardWidth =
         when (zoomDensity) {
-            0 -> 150.dp
-            1 -> 112.dp
-            else -> 84.dp
+            0 -> if (w < 400f) 110f else 150f
+            1 -> if (w < 400f) 85f else 112f
+            else -> if (w < 400f) 65f else 84f
         }
-    return (availableWidth / cardWidth).toInt().coerceIn(2, 5)
+    return (w / cardWidth).toInt().coerceIn(2, 6)
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -292,12 +316,13 @@ private fun LibrarySidebar(
     onConsoleLongClick: (MetaSystemID) -> Unit,
     onAddConsole: () -> Unit,
 ) {
+    val adaptiveSpec = LocalAdaptiveLayout.current
     Column(
         modifier =
             modifier
                 .fillMaxHeight()
-                .width(LibrarySidebarWidth)
-                .padding(vertical = 12.dp)
+                .width(adaptiveSpec.sidebarWidth)
+                .padding(vertical = if (adaptiveSpec.isCompact) 6.dp else 12.dp)
                 .focusGroup(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -317,7 +342,7 @@ private fun LibrarySidebar(
         )
         Spacer(modifier = Modifier.height(4.dp))
         HorizontalDivider(
-            modifier = Modifier.width(28.dp),
+            modifier = Modifier.width(if (adaptiveSpec.isCompact) 20.dp else 28.dp),
             color = Color.White.copy(alpha = 0.12f),
         )
         Spacer(modifier = Modifier.height(4.dp))
@@ -356,9 +381,10 @@ private fun SidebarIconButton(
     onClick: () -> Unit,
     pinned: Boolean = false,
 ) {
+    val adaptiveSpec = LocalAdaptiveLayout.current
     Surface(
         onClick = onClick,
-        modifier = Modifier.size(LibrarySidebarButtonSize).controllerFocusGlow(CircleShape),
+        modifier = Modifier.size(adaptiveSpec.sidebarButtonSize).controllerFocusGlow(CircleShape),
         shape = CircleShape,
         color = if (selected) Color(0xFF242424) else Color(0xFF161616),
         shadowElevation = 6.dp,
@@ -369,7 +395,7 @@ private fun SidebarIconButton(
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,
-                modifier = Modifier.size(26.dp),
+                modifier = Modifier.size(adaptiveSpec.sidebarIconSize),
                 tint = if (selected) LibraryNeonGreen else Color.White,
             )
             StartupBadge(visible = pinned)
@@ -397,10 +423,11 @@ private fun SidebarSystemLogoButton(
     onLongClick: (() -> Unit)? = null,
     pinned: Boolean = false,
 ) {
+    val adaptiveSpec = LocalAdaptiveLayout.current
     Surface(
         modifier =
             Modifier
-                .size(LibrarySidebarButtonSize)
+                .size(adaptiveSpec.sidebarButtonSize)
                 .controllerFocusGlow(CircleShape)
                 .clip(CircleShape)
                 .combinedClickable(
@@ -441,6 +468,7 @@ private fun PortraitConsoleBar(
     onConsoleLongClick: (MetaSystemID) -> Unit,
     onAddConsole: () -> Unit,
 ) {
+    val adaptiveSpec = LocalAdaptiveLayout.current
     val listState = rememberLazyListState()
     val selectedSystemIndex =
         (filter as? LibraryFilter.System)?.let { systems.indexOf(it.metaSystemID) } ?: -1
@@ -453,8 +481,8 @@ private fun PortraitConsoleBar(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(68.dp)
-                .padding(horizontal = 12.dp)
+                .height(adaptiveSpec.consoleBarHeight)
+                .padding(horizontal = if (adaptiveSpec.isCompact) 8.dp else 12.dp)
                 .focusGroup(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -633,16 +661,17 @@ private fun LibraryGames(
                             }
                         }
                     } else if (portrait) {
-                        val columns = libraryPortraitColumns(state.zoomDensity, maxWidth)
+                        val adaptiveSpec = LocalAdaptiveLayout.current
+                        val columns = libraryPortraitColumns(state.zoomDensity, maxWidth, adaptiveSpec.isSquare)
                         LazyVerticalGrid(
                             modifier =
                                 Modifier
                                     .fillMaxSize()
                                     .focusGroup(),
                             columns = GridCells.Fixed(columns),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            contentPadding = PaddingValues(horizontal = adaptiveSpec.gridSpacing, vertical = adaptiveSpec.gridSpacing),
+                            horizontalArrangement = Arrangement.spacedBy(adaptiveSpec.gridSpacing),
+                            verticalArrangement = Arrangement.spacedBy(adaptiveSpec.gridSpacing),
                         ) {
                             if (featured != null) {
                                 item(key = "continue-${featured.id}") {
@@ -670,7 +699,7 @@ private fun LibraryGames(
                                     game = game,
                                     modifier =
                                         if (!showContinue && index == 0) {
-                                            Modifier.focusRequester(firstItemRequester)
+                                             Modifier.focusRequester(firstItemRequester)
                                         } else {
                                             Modifier
                                         },
@@ -683,16 +712,17 @@ private fun LibraryGames(
                             }
                         }
                     } else {
-                        val rows = libraryGridRows(state.zoomDensity, maxHeight)
+                        val adaptiveSpec = LocalAdaptiveLayout.current
+                        val rows = libraryGridRows(state.zoomDensity, maxHeight, adaptiveSpec.isSquare)
                         LazyHorizontalGrid(
                             modifier =
                                 Modifier
                                     .fillMaxSize()
                                     .focusGroup(),
                             rows = GridCells.Fixed(rows),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(horizontal = adaptiveSpec.gridSpacing + 4.dp, vertical = adaptiveSpec.gridSpacing),
+                            horizontalArrangement = Arrangement.spacedBy(adaptiveSpec.gridSpacing),
+                            verticalArrangement = Arrangement.spacedBy(adaptiveSpec.gridSpacing),
                         ) {
                             if (featured != null) {
                                 item(key = "continue-${featured.id}") {
@@ -850,7 +880,8 @@ private fun LibraryGameRow(
                 clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(cornerAnim)),
             )
         }
-    val thumbHeight = 56.dp
+    val adaptiveSpec = LocalAdaptiveLayout.current
+    val thumbHeight = adaptiveSpec.listThumbHeight
     val thumbWidth = thumbHeight * LibraryGameCardAspectRatio
     Surface(
         modifier =

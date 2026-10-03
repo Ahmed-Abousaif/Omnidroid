@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,17 +27,23 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.RotateLeft
 import androidx.compose.material.icons.filled.Height
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.OpenInFull
-import androidx.compose.material.icons.filled.RotateLeft
 import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -50,6 +57,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Rect
@@ -61,6 +69,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -133,6 +142,9 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 currentControllerConfig != null &&
                 touchControlsVisibleState.value
 
+        val gameAspectRatioState =
+            viewModel.getGameAspectRatio().collectAsState(viewModel.system.aspectRatio)
+
         LaunchedEffect(fullPos, viewPos) {
             val gameView = viewModel.retroGameView.retroGameViewFlow()
             if (fullPos == null || viewPos == null) return@LaunchedEffect
@@ -178,13 +190,40 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                         padsVisible = isVisible,
                     ),
             ) {
-                Box(
+                val screenPosY =
+                    touchControllerSettings?.screenPositionY
+                        ?: TouchControllerSettingsManager.DEFAULT_SCREEN_POSITION_Y
+                val verticalBias = (screenPosY * 2f - 1f).coerceIn(-1f, 1f)
+                val targetAspect = gameAspectRatioState.value
+
+                BoxWithConstraints(
                     modifier =
                         Modifier
                             .layoutId(GameScreenLayout.CONSTRAINTS_GAME_VIEW)
-                            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Top))
-                            .onGloballyPositioned { viewportPosition.value = it.boundsInRoot() },
-                )
+                            .windowInsetsPadding(
+                                if (isLandscape) {
+                                    WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)
+                                } else {
+                                    WindowInsets.displayCutout.only(WindowInsetsSides.Top)
+                                },
+                            )
+                            .fillMaxSize(),
+                ) {
+                    val containerAspect =
+                        if (maxHeight.value > 0f) maxWidth.value / maxHeight.value else targetAspect
+                    val boxWidth =
+                        if (targetAspect > containerAspect) maxWidth else maxHeight * targetAspect
+                    val boxHeight =
+                        if (targetAspect > containerAspect) maxWidth / targetAspect else maxHeight
+
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(width = boxWidth, height = boxHeight)
+                                .align(BiasAlignment(horizontalBias = 0f, verticalBias = verticalBias))
+                                .onGloballyPositioned { viewportPosition.value = it.boundsInRoot() },
+                    )
+                }
 
                 if (isVisible) {
                     CompositionLocalProvider(LocalOmnidroidPadTheme provides OmnidroidPadTheme()) {
@@ -214,13 +253,21 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
                         GameScreenRunningCentralMenu(
                             modifier = Modifier.layoutId(GameScreenLayout.CONSTRAINTS_GAME_CONTAINER),
-                            controllerConfig = currentControllerConfig,
-                            touchControllerSettings = touchControllerSettings,
                             viewModel = viewModel,
                         )
                     }
                 }
             }
+        }
+
+        val showEditControlsState = viewModel.isEditControlShown().collectAsState(false)
+        if (showEditControlsState.value && touchControllerSettings != null) {
+            MenuEditTouchControls(
+                viewModel = viewModel,
+                controllerConfig = currentControllerConfig,
+                touchControllerSettings = touchControllerSettings,
+                isTouchControlsVisible = isVisible,
+            )
         }
 
         // Viewport-sized sibling above the game image only (NDS/3DS pads sit beside/below it).
@@ -310,8 +357,6 @@ private fun PadContainer(modifier: Modifier = Modifier) {
 private fun GameScreenRunningCentralMenu(
     modifier: Modifier = Modifier,
     viewModel: BaseGameScreenViewModel,
-    touchControllerSettings: TouchControllerSettingsManager.Settings,
-    controllerConfig: ControllerConfig,
 ) {
     val menuPressed = viewModel.isMenuPressed().collectAsState(false)
     Box(
@@ -323,148 +368,213 @@ private fun GameScreenRunningCentralMenu(
             animationDurationMillis = MENU_LOADING_ANIMATION_MILLIS,
             icon = R.drawable.button_menu,
         )
-        MenuEditTouchControls(viewModel, controllerConfig, touchControllerSettings)
     }
 }
 
 @Composable
 private fun MenuEditTouchControls(
     viewModel: BaseGameScreenViewModel,
-    controllerConfig: ControllerConfig,
+    controllerConfig: ControllerConfig?,
     touchControllerSettings: TouchControllerSettingsManager.Settings,
+    isTouchControlsVisible: Boolean,
 ) {
-    val showEditControls = viewModel.isEditControlShown().collectAsState(false)
-    if (!showEditControls.value) return
-
     Dialog(onDismissRequest = { viewModel.showEditControls(false) }) {
         Card(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .wrapContentHeight(),
+            shape = RoundedCornerShape(16.dp),
         ) {
             Column(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .wrapContentHeight()
-                        .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                        .verticalScroll(rememberScrollState())
+                        .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                MenuEditTouchControlRow(Icons.Default.OpenInFull, "Scale", 0f) {
+                MenuEditTouchControlSlider(
+                    icon = Icons.Default.Height,
+                    label = stringResource(R.string.touch_customize_screen_position),
+                    rotation = 0f,
+                ) {
                     Slider(
-                        value = touchControllerSettings.scale,
+                        value = touchControllerSettings.screenPositionY,
                         onValueChange = {
                             viewModel.updateTouchControllerSettings(
-                                touchControllerSettings.copy(scale = it),
+                                touchControllerSettings.copy(screenPositionY = it),
                             )
                         },
                     )
                 }
-                MenuEditTouchControlRow(Icons.Default.Height, "Horizontal Margin", 90f) {
-                    Slider(
-                        value = touchControllerSettings.marginX,
-                        onValueChange = {
-                            viewModel.updateTouchControllerSettings(
-                                touchControllerSettings.copy(marginX = it),
-                            )
-                        },
-                    )
-                }
-                MenuEditTouchControlRow(Icons.Default.Height, "Vertical Margin", 0f) {
-                    Slider(
-                        value = touchControllerSettings.marginY,
-                        onValueChange = {
-                            viewModel.updateTouchControllerSettings(
-                                touchControllerSettings.copy(marginY = it),
-                            )
-                        },
-                    )
-                }
-                if (controllerConfig.allowTouchRotation) {
-                    MenuEditTouchControlRow(Icons.Default.RotateLeft, "Rotate", 0f) {
+
+                if (isTouchControlsVisible && controllerConfig != null) {
+                    MenuEditTouchControlSlider(
+                        icon = Icons.Default.OpenInFull,
+                        label = stringResource(R.string.touch_customize_scale),
+                        rotation = 0f,
+                    ) {
                         Slider(
-                            value = touchControllerSettings.rotation,
+                            value = touchControllerSettings.scale,
                             onValueChange = {
                                 viewModel.updateTouchControllerSettings(
-                                    touchControllerSettings.copy(rotation = it),
+                                    touchControllerSettings.copy(scale = it),
                                 )
                             },
                         )
                     }
-                }
-                if (controllerConfig.allowDpadDiagonalsToggle) {
-                    val dpadLabel = stringResource(R.string.touch_customize_dpad_8way)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+
+                    MenuEditTouchControlSlider(
+                        icon = Icons.Default.Height,
+                        label = stringResource(R.string.touch_customize_margin_x),
+                        rotation = 90f,
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.SportsEsports,
-                            contentDescription = dpadLabel,
-                        )
-                        Text(
-                            text = dpadLabel,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Switch(
-                            checked = touchControllerSettings.allowDiagonals,
-                            onCheckedChange = {
+                        Slider(
+                            value = touchControllerSettings.marginX,
+                            onValueChange = {
                                 viewModel.updateTouchControllerSettings(
-                                    touchControllerSettings.copy(allowDiagonals = it),
+                                    touchControllerSettings.copy(marginX = it),
                                 )
                             },
                         )
                     }
-                }
-                if (controllerConfig.allowDpadAsAnalog) {
-                    val dpadAnalogLabel = stringResource(R.string.touch_customize_dpad_as_analog)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+
+                    MenuEditTouchControlSlider(
+                        icon = Icons.Default.Height,
+                        label = stringResource(R.string.touch_customize_margin_y),
+                        rotation = 0f,
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.SportsEsports,
-                            contentDescription = dpadAnalogLabel,
-                        )
-                        Text(
-                            text = dpadAnalogLabel,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Switch(
-                            checked = touchControllerSettings.dpadStyle == TouchControllerSettingsManager.DpadStyle.ANALOG,
-                            onCheckedChange = { isAnalog ->
+                        Slider(
+                            value = touchControllerSettings.marginY,
+                            onValueChange = {
                                 viewModel.updateTouchControllerSettings(
-                                    touchControllerSettings.copy(
-                                        dpadStyle =
-                                            if (isAnalog) {
-                                                TouchControllerSettingsManager.DpadStyle.ANALOG
-                                            } else {
-                                                TouchControllerSettingsManager.DpadStyle.CROSS
-                                            },
-                                    ),
+                                    touchControllerSettings.copy(marginY = it),
                                 )
                             },
                         )
                     }
+
+                    if (controllerConfig.allowTouchRotation) {
+                        MenuEditTouchControlSlider(
+                            icon = Icons.AutoMirrored.Filled.RotateLeft,
+                            label = stringResource(R.string.touch_customize_rotation),
+                            rotation = 0f,
+                        ) {
+                            Slider(
+                                value = touchControllerSettings.rotation,
+                                onValueChange = {
+                                    viewModel.updateTouchControllerSettings(
+                                        touchControllerSettings.copy(rotation = it),
+                                    )
+                                },
+                            )
+                        }
+                    }
+
+                    if (controllerConfig.allowDpadDiagonalsToggle) {
+                        val dpadLabel = stringResource(R.string.touch_customize_dpad_8way)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Icon(
+                                modifier = Modifier.size(18.dp),
+                                imageVector = Icons.Default.SportsEsports,
+                                contentDescription = dpadLabel,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                text = dpadLabel,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Switch(
+                                checked = touchControllerSettings.allowDiagonals,
+                                onCheckedChange = {
+                                    viewModel.updateTouchControllerSettings(
+                                        touchControllerSettings.copy(allowDiagonals = it),
+                                    )
+                                },
+                            )
+                        }
+                    }
+
+                    if (controllerConfig.allowDpadAsAnalog) {
+                        val dpadAnalogLabel = stringResource(R.string.touch_customize_dpad_as_analog)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Icon(
+                                modifier = Modifier.size(18.dp),
+                                imageVector = Icons.Default.SportsEsports,
+                                contentDescription = dpadAnalogLabel,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                text = dpadAnalogLabel,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Switch(
+                                checked = touchControllerSettings.dpadStyle == TouchControllerSettingsManager.DpadStyle.ANALOG,
+                                onCheckedChange = { isAnalog ->
+                                    viewModel.updateTouchControllerSettings(
+                                        touchControllerSettings.copy(
+                                            dpadStyle =
+                                                if (isAnalog) {
+                                                    TouchControllerSettingsManager.DpadStyle.ANALOG
+                                                } else {
+                                                    TouchControllerSettingsManager.DpadStyle.CROSS
+                                                },
+                                        ),
+                                    )
+                                },
+                            )
+                        }
+                    }
                 }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    TextButton(
+                    OutlinedButton(
                         onClick = { viewModel.resetTouchControls() },
-                        modifier = Modifier.padding(8.dp),
+                        modifier = Modifier.weight(1f),
+                        colors =
+                            ButtonDefaults.outlinedButtonColors(
+                                contentColor = Color.White,
+                            ),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.4f)),
+                        shape = RoundedCornerShape(8.dp),
                     ) {
-                        Text(text = stringResource(R.string.touch_customize_button_reset))
+                        Text(
+                            text = stringResource(R.string.touch_customize_button_reset),
+                            fontWeight = FontWeight.Medium,
+                        )
                     }
-                    TextButton(
+                    Button(
                         onClick = { viewModel.showEditControls(false) },
-                        modifier = Modifier.padding(8.dp),
+                        modifier = Modifier.weight(1f),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF2E7D32),
+                                contentColor = Color.White,
+                            ),
+                        shape = RoundedCornerShape(8.dp),
                     ) {
-                        Text(text = stringResource(R.string.touch_customize_button_done))
+                        Text(
+                            text = stringResource(R.string.touch_customize_button_save),
+                            fontWeight = FontWeight.Bold,
+                        )
                     }
                 }
             }
@@ -473,22 +583,36 @@ private fun MenuEditTouchControls(
 }
 
 @Composable
-private fun MenuEditTouchControlRow(
+private fun MenuEditTouchControlSlider(
     icon: ImageVector,
     label: String,
-    rotation: Float,
+    rotation: Float = 0f,
     slider: @Composable () -> Unit,
 ) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Icon(
-            modifier = Modifier.rotate(rotation),
-            imageVector = icon,
-            contentDescription = label,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                modifier =
+                    Modifier
+                        .size(18.dp)
+                        .rotate(rotation),
+                imageVector = icon,
+                contentDescription = label,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+            )
+        }
         slider()
     }
 }

@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="touch_customize_button_done">Done</string>
+    <string name="touch_customize_title">Edit Controls &amp; Screen</string>
+    <string name="touch_customize_button_done">Save</string>
+    <string name="touch_customize_button_save">Save</string>
     <string name="touch_customize_button_reset">Reset</string>
     <string name="touch_customize_info">Drag and Pinch controls to change position and size</string>
+    <string name="touch_customize_section_screen">Screen</string>
+    <string name="touch_customize_section_controls">Virtual Controller</string>
+    <string name="touch_customize_screen_position">Screen Position</string>
+    <string name="touch_customize_scale">Button Scale</string>
+    <string name="touch_customize_margin_x">Horizontal Margin</string>
+    <string name="touch_customize_margin_y">Vertical Margin</string>
+    <string name="touch_customize_rotation">Rotation</string>
     <string name="touch_customize_dpad_8way">8-way D-Pad</string>
     <string name="touch_customize_dpad_as_analog">Analog D-Pad</string>
 </resources>

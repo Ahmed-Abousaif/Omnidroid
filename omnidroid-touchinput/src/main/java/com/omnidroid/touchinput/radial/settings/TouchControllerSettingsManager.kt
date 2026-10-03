@@ -37,6 +37,7 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
         val marginY: Float = DEFAULT_MARGIN_Y,
         val allowDiagonals: Boolean = DEFAULT_ALLOW_DIAGONALS,
         val dpadStyle: DpadStyle = DEFAULT_DPAD_STYLE,
+        val screenPositionY: Float = DEFAULT_SCREEN_POSITION_Y,
     )
 
     private fun computeInsetsPaddings(
@@ -74,6 +75,7 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
                 rotation = DEFAULT_ROTATION,
                 marginX = horizontalPadding.value / MAX_MARGINS,
                 marginY = verticalPadding.value / MAX_MARGINS,
+                screenPositionY = DEFAULT_SCREEN_POSITION_Y,
             )
         val settingsKey = getPreferenceString(touchControllerID, orientation)
         val cachedStateFlow =
@@ -133,6 +135,7 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
         const val DEFAULT_MARGIN_Y = 0.0f
         const val DEFAULT_ALLOW_DIAGONALS = true
         val DEFAULT_DPAD_STYLE = DpadStyle.CROSS
+        const val DEFAULT_SCREEN_POSITION_Y = 0.5f
 
         const val MAX_ROTATION = 45f
         const val MIN_SCALE = 0.75f

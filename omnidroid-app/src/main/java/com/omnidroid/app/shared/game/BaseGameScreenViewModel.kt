@@ -50,7 +50,7 @@ class BaseGameScreenViewModel(
     settingsManager: SettingsManager,
     inputDeviceManager: InputDeviceManager,
     controllerConfigsManager: ControllerConfigsManager,
-    system: GameSystem,
+    val system: GameSystem,
     systemCoreConfig: SystemCoreConfig,
     sharedPreferences: SharedPreferences,
     savesManager: SavesManager,
@@ -226,6 +226,10 @@ class BaseGameScreenViewModel(
 
     fun onScreenOrientationChanged(orientation: TouchControllerSettingsManager.Orientation) {
         touchControls.updateScreenOrientation(orientation)
+    }
+
+    fun getGameAspectRatio(): Flow<Float> {
+        return touchControls.getGameAspectRatio()
     }
 
     fun isTouchControllerVisible(): Flow<Boolean> {
