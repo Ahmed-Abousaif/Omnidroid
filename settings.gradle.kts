@@ -36,7 +36,6 @@ fun usePlayDynamicFeatures(): Boolean {
 
 if (usePlayDynamicFeatures()) {
     include(
-        ":omnidroid_core_desmume",
         ":omnidroid_core_dosbox_pure",
         ":omnidroid_core_fbneo",
         ":omnidroid_core_fceumm",
@@ -47,7 +46,6 @@ if (usePlayDynamicFeatures()) {
         ":omnidroid_core_mednafen_ngp",
         ":omnidroid_core_mednafen_pce_fast",
         ":omnidroid_core_mednafen_wswan",
-        ":omnidroid_core_melonds",
         ":omnidroid_core_melondsds",
         ":omnidroid_core_mgba",
         ":omnidroid_core_mupen64plus_next_gles3",
@@ -65,8 +63,6 @@ if (usePlayDynamicFeatures()) {
     )
 
     project(":omnidroid_core_gambatte").projectDir = File("omnidroid-cores/omnidroid_core_gambatte")
-    project(":omnidroid_core_desmume").projectDir = File("omnidroid-cores/omnidroid_core_desmume")
-    project(":omnidroid_core_melonds").projectDir = File("omnidroid-cores/omnidroid_core_melonds")
     project(":omnidroid_core_melondsds").projectDir = File("omnidroid-cores/omnidroid_core_melondsds")
     project(":omnidroid_core_fbneo").projectDir = File("omnidroid-cores/omnidroid_core_fbneo")
     project(":omnidroid_core_fceumm").projectDir = File("omnidroid-cores/omnidroid_core_fceumm")

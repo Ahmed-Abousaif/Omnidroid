@@ -48,8 +48,6 @@
     <string name="setting_ppsspp_texture_filtering">Filtrare textură</string>
     <string name="setting_fbneo_frameskip">Frameskip</string>
     <string name="setting_fbneo_cpu_speed_adjust">Viteza procesorului</string>
-    <string name="setting_desmume_screens_layout">Aspect ecran</string>
-    <string name="setting_desmume_frameskip">Frameskip</string>
     <string name="setting_melonds_screen_layout">Aspect ecran</string>
     <string name="setting_melonds_threaded_renderer">Randator glisat</string>
     <string name="setting_melonds_jit_enable">Recompilator dinamic</string>
@@ -108,8 +106,6 @@
     <string name="value_melonds_mic_input_blow">Simulează sunete de lovitură</string>
     <string name="value_citra_layout_option_topbottom">Top - jos</string>
     <string name="value_citra_layout_option_sidebyside">Stânga - Dreapta</string>
-    <string name="value_desmume_screens_layout_topbottom">Top - jos</string>
-    <string name="value_desmume_screens_layout_leftright">Stânga - Dreapta</string>
     <string name="value_ppsspp_cpu_core_jit">ITC</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>
     <string name="value_ppsspp_cpu_core_interpreter">Interpretare</string>

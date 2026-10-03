@@ -48,8 +48,6 @@
     <string name="setting_ppsspp_texture_filtering">Filtragem da textura</string>
     <string name="setting_fbneo_frameskip">Frameskip</string>
     <string name="setting_fbneo_cpu_speed_adjust">Velocidade da CPU</string>
-    <string name="setting_desmume_screens_layout">Layout das telas</string>
-    <string name="setting_desmume_frameskip">Frameskip</string>
     <string name="setting_melonds_screen_layout">Layout de tela</string>
     <string name="setting_melonds_threaded_renderer">Renderizador de thread</string>
     <string name="setting_melonds_jit_enable">Recompilador dinâmico</string>
@@ -108,8 +106,6 @@
     <string name="value_melonds_mic_input_blow">Simular sons de sopro</string>
     <string name="value_citra_layout_option_topbottom">Superior — inferior</string>
     <string name="value_citra_layout_option_sidebyside">Esquerda — direita</string>
-    <string name="value_desmume_screens_layout_topbottom">Superior — inferior</string>
-    <string name="value_desmume_screens_layout_leftright">Esquerda — direita</string>
     <string name="value_ppsspp_cpu_core_jit">JIT</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>
     <string name="value_ppsspp_cpu_core_interpreter">Interpretador</string>

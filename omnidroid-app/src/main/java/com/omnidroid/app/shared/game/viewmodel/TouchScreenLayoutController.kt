@@ -20,7 +20,6 @@ class TouchScreenLayoutController(
         orientation: TouchControllerSettingsManager.Orientation,
     ): List<CoreVariable> {
         return when (coreId) {
-            CoreID.MELONDS -> toggleMelonDs(orientation)
             CoreID.MELONDS_DS -> toggleMelonDsDs(orientation)
             CoreID.CITRA, CoreID.AZAHAR -> toggleCitra(orientation)
             else -> emptyList()
@@ -28,20 +27,7 @@ class TouchScreenLayoutController(
     }
 
     fun supportsToggle(): Boolean =
-        coreId == CoreID.MELONDS || coreId == CoreID.MELONDS_DS || coreId == CoreID.CITRA || coreId == CoreID.AZAHAR
-
-    private fun toggleMelonDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
-        val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDS_LAYOUT_KEY, systemId.dbname)
-        val current = sharedPreferences.getString(key, null)
-        val next =
-            if (current == MELONDS_SINGLE_TOP) {
-                melonDsDual(orientation)
-            } else {
-                MELONDS_SINGLE_TOP
-            }
-        sharedPreferences.edit { putString(key, next) }
-        return listOf(CoreVariable(MELONDS_LAYOUT_KEY, next))
-    }
+        coreId == CoreID.MELONDS_DS || coreId == CoreID.CITRA || coreId == CoreID.AZAHAR
 
     private fun toggleMelonDsDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
         val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDSDS_LAYOUT_KEY, systemId.dbname)
@@ -80,24 +66,9 @@ class TouchScreenLayoutController(
         orientation: TouchControllerSettingsManager.Orientation,
     ): List<CoreVariable> {
         return when (coreId) {
-            CoreID.MELONDS -> onOrientationChangedMelonDs(orientation)
             CoreID.MELONDS_DS -> onOrientationChangedMelonDsDs(orientation)
             else -> emptyList()
         }
-    }
-
-    private fun onOrientationChangedMelonDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
-        val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDS_LAYOUT_KEY, systemId.dbname)
-        val current = sharedPreferences.getString(key, null)
-        if (current == MELONDS_SINGLE_TOP) {
-            return emptyList()
-        }
-        val target = melonDsDual(orientation)
-        if (current == target) {
-            return emptyList()
-        }
-        sharedPreferences.edit { putString(key, target) }
-        return listOf(CoreVariable(MELONDS_LAYOUT_KEY, target))
     }
 
     private fun onOrientationChangedMelonDsDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
@@ -112,14 +83,6 @@ class TouchScreenLayoutController(
         }
         sharedPreferences.edit { putString(key, target) }
         return listOf(CoreVariable(MELONDSDS_LAYOUT_KEY, target))
-    }
-
-    private fun melonDsDual(orientation: TouchControllerSettingsManager.Orientation): String {
-        return if (orientation == TouchControllerSettingsManager.Orientation.LANDSCAPE) {
-            MELONDS_DUAL_LANDSCAPE
-        } else {
-            MELONDS_DUAL_PORTRAIT
-        }
     }
 
     private fun melonDsDsDual(orientation: TouchControllerSettingsManager.Orientation): String {
@@ -139,11 +102,6 @@ class TouchScreenLayoutController(
     }
 
     companion object {
-        const val MELONDS_LAYOUT_KEY = "melonds_screen_layout"
-        const val MELONDS_DUAL_PORTRAIT = "Top/Bottom"
-        const val MELONDS_DUAL_LANDSCAPE = "Left/Right"
-        const val MELONDS_SINGLE_TOP = "Top Only"
-
         const val MELONDSDS_LAYOUT_KEY = "melonds_screen_layout1"
         const val MELONDSDS_DUAL_PORTRAIT = "top-bottom"
         const val MELONDSDS_DUAL_LANDSCAPE = "left-right"

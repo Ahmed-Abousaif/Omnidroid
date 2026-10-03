@@ -312,8 +312,7 @@ object OmnidroidApplicationModule {
     @Singleton
     fun coresSelection(
         sharedPreferences: Lazy<SharedPreferences>,
-        desmumeMigrationHandler: DesmumeMigrationHandler,
-    ) = CoresSelection(sharedPreferences, desmumeMigrationHandler)
+    ) = CoresSelection(sharedPreferences)
 
     @Provides
     @Singleton

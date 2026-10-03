@@ -44,7 +44,10 @@
     <string name="setting_mgba_interframe_blending">LCD ghosting</string>
     <string name="setting_mgba_frameskip">Frameskip</string>
     <string name="setting_mgba_color_correction">Color correction</string>
-    <string name="setting_mupen64plus_43screensize">Screen size 4:3</string>
+    <string name="setting_mupen64plus_aspect">Aspect ratio</string>
+    <string name="setting_mupen64plus_43screensize">Internal resolution</string>
+    <string name="setting_mupen64plus_crop_mode">Crop black borders</string>
+    <string name="setting_mupen64plus_msaa">Anti-aliasing (MSAA)</string>
     <string name="setting_mupen64plus_cpucore">Dynamic recompiler</string>
     <string name="setting_mupen64plus_BilinearMode">Bilinear mode</string>
     <string name="setting_mupen64plus_pak1">Player 1 Pak</string>
@@ -60,8 +63,6 @@
     <string name="setting_ppsspp_texture_filtering">Texture filtering</string>
     <string name="setting_fbneo_frameskip">Frameskip</string>
     <string name="setting_fbneo_cpu_speed_adjust">CPU speed</string>
-    <string name="setting_desmume_screens_layout">Screens layout</string>
-    <string name="setting_desmume_frameskip">Frameskip</string>
     <string name="setting_melonds_screen_layout">Screens layout</string>
     <string name="setting_melonds_threaded_renderer">Threaded renderer</string>
     <string name="setting_melonds_jit_enable">Dynamic recompiler</string>
@@ -170,6 +171,27 @@
     <string name="value_genesis_plus_gx_overscan_leftright">Left/Right</string>
     <string name="value_genesis_plus_gx_overscan_full">Full</string>
 
+    <string name="value_mupen64plus_aspect_4_3">4:3</string>
+    <string name="value_mupen64plus_aspect_16_9">16:9</string>
+    <string name="value_mupen64plus_aspect_16_9_adjusted">16:9 (Adjusted)</string>
+
+    <string name="value_mupen64plus_res_320x240">1x Native (320x240)</string>
+    <string name="value_mupen64plus_res_640x480">2x (640x480)</string>
+    <string name="value_mupen64plus_res_960x720">3x (960x720)</string>
+    <string name="value_mupen64plus_res_1280x960">4x (1280x960)</string>
+    <string name="value_mupen64plus_res_1600x1200">5x (1600x1200)</string>
+    <string name="value_mupen64plus_res_1920x1440">6x (1920x1440)</string>
+    <string name="value_mupen64plus_res_2560x1920">8x (2560x1920)</string>
+
+    <string name="value_mupen64plus_crop_mode_auto">Auto (Recommended)</string>
+    <string name="value_mupen64plus_crop_mode_off">Off</string>
+
+    <string name="value_mupen64plus_msaa_0">Off</string>
+    <string name="value_mupen64plus_msaa_2">2x</string>
+    <string name="value_mupen64plus_msaa_4">4x</string>
+    <string name="value_mupen64plus_msaa_8">8x</string>
+    <string name="value_mupen64plus_msaa_16">16x</string>
+
     <string name="value_mupen64plus_cpucore_dynamicrecompiler">Dynamic recompiler</string>
     <string name="value_mupen64plus_cpucore_pureinterpreter">Pure interpreter</string>
     <string name="value_mupen64plus_cpucore_cachedinterpreter">Cached interpreter</string>
@@ -198,9 +220,6 @@
     <string name="value_citra_layout_option_single">Single Screen</string>
     <string name="value_citra_swap_screen_top">Top</string>
     <string name="value_citra_swap_screen_bottom">Bottom</string>
-
-    <string name="value_desmume_screens_layout_topbottom">Top - Bottom</string>
-    <string name="value_desmume_screens_layout_leftright">Left - Right</string>
 
     <string name="value_ppsspp_cpu_core_jit">JIT</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>

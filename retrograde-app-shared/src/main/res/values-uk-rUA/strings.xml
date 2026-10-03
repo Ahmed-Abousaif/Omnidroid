@@ -48,8 +48,6 @@
     <string name="setting_ppsspp_texture_filtering">Фільтрування текстур</string>
     <string name="setting_fbneo_frameskip">Frameskip</string>
     <string name="setting_fbneo_cpu_speed_adjust">Швидкість процесора</string>
-    <string name="setting_desmume_screens_layout">Компонування екрана</string>
-    <string name="setting_desmume_frameskip">Frameskip</string>
     <string name="setting_melonds_screen_layout">Компонування екрана</string>
     <string name="setting_melonds_threaded_renderer">Розпаралелений рендер</string>
     <string name="setting_melonds_jit_enable">Динамічний рекомпілятор</string>
@@ -108,8 +106,6 @@
     <string name="value_melonds_mic_input_blow">Симулювати звуки дмухання</string>
     <string name="value_citra_layout_option_topbottom">Верх - Низ</string>
     <string name="value_citra_layout_option_sidebyside">Ліво - Право</string>
-    <string name="value_desmume_screens_layout_topbottom">Верх - Низ</string>
-    <string name="value_desmume_screens_layout_leftright">Ліво - Право</string>
     <string name="value_ppsspp_cpu_core_jit">JIT</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>
     <string name="value_ppsspp_cpu_core_interpreter">Інтерпретатор</string>

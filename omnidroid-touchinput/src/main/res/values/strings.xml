@@ -4,4 +4,5 @@
     <string name="touch_customize_button_reset">Reset</string>
     <string name="touch_customize_info">Drag and Pinch controls to change position and size</string>
     <string name="touch_customize_dpad_8way">8-way D-Pad</string>
+    <string name="touch_customize_dpad_as_analog">Analog D-Pad</string>
 </resources>

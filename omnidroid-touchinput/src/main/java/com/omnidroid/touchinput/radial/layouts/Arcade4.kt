@@ -27,7 +27,11 @@ fun PadKitScope.Arcade4Left(
         settings = settings,
         modifier = modifier,
         primaryDial = {
-            OmnidroidControlCross(id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD_AND_LEFT_STICK), allowDiagonals = settings.allowDiagonals)
+            OmnidroidControlCross(
+                id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD_AND_LEFT_STICK),
+                allowDiagonals = settings.allowDiagonals,
+                dpadStyle = settings.dpadStyle,
+            )
         },
         secondaryDials = {
             SecondaryButtonCoin()

@@ -48,8 +48,6 @@
     <string name="setting_ppsspp_texture_filtering">Филтрирање текстуре</string>
     <string name="setting_fbneo_frameskip">Прескакање фрејмова</string>
     <string name="setting_fbneo_cpu_speed_adjust">Брзина процесора (CPU)</string>
-    <string name="setting_desmume_screens_layout">Распоред екрана</string>
-    <string name="setting_desmume_frameskip">Прескакање фрејмова</string>
     <string name="setting_melonds_screen_layout">Распоред екрана</string>
     <string name="setting_melonds_threaded_renderer">Навојни цртач</string>
     <string name="setting_melonds_jit_enable">Динамични рекомпајлер</string>
@@ -108,8 +106,6 @@
     <string name="value_melonds_mic_input_blow">Симулирај звукове удараца</string>
     <string name="value_citra_layout_option_topbottom">Горе - Доле</string>
     <string name="value_citra_layout_option_sidebyside">Лево - Десно</string>
-    <string name="value_desmume_screens_layout_topbottom">Горе - Доле</string>
-    <string name="value_desmume_screens_layout_leftright">Лево - Десно</string>
     <string name="value_ppsspp_cpu_core_jit">JIT</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>
     <string name="value_ppsspp_cpu_core_interpreter">Интерпретер</string>

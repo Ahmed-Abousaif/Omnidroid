@@ -162,7 +162,7 @@ The original Lemuroid goals still apply: ease of use, good Android integration, 
 - PlayStation (PSX) ([PCSX-ReARMed](https://docs.libretro.com/library/pcsx_rearmed/))
 - PlayStation Portable (PSP) ([ppsspp](https://docs.libretro.com/library/ppsspp/))
 - FinalBurn Neo (Arcade) ([fbneo](https://github.com/libretro/FBNeo/))
-- Nintendo DS (NDS) ([melonDS DS](https://github.com/JesseTG/melonds-ds)/[melonDS](https://docs.libretro.com/library/melonds/)/[desmume](https://docs.libretro.com/library/desmume/))
+- Nintendo DS (NDS) ([melonDS DS](https://github.com/JesseTG/melonds-ds))
 - NEC PC Engine (PCE) ([beetle_pce_fast](https://docs.libretro.com/library/beetle_pce_fast/))
 - Neo Geo Pocket (NGP) ([mednafen_ngp](https://docs.libretro.com/library/beetle_neopop/))
 - Neo Geo Pocket Color (NGC) ([mednafen_ngp](https://docs.libretro.com/library/beetle_neopop/))

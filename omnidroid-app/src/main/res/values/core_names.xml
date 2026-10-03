@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="core_name_desmume" translatable="false">desmume</string>
     <string name="core_name_fbneo" translatable="false">fbneo</string>
     <string name="core_name_gambatte" translatable="false">gambatte</string>
     <string name="core_name_fceumm" translatable="false">fceumm</string>
@@ -12,7 +11,6 @@
     <string name="core_name_snes9x" translatable="false">snes9x</string>
     <string name="core_name_stella" translatable="false">stella</string>
     <string name="core_name_mame2003_plus" translatable="false">mame2003_plus</string>
-    <string name="core_name_melonds" translatable="false">melonds</string>
     <string name="core_name_melondsds" translatable="false">melondsds</string>
     <string name="core_name_handy" translatable="false">handy</string>
     <string name="core_name_prosystem" translatable="false">prosystem</string>

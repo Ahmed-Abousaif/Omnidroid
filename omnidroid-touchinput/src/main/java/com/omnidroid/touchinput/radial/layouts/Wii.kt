@@ -37,6 +37,7 @@ fun PadKitScope.WiiClassicLeft(
             OmnidroidControlCross(
                 id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD),
                 allowDiagonals = settings.allowDiagonals,
+                dpadStyle = settings.dpadStyle,
             )
         },
         secondaryDials = {
@@ -97,6 +98,7 @@ fun PadKitScope.WiiRemoteLeft(
             OmnidroidControlCross(
                 id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD),
                 allowDiagonals = settings.allowDiagonals,
+                dpadStyle = settings.dpadStyle,
             )
         },
         secondaryDials = {
@@ -170,6 +172,7 @@ fun PadKitScope.WiiSidewaysLeft(
             OmnidroidControlCross(
                 id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD),
                 allowDiagonals = settings.allowDiagonals,
+                dpadStyle = settings.dpadStyle,
             )
         },
         secondaryDials = {

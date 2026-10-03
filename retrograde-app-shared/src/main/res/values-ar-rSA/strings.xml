@@ -48,8 +48,6 @@
     <string name="setting_ppsspp_texture_filtering">تصفية النسق</string>
     <string name="setting_fbneo_frameskip">تخطي الإطارات</string>
     <string name="setting_fbneo_cpu_speed_adjust">سرعة وحدة المعالجة المركزية</string>
-    <string name="setting_desmume_screens_layout">تخطيط الشاشات</string>
-    <string name="setting_desmume_frameskip">تخطي الإطارات</string>
     <string name="setting_melonds_screen_layout">تخطيط الشاشات</string>
     <string name="setting_melonds_threaded_renderer">معالجة متعددة المهام</string>
     <string name="setting_melonds_jit_enable">إعادة تجميع ديناميكية</string>
@@ -108,8 +106,6 @@
     <string name="value_melonds_mic_input_blow">محاكاة أصوات الضربة</string>
     <string name="value_citra_layout_option_topbottom">الأعلى - أسفل</string>
     <string name="value_citra_layout_option_sidebyside">اليسار - اليمين</string>
-    <string name="value_desmume_screens_layout_topbottom">الأعلى - أسفل</string>
-    <string name="value_desmume_screens_layout_leftright">اليسار - اليمين</string>
     <string name="value_ppsspp_cpu_core_jit">JIT</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>
     <string name="value_ppsspp_cpu_core_interpreter">المترجم</string>

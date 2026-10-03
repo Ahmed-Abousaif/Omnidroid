@@ -48,8 +48,6 @@
     <string name="setting_ppsspp_texture_filtering">Filtrování textur</string>
     <string name="setting_fbneo_frameskip">Frameskip</string>
     <string name="setting_fbneo_cpu_speed_adjust">Rychlost CPU</string>
-    <string name="setting_desmume_screens_layout">Rozložení obrazovky</string>
-    <string name="setting_desmume_frameskip">Frameskip</string>
     <string name="setting_melonds_screen_layout">Rozložení obrazovky</string>
     <string name="setting_melonds_threaded_renderer">Vykreslování ve vláknech</string>
     <string name="setting_melonds_jit_enable">Dynamický rekompilátor</string>
@@ -108,8 +106,6 @@
     <string name="value_melonds_mic_input_blow">Simulovat zvuky úderů</string>
     <string name="value_citra_layout_option_topbottom">Vrch - Spodek</string>
     <string name="value_citra_layout_option_sidebyside">Levá - Pravá</string>
-    <string name="value_desmume_screens_layout_topbottom">Vrch - Spodek</string>
-    <string name="value_desmume_screens_layout_leftright">Levá - Pravá</string>
     <string name="value_ppsspp_cpu_core_jit">JIT</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>
     <string name="value_ppsspp_cpu_core_interpreter">Interpret</string>
