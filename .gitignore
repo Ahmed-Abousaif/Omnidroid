@@ -17,7 +17,7 @@ project.properties
 .externalNativeBuild
 local.properties
 
-# Signing material — never commit private keys or passwords
+# Signing material - never commit private keys or passwords
 *.jks
 *.keystore
 *.keystore.asc
@@ -41,7 +41,6 @@ bugreport*.zip
 *.bak-*
 debug.keystore.bak*
 implementation_plan.md
-reddit-followup.md
 
 # Wii U title keys (shipped only as omnidroid-cores/assets/cemu.zip)
 keys.txt

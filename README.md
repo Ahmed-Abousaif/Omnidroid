@@ -18,11 +18,11 @@
   </table>
 </p>
 
-Omnidroid is an open-source Libretro frontend for Android, forked from [Lemuroid](https://github.com/Swordfish90/Lemuroid).
+Omnidroid is an open-source Libretro-powered multi-console emulation platform for Android, forked from [Lemuroid](https://github.com/Swordfish90/Lemuroid).
 
-It keeps the core that made Lemuroid solid — ROM scanning, strong Android integration, and a wide set of cores — and builds on top of it with a landscape-first launcher, full controller navigation, richer cloud saves, native Vulkan hardware acceleration, and extensive improvements to UI, functionality, and performance. All while keeping the release build lightweight (universal release APK under 10 MB, ~16% smaller than Lemuroid's baseline).
+It keeps the core that made Lemuroid solid (ROM scanning, strong Android integration, and a wide set of cores) and builds on top of it with a landscape-first launcher, full controller navigation, richer cloud saves, native Vulkan hardware acceleration, and extensive improvements to UI, functionality, and performance. All while keeping the release build lightweight (universal release APK under 10 MB, ~16% smaller than Lemuroid's baseline).
 
-It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://github.com/retrograde/retrograde-android)). Omnidroid elevates the emulation stack with its custom-engineered [omni-libretrodroid](https://github.com/Ahmed-Abousaif/omni-libretrodroid) native engine—introducing native Vulkan hardware acceleration, 16KB memory page alignment, low-latency audio, and adaptive dual-screen rendering.
+It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://github.com/retrograde/retrograde-android)). Omnidroid elevates the emulation stack with its custom-engineered [omni-libretrodroid](https://github.com/Ahmed-Abousaif/omni-libretrodroid) native engine, introducing native Vulkan hardware acceleration, 16KB memory page alignment, low-latency audio, and adaptive dual-screen rendering.
 
 ## Newly added features
 
@@ -34,17 +34,22 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 
 ### A real game launcher
 
-- Browse your whole library in landscape, like a handheld instead of a settings app.
-- Jump between **All games**, **Favorites**, and each console from a sidebar.
+- Browse your whole library in landscape or portrait orientation, with dedicated UI for handhelds, phones, and tablets.
+- Toggle between a visual cover **Grid View** and a compact **List View**.
+- Jump between **All games**, **Favorites**, and each console from a collapsible sidebar or bottom navigation.
+- **Customizable Startup Screen:** Choose what the app opens on by default (All games, Favorites, or a specific console) from Settings or by long-pressing any console in the sidebar.
 - Set Omnidroid as your Android home screen.
-- See battery, Wi-Fi or mobile data, and whether a controller is connected, without leaving the App.
+- See battery level, network status (Wi-Fi or mobile data), and connected gamepads without leaving the launcher.
 
 ### A library that is easier to live in
 
-- Zoom game covers in or out to show more or fewer games.
+- Zoom game covers in or out to show more or fewer games in Grid View.
 - The library grid picks how many rows to show from the **available screen height**, so phones, tall devices, and tablets stay readable at every zoom level.
 - Hit **Continue** to jump straight back into your last game.
-- Search as you type, advanced search for all games and consoles.
+- Search as you type with advanced filtering across all games and consoles.
+- **Content-Based ROM Scanner:** Detects games by inspecting file headers and signatures directly rather than relying on folder structures.
+- **Modular Database Slices:** Per-console title databases download on demand alongside cores, keeping the initial install compact.
+- **Unrecognized Files Inspector:** Easily view and inspect unindexed files from Settings.
 
 ### Play with a controller, not just in-game
 
@@ -66,7 +71,7 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 - Under **Settings → Advanced**, turn on **RAWG game metadata** (off by default).
 - Enter your own free API key from [rawg.io/apidocs](https://rawg.io/apidocs); the key field appears under the toggle.
 - On the next library sync, Omnidroid searches RAWG by title, caches description, genres, release date, publisher, rating, and backdrop image on device, and keeps Libretro box art for covers unless a portrait screenshot is available.
-- Trailers come from RAWG’s movie files when present — no YouTube scraping.
+- Trailers come from RAWG's movie files when present; no YouTube scraping.
 - Independent of cloud login / save sync; leave it off and game pages show empty metadata fields.
 
 ### Add consoles
@@ -75,9 +80,10 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 
 ### Revamped settings
 
-- Landscape settings with a sidebar for Library, Display, Controllers, Saves, Advanced, and About.
+- Fluid landscape and portrait settings with a sidebar for Library, Display, Controllers, Saves, Advanced, and About.
 - Big cards on the settings home so you can jump straight to what you need.
 - Same look as the rest of the app, and fully usable with a controller.
+- Manage game database slices and inspect unrecognized ROM files under Advanced settings.
 - About covers privacy policy, donation channels, and developer info.
 
 ### Cast to a TV
@@ -98,27 +104,27 @@ It started as a fork of Lemuroid (itself a descendant of [Retrograde](https://gi
 
 - HD mode turns itself off when the battery drops below 15%, then comes back when you have charge again.
 
-### Touch D-Pad: 4-way or 8-way
+### Touch D-Pad: 4-way, 8-way, and Analog Stick Routing
 
-- In **Edit Controls**, toggle **8-way D-Pad** on or off for any console with a D-Pad.
-- On = diagonals (default); off = cardinal directions only.
+- In **Edit Controls**, toggle **8-way D-Pad** on or off for any console with a D-Pad (On = diagonals; Off = cardinal directions only).
+- **Analog to D-Pad Mapping:** Route on-screen analog stick movement to D-pad directional input for retro consoles without native analog sticks.
 - Saved per layout and orientation with your other touch control settings.
 
 ### NDS and 3DS dual-screen layouts & quick controls
 
-- **melonDS DS (NDS):** Screens layout includes **Top Only** and **Bottom Only**, alongside Top–Bottom and Left–Right.
+- **melonDS DS (NDS):** Screens layout includes **Top Only** and **Bottom Only**, alongside Top-Bottom and Left-Right.
 - **Azahar / Citra (3DS):** Screens layout includes **Default Top-Bottom**, **Side by Side**, and **Single Screen** (with Top/Bottom selection), switchable via in-game settings or the touch overlay toggle button.
 - **Interactive 3DS Touchscreen Overlay:** Accurate touch stylus input mapped to the 3DS bottom screen with precise aspect-ratio coordinate conversion.
 - **Quick Screen Toggle:** On the virtual pad (melonDS DS / Azahar / Citra), tap the **screen layout** button to toggle dual ↔ **Top only** without opening the menu. The core option stays perfectly synchronized with in-game settings.
 
 ### Vibration intensity
 
-- Under **Settings → Controllers** (and Advanced → Input), a **Vibration intensity** slider (0–100, default 50) controls strength for both touch feedback and rumble.
+- Under **Settings → Controllers** (and Advanced → Input), a **Vibration intensity** slider (0-100, default 50) controls strength for both touch feedback and rumble.
 - Applies to on-screen control haptics and gamepad / device rumble together.
 
 ### NDS and 3DS touchscreen with virtual buttons
 
-- You can use the emulated touchscreen while holding on-screen buttons — a second finger on the game screen still registers as the stylus.
+- You can use the emulated touchscreen while holding on-screen buttons; a second finger on the game screen still registers as the stylus.
 - Tap the **hide pads** button on the DS/3DS virtual pad to slide the controls away and give the game more screen space (handy for stylus-only moments). A small edge tab at the bottom brings the pads back.
 
 ### Your profile
@@ -169,9 +175,10 @@ The original Lemuroid goals still apply: ease of use, good Android integration, 
 - WonderSwan (WS) ([beetle_cygne](https://docs.libretro.com/library/beetle_cygne/))
 - WonderSwan Color (WSC) ([beetle_cygne](https://docs.libretro.com/library/beetle_cygne/))
 - Nintendo 3DS (3DS) ([azahar](https://github.com/azahar-emu/azahar)/[citra](https://docs.libretro.com/library/citra/))
-- PlayStation 2 (PS2) (Beta) ([pcee2](https://github.com/WizzardSK/pcee2-libretro))
+- PlayStation 2 (PS2) (Beta) ([armsx2](https://github.com/Ahmed-Abousaif/ARMSX2))
 - Nintendo GameCube (GameCube) ([dolphin](https://docs.libretro.com/library/dolphin/))
 - Nintendo Wii (Wii) ([dolphin](https://docs.libretro.com/library/dolphin/))
+- Nintendo Wii U (Wii U) (Beta) ([cemu](https://github.com/cemu-project/Cemu))
 
 ## Nintendo 3DS Emulation
 
@@ -181,7 +188,7 @@ Omnidroid includes full **Nintendo 3DS** emulation powered by the **Azahar** (mo
 - **Hardware Acceleration:** Native support for both **Vulkan** and **OpenGL ES 3.0+** rendering pipelines via `omni-libretrodroid`.
 - **Supported ROM Formats:** `.3ds`, `.3dsx`, `.elf`, `.axf`, `.cci`, `.cxi`, `.app`, `.cia`.
 - **Resolution Scaling:** Real-time scaling factors from 1x Native (400×240) up to 6x (2400×1440 QHD).
-- **Dual-Screen Layouts:** Choose between Default Top–Bottom, Side by Side (Left–Right), or Single Screen Only (with top/bottom screen selection).
+- **Dual-Screen Layouts:** Choose between Default Top-Bottom, Side by Side (Left-Right), or Single Screen Only (with top/bottom screen selection).
 - **Interactive Touchscreen:** Bottom screen touch stylus input with precise multi-touch coordinate translation while operating virtual face buttons.
 - **Decrypted & System Data:** Automatic handling of decrypted ROMs, shared system archives, and DLC/update paths.
 
@@ -197,14 +204,14 @@ Omnidroid includes full **Nintendo GameCube** and **Nintendo Wii** emulation pow
 - **Multi-Disc Support:** Seamless multi-disc changing via `.m3u` playlist files.
 - **Hardware Rendering & Adaptive Resolution Scaling:**
   - High-performance **OpenGL ES 3.0+** and **Vulkan** pipelines.
-  - **Real-Time Internal Resolution Scaling:** 1x Native (640×528), 2x (720p), 3x (1080p), and 4x (1440p / QHD) with dynamic intermediate framebuffer reallocation—eliminating letterbox clipping and viewport shrinking artifacts.
+  - **Real-Time Internal Resolution Scaling:** 1x Native (640×528), 2x (720p), 3x (1080p), and 4x (1440p / QHD) with dynamic intermediate framebuffer reallocation, eliminating letterbox clipping and viewport shrinking artifacts.
   - **Display Enhancements:** Native support for **Widescreen (16:9)** anamorphic modes and **Progressive Scan (480p)** toggles via in-game settings.
 - **Versatile Controller Profiles & Input Routing:**
   - **GameCube:** Authentic GameCube layout (Analog Main Stick, C-Stick, A/B/X/Y, Z trigger, analog L/R, D-Pad, Start).
   - **Wii Remote (Sideways):** Default configuration for classic 2D platformers and horizontal play (*Super Paper Mario*, *New Super Mario Bros. Wii*).
   - **Wii Remote + Nunchuk:** Twin-motion and analog stick configuration for 3D adventures (*Super Mario Galaxy*, *The Legend of Zelda: Twilight Princess*).
   - **Wii Classic Controller:** Full dual-stick gamepad layout for standard Wii titles.
-  - **Ghost Controller Prevention:** Automatically disconnects unused controller ports (ports 1–3) on boot to prevent games from detecting false multiplayer inputs.
+  - **Ghost Controller Prevention:** Automatically disconnects unused controller ports (ports 1-3) on boot to prevent games from detecting false multiplayer inputs.
   - **Sensor Bar Setup:** Configurable Top / Bottom virtual sensor bar positioning.
 - **Complete Save State & Persistent Memory Support:**
   - **Auto-Save & Quick-Resume:** Automatically snapshots state on game quit and seamlessly restores progress when tapping **Continue**.
@@ -213,14 +220,26 @@ Omnidroid includes full **Nintendo GameCube** and **Nintendo Wii** emulation pow
 
 ## PlayStation 2 Emulation (Beta)
 
-Omnidroid includes experimental **PlayStation 2 (PS2)** emulation powered by the **PCEE2** libretro core (PCSX2-based):
+Omnidroid includes experimental **PlayStation 2 (PS2)** emulation powered by the **ARMSX2** libretro core (PCSX2-based):
 
-- **Target Architecture:** Optimized for 64-bit architectures (`arm64-v8a` and `x86_64`).
+- **Target Architecture:** Optimized for 64-bit ARM architecture (`arm64-v8a`).
+- **Hardware Acceleration:** Native support for **OpenGL**, **Vulkan**, and **Software** rendering pipelines via `omni-libretrodroid`.
 - **BIOS Required:** A legally dumped PS2 BIOS is required (e.g. `scph39001.bin`, `scph70012.bin`, `scph77001.bin`). Omnidroid automatically verifies the BIOS and syncs it into the core's `system/pcsx2/bios/` directory.
 - **Supported Disc & ROM Formats:** `.iso`, `.chd`, `.cue`, `.m3u`, `.cso`, `.zso`, `.gz`, `.bin`, `.mdf`, `.nrg`, `.elf`, `.irx`.
 - **Multi-Disc Support:** Multi-disc titles are supported through `.m3u` playlists.
 - **Custom DualShock 2 Layout:** Dedicated on-screen touch layout with dual analog sticks, D-Pad, face buttons, shoulder triggers (L1/L2/R1/R2), Select, Start, and full physical gamepad mapping with rumble support.
 - **Shaders & State Management:** Supports quick save/load states and CRT / modern display enhancement shaders.
+
+## Nintendo Wii U Emulation (Beta)
+
+Omnidroid includes experimental **Nintendo Wii U** emulation powered by the **Cemu** libretro core:
+
+- **Target Architecture:** Optimized for 64-bit ARM architecture (`arm64-v8a`).
+- **Hardware Acceleration:** Native **Vulkan** hardware rendering engine for high performance on modern mobile GPUs.
+- **CPU Recompiler Modes:** Configurable CPU modes including Multi-Core Recompiler (recommended), Dual-Core Recompiler, Single-Core Recompiler, and Interpreter.
+- **Supported ROM Formats:** `.wud`, `.wux`, `.wua`, `.iso`, `.rpx`, `.elf`.
+- **Dual Screen & GamePad Modes:** Flexible screen view configurations including **TV View**, **GamePad View**, and **Side by Side** views with interactive touch GamePad support.
+- **Controller Profiles:** Dedicated controller mappings for the Wii U GamePad and Wii U Pro Controller with rumble support.
 
 ## Features from Lemuroid, still here
 

@@ -104,8 +104,8 @@
     <string name="value_melonds_screen_layout_hybridbottom">Híbrido Inferior</string>
     <string name="value_melonds_mic_input_microphone">Microfone físico</string>
     <string name="value_melonds_mic_input_blow">Simular sons de sopro</string>
-    <string name="value_citra_layout_option_topbottom">Superior — inferior</string>
-    <string name="value_citra_layout_option_sidebyside">Esquerda — direita</string>
+    <string name="value_citra_layout_option_topbottom">Superior - inferior</string>
+    <string name="value_citra_layout_option_sidebyside">Esquerda - direita</string>
     <string name="value_ppsspp_cpu_core_jit">JIT</string>
     <string name="value_ppsspp_cpu_core_irjit">IR JIT</string>
     <string name="value_ppsspp_cpu_core_interpreter">Interpretador</string>

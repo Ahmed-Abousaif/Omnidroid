@@ -1,0 +1,25 @@
+name: Feature Request
+description: Suggest a new feature or improvement for Omnidroid
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Is this related to something that is missing or difficult to use right now?
+      placeholder: e.g. I want to customize per-console fast-forward speeds or button mappings...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: A clear and concise description of any alternative solutions or features you've considered.
