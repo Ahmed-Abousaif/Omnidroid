@@ -45,7 +45,6 @@
     <string name="settings_gamepad_title_game_menu">Menu</string>
     <string name="settings_title_open_cores_selection">Gérer les cœurs</string>
     <string name="settings_description_open_cores_selection">Sélectionnez quel cœur est associé à un système</string>
-    <string name="settings_core_selection_ds_info">DeSmuME est obsolète et sera bientôt supprimé. Sauvegardez dans le jeu, puis basculez sur melonDS: les sauvegardes en jeu y sont chargées automatiquement, mais les états de sauvegarde restent sur le cœur qui les a créés.</string>
     <string name="settings_title_display_bios_info">BIOS</string>
     <string name="settings_description_display_bios_info">Affichage des fichiers BIOS détectés et pris en charge</string>
     <string name="settings_bios_category_detected">Détecté</string>
@@ -89,9 +88,6 @@
     <string name="home_empty_title">Sélectionnez le dossier contenant les ROMs</string>
     <string name="home_empty_message">Omnidroid a besoin de scanner un répertoire contenant des ROMs.\nCela peut prendre quelques minutes.</string>
     <string name="home_empty_action">Sélectionner un dossier</string>
-    <string name="home_notification_desmume_deprecated_title">DeSmuME prend bientôt sa retraite</string>
-    <string name="home_notification_desmume_deprecated_message">Sauvegardez dans le jeu, basculez sur melonDS, et votre progression sera transférée. Sauvegardez les états restent liés à DeSmuME.</string>
-    <string name="home_notification_desmume_deprecated_action">Basculer vers melonDS</string>
     <string name="game_menu_save">Sauvegarder</string>
     <string name="game_menu_load">Charger</string>
     <string name="game_menu_restart">Redémarrer</string>

@@ -45,7 +45,6 @@
     <string name="settings_gamepad_title_game_menu">Меню</string>
     <string name="settings_title_open_cores_selection">Змінити ядра</string>
     <string name="settings_description_open_cores_selection">Виберіть, яке ядро пов’язане з системою</string>
-    <string name="settings_core_selection_ds_info">DeSmuME є застарілим і незабаром буде вилучено. Збережіть всередині гри, а потім перемкніться на мелонДК: всередині гри економить там завантаження автоматично, але зберігайте стани, що залишаються на ядрі, що їх створили.</string>
     <string name="settings_title_display_bios_info">БІОС</string>
     <string name="settings_description_display_bios_info">Відображати знайдені та підтримувані файли BIOS</string>
     <string name="settings_bios_category_detected">Знайдено</string>
@@ -89,9 +88,6 @@
     <string name="home_empty_title">Виберіть каталог ROM</string>
     <string name="home_empty_message">Omnidroid повинен сканувати каталог, що містить ROM файли.\nЦе може зайняти до декількох хвилин.</string>
     <string name="home_empty_action">Виберіть каталог</string>
-    <string name="home_notification_desmume_deprecated_title">DSmuME незабаром вийшло на пенсію</string>
-    <string name="home_notification_desmume_deprecated_message">Заощаджуйте в грі, перемикайтесь на melonDS, і ваш прогрес буде перенесений. Економна держава, яка залишиться прив\'язаною до DeSmuME.</string>
-    <string name="home_notification_desmume_deprecated_action">Перемкнути на динарії</string>
     <string name="game_menu_save">Зберегти</string>
     <string name="game_menu_load">Завантажити</string>
     <string name="game_menu_restart">Перезапуск</string>

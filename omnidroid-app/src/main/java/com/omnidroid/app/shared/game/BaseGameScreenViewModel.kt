@@ -232,6 +232,11 @@ class BaseGameScreenViewModel(
         return touchControls.getGameAspectRatio()
     }
 
+    fun refreshSettings() {
+        touchControls.refreshLayout()
+        retroGameView.refreshCoreVariables()
+    }
+
     fun isTouchControllerVisible(): Flow<Boolean> {
         return touchControls.isTouchControllerVisible()
     }

@@ -14,7 +14,7 @@ interface SavesMigrator {
 
 fun SystemCoreConfig.getSavesMigrator(): SavesMigrator? {
     return when (this.coreID) {
-        CoreID.MELONDS_DS -> MelonDsSavesMigrator
+        CoreID.MELONDS_DS -> MelonDsDsSavesMigrator
         else -> null
     }
 }

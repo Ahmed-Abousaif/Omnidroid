@@ -45,7 +45,6 @@
     <string name="settings_gamepad_title_game_menu">Menu</string>
     <string name="settings_title_open_cores_selection">Cores wisselen</string>
     <string name="settings_description_open_cores_selection">Selecteer welke core gekoppeld is aan een systeem</string>
-    <string name="settings_core_selection_ds_info">DeSmuME is verouderd en zal binnenkort worden verwijderd. Sla binnen het spel op en schakel vervolgens over naar melonDS: in-game bespaart de lading daar automatisch, maar bespaart staten op de kern die ze gemaakt heeft.</string>
     <string name="settings_title_display_bios_info">BIOS</string>
     <string name="settings_description_display_bios_info">Gedetecteerde en ondersteunde BIOS-bestanden</string>
     <string name="settings_bios_category_detected">Gedetecteerd</string>
@@ -89,9 +88,6 @@
     <string name="home_empty_title">Selecteer ROM-map</string>
     <string name="home_empty_message">Omnidroid moet een map met ROM-bestanden scannen.\nDit kan enkele minuten duren.</string>
     <string name="home_empty_action">Selecteer map</string>
-    <string name="home_notification_desmume_deprecated_title">DeSmuME gaat binnenkort met pensioen</string>
-    <string name="home_notification_desmume_deprecated_message">Sla in-game op, schakel over naar melonDS, en jouw voortgang zal overgedragen worden. Bespaar staten blijven gekoppeld aan DeSmuME.</string>
-    <string name="home_notification_desmume_deprecated_action">Overschakelen naar melonDS</string>
     <string name="game_menu_save">Opslaan</string>
     <string name="game_menu_load">Laden</string>
     <string name="game_menu_restart">Herstarten</string>

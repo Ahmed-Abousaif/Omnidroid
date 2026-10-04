@@ -146,6 +146,160 @@ data class GameSystem(
                                     0 to arrayListOf(ControllerConfigs.SNES),
                                     1 to arrayListOf(ControllerConfigs.SNES),
                                 ),
+                            exposedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "snes9x_aspect_ratio",
+                                        R.string.setting_snes9x_aspect_ratio,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "4:3",
+                                                R.string.value_snes9x_aspect_ratio_4_3,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "8:7",
+                                                R.string.value_snes9x_aspect_ratio_8_7,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "16:9",
+                                                R.string.value_snes9x_aspect_ratio_16_9,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "snes9x_mode7_hires",
+                                        R.string.setting_snes9x_mode7_hires,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "disabled",
+                                                R.string.value_snes9x_mode7_hires_disabled,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "2x",
+                                                R.string.value_snes9x_mode7_hires_2x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "3x",
+                                                R.string.value_snes9x_mode7_hires_3x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "4x",
+                                                R.string.value_snes9x_mode7_hires_4x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "2x_hv",
+                                                R.string.value_snes9x_mode7_hires_2x_hv,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "3x_hv",
+                                                R.string.value_snes9x_mode7_hires_3x_hv,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "4x_hv",
+                                                R.string.value_snes9x_mode7_hires_4x_hv,
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            exposedAdvancedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "snes9x_mode7_hires_bilinear",
+                                        R.string.setting_snes9x_mode7_hires_bilinear,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "disabled",
+                                                R.string.value_snes9x_mode7_hires_bilinear_disabled,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "stable",
+                                                R.string.value_snes9x_mode7_hires_bilinear_stable,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "smooth",
+                                                R.string.value_snes9x_mode7_hires_bilinear_smooth,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "snes9x_hires_blend",
+                                        R.string.setting_snes9x_hires_blend,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "disabled",
+                                                R.string.value_snes9x_hires_blend_disabled,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "merge",
+                                                R.string.value_snes9x_hires_blend_merge,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "blur",
+                                                R.string.value_snes9x_hires_blend_blur,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "snes9x_overscan",
+                                        R.string.setting_snes9x_overscan,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "auto",
+                                                R.string.value_snes9x_overscan_auto,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "disabled",
+                                                R.string.value_snes9x_overscan_disabled,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "enabled",
+                                                R.string.value_snes9x_overscan_enabled,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "12_pixels",
+                                                R.string.value_snes9x_overscan_12_pixels,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "16_pixels",
+                                                R.string.value_snes9x_overscan_16_pixels,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "snes9x_reduce_sprite_flicker",
+                                        R.string.setting_snes9x_reduce_sprite_flicker,
+                                    ),
+                                    ExposedSetting(
+                                        "snes9x_blargg",
+                                        R.string.setting_snes9x_blargg,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "disabled",
+                                                R.string.value_snes9x_blargg_disabled,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "composite",
+                                                R.string.value_snes9x_blargg_composite,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "svideo",
+                                                R.string.value_snes9x_blargg_svideo,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "rgb",
+                                                R.string.value_snes9x_blargg_rgb,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "rf",
+                                                R.string.value_snes9x_blargg_rf,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "monochrome",
+                                                R.string.value_snes9x_blargg_monochrome,
+                                            ),
+                                        ),
+                                    ),
+                                ),
                         ),
                     ),
                     uniqueExtensions = listOf("smc", "sfc", "fig", "swc", "bs"),
@@ -863,6 +1017,34 @@ data class GameSystem(
                             exposedSettings =
                                 listOf(
                                     ExposedSetting(
+                                        "pcsx_rearmed_aspect_ratio",
+                                        R.string.setting_pcsx_rearmed_aspect_ratio,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "4:3",
+                                                R.string.value_pcsx_rearmed_aspect_4_3,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "16:9",
+                                                R.string.value_pcsx_rearmed_aspect_16_9,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "pcsx_rearmed_neon_enhancement_enable",
+                                        R.string.setting_pcsx_rearmed_neon_enhancement_enable,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "disabled",
+                                                R.string.value_pcsx_rearmed_res_1x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "enabled",
+                                                R.string.value_pcsx_rearmed_res_2x,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
                                         "pcsx_rearmed_frameskip",
                                         R.string.setting_pcsx_rearmed_frameskip,
                                     ),
@@ -873,10 +1055,44 @@ data class GameSystem(
                                         "pcsx_rearmed_drc",
                                         R.string.setting_pcsx_rearmed_drc,
                                     ),
+                                    ExposedSetting(
+                                        "pcsx_rearmed_neon_enhancement_no_main",
+                                        R.string.setting_pcsx_rearmed_neon_enhancement_no_main,
+                                    ),
+                                    ExposedSetting(
+                                        "pcsx_rearmed_neon_enhancement_tex_adj_v2",
+                                        R.string.setting_pcsx_rearmed_neon_enhancement_tex_adj_v2,
+                                    ),
+                                    ExposedSetting(
+                                        "pcsx_rearmed_dithering",
+                                        R.string.setting_pcsx_rearmed_dithering,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "disabled",
+                                                R.string.value_dithering_disabled,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "enabled",
+                                                R.string.value_dithering_enabled,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "force",
+                                                R.string.value_dithering_force,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "pcsx_rearmed_rgb32_output",
+                                        R.string.setting_pcsx_rearmed_rgb32_output,
+                                    ),
                                 ),
                             defaultSettings =
                                 listOf(
                                     CoreVariable("pcsx_rearmed_drc", "disabled"),
+                                    CoreVariable("pcsx_rearmed_aspect_ratio", "4:3"),
+                                    CoreVariable("pcsx_rearmed_neon_enhancement_enable", "disabled"),
+                                    CoreVariable("pcsx_rearmed_neon_enhancement_no_main", "disabled"),
+                                    CoreVariable("pcsx_rearmed_neon_enhancement_tex_adj_v2", "disabled"),
                                 ),
                             rumbleSupported = true,
                             supportsLibretroVFS = true,
