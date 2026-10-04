@@ -35,6 +35,7 @@ import com.omnidroid.common.coroutines.launchOnState
 import com.omnidroid.common.displayToast
 import com.omnidroid.common.dump
 import com.omnidroid.common.kotlin.serializable
+import com.omnidroid.lib.core.CoreVariable
 import com.omnidroid.lib.core.CoreVariablesManager
 import com.omnidroid.lib.game.GameLoader
 import com.omnidroid.lib.library.ExposedSetting
@@ -199,9 +200,29 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         exposedSetting: ExposedSetting,
         coreOptions: List<CoreOption>,
     ): OmnidroidCoreOption? {
-        return coreOptions
-            .firstOrNull { it.variable.key == exposedSetting.key }
-            ?.let { OmnidroidCoreOption(exposedSetting, it) }
+        val matched = coreOptions.firstOrNull { it.variable.key == exposedSetting.key }
+        if (matched != null) {
+            return OmnidroidCoreOption(exposedSetting, matched)
+        }
+        if (exposedSetting.values.isNotEmpty()) {
+            val key = CoreVariablesManager.computeSharedPreferenceKey(exposedSetting.key, system.id.dbname)
+            val currentVal =
+                sharedPreferences.get().getString(key, exposedSetting.values.first().key)
+                    ?: exposedSetting.values.first().key
+            val variable = CoreVariable(exposedSetting.key, currentVal)
+            val coreOption =
+                CoreOption(
+                    variable,
+                    getString(exposedSetting.titleId),
+                    exposedSetting.values.map { it.key },
+                )
+            return OmnidroidCoreOption(exposedSetting, coreOption)
+        }
+        val key = CoreVariablesManager.computeSharedPreferenceKey(exposedSetting.key, system.id.dbname)
+        val isEnabled = sharedPreferences.get().getBoolean(key, false)
+        val variable = CoreVariable(exposedSetting.key, if (isEnabled) "enabled" else "disabled")
+        val coreOption = CoreOption(variable, getString(exposedSetting.titleId), listOf("disabled", "enabled"))
+        return OmnidroidCoreOption(exposedSetting, coreOption)
     }
 
     private fun displayOptionsDialog(
@@ -411,6 +432,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == DIALOG_REQUEST) {
             Timber.i("Game menu dialog response: ${data?.extras.dump()}")
+            baseGameScreenViewModel.refreshSettings()
             if (data?.getBooleanExtra(GameMenuContract.RESULT_RESET, false) == true) {
                 lifecycleScope.launch {
                     baseGameScreenViewModel.reset()

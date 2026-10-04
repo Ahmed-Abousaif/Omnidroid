@@ -47,7 +47,6 @@ import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.dao.GameSearchDao
 import com.omnidroid.lib.library.db.dao.Migrations
 import com.omnidroid.lib.library.metadata.GameMetadataProvider
-import com.omnidroid.lib.migration.DesmumeMigrationHandler
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.saves.SavesCoherencyEngine
 import com.omnidroid.lib.saves.SavesManager
@@ -282,7 +281,6 @@ object OmnidroidApplicationModule {
         savesCoherencyEngine: SavesCoherencyEngine,
         directoriesManager: DirectoriesManager,
         biosManager: BiosManager,
-        desmumeMigrationHandler: DesmumeMigrationHandler,
         coreUpdater: CoreUpdater,
     ) = GameLoader(
         omnidroidLibrary,
@@ -293,7 +291,6 @@ object OmnidroidApplicationModule {
         savesCoherencyEngine,
         directoriesManager,
         biosManager,
-        desmumeMigrationHandler,
         coreUpdater,
     )
 
@@ -327,11 +324,6 @@ object OmnidroidApplicationModule {
         @ApplicationContext context: Context,
         directoriesManager: DirectoriesManager,
     ) = SaveSyncManagerImpl(context, directoriesManager)
-
-    @Provides
-    @Singleton
-    fun desmumeMigrationHandler(directoriesManager: DirectoriesManager) =
-        DesmumeMigrationHandler(directoriesManager)
 
     @Provides
     @Singleton

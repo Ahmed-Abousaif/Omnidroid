@@ -32,7 +32,6 @@ import com.omnidroid.lib.library.OmnidroidLibrary
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
-import com.omnidroid.lib.migration.DesmumeMigrationHandler
 import com.omnidroid.lib.saves.SaveState
 import com.omnidroid.lib.saves.SavesCoherencyEngine
 import com.omnidroid.lib.saves.SavesManager
@@ -53,7 +52,6 @@ class GameLoader(
     private val savesCoherencyEngine: SavesCoherencyEngine,
     private val directoriesManager: DirectoriesManager,
     private val biosManager: BiosManager,
-    private val desmumeMigrationHandler: DesmumeMigrationHandler,
     private val coreUpdater: CoreUpdater,
 ) {
     sealed class LoadingState {
@@ -100,12 +98,10 @@ class GameLoader(
                         omnidroidLibrary.getGameFiles(game, dataFiles, useVFS)
                     }.getOrElse { throw it }
 
-                val saveRAM =
+                val saveRAMData =
                     runCatching {
-                        val data = savesManager.getSaveRAM(game, systemCoreConfig)
-                        desmumeMigrationHandler.resolveSaveData(game, systemCoreConfig.coreID, data)
+                        savesManager.getSaveRAM(game, systemCoreConfig)
                     }.getOrElse { throw GameLoaderException(GameLoaderError.Saves) }
-                val saveRAMData = saveRAM.data
 
                 val quickSaveData =
                     runCatching {
@@ -113,7 +109,6 @@ class GameLoader(
                             !savesCoherencyEngine.shouldDiscardAutoSaveState(
                                 game,
                                 systemCoreConfig.coreID,
-                                saveRAM.timestampOverride,
                             )
 
                         if (systemCoreConfig.statesSupported && loadSave && shouldDiscardSave) {

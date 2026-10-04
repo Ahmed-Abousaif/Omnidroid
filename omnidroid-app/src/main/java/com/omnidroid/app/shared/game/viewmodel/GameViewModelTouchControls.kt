@@ -58,7 +58,7 @@ class GameViewModelTouchControls(
     private val scope: CoroutineScope,
     private val systemId: SystemID,
     private val systemCoreConfig: SystemCoreConfig,
-    sharedPreferences: SharedPreferences,
+    private val sharedPreferences: SharedPreferences,
     private val hasTouchScreen: Boolean,
 ) : DefaultLifecycleObserver {
     private val touchControlId = MutableStateFlow(TouchControllerID.GB)
@@ -82,7 +82,12 @@ class GameViewModelTouchControls(
 
     private var loadingMenuJob: Job? = null
 
+    private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+        screenLayoutRevision.value++
+    }
+
     override fun onCreate(owner: LifecycleOwner) {
+        sharedPreferences.registerOnSharedPreferenceChangeListener(prefListener)
         owner.launchOnState(Lifecycle.State.CREATED) {
             getTouchControllerConfig().safeCollect {
                 touchControlId.value = it.touchControllerID
@@ -94,6 +99,11 @@ class GameViewModelTouchControls(
                 vibrationIntensity.value = settingsManager.vibrationIntensity()
             }
         }
+    }
+
+    override fun onDestroy(owner: LifecycleOwner) {
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(prefListener)
+        super.onDestroy(owner)
     }
 
     fun getTouchControlsSettings(
@@ -136,6 +146,10 @@ class GameViewModelTouchControls(
         return combine(screenOrientation, screenLayoutRevision) { orientation, _ ->
             screenLayoutController.getAspectRatio(orientation)
         }.distinctUntilChanged()
+    }
+
+    fun refreshLayout() {
+        screenLayoutRevision.value++
     }
 
     fun updateScreenOrientation(orientation: TouchControllerSettingsManager.Orientation) {

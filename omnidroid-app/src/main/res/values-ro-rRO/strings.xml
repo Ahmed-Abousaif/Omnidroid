@@ -45,7 +45,6 @@
     <string name="settings_gamepad_title_game_menu">Meniu</string>
     <string name="settings_title_open_cores_selection">Schimbă Nucleele</string>
     <string name="settings_description_open_cores_selection">Selectați care nucleu este asociat unui sistem</string>
-    <string name="settings_core_selection_ds_info">DeSmuME este învechit şi va fi eliminat în curând. Salvați în interiorul jocului, apoi comutați la melonDS: în joc încărcați în mod automat, dar salvați statele rămân pe nucleul care le-a creat.</string>
     <string name="settings_title_display_bios_info">BIOS</string>
     <string name="settings_description_display_bios_info">Afișează fișierele BIOS detectate și suportate</string>
     <string name="settings_bios_category_detected">Detectat</string>
@@ -89,9 +88,6 @@
     <string name="home_empty_title">Alege directorul de ROM-uri</string>
     <string name="home_empty_message">Omnidroid trebuie să scaneze un director care conține fișiere ROM.\nAcest lucru ar putea dura până la câteva minute.</string>
     <string name="home_empty_action">Selectare director</string>
-    <string name="home_notification_desmume_deprecated_title">DeSmuME se pensionează în curând</string>
-    <string name="home_notification_desmume_deprecated_message">Salvați în joc, comutați la melonDS, iar progresul dvs. va continua. Salvați statele rămân legate pe DeSmuME.</string>
-    <string name="home_notification_desmume_deprecated_action">Comutați la melonDS</string>
     <string name="game_menu_save">Salvare</string>
     <string name="game_menu_load">Încărcare</string>
     <string name="game_menu_restart">Reporniţi</string>

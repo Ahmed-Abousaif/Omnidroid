@@ -9,11 +9,14 @@ Community requests, feature milestones, and bug reports from the community, orga
 ### v2.4.2
 
 - Added customizable startup screen (launch directly into All Games, Favorites, or a chosen console)
-- Added analog stick to D-pad directional routing on retro consoles (_Satto_)
+- Added analog stick to D-pad directional routing on retro consoles
 - Added N64 16:9 widescreen support (_u/SideEffect07_)
 - Added compact adaptive layout & square screen scaling for 3.5" handhelds and 1:1 displays (_u/keithitreal_)
 - Added in-game screen positioning (_u/GhiStale_)
-- Fixed portrait startup flicker (eliminated landscape window initialization flash)
+- Fixed portrait startup flicker
+- Add PS1/SNES aspect ratio & scaling
+- Add real-time in-game refresh
+- remove DeSmuME
 
 ### v2.4.1
 

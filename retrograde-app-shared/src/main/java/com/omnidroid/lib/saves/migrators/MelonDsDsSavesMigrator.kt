@@ -4,7 +4,7 @@ import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.storage.DirectoriesManager
 import java.io.File
 
-object MelonDsSavesMigrator : SavesMigrator {
+object MelonDsDsSavesMigrator : SavesMigrator {
     override fun loadPreviousSaveForGame(
         game: Game,
         directoriesManager: DirectoriesManager,

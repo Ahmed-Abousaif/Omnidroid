@@ -45,7 +45,6 @@
     <string name="settings_gamepad_title_game_menu">Menü</string>
     <string name="settings_title_open_cores_selection">Çekirdekleri Değiştir</string>
     <string name="settings_description_open_cores_selection">Hangi çekirdeğin bir sistemle ilişkili olduğunu seçin</string>
-    <string name="settings_core_selection_ds_info">DeSmuME kullanıma kapatılmıştır ve sonraki güncellemelerden birinde kaldırılacaktır. Oyun içindeki ilerlemenizi kaydedin ve ardından melonDS\'ye geçin. Oyun içi kayıtlar melonDS\'de otomatik olarak yüklenecektir, ancak kayıt durumları yalnızca onları oluşturan çekirdek ile kullanılabilir.</string>
     <string name="settings_title_display_bios_info">BIOS</string>
     <string name="settings_description_display_bios_info">Algılanan ve desteklenen BIOS dosyalarını göster</string>
     <string name="settings_bios_category_detected">Algılanan</string>
@@ -89,9 +88,6 @@
     <string name="home_empty_title">ROMların konumunu seç</string>
     <string name="home_empty_message">Omnidroid\'in ROM dosyalarını içeren dizini taraması gerekiyor.\n Bu birkaç dakika sürebilir.</string>
     <string name="home_empty_action">Konum seç</string>
-    <string name="home_notification_desmume_deprecated_title">DeSmuME kullanımdan kaldırılıyor</string>
-    <string name="home_notification_desmume_deprecated_message">Oyun içinde kaydedin, ardından ilerlemenizi korumak için melonDS\'ye geçin. Kayıt durumları aktarılmayacak ve yalnızca DeSmuME\'de kullanılabilir kalacaktır.</string>
-    <string name="home_notification_desmume_deprecated_action">MelonDS\'ye geç</string>
     <string name="game_menu_save">Kaydet</string>
     <string name="game_menu_load">Yükle</string>
     <string name="game_menu_restart">Yeniden başlat</string>

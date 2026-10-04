@@ -45,7 +45,6 @@
     <string name="settings_gamepad_title_game_menu">菜单</string>
     <string name="settings_title_open_cores_selection">更改核心</string>
     <string name="settings_description_open_cores_selection">选择与系统关联的核心</string>
-    <string name="settings_core_selection_ds_info">Dersmume 已被弃用，不久将被删除。 在游戏中保存，然后切换至熔化后自动保存游戏中的负载，但保存状态保持在创建游戏的核心上。</string>
     <string name="settings_title_display_bios_info">BIOS</string>
     <string name="settings_description_display_bios_info">显示检测到的和受支持的 BIOS 文件</string>
     <string name="settings_bios_category_detected">已检测到</string>
@@ -89,9 +88,6 @@
     <string name="home_empty_title">选择 ROM 目录</string>
     <string name="home_empty_message">Omnidroid 需要扫描一个包含 ROM 文件的目录。\n这可能需要几分钟的时间。</string>
     <string name="home_empty_action">选择目录</string>
-    <string name="home_notification_desmume_deprecated_title">Désmume 即将退出</string>
-    <string name="home_notification_desmume_deprecated_message">在游戏中保存，切换到melondDS，进度将会传输。保存状态将保持与 DeSmuME 的绑定。</string>
-    <string name="home_notification_desmume_deprecated_action">切换到熔化</string>
     <string name="game_menu_save">保存</string>
     <string name="game_menu_load">载入</string>
     <string name="game_menu_restart">重新开始</string>
