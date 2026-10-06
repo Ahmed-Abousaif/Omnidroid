@@ -112,7 +112,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
         val forceHidePadsState = viewModel.isForceHideTouchControls().collectAsState(false)
         val touchControllerSettingsState =
             viewModel
-                .getTouchControlsSettings(LocalDensity.current, WindowInsets.displayCutout)
+                .getTouchControlsSettings()
                 .collectAsState(null)
 
         val touchControllerSettings = touchControllerSettingsState.value
@@ -136,6 +136,16 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
         val fullPos = fullScreenPosition.value
         val viewPos = viewportPosition.value
+
+        // Pads are laid out edge-to-edge, and the user can raise `scale` or drop the
+        // margins, so inset them out of the display cutout here rather than relying on a
+        // default margin. Otherwise a camera hole can end up underneath a button.
+        val padCutoutInsets =
+            if (isLandscape) {
+                WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)
+            } else {
+                WindowInsets.displayCutout.only(WindowInsetsSides.Bottom)
+            }
 
         val isVisible =
             touchControllerSettings != null &&
@@ -229,25 +239,38 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                     CompositionLocalProvider(LocalOmnidroidPadTheme provides OmnidroidPadTheme()) {
                         if (!isLandscape) {
                             PadContainer(
-                                modifier = Modifier.layoutId(GameScreenLayout.CONSTRAINTS_BOTTOM_CONTAINER),
+                                modifier =
+                                    Modifier
+                                        .layoutId(GameScreenLayout.CONSTRAINTS_BOTTOM_CONTAINER)
+                                        .windowInsetsPadding(padCutoutInsets),
                             )
                         } else if (!currentControllerConfig.allowTouchOverlay) {
                             PadContainer(
-                                modifier = Modifier.layoutId(GameScreenLayout.CONSTRAINTS_LEFT_CONTAINER),
+                                modifier =
+                                    Modifier
+                                        .layoutId(GameScreenLayout.CONSTRAINTS_LEFT_CONTAINER)
+                                        .windowInsetsPadding(padCutoutInsets),
                             )
                             PadContainer(
-                                modifier = Modifier.layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_CONTAINER),
+                                modifier =
+                                    Modifier
+                                        .layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_CONTAINER)
+                                        .windowInsetsPadding(padCutoutInsets),
                             )
                         }
 
                         leftGamePad?.invoke(
                             this,
-                            Modifier.layoutId(GameScreenLayout.CONSTRAINTS_LEFT_PAD),
+                            Modifier
+                                .layoutId(GameScreenLayout.CONSTRAINTS_LEFT_PAD)
+                                .windowInsetsPadding(padCutoutInsets),
                             touchControllerSettings,
                         )
                         rightGamePad?.invoke(
                             this,
-                            Modifier.layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_PAD),
+                            Modifier
+                                .layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_PAD)
+                                .windowInsetsPadding(padCutoutInsets),
                             touchControllerSettings,
                         )
 
