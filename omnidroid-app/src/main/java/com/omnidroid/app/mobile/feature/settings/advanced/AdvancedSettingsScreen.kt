@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import android.widget.Toast
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -24,9 +25,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.main.MainRoute
 import com.omnidroid.app.mobile.feature.main.navigateToRoute
+import com.omnidroid.app.shared.covers.CoverPreloadWorker
 import com.omnidroid.app.shared.covers.RawgCoverStore
 import com.omnidroid.app.shared.library.LibraryIndexScheduler
 import com.omnidroid.app.utils.android.settings.OmnidroidCardSettingsGroup
@@ -220,6 +227,27 @@ private fun GeneralSettings(
             title = { Text(text = stringResource(id = R.string.settings_title_unrecognized_files)) },
             subtitle = { Text(text = stringResource(id = R.string.settings_description_unrecognized_files)) },
             onClick = { navController.navigateToRoute(MainRoute.SETTINGS_UNRECOGNIZED) },
+        )
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_precache_covers)) },
+            subtitle = { Text(text = stringResource(id = R.string.settings_description_precache_covers)) },
+            onClick = {
+                val workRequest =
+                    OneTimeWorkRequestBuilder<CoverPreloadWorker>()
+                        .setConstraints(
+                            Constraints.Builder()
+                                .setRequiredNetworkType(NetworkType.CONNECTED)
+                                .build(),
+                        )
+                        .build()
+                WorkManager.getInstance(context.applicationContext)
+                    .enqueueUniqueWork("cover_preload", ExistingWorkPolicy.KEEP, workRequest)
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.settings_precache_covers_started),
+                    Toast.LENGTH_SHORT,
+                ).show()
+            },
         )
         OmnidroidSettingsMenuLink(
             title = { Text(text = stringResource(id = R.string.settings_title_reset_settings)) },
