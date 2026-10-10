@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -108,6 +109,7 @@ import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
+import com.omnidroid.app.mobile.shared.compose.ui.avoidDisplayCutout
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -256,7 +258,15 @@ fun LibraryScreen(
                 )
             }
         } else {
-            Row(modifier = Modifier.fillMaxSize()) {
+            // The sidebar rail is pinned to the screen edge, so in landscape it runs under the
+            // camera cutout. Inset the whole row rather than the rail itself, which is only
+            // 80.dp wide and could not absorb the inset without clipping its buttons.
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .avoidDisplayCutout(WindowInsetsSides.Horizontal),
+            ) {
                 LibrarySidebar(
                     modifier = Modifier,
                     filter = state.filter,
