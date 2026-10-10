@@ -3,10 +3,8 @@ package com.omnidroid.app.shared.game.viewmodel
 import android.content.Context
 import android.content.SharedPreferences
 import android.view.KeyEvent
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isSpecified
-import androidx.compose.ui.unit.Density
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -106,16 +104,13 @@ class GameViewModelTouchControls(
         super.onDestroy(owner)
     }
 
-    fun getTouchControlsSettings(
-        density: Density,
-        insets: WindowInsets,
-    ): Flow<TouchControllerSettingsManager.Settings?> {
+    fun getTouchControlsSettings(): Flow<TouchControllerSettingsManager.Settings?> {
         return combine(
             touchControlId,
             screenOrientation,
         ) { touchControlId, orientation -> touchControlId to orientation }
             .flatMapLatest { (touchControlId, orientation) ->
-                touchControllerSettingsManager.observeSettings(touchControlId, orientation, density, insets)
+                touchControllerSettingsManager.observeSettings(touchControlId, orientation)
             }
     }
 
