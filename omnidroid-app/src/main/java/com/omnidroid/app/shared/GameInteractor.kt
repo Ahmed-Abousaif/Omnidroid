@@ -101,6 +101,55 @@ class GameInteractor(
         }
     }
 
+    fun onSetCoverUrl(
+        game: Game,
+        newCoverUrl: String,
+    ) {
+        appScope.launch {
+            CustomCoverManager(activity.activity()).deleteCustomCover(game.id, game.customCoverPath)
+            val current = retrogradeDb.gameDao().selectById(game.id) ?: game
+            retrogradeDb.gameDao().update(
+                current.copy(
+                    coverFrontUrl = newCoverUrl,
+                    customCoverPath = null,
+                ),
+            )
+            withContext(Dispatchers.Main) {
+                activity.activity().displayToast(R.string.game_cover_updated_success)
+            }
+        }
+    }
+
+    fun onFixGameMatch(
+        game: Game,
+        newTitle: String,
+        newCoverUrl: String,
+    ) {
+        appScope.launch {
+            CustomCoverManager(activity.activity()).deleteCustomCover(game.id, game.customCoverPath)
+            val current = retrogradeDb.gameDao().selectById(game.id) ?: game
+            retrogradeDb.gameDao().update(
+                current.copy(
+                    title = newTitle,
+                    coverFrontUrl = newCoverUrl,
+                    customCoverPath = null,
+                    customName = null,
+                ),
+            )
+            runCatching {
+                retrogradeDb.rawgGameMetadataDao().deleteByGameId(game.id)
+            }
+            runCatching {
+                com.omnidroid.app.shared.library.LibraryIndexScheduler.scheduleLibrarySync(
+                    activity.activity().applicationContext,
+                )
+            }
+            withContext(Dispatchers.Main) {
+                activity.activity().displayToast(R.string.game_match_updated_success)
+            }
+        }
+    }
+
     fun onSetCustomName(
         game: Game,
         name: String,

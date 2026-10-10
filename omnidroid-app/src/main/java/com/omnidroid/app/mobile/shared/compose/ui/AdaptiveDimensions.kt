@@ -36,7 +36,7 @@ private val UltraCompactSpec = AdaptiveLayoutSpec(
     consoleBarHeight = 48.dp,
     searchWidth = 110.dp,
     topBarRowHeight = 34.dp,
-    topBarPortraitHeight = 68.dp,
+    topBarPortraitHeight = 70.dp,
     listThumbHeight = 46.dp,
     gridSpacing = 8.dp,
 )
@@ -51,7 +51,7 @@ private val SquareCompactSpec = AdaptiveLayoutSpec(
     consoleBarHeight = 52.dp,
     searchWidth = 130.dp,
     topBarRowHeight = 34.dp,
-    topBarPortraitHeight = 68.dp,
+    topBarPortraitHeight = 70.dp,
     listThumbHeight = 46.dp,
     gridSpacing = 8.dp,
 )
@@ -66,7 +66,7 @@ private val CompactSpec = AdaptiveLayoutSpec(
     consoleBarHeight = 56.dp,
     searchWidth = 136.dp,
     topBarRowHeight = 34.dp,
-    topBarPortraitHeight = 68.dp,
+    topBarPortraitHeight = 70.dp,
     listThumbHeight = 46.dp,
     gridSpacing = 8.dp,
 )
@@ -81,7 +81,7 @@ private val SquareStandardSpec = AdaptiveLayoutSpec(
     consoleBarHeight = 60.dp,
     searchWidth = 160.dp,
     topBarRowHeight = 38.dp,
-    topBarPortraitHeight = 76.dp,
+    topBarPortraitHeight = 78.dp,
     listThumbHeight = 52.dp,
     gridSpacing = 10.dp,
 )
@@ -96,7 +96,7 @@ private val StandardSpec = AdaptiveLayoutSpec(
     consoleBarHeight = 68.dp,
     searchWidth = 200.dp,
     topBarRowHeight = 40.dp,
-    topBarPortraitHeight = 80.dp,
+    topBarPortraitHeight = 82.dp,
     listThumbHeight = 56.dp,
     gridSpacing = 12.dp,
 )

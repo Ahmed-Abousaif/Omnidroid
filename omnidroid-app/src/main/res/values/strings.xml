@@ -320,6 +320,19 @@
     <string name="game_context_menu_change_name">Change name</string>
     <string name="game_context_menu_remove_name">Remove custom name</string>
     <string name="game_custom_name_hint">Custom name</string>
+    <string name="game_context_menu_search_cover">Fix match / Search box art</string>
+    <string name="game_search_cover_title">Fix Match / Search Box Art</string>
+    <string name="game_search_cover_hint">Search Libretro database...</string>
+    <string name="game_search_cover_no_results">No matching covers found</string>
+    <string name="game_match_dialog_title">Apply Game Match</string>
+    <string name="game_match_dialog_prompt">Do you want to update both the game title and cover, or the cover only?</string>
+    <string name="game_match_apply_both">Title &amp; Cover</string>
+    <string name="game_match_apply_cover_only">Cover Only</string>
+    <string name="game_match_updated_success">Game match updated</string>
+    <string name="game_cover_updated_success">Cover updated</string>
+    <string name="settings_title_precache_covers">Pre-cache All Covers</string>
+    <string name="settings_description_precache_covers">Download all library box arts for offline use</string>
+    <string name="settings_precache_covers_started">Pre-caching covers in background…</string>
 
     <string name="home_notification_title">Enable notifications</string>
     <string name="home_notification_message">Omnidroid uses notifications to let you know when a game or operation is running in background.</string>

@@ -38,10 +38,12 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.Image
+import com.omnidroid.metadata.libretrodb.CoverSearcher
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -107,6 +109,9 @@ fun MainGameContextActions(
     onSyncGameNow: (Game) -> Unit = {},
     onSetCustomThumbnail: (Game, Uri) -> Unit = { _, _ -> },
     onRemoveCustomThumbnail: (Game) -> Unit = {},
+    coverSearcher: CoverSearcher? = null,
+    onSetCoverUrl: (Game, String) -> Unit = { _, _ -> },
+    onFixGameMatch: (Game, String, String) -> Unit = { _, _, _ -> },
     onSetCustomName: (Game, String) -> Unit = { _, _ -> },
     onRemoveCustomName: (Game) -> Unit = {},
 ) {
@@ -132,6 +137,7 @@ fun MainGameContextActions(
         }
     var showNameDialog by remember { mutableStateOf(false) }
     var nameDraft by remember { mutableStateOf("") }
+    var showCoverSearchDialog by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize().zIndex(24f)) {
         AnimatedVisibility(
@@ -176,6 +182,10 @@ fun MainGameContextActions(
                         coverPicker.launch("image/*")
                     },
                     onRemoveCustomThumbnail = { onRemoveCustomThumbnail(game) },
+                    onSearchCover = {
+                        showCoverSearchDialog = true
+                    },
+                    hasCoverSearcher = coverSearcher != null,
                     onSetCustomName = {
                         nameDraft = game.customName ?: game.title
                         showNameDialog = true
@@ -184,6 +194,20 @@ fun MainGameContextActions(
                 )
             }
         }
+    }
+
+    if (showCoverSearchDialog && panelGame != null && coverSearcher != null) {
+        CoverSearchDialog(
+            game = panelGame,
+            coverSearcher = coverSearcher,
+            onDismiss = { showCoverSearchDialog = false },
+            onUpdateCoverOnly = { url ->
+                onSetCoverUrl(panelGame, url)
+            },
+            onFixFullMatch = { newTitle, url ->
+                onFixGameMatch(panelGame, newTitle, url)
+            },
+        )
     }
 
     if (showNameDialog && panelGame != null) {
@@ -234,6 +258,8 @@ private fun GameSettingsPanel(
     onSyncGameNow: (Game) -> Unit,
     onSetCustomThumbnail: () -> Unit,
     onRemoveCustomThumbnail: () -> Unit,
+    onSearchCover: () -> Unit = {},
+    hasCoverSearcher: Boolean = false,
     onSetCustomName: () -> Unit,
     onRemoveCustomName: () -> Unit,
 ) {
@@ -396,6 +422,13 @@ private fun GameSettingsPanel(
                         }
 
                         SectionLabel(text = stringResource(R.string.game_context_menu_set_custom_thumbnail))
+                        if (hasCoverSearcher) {
+                            ContextActionEntry(
+                                label = stringResource(R.string.game_context_menu_search_cover),
+                                icon = Icons.Default.Search,
+                                onClick = onSearchCover,
+                            )
+                        }
                         ContextActionEntry(
                             label =
                                 stringResource(

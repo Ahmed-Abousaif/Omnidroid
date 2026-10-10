@@ -87,6 +87,8 @@ class LibretroDBMetadataProvider(
         val variants = titleVariants(fallbackTitle)
         if (variants.isEmpty()) return null
         val dao = ovgdbManager.dbInstance.gameDao()
+
+        // Stage 1: Exact and Prefix lookups (fast path)
         for (normalized in variants) {
             dao.findByNormalizedName(systemId, normalized)?.takeIf { isLibraryTitle(it.name) }?.let {
                 return it
@@ -98,12 +100,65 @@ class LibretroDBMetadataProvider(
                 return it
             }
         }
-        return null
+
+        // Stage 2: Token-Fuzzy fallback (smarter recovery)
+        val queryNorm = normalizeTitle(fallbackTitle) ?: return null
+        val significantToken = TokenMatcher.selectSignificantToken(queryNorm) ?: return null
+        val candidates = dao.findCandidatesByToken(systemId, significantToken)
+
+        val bestMatch =
+            candidates
+                .asSequence()
+                .filter { isLibraryTitle(it.name) }
+                .map { candidate ->
+                    candidate to TokenMatcher.bestScore(queryNorm, candidate.normalizedName ?: "")
+                }
+                .filter { it.second >= 85 }
+                .maxByOrNull { it.second }
+                ?.first
+
+        return bestMatch?.let {
+            LibretroRom(
+                name = it.name,
+                system = it.system,
+                crc32 = null,
+                serial = null,
+                code = null,
+                size = null,
+                romHash = null,
+                normalizedName = it.normalizedName,
+                rawName = it.rawName,
+            )
+        }
     }
+
+    private val commonAliases =
+        mapOf(
+            "megaman" to "mega man",
+            "thps" to "tony hawk's pro skater",
+            "sf2" to "street fighter ii",
+            "sfii" to "street fighter ii",
+            "mk" to "mortal kombat",
+            "smb" to "super mario bros",
+            "tmnt" to "teenage mutant ninja turtles",
+            "zelda" to "the legend of zelda",
+            "castlevania sotn" to "castlevania symphony of the night",
+            "re1" to "resident evil",
+            "re2" to "resident evil 2",
+            "re3" to "resident evil 3",
+        )
+
+    private val regionOrTagSuffix =
+        Regex(
+            """\s*\((?:usa|europe|japan|world|rev\s*\d+|v\d+\.\d+|beta|proto|track\s*\d+)[^)]*\)$""",
+            RegexOption.IGNORE_CASE,
+        )
 
     private fun titleVariants(value: String): List<String> {
         val base = normalizeTitle(value) ?: return emptyList()
         val variants = linkedSetOf(base)
+
+        // 1. Article variations ("the", "a", "an")
         if (base.startsWith("the ")) {
             variants += base.removePrefix("the ").trim()
         } else {
@@ -113,34 +168,50 @@ class LibretroDBMetadataProvider(
             variants += "the " + base.removeSuffix(" the").trim()
             variants += base.removeSuffix(" the").trim()
         }
-        val withoutRegion = base.substringBefore('(').trim()
-        if (withoutRegion.isNotEmpty() && withoutRegion != base) {
-            variants += withoutRegion
-            if (withoutRegion.startsWith("the ")) {
-                variants += withoutRegion.removePrefix("the ").trim()
-            } else {
-                variants += "the $withoutRegion"
+
+        // 2. Region / Tag Stripping
+        val withoutTags = base.replace(regionOrTagSuffix, "").trim()
+        if (withoutTags.isNotEmpty() && withoutTags != base) {
+            variants += withoutTags
+            if (withoutTags.startsWith("the ")) {
+                variants += withoutTags.removePrefix("the ").trim()
             }
         }
+        val genericNoParen = base.substringBefore('(').trim()
+        if (genericNoParen.isNotEmpty() && genericNoParen != base) {
+            variants += genericNoParen
+        }
+
+        // 3. Common Alias Mapping
+        for (v in variants.toList()) {
+            for ((alias, canonical) in commonAliases) {
+                if (v.contains(alias)) {
+                    variants += v.replace(alias, canonical).trim()
+                }
+            }
+        }
+
         return variants.filter { it.isNotBlank() }
     }
 
     private fun normalizeTitle(value: String): String? {
         val cleaned =
             value
-                .lowercase()
+                .lowercase(java.util.Locale.US)
+                .replace(Regex("""\.\w{1,4}$"""), "")
+                .replace(Regex("""\s*\[[^\]]*\]"""), "")
                 .replace('_', ' ')
                 .replace(",", "")
-                .replace(Regex("\\s+"), " ")
+                .replace(Regex("""[-:]+"""), " ")
+                .replace(Regex("""\s+"""), " ")
                 .trim()
         return cleaned.takeIf { it.isNotBlank() }
     }
 
     private fun isLibraryTitle(name: String?): Boolean {
         if (name.isNullOrBlank()) return false
-        if (name.length > 160 && !name.contains('(')) return false
-        val lower = name.lowercase()
-        return " is " !in lower && " are " !in lower && " was " !in lower && " were " !in lower
+        if (name.length > 200) return false
+        return !name.contains(". ") || name.length <= 80
     }
 
     private suspend fun find(
@@ -163,34 +234,5 @@ class LibretroDBMetadataProvider(
     private fun computeCoverUrl(
         system: GameSystem?,
         name: String?,
-    ): String? {
-        if (system == null || name.isNullOrBlank()) return null
-        var systemName = system.libretroFullName
-        if (system.id == SystemID.MAME2003PLUS) {
-            systemName = "MAME"
-        }
-        if (!systemName.all { it.isLetterOrDigit() || it == ' ' || it == '-' }) return null
-        val cleanName =
-            name
-                .replace(CONTROL_CHARS, "")
-                .replace(PATH_TRAVERSAL, "_")
-                .replace(THUMB_REPLACE, "_")
-                .trim()
-                .trim('.', '_', ' ')
-        if (cleanName.isBlank() || cleanName.length > MAX_TITLE_LENGTH) return null
-        return "$BASE_THUMBNAIL_URL/${encode(systemName)}/$IMAGE_TYPE/${encode(cleanName)}.png"
-    }
-
-    private fun encode(value: String): String {
-        return URLEncoder.encode(value, "UTF-8").replace("+", "%20")
-    }
-
-    companion object {
-        private val THUMB_REPLACE = Regex("[&*/:`<>?\\\\|\"#%^~;\\[\\]{}@+=!\$]")
-        private val CONTROL_CHARS = Regex("[\\p{Cntrl}\\u0000-\\u001F\\u007F-\\u009F]")
-        private val PATH_TRAVERSAL = Regex("\\.{2,}")
-        private const val MAX_TITLE_LENGTH = 200
-        private const val BASE_THUMBNAIL_URL = "https://thumbnails.libretro.com"
-        private const val IMAGE_TYPE = "Named_Boxarts"
-    }
+    ): String? = CoverSearcher.computeCoverUrl(system, name)
 }

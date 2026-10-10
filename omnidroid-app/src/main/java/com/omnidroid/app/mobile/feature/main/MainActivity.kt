@@ -157,6 +157,9 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
     lateinit var libretroDb: com.omnidroid.metadata.libretrodb.db.LibretroDBManager
 
     @Inject
+    lateinit var coverSearcher: com.omnidroid.metadata.libretrodb.CoverSearcher
+
+    @Inject
     lateinit var sliceInstaller: MetadataSliceInstaller
 
     @Inject
@@ -802,6 +805,9 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 onSyncGameNow = { gameInteractor.syncGameNow(it) },
                 onSetCustomThumbnail = { game, uri -> gameInteractor.onSetCustomCover(game, uri) },
                 onRemoveCustomThumbnail = { gameInteractor.onRemoveCustomCover(it) },
+                coverSearcher = coverSearcher,
+                onSetCoverUrl = { game, url -> gameInteractor.onSetCoverUrl(game, url) },
+                onFixGameMatch = { game, title, url -> gameInteractor.onFixGameMatch(game, title, url) },
                 onSetCustomName = { game, name -> gameInteractor.onSetCustomName(game, name) },
                 onRemoveCustomName = { gameInteractor.onRemoveCustomName(it) },
             )
