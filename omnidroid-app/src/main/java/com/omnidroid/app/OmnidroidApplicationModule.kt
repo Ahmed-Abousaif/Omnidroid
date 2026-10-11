@@ -60,6 +60,7 @@ import com.omnidroid.lib.storage.StorageProviderRegistry
 import com.omnidroid.lib.storage.local.LocalStorageProvider
 import com.omnidroid.lib.storage.local.StorageAccessFrameworkProvider
 import com.omnidroid.app.shared.library.LibraryIndexScheduler
+import com.omnidroid.metadata.libretrodb.CoverSearcher
 import com.omnidroid.metadata.libretrodb.LibretroDBMetadataProvider
 import com.omnidroid.metadata.libretrodb.MetadataSliceInstallerImpl
 import com.omnidroid.metadata.libretrodb.db.LibretroDBManager
@@ -156,6 +157,11 @@ object OmnidroidApplicationModule {
     @Singleton
     fun gameMetadataProvider(libretroDBManager: LibretroDBManager): GameMetadataProvider =
         LibretroDBMetadataProvider(libretroDBManager)
+
+    @Provides
+    @Singleton
+    fun coverSearcher(libretroDBManager: LibretroDBManager): CoverSearcher =
+        CoverSearcher(libretroDBManager)
 
     @Provides
     @Singleton

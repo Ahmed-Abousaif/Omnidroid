@@ -89,7 +89,7 @@ import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 
 val LibraryTopBarRowHeight = 40.dp
-val LibraryTopBarPortraitHeight = 80.dp
+val LibraryTopBarPortraitHeight = 82.dp
 private val LibrarySearchCollapsedWidth = 200.dp
 private val LibrarySearchFieldHeight = 36.dp
 
@@ -506,6 +506,7 @@ private fun PortraitHomeTopBar(
                 }
                 SystemStatusIndicators(gamepadConnected = gamepadConnected)
             }
+            Spacer(modifier = Modifier.height(2.dp))
             Row(
                 modifier =
                     Modifier

@@ -137,13 +137,6 @@ fun libraryGridRows(zoomDensity: Int, availableHeight: Dp, isSquare: Boolean = f
     }
     val h = availableHeight.value
     return when {
-        h < 360f -> {
-            when (zoomDensity) {
-                0 -> 1
-                1 -> 2
-                else -> 2
-            }
-        }
         h < 440f -> {
             when (zoomDensity) {
                 0 -> 1

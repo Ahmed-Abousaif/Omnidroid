@@ -17,6 +17,10 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Add PS1/SNES aspect ratio & scaling
 - Add real-time in-game refresh
 - remove DeSmuME
+- Added in-app "Fix Match / Search Box Art" dialog
+- Smarter game matching with token-fuzzy search and franchise alias resolution & smart punctuation recovery
+- Added "Pre-cache All Covers" in Advanced Settings for offline library artwork browsing
+- Overhauled console database slices: ~47% smaller file sizes, deduplicated entries, and faster on-device lookups
 
 ### v2.4.1
 

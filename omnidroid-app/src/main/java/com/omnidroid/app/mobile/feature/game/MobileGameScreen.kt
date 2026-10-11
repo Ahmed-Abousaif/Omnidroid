@@ -55,6 +55,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -112,6 +113,8 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             viewModel
                 .getTouchControlsSettings()
                 .collectAsState(null)
+
+        val padOpacity = viewModel.getVirtualPadOpacity().collectAsState(1f).value
 
         val touchControllerSettings = touchControllerSettingsState.value
         val currentControllerConfig = controllerConfigState.value
@@ -232,6 +235,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                                     Modifier
                                         .layoutId(GameScreenLayout.CONSTRAINTS_BOTTOM_CONTAINER)
                                         .windowInsetsPadding(padCutoutInsets),
+                                        .alpha(padOpacity),
                             )
                         } else if (!currentControllerConfig.allowTouchOverlay) {
                             PadContainer(
@@ -239,12 +243,14 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                                     Modifier
                                         .layoutId(GameScreenLayout.CONSTRAINTS_LEFT_CONTAINER)
                                         .windowInsetsPadding(padCutoutInsets),
+                                        .alpha(padOpacity),
                             )
                             PadContainer(
                                 modifier =
                                     Modifier
                                         .layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_CONTAINER)
                                         .windowInsetsPadding(padCutoutInsets),
+                                        .alpha(padOpacity),
                             )
                         }
 
@@ -253,6 +259,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                             Modifier
                                 .layoutId(GameScreenLayout.CONSTRAINTS_LEFT_PAD)
                                 .windowInsetsPadding(padCutoutInsets),
+                                .alpha(padOpacity),
                             touchControllerSettings,
                         )
                         rightGamePad?.invoke(
@@ -260,6 +267,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                             Modifier
                                 .layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_PAD)
                                 .windowInsetsPadding(padCutoutInsets),
+                                .alpha(padOpacity),
                             touchControllerSettings,
                         )
 
