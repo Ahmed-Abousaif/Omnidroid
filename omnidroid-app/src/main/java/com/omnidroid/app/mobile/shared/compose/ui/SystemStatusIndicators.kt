@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.omnidroid.R
 import kotlinx.coroutines.delay
@@ -80,38 +81,28 @@ fun SystemStatusIndicators(
     Row(
         modifier = modifier.padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         ConnectionStatusIcon(connection)
         if (gamepadConnected) {
-            StatusDivider()
             Icon(
                 imageVector = Icons.Filled.SportsEsports,
                 contentDescription = stringResource(R.string.status_gamepad_connected),
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(13.5.dp),
                 tint = MaterialTheme.colorScheme.primary,
             )
         }
-        StatusDivider()
         BatteryStatusIcon(battery)
-        StatusDivider()
         Text(
             text = clock,
-            style = MaterialTheme.typography.labelSmall,
+            style =
+                MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = (-0.2).sp,
+                ),
         )
     }
-}
-
-@Composable
-private fun StatusDivider() {
-    Box(
-        modifier =
-            Modifier
-                .padding(horizontal = 2.dp)
-                .width(1.dp)
-                .height(12.dp)
-                .background(LocalContentColor.current.copy(alpha = 0.28f)),
-    )
 }
 
 @Composable
@@ -142,7 +133,12 @@ private fun ConnectionStatusIcon(status: ConnectionStatus) {
         val description = stringResource(R.string.status_cellular_connected, cellularLabel)
         Text(
             text = cellularLabel,
-            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+            style =
+                MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = (-0.2).sp,
+                ),
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.semantics { contentDescription = description },
         )
@@ -190,7 +186,7 @@ private fun BatteryStatusIcon(status: BatteryStatus) {
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.5.dp),
     ) {
         BatteryLevelIcon(
             percent = status.percent,
@@ -200,7 +196,12 @@ private fun BatteryStatusIcon(status: BatteryStatus) {
         )
         Text(
             text = "${status.percent}%",
-            style = MaterialTheme.typography.labelSmall,
+            style =
+                MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = (-0.2).sp,
+                ),
             color = color,
         )
     }
