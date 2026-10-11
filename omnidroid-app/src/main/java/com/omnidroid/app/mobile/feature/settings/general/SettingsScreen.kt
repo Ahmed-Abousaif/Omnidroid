@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -74,6 +75,7 @@ import com.omnidroid.app.mobile.feature.main.MainRoute
 import com.omnidroid.app.mobile.feature.main.navigateToRoute
 import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.avoidDisplayCutout
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.shared.library.LibraryIndexScheduler
@@ -168,7 +170,14 @@ fun SettingsScreen(
         val isLandscape = maxWidth > maxHeight
 
         if (isLandscape) {
-            Row(modifier = Modifier.fillMaxSize()) {
+            // Same as the library rail: in landscape the sidebar runs under the camera cutout,
+            // so inset the row instead of the sidebar, which has no room to absorb it.
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .avoidDisplayCutout(WindowInsetsSides.Horizontal),
+            ) {
                 SettingsSidebar(
                     modifier =
                         Modifier

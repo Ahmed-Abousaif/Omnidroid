@@ -4,8 +4,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.view.KeyEvent
 import android.view.MotionEvent
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.ui.unit.Density
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
@@ -173,11 +171,8 @@ class BaseGameScreenViewModel(
         return tilt.getSimulatedTiltEvents()
     }
 
-    fun getTouchControlsSettings(
-        density: Density,
-        insets: WindowInsets,
-    ): Flow<TouchControllerSettingsManager.Settings?> {
-        return touchControls.getTouchControlsSettings(density, insets)
+    fun getTouchControlsSettings(): Flow<TouchControllerSettingsManager.Settings?> {
+        return touchControls.getTouchControlsSettings()
     }
 
     fun getTouchHapticFeedbackMode(): Flow<HapticFeedbackMode> {
