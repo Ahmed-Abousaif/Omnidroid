@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -83,6 +84,7 @@ import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.SystemStatusIndicators
+import com.omnidroid.app.mobile.shared.compose.ui.rememberDisplayCutoutInsetsForTopBar
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 
@@ -221,7 +223,17 @@ fun LibraryTopBar(
                             },
                 )
             }
-            Box(modifier = Modifier.fillMaxWidth().align(Alignment.TopStart)) {
+            // Full-bleed bar: the cutout is top-centre in portrait and moves to a side edge in
+            // landscape, where the bar runs into it at one end.
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.TopStart)
+                        .windowInsetsPadding(
+                            rememberDisplayCutoutInsetsForTopBar(isLandscape = !portrait),
+                        ),
+            ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier =

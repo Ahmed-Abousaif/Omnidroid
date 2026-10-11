@@ -1,13 +1,7 @@
 package com.omnidroid.touchinput.radial.settings
 
 import android.content.SharedPreferences
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.max
 import androidx.core.content.edit
-import com.omnidroid.common.compose.pxToDp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,41 +34,22 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
         val screenPositionY: Float = DEFAULT_SCREEN_POSITION_Y,
     )
 
-    private fun computeInsetsPaddings(
-        density: Density,
-        insets: WindowInsets,
-    ): PaddingValues {
-        val result =
-            PaddingValues(
-                insets.getLeft(density, layoutDirection = LayoutDirection.Ltr).pxToDp(density),
-                insets.getTop(density).pxToDp(density),
-                insets.getRight(density, layoutDirection = LayoutDirection.Ltr).pxToDp(density),
-                insets.getBottom(density).pxToDp(density),
-            )
-        return result
-    }
-
     private val cachedSettings = mutableMapOf<String, MutableStateFlow<Settings?>>()
 
     fun observeSettings(
         touchControllerID: TouchControllerID,
         orientation: Orientation,
-        density: Density,
-        insets: WindowInsets,
     ): Flow<Settings> {
-        val paddings = computeInsetsPaddings(density, insets)
-        val horizontalPadding =
-            max(
-                paddings.calculateLeftPadding(LayoutDirection.Ltr),
-                paddings.calculateRightPadding(LayoutDirection.Ltr),
-            )
-        val verticalPadding = paddings.calculateBottomPadding()
+        // Display cutout insets are applied by the caller as layout padding, so the
+        // defaults stay at zero. Deriving margins from the cutout here used to double
+        // up with that padding, and could not stop a user raising `scale` from pushing
+        // the pads under the camera cutout.
         val defaultSettings =
             Settings(
                 scale = DEFAULT_SCALE,
                 rotation = DEFAULT_ROTATION,
-                marginX = horizontalPadding.value / MAX_MARGINS,
-                marginY = verticalPadding.value / MAX_MARGINS,
+                marginX = DEFAULT_MARGIN_X,
+                marginY = DEFAULT_MARGIN_Y,
                 screenPositionY = DEFAULT_SCREEN_POSITION_Y,
             )
         val settingsKey = getPreferenceString(touchControllerID, orientation)
