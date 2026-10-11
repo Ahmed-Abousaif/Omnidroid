@@ -808,6 +808,24 @@ private fun ControllerSettings(navController: NavController) {
             enabled = true,
             title = { Text(text = stringResource(R.string.settings_title_tilt_sensitivity)) },
         )
+        OmnidroidSettingsSlider(
+            state =
+                intPreferenceState(
+                    key = stringResource(id = R.string.pref_key_virtual_pad_opacity),
+                    default = 100,
+                ),
+            steps = 100,
+            valueRange = 0f..100f,
+            enabled = true,
+            title = { Text(text = stringResource(R.string.settings_title_virtual_pad_opacity)) },
+            subtitle = { Text(text = stringResource(R.string.settings_description_virtual_pad_opacity)) },
+            valueText = { value ->
+                Text(
+                    text = value.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            },
+        )
     }
 }
 

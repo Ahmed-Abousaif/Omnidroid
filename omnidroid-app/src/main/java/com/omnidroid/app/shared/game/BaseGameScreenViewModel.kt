@@ -184,6 +184,10 @@ class BaseGameScreenViewModel(
         return touchControls.getTouchHapticFeedbackMode()
     }
 
+    fun getVirtualPadOpacity(): Flow<Float> {
+        return touchControls.getVirtualPadOpacity()
+    }
+
     fun createRetroView(
         context: Context,
         lifecycle: LifecycleOwner,
