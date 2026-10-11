@@ -6,7 +6,7 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ## Completed
 
-### v2.4.2
+### v2.5.0
 
 - Added customizable startup screen (launch directly into All Games, Favorites, or a chosen console)
 - Added analog stick to D-pad directional routing on retro consoles
@@ -21,6 +21,8 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Smarter game matching with token-fuzzy search and franchise alias resolution & smart punctuation recovery
 - Added "Pre-cache All Covers" in Advanced Settings for offline library artwork browsing
 - Overhauled console database slices: ~47% smaller file sizes, deduplicated entries, and faster on-device lookups
+- Added virtual controller opacity setting for on-screen pads
+- Kept on-screen pads, sidebars, and top chrome clear of display cutouts (camera, sensors, etc.) in landscape (_u/-BMX-_)
 
 ### v2.4.1
 
@@ -80,7 +82,6 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 - Better touchscreen customization overall (_u/Repulsive_Cow_2470_)
 - In-game screen size (_u/GhiStale_)
-- Top and/or sidebar depending on screen orientation interfere with the front camera hole (_u/-BMX-_)
 
 ### Library & UI
 

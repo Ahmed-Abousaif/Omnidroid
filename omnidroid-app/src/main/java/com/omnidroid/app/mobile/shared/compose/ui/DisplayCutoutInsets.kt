@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 
 /**
@@ -18,34 +19,39 @@ import androidx.compose.ui.Modifier
  * Devices without a cutout report zero insets, so this is a no-op there.
  */
 @Composable
-fun rememberDisplayCutoutInsets(sides: WindowInsetsSides): WindowInsets =
-    WindowInsets.displayCutout.only(sides)
+fun rememberDisplayCutoutInsets(sides: WindowInsetsSides): WindowInsets {
+    val cutout = WindowInsets.displayCutout
+    return remember(cutout, sides) { cutout.only(sides) }
+}
 
 /**
- * Cutout insets for content pinned to the top or spanning the full width, such as the top bar
+ * Cutout insets for content spanning the full width or top chrome, such as the top bar
  * and the video surface.
  *
- * The hole sits top-centre in portrait and moves to a side edge in landscape, where a full-width
- * bar runs into it at one end.
+ * In landscape, camera cutouts on the side edges are inset to avoid overlap. In portrait,
+ * no cutout insets are applied since cutouts do not interfere with portrait layouts.
  */
 @Composable
 fun rememberDisplayCutoutInsetsForTopBar(isLandscape: Boolean): WindowInsets =
-    rememberDisplayCutoutInsets(
-        if (isLandscape) WindowInsetsSides.Horizontal else WindowInsetsSides.Top,
-    )
+    if (isLandscape) {
+        rememberDisplayCutoutInsets(WindowInsetsSides.Horizontal)
+    } else {
+        WindowInsets(0, 0, 0, 0)
+    }
 
 /**
- * Cutout insets for content pinned to a side rail or the bottom edge, such as the on-screen
- * pads.
+ * Cutout insets for content pinned to a side rail or edge, such as the on-screen pads.
  *
- * A side rail is only ever overlapped in landscape. In portrait the hole is top-centre, far from
- * the rails, and only a hole reaching the bottom edge would reach the pads.
+ * In landscape, camera cutouts on the side edges are inset to keep pads clear. In portrait,
+ * no cutout insets are applied.
  */
 @Composable
 fun rememberDisplayCutoutInsetsForEdge(isLandscape: Boolean): WindowInsets =
-    rememberDisplayCutoutInsets(
-        if (isLandscape) WindowInsetsSides.Horizontal else WindowInsetsSides.Bottom,
-    )
+    if (isLandscape) {
+        rememberDisplayCutoutInsets(WindowInsetsSides.Horizontal)
+    } else {
+        WindowInsets(0, 0, 0, 0)
+    }
 
 /** Keeps this content out of the display cutout on [sides]. See [rememberDisplayCutoutInsets]. */
 @Composable

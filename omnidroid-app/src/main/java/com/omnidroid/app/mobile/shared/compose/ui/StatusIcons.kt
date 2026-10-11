@@ -36,7 +36,7 @@ fun WifiArcsIcon(
     Canvas(
         modifier =
             modifier
-                .size(18.dp)
+                .size(14.5.dp)
                 .semantics { this.contentDescription = contentDescription },
     ) {
         val strokeWidth = size.minDimension * 0.11f
@@ -89,7 +89,7 @@ fun BatteryLevelIcon(
     Canvas(
         modifier =
             modifier
-                .size(20.dp, 12.dp)
+                .size(16.dp, 9.5.dp)
                 .semantics { this.contentDescription = contentDescription },
     ) {
         val strokeWidth = size.minDimension * 0.14f
