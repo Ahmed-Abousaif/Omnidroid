@@ -1,6 +1,7 @@
 package com.omnidroid.app.shared.game.view
 
 import android.content.Context
+import android.os.Build
 import android.graphics.PointF
 import android.graphics.RectF
 import android.view.KeyEvent
@@ -44,7 +45,6 @@ class VulkanRetroView(
     private val isEmulationReady = AtomicBoolean(false)
     private val isGameLoaded = AtomicBoolean(false)
     private var isInitializationFailed = false
-    private var isTouchDisabled = false
 
     override var audioEnabled: Boolean = true
         set(value) {
@@ -108,6 +108,11 @@ class VulkanRetroView(
         if (!stopEmulationThread()) {
             Timber.e("VulkanRetroView: previous emulation thread is still running; not starting another")
             return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            runCatching {
+                holder.surface.setFrameRate(60.0f, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT)
+            }
         }
         LibretroDroid.setSurface(holder.surface)
         startEmulationThread(holder.surface)
@@ -220,9 +225,22 @@ class VulkanRetroView(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (isTouchDisabled) return false
-        val point = normalizeTouchCoordinates(event.x, event.y)
-        runCatching { LibretroDroid.onTouchEvent(point.x, point.y) }
+        val position = when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                normalizeTouchCoordinates(event.x, event.y)
+            }
+
+            MotionEvent.ACTION_UP -> {
+                TOUCH_EVENT_OUTSIDE
+            }
+
+            else -> null
+        }
+
+        if (position != null) {
+            runCatching { LibretroDroid.onTouchEvent(position.x, position.y) }
+        }
+
         return true
     }
 
@@ -313,7 +331,7 @@ class VulkanRetroView(
     override fun getRumbleEvents(): Flow<RumbleEvent> = rumbleEventsSubject
 
     override fun disableTouchEvents() {
-        isTouchDisabled = true
+        this.setOnTouchListener { _, _ -> true }
     }
 
     override fun refreshAspectRatio() {
@@ -447,5 +465,9 @@ class VulkanRetroView(
 
             Timber.i("VulkanEmulationThread: exited")
         }
+    }
+
+    companion object {
+        private val TOUCH_EVENT_OUTSIDE = PointF(-10f, 10f)
     }
 }
