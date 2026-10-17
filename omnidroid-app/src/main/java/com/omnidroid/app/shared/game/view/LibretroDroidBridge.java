@@ -75,6 +75,10 @@ public final class LibretroDroidBridge {
         LibretroDroid.setShaderConfig(shader);
     }
 
+    public static void setCacheDirectory(String cacheDir) {
+        LibretroDroid.setCacheDirectory(cacheDir);
+    }
+
     public static void loadGameFromVirtualFiles(List<VirtualFile> virtualFiles) {
         if (virtualFiles == null) return;
         List<DetachedVirtualFile> detached = new ArrayList<>();

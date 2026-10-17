@@ -164,6 +164,9 @@ class VulkanRetroView(
         val language = Locale.getDefault().language
 
         try {
+            context.cacheDir?.absolutePath?.let { cachePath ->
+                LibretroDroidBridge.setCacheDirectory(cachePath)
+            }
             LibretroDroidBridge.create(
                 LibretroDroid.GLES_VERSION_VULKAN,
                 data.coreFilePath,
