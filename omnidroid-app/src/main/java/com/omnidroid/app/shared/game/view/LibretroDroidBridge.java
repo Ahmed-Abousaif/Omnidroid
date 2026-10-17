@@ -79,6 +79,10 @@ public final class LibretroDroidBridge {
         LibretroDroid.setCacheDirectory(cacheDir);
     }
 
+    public static void onTrimMemory(int level) {
+        LibretroDroid.onTrimMemory(level);
+    }
+
     public static void loadGameFromVirtualFiles(List<VirtualFile> virtualFiles) {
         if (virtualFiles == null) return;
         List<DetachedVirtualFile> detached = new ArrayList<>();

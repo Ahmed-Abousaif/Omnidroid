@@ -1,6 +1,8 @@
 package com.omnidroid.app.shared.game.view
 
+import android.content.ComponentCallbacks2
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Build
 import android.graphics.PointF
 import android.graphics.RectF
@@ -33,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class VulkanRetroView(
     context: Context,
     private val data: GLRetroViewData,
-) : SurfaceView(context), SurfaceHolder.Callback, IRetroGameView {
+) : SurfaceView(context), SurfaceHolder.Callback, IRetroGameView, ComponentCallbacks2 {
 
     private val retroEventsSubject = MutableSharedFlow<GLRetroView.GLRetroEvents>(extraBufferCapacity = 64)
     private val errorsSubject = MutableSharedFlow<Int>(extraBufferCapacity = 16)
@@ -98,6 +100,39 @@ class VulkanRetroView(
     }
 
     override fun asView(): View = this
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        context.registerComponentCallbacks(this)
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        runCatching { context.unregisterComponentCallbacks(this) }
+    }
+
+    override fun onTrimMemory(level: Int) {
+        Timber.i("VulkanRetroView.onTrimMemory(level=$level)")
+        val thread = emulationThread
+        if (thread != null) {
+            thread.postAction {
+                runCatching { LibretroDroidBridge.onTrimMemory(level) }
+            }
+        } else {
+            runCatching { LibretroDroidBridge.onTrimMemory(level) }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Deprecated in Java", ReplaceWith("onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_COMPLETE)"))
+    override fun onLowMemory() {
+        Timber.w("VulkanRetroView.onLowMemory()")
+        onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_COMPLETE)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+    }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
         Timber.i("VulkanRetroView: surfaceCreated")
@@ -210,6 +245,7 @@ class VulkanRetroView(
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
+        runCatching { context.unregisterComponentCallbacks(this) }
         if (!stopEmulationThread()) {
             Timber.e("VulkanRetroView: skipping LibretroDroid.destroy because the emulation thread is still running")
             return
