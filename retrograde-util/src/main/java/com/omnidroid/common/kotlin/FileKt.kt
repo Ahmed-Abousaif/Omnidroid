@@ -63,16 +63,53 @@ fun InputStream.writeToFile(file: File) {
     }
 }
 
+private val NON_GAME_EXTENSIONS = setOf("txt", "nfo", "url", "png", "jpg", "jpeg", "gif", "htm", "html", "pdf", "xml")
+
 fun ZipInputStream.extractEntryToFile(
     entryName: String,
     gameFile: File,
 ) {
     this.use { inputStream ->
+        var targetFound = false
+        var fallbackTempFile: File? = null
+        val buffer = ByteArray(8192)
+
         while (true) {
-            val entry = inputStream.nextEntry
-            if (entry.name == entryName) break
+            val entry = inputStream.nextEntry ?: break
+            if (entry.isDirectory) continue
+
+            if (entry.name == entryName) {
+                targetFound = true
+                gameFile.outputStream().use { out ->
+                    var len: Int
+                    while (inputStream.read(buffer).also { len = it } > 0) {
+                        out.write(buffer, 0, len)
+                    }
+                }
+                break
+            } else {
+                val ext = entry.name.substringAfterLast('.', "").lowercase()
+                val isLikelyRom = ext.isNotEmpty() && ext !in NON_GAME_EXTENSIONS
+                if (fallbackTempFile == null || isLikelyRom) {
+                    fallbackTempFile?.delete()
+                    val temp = File.createTempFile("zip_extract", ".tmp", gameFile.parentFile)
+                    temp.outputStream().use { out ->
+                        var len: Int
+                        while (inputStream.read(buffer).also { len = it } > 0) {
+                            out.write(buffer, 0, len)
+                        }
+                    }
+                    fallbackTempFile = temp
+                }
+            }
         }
-        inputStream.writeToFile(gameFile)
+
+        if (!targetFound && fallbackTempFile != null) {
+            fallbackTempFile.copyTo(gameFile, overwrite = true)
+            fallbackTempFile.delete()
+        } else {
+            fallbackTempFile?.delete()
+        }
     }
 }
 

@@ -33,6 +33,8 @@ class PCEE2AssetsManager : CoreID.AssetsManager {
             // 1. Sync any existing local PS2 BIOS from system/ to system/pcsx2/bios/
             val ps2BiosNames = listOf(
                 "scph39001.bin",
+                "scph39004.bin",
+                "scph39000.bin",
                 "scph70012.bin",
                 "scph77001.bin",
             )
@@ -52,6 +54,19 @@ class PCEE2AssetsManager : CoreID.AssetsManager {
                     }
                 } else if (dest.exists()) {
                     hasLocalBios = true
+                }
+            }
+
+            // Cross-alias standard BIOS: if user has scph39001.bin (USA), alias to European and Japanese names
+            val usBios = File(pcsx2BiosDir, "scph39001.bin")
+            if (usBios.exists()) {
+                val euBios = File(pcsx2BiosDir, "scph39004.bin")
+                if (!euBios.exists()) {
+                    try { usBios.copyTo(euBios, overwrite = false) } catch (_: Exception) {}
+                }
+                val jpBios = File(pcsx2BiosDir, "scph39000.bin")
+                if (!jpBios.exists()) {
+                    try { usBios.copyTo(jpBios, overwrite = false) } catch (_: Exception) {}
                 }
             }
 
@@ -95,8 +110,15 @@ class PCEE2AssetsManager : CoreID.AssetsManager {
                         }
                         try {
                             pcsx2File.copyTo(systemFile, overwrite = true)
-                            // If named with full model name (e.g. SCPH-39001_BIOS_V7_USA_160.BIN), also alias to scph39001.bin
-                            if (baseName.contains("39001", ignoreCase = true) || baseName.contains("scph", ignoreCase = true)) {
+                            if (baseName.contains("39004", ignoreCase = true)) {
+                                val standardName = "scph39004.bin"
+                                pcsx2File.copyTo(File(pcsx2BiosDir, standardName), overwrite = true)
+                                pcsx2File.copyTo(File(systemDir, standardName), overwrite = true)
+                            } else if (baseName.contains("39000", ignoreCase = true)) {
+                                val standardName = "scph39000.bin"
+                                pcsx2File.copyTo(File(pcsx2BiosDir, standardName), overwrite = true)
+                                pcsx2File.copyTo(File(systemDir, standardName), overwrite = true)
+                            } else if (baseName.contains("39001", ignoreCase = true) || baseName.contains("scph", ignoreCase = true)) {
                                 val standardName = "scph39001.bin"
                                 pcsx2File.copyTo(File(pcsx2BiosDir, standardName), overwrite = true)
                                 pcsx2File.copyTo(File(systemDir, standardName), overwrite = true)

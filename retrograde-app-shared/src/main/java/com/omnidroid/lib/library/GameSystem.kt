@@ -1686,7 +1686,7 @@ data class GameSystem(
                         ),
                     ),
                     uniqueExtensions = listOf("3ds"),
-                    supportedExtensions = listOf("3ds", "cci"),
+                    supportedExtensions = listOf("3ds", "cci", "zcci", "cxi"),
                     hasTouchScreen = true,
                 ),
                 GameSystem(
@@ -1927,6 +1927,7 @@ data class GameSystem(
                             defaultSettings =
                                 listOf(
                                     CoreVariable("dolphin_renderer", "Hardware"),
+                                    CoreVariable("dolphin_graphics_api", "OpenGL"),
                                     CoreVariable("dolphin_fastmem", "disabled"),
                                     CoreVariable("dolphin_main_cpu_thread", "disabled"),
                                     CoreVariable("dolphin_efb_to_texture", "enabled"),
@@ -2009,6 +2010,7 @@ data class GameSystem(
                             defaultSettings =
                                 listOf(
                                     CoreVariable("dolphin_renderer", "Hardware"),
+                                    CoreVariable("dolphin_graphics_api", "OpenGL"),
                                     CoreVariable("dolphin_fastmem", "disabled"),
                                     CoreVariable("dolphin_main_cpu_thread", "disabled"),
                                     CoreVariable("dolphin_efb_to_texture", "enabled"),

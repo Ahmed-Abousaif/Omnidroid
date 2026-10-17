@@ -48,6 +48,16 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
             return emptyList()
         }
 
+        // If the preferred regional BIOS is missing, but another valid BIOS for this core
+        // is present (e.g. user has scph39001.bin for a European game), allow it as a fallback
+        // so cross-region games can still boot.
+        if (required.none(::present)) {
+            val allCoreBios = (coreConfig.requiredBIOSFiles + regionalBiosFiles.values).distinct()
+            if (allCoreBios.any(::present)) {
+                return emptyList()
+            }
+        }
+
         return required.filterNot(::present)
     }
 
