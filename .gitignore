@@ -41,6 +41,7 @@ bugreport*.zip
 *.bak-*
 debug.keystore.bak*
 implementation_plan.md
+prompt.md
 
 # Wii U title keys (shipped only as omnidroid-cores/assets/cemu.zip)
 keys.txt

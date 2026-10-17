@@ -234,7 +234,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                                 modifier =
                                     Modifier
                                         .layoutId(GameScreenLayout.CONSTRAINTS_BOTTOM_CONTAINER)
-                                        .windowInsetsPadding(padCutoutInsets),
+                                        .windowInsetsPadding(padCutoutInsets)
                                         .alpha(padOpacity),
                             )
                         } else if (!currentControllerConfig.allowTouchOverlay) {
@@ -242,14 +242,14 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                                 modifier =
                                     Modifier
                                         .layoutId(GameScreenLayout.CONSTRAINTS_LEFT_CONTAINER)
-                                        .windowInsetsPadding(padCutoutInsets),
+                                        .windowInsetsPadding(padCutoutInsets)
                                         .alpha(padOpacity),
                             )
                             PadContainer(
                                 modifier =
                                     Modifier
                                         .layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_CONTAINER)
-                                        .windowInsetsPadding(padCutoutInsets),
+                                        .windowInsetsPadding(padCutoutInsets)
                                         .alpha(padOpacity),
                             )
                         }
@@ -258,7 +258,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                             this,
                             Modifier
                                 .layoutId(GameScreenLayout.CONSTRAINTS_LEFT_PAD)
-                                .windowInsetsPadding(padCutoutInsets),
+                                .windowInsetsPadding(padCutoutInsets)
                                 .alpha(padOpacity),
                             touchControllerSettings,
                         )
@@ -266,7 +266,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                             this,
                             Modifier
                                 .layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_PAD)
-                                .windowInsetsPadding(padCutoutInsets),
+                                .windowInsetsPadding(padCutoutInsets)
                                 .alpha(padOpacity),
                             touchControllerSettings,
                         )

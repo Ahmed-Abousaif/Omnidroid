@@ -46,7 +46,7 @@ class TouchScreenLayoutController(
                 val current = sharedPreferences.getString(layoutKey, null)
                 when {
                     current == CITRA_SINGLE -> 5f / 3f
-                    isLandscape -> 2.5f
+                    isLandscape -> 3f
                     else -> 5f / 6f
                 }
             }
@@ -184,8 +184,23 @@ class TouchScreenLayoutController(
     ): List<CoreVariable> {
         return when (coreId) {
             CoreID.MELONDS_DS -> onOrientationChangedMelonDsDs(orientation)
+            CoreID.CITRA, CoreID.AZAHAR -> onOrientationChangedCitra(orientation)
             else -> emptyList()
         }
+    }
+
+    private fun onOrientationChangedCitra(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
+        val key = CoreVariablesManager.computeSharedPreferenceKey(CITRA_LAYOUT_KEY, systemId.dbname)
+        val current = sharedPreferences.getString(key, null)
+        if (current == CITRA_SINGLE) {
+            return emptyList()
+        }
+        val target = citraDual(orientation)
+        if (current == target) {
+            return emptyList()
+        }
+        sharedPreferences.edit { putString(key, target) }
+        return listOf(CoreVariable(CITRA_LAYOUT_KEY, target))
     }
 
     private fun onOrientationChangedMelonDsDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
