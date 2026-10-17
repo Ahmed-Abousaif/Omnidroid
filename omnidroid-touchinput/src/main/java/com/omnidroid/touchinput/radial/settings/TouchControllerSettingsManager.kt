@@ -117,6 +117,7 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
         const val MAX_SCALE = 1.5f
 
         const val MAX_MARGINS = 96f
+        const val MAX_MARGIN_Y_PORTRAIT = 480f
     }
 
     private fun getPreferenceString(
