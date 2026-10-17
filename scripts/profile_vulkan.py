@@ -108,8 +108,8 @@ duration_ms: {duration * 1000}
     print(f"[*] Pulling trace to {output}...")
     run_adb(["pull", "/data/misc/perfetto-traces/trace.pftrace", output])
     run_adb(["shell", "rm", "/data/misc/perfetto-traces/trace.pftrace"])
-    print(f"[✓] Trace saved: {output}")
-    print(f"[✓] View trace at: https://ui.perfetto.dev/")
+    print(f"[+] Trace saved: {output}")
+    print(f"[+] View trace at: https://ui.perfetto.dev/")
 
 def cmd_validation_layers(args):
     if args.enable:
@@ -117,14 +117,14 @@ def cmd_validation_layers(args):
         run_adb(["shell", "settings", "put", "global", "enable_gpu_debug_layers", "1"])
         run_adb(["shell", "settings", "put", "global", "gpu_debug_app", APP_PACKAGE])
         run_adb(["shell", "settings", "put", "global", "gpu_debug_layers", "VK_LAYER_KHRONOS_validation"])
-        print("[✓] Validation layer active for package:", APP_PACKAGE)
+        print("[+] Validation layer active for package:", APP_PACKAGE)
         print("    Monitor warnings/errors with: adb logcat -s VulkanRenderer:E VulkanContext:E")
     else:
         print("[*] Disabling Vulkan Validation Layer on device...")
         run_adb(["shell", "settings", "delete", "global", "enable_gpu_debug_layers"])
         run_adb(["shell", "settings", "delete", "global", "gpu_debug_app"])
         run_adb(["shell", "settings", "delete", "global", "gpu_debug_layers"])
-        print("[✓] Validation layer disabled.")
+        print("[+] Validation layer disabled.")
 
 def main():
     parser = argparse.ArgumentParser(description="Omnidroid Vulkan Profiling & Telemetry Helper")
