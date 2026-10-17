@@ -50,7 +50,20 @@ internal object NintendoDisc {
         val rvz = magic.startsWithAscii("RVZ")
         val wia = magic.startsWithAscii("WIA")
         if (!rvz && !wia) return null
-        return fromHeader(source.read(0x58, 0x80))
+        val header = source.read(0x58, 0x80)
+        fromHeader(header)?.let { return it }
+        // Fallback using WIA/RVZ disc_type header at offset 0x48 (1 = GameCube, 2 = Wii)
+        val discType = be32(source.read(0x48, 4), 0)
+        val system =
+            when (discType) {
+                1L -> SystemID.GAMECUBE
+                2L -> SystemID.WII
+                else -> null
+            }
+        if (system != null) {
+            return NintendoDiscId(system, ScanKeys.gameCode(header))
+        }
+        return null
     }
 
     fun fromGcz(source: RandomAccessBytes): NintendoDiscId? {

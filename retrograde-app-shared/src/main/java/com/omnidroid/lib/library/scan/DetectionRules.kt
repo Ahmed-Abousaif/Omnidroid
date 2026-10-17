@@ -101,7 +101,7 @@ object DetectionRules {
         }
         return when (extension) {
             "nds" -> headerSerial(input, SystemID.NDS) { it.ascii(0x0C, 4).takeIf(::isCode) }
-            "3ds", "cci" -> headerSerial(input, SystemID.NINTENDO_3DS) { it.ascii(0x1150, 10).ifBlank { null } }
+            "3ds", "cci", "zcci", "cxi" -> headerSerial(input, SystemID.NINTENDO_3DS) { it.ascii(0x1150, 10).ifBlank { null } }
             "gcm" -> nintendo(input) { NintendoDisc.fromIso(it) }
             "tgc" -> nintendo(input) { NintendoDisc.fromTgc(it) }
             "wbfs" -> nintendo(input) { NintendoDisc.fromWbfs(it) }
@@ -338,6 +338,8 @@ object DetectionRules {
                 "nds",
                 "3ds",
                 "cci",
+                "zcci",
+                "cxi",
                 "gcm",
                 "tgc",
                 "wbfs",
