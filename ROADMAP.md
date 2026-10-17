@@ -23,6 +23,10 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Overhauled console database slices: ~47% smaller file sizes, deduplicated entries, and faster on-device lookups
 - Added virtual controller opacity setting for on-screen pads
 - Kept on-screen pads, sidebars, and top chrome clear of display cutouts (camera, sensors, etc.) in landscape (_u/-BMX-_)
+- Fixed Immersive mode dynamic background coloring across OpenGL ES 3 mobile GPUs ([#8](https://github.com/Ahmed-Abousaif/Omnidroid/issues/8)) (_u/-BMX-_)
+- Extended vertical gamepad positioning range in portrait mode to allow centered controls ([#11](https://github.com/Ahmed-Abousaif/Omnidroid/issues/11)) (_u/uiro1_)
+- Added 3DS .zcci/.cxi scanning, GameCube/Wii OpenGL stability default, PS2 regional BIOS fallback, and safe zip ROM extraction ([#14](https://github.com/Ahmed-Abousaif/Omnidroid/issues/14)) (_u/Deus0_)
+- Fixed Dreamcast (Flycast) black screen under OpenGL ES by isolating frontend context state ([#15](https://github.com/Ahmed-Abousaif/Omnidroid/issues/15)) (_u/yurix_)
 
 ### v2.4.1
 
