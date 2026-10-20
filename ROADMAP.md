@@ -26,7 +26,11 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Modernized the Vulkan renderer for smoother frame pacing, reduced thermal throttling, and stutter-free shader execution on mobile GPUs.
 - Fixed Immersive mode dynamic background coloring across OpenGL ES 3 mobile GPUs ([#8](https://github.com/Ahmed-Abousaif/Omnidroid/issues/8)) (_u/-BMX-_)
 - Extended vertical gamepad positioning range in portrait mode to allow centered controls ([#11](https://github.com/Ahmed-Abousaif/Omnidroid/issues/11)) (_uiro1_)
-- Added 3DS .zcci/.cxi scanning, GameCube/Wii OpenGL stability default, PS2 regional BIOS fallback, and safe zip ROM extraction ([#14](https://github.com/Ahmed-Abousaif/Omnidroid/issues/14)) (_Deus0_)
+- Added 3DS .zcci/.cxi scanning ([#16](https://github.com/Ahmed-Abousaif/Omnidroid/issues/16)) (_Deus0_)
+- Added GameCube/Wii OpenGL stability default ([#19](https://github.com/Ahmed-Abousaif/Omnidroid/issues/19)) (_Deus0_)
+- Added PS2 regional BIOS fallback ([#18](https://github.com/Ahmed-Abousaif/Omnidroid/issues/18)) (_Deus0_)
+- Added safe zip ROM extraction ([#14](https://github.com/Ahmed-Abousaif/Omnidroid/issues/14)) (_Deus0_)
+- Fixed PSP .chd disc booting by disabling virtual file system routing for PPSSPP ([#20](https://github.com/Ahmed-Abousaif/Omnidroid/issues/20)) (_Deus0_)
 - Fixed Dreamcast (Flycast) black screen under OpenGL ES by isolating frontend context state ([#15](https://github.com/Ahmed-Abousaif/Omnidroid/issues/15)) (_yurix_)
 - Fixed Nintendo 3DS touch screen input by routing secondary pointer gestures to the lower display ([#9](https://github.com/Ahmed-Abousaif/Omnidroid/issues/9)) (_vermahardik735_)
 - Added landscape dual-screen layout options (Side-by-Side, Top-Bottom, Single Screen) for Nintendo 3DS ([#10](https://github.com/Ahmed-Abousaif/Omnidroid/issues/10)) (_vermahardik735_)

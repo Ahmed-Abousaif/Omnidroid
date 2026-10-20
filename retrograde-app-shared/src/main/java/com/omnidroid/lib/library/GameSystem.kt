@@ -1170,7 +1170,7 @@ data class GameSystem(
                                 hashMapOf(
                                     0 to arrayListOf(ControllerConfigs.PSP),
                                 ),
-                            supportsLibretroVFS = true,
+                            supportsLibretroVFS = false,
                         ),
                     ),
                     uniqueExtensions = listOf(),
