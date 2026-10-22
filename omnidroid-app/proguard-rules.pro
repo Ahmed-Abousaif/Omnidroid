@@ -36,10 +36,7 @@
 -dontnote sun.misc.Unsafe
 
 ## Google API
--dontwarn com.google.api.client.json.jackson2.JacksonFactory
--keepclassmembers class * {
-  @com.google.api.client.util.Key <fields>;
-}
+-dontwarn com.google.api.client.**
 
 ## Guava
 -dontnote com.google.appengine.api.ThreadManager
