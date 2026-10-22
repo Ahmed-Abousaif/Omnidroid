@@ -24,6 +24,22 @@ android {
                     abiFiltersProp.split(",").map { it.trim() }.filter { it.isNotEmpty() },
                 )
             }
+        } else if (usePlayDynamicFeatures()) {
+            // MelonDS DS dynamic module only provides arm64-v8a, armeabi-v7a, x86_64.
+            // All dynamic bundle modules must have a consistent set of ABIs for Bundletool.
+            ndk {
+                abiFilters.clear()
+                abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a", "x86_64"))
+            }
+        }
+    }
+
+    splits {
+        abi {
+            isEnable = !usePlayDynamicFeatures()
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+            isUniversalApk = true
         }
     }
     flavorDimensions += listOf("opensource", "cores")
@@ -85,8 +101,8 @@ android {
 
     packagingOptions {
         jniLibs {
-            // Stripping created some issues with some libretro cores such as ppsspp
-            keepDebugSymbols += setOf("*/*/*_libretro_android.so")
+            // Stripping created issues with ppsspp; narrow to only ppsspp
+            keepDebugSymbols += setOf("*/*/libppsspp_libretro_android.so")
             pickFirsts += setOf("**/liblibretrodroid.so")
             useLegacyPackaging = true
         }
@@ -196,11 +212,38 @@ android {
         val baseVersion = variant.versionName?.removeSuffix("-DEBUG") ?: defaultConfig.versionName
 
         val prefix = if (isPlay) "Omnidroid-play" else "Omnidroid"
-        val apkName = "$prefix-$coresType-$buildTypeName-v$baseVersion.apk"
 
         outputs.all {
             val output = this as? com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            val abi = output?.getFilter("ABI")
+            val suffix = if (abi != null) "-$abi" else if (splits.abi.isEnable) "-universal" else ""
+            val apkName = "$prefix-$coresType$suffix-$buildTypeName-v$baseVersion.apk"
             output?.outputFileName = apkName
+        }
+    }
+}
+
+val abiCodes = mapOf(
+    "armeabi-v7a" to 1,
+    "x86" to 2,
+    "arm64-v8a" to 3,
+    "x86_64" to 4,
+)
+
+androidComponents {
+    onVariants { variant ->
+        val baseVersionCode = 262
+        variant.outputs.forEach { output ->
+            val filterAbi = output.filters.find {
+                it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI
+            }?.identifier
+
+            if (filterAbi != null) {
+                val modifier = abiCodes[filterAbi] ?: 0
+                output.versionCode.set(baseVersionCode * 10 + modifier)
+            } else {
+                output.versionCode.set(baseVersionCode * 10)
+            }
         }
     }
 }
