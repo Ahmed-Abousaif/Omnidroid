@@ -118,7 +118,6 @@ import androidx.compose.ui.input.key.type
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.mobile.shared.controller.reportControllerGame
-import com.omnidroid.app.shared.covers.CoverUtils
 import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.lib.library.MetaSystemID
 import com.omnidroid.lib.library.db.entity.Game
@@ -886,14 +885,7 @@ private fun LibraryGameRow(
         }
     val adaptiveSpec = LocalAdaptiveLayout.current
     val thumbHeight = adaptiveSpec.listThumbHeight
-    val thumbSlotWidth = thumbHeight * 1.4f
-    val initialAspect =
-        remember(game.id, game.coverFrontUrl, game.customCoverPath) {
-            CoverUtils.getCachedCoverAspectRatio(context, game) ?: LibraryGameCardAspectRatio
-        }
-    var naturalAspect by remember(game.id, game.coverFrontUrl, game.customCoverPath) {
-        mutableStateOf(initialAspect)
-    }
+    val thumbWidth = thumbHeight * LibraryGameCardAspectRatio
     Surface(
         modifier =
             modifier
@@ -918,38 +910,16 @@ private fun LibraryGameRow(
                     .padding(end = coverInset),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
+            OmnidroidGameImage(
                 modifier =
                     Modifier
                         .padding(start = coverInset)
-                        .size(thumbSlotWidth, thumbHeight),
-                contentAlignment = Alignment.Center,
-            ) {
-                val effectiveAspect =
-                    naturalAspect.takeIf { it > 0f && !it.isNaN() && !it.isInfinite() }
-                        ?: LibraryGameCardAspectRatio
-                val coverModifier =
-                    Modifier
-                        .fillMaxHeight()
-                        .then(
-                            if (thumbHeight * effectiveAspect <= thumbSlotWidth) {
-                                Modifier.aspectRatio(effectiveAspect, matchHeightConstraintsFirst = true)
-                            } else {
-                                Modifier.width(thumbSlotWidth).aspectRatio(effectiveAspect)
-                            },
-                        )
-
-                OmnidroidGameImage(
-                    modifier =
-                        coverModifier
-                            .clip(RoundedCornerShape(cornerAnim))
-                            .then(coverSharedModifier),
-                    game = game,
-                    aspectRatio = null,
-                    contentScale = ContentScale.Fit,
-                    onAspectRatio = { naturalAspect = it },
-                )
-            }
+                        .size(thumbWidth, thumbHeight)
+                        .clip(RoundedCornerShape(cornerAnim))
+                        .then(coverSharedModifier),
+                game = game,
+                aspectRatio = null,
+            )
             Column(
                 modifier =
                     Modifier
@@ -977,15 +947,21 @@ private fun LibraryGameRow(
             }
             when {
                 continueAction -> {
-                    Text(
-                        text = stringResource(R.string.continue_playing),
-                        style =
-                            MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                            ),
+                    Surface(
+                        shape = RoundedCornerShape((rowCorner - coverInset).coerceAtLeast(0.dp)),
                         color = LibraryNeonGreen,
-                        maxLines = 1,
-                    )
+                    ) {
+                        Text(
+                            text = stringResource(R.string.continue_playing),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            style =
+                                MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                ),
+                            color = Color.White,
+                            maxLines = 1,
+                        )
+                    }
                 }
                 game.isFavorite -> {
                     Icon(
