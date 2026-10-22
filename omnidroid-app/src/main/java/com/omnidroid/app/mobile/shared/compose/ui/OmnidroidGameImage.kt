@@ -16,6 +16,8 @@ fun OmnidroidGameImage(
     modifier: Modifier = Modifier,
     game: Game,
     aspectRatio: Float? = LibraryGameCardAspectRatio,
+    contentScale: ContentScale = ContentScale.Crop,
+    onAspectRatio: ((Float) -> Unit)? = null,
 ) {
     val fallbackDrawable =
         remember(game) {
@@ -39,6 +41,20 @@ fun OmnidroidGameImage(
                 ),
         fallback = fallbackPainter,
         error = fallbackPainter,
-        contentScale = ContentScale.Crop,
+        contentScale = contentScale,
+        onSuccess = { state ->
+            val size = state.painter.intrinsicSize
+            if (size.width > 0f && size.height > 0f) {
+                onAspectRatio?.invoke(size.width / size.height)
+            }
+        },
+        onError = {
+            val size = fallbackPainter.intrinsicSize
+            if (size.width > 0f && size.height > 0f) {
+                onAspectRatio?.invoke(size.width / size.height)
+            } else {
+                onAspectRatio?.invoke(1f)
+            }
+        },
     )
 }
