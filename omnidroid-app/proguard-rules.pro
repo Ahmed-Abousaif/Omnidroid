@@ -13,7 +13,6 @@
 -dontwarn kotlin.**
 -dontnote kotlin.**
 -dontwarn org.jetbrains.annotations.**
--keep class kotlin.Metadata { *; }
 -dontwarn kotlinx.coroutines.flow.**
 -keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
 
@@ -51,13 +50,6 @@
 -dontwarn org.apache.commons.codec.binary.Base64
 -dontwarn org.apache.commons.codec.binary.StringUtils
 
-## Retrograde
--keep class **.model.**
--keepclassmembers class **.model.** {
-  <init>(...);
-  <fields>;
-}
-
 ## Misc
 -dontwarn com.uber.javaxextras.**
 -dontwarn java.lang.management.**
@@ -78,5 +70,20 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
-## LibretroDroid
--keep class com.swordfish.libretrodroid.** { *; }
+## LibretroDroid JNI Interface (strictly scoped to C++ FindClass/GetMethodID/GetFieldID)
+-keep class com.swordfish.libretrodroid.Variable { <fields>; }
+-keep class com.swordfish.libretrodroid.Controller { <fields>; }
+-keep class com.swordfish.libretrodroid.DetachedVirtualFile { *; }
+-keep class com.swordfish.libretrodroid.GLRetroShader { <fields>; }
+-keep class com.swordfish.libretrodroid.RetroException { *; }
+-keep class com.swordfish.libretrodroid.GLRetroView {
+    void refreshAspectRatio();
+    void sendRumbleEvent(int, float, float);
+}
+-keep class com.swordfish.libretrodroid.ImmersiveMode* { *; }
+-keepclasseswithmembernames class com.swordfish.libretrodroid.LibretroDroid {
+    native <methods>;
+}
+
+
+
