@@ -1,0 +1,72 @@
+=== TOP 30 LARGEST LEAF PACKAGES IN PLAY DEX ===
+
+Package                                                   Size DefinedMethods ReferencedMethods
+-------                                                   ---- -------------- -----------------
+androidx.recyclerview.widget                            261254            793               794
+androidx.appcompat.widget                               210500           1018              1018
+androidx.compose.ui.platform                            189971            532               532
+androidx.compose.ui.node                                178563            662               662
+com.omnidroid.app.mobile.feature.library                150807            181               181
+com.omnidroid.app.mobile.feature.settings.general       144055            154               154
+androidx.compose.foundation.gestures                    127898            348               348
+com.google.android.gms.internal.auth                    118448            420               420
+com.omnidroid.app.mobile.feature.main                    98364            119               119
+com.omnidroid.app.mobile.feature.settings.deviceprofile  97326             99                99
+androidx.transition                                      97138            433               433
+androidx.work.impl.model                                 92842            300               300
+androidx.compose.ui.focus                                89543            170               170
+com.omnidroid.app.mobile.feature.profile                 87316             75                75
+androidx.compose.foundation.lazy.layout                  81585            271               271
+androidx.compose.ui.layout                               80502            415               415
+androidx.compose.runtime.snapshots                       73174            306               306
+com.omnidroid.app.mobile.feature.gamedetails             73142            128               128
+androidx.constraintlayout.widget                         71173            100               100
+androidx.appcompat.view.menu                             67087            455               455
+com.omnidroid.app.shared.game.viewmodel                  65549            193               193
+androidx.compose.material3.internal                      59540            165               165
+androidx.core.widget                                     59327            197               197
+androidx.appcompat.app                                   57234            180               180
+androidx.compose.foundation.text.selection               55552            198               198
+androidx.navigation.compose                              54411             93                93
+com.omnidroid.touchinput.radial.settings                 53891             66                66
+com.omnidroid.lib.library.scan                           53129            118               118
+com.omnidroid.app.shared.savesync                        52114             94                94
+androidx.compose.foundation.text.input.internal          51103            181               181
+
+
+=== TOP 30 LARGEST LEAF PACKAGES IN FREE DEX ===
+
+Package                                                   Size DefinedMethods ReferencedMethods
+-------                                                   ---- -------------- -----------------
+androidx.compose.foundation.gestures                    299794            549               549
+androidx.recyclerview.widget                            230935            709               710
+androidx.appcompat.widget                               210277           1014              1014
+androidx.compose.ui.node                                174074            669               669
+com.omnidroid.app.mobile.feature.library                146519            177               177
+com.omnidroid.app.mobile.feature.settings.general       100779            104               104
+com.omnidroid.app.mobile.feature.main                    98566            120               120
+androidx.work.impl.model                                 95002            300               300
+com.omnidroid.app.mobile.feature.profile                 93878             78                78
+androidx.transition                                      87514            411               411
+androidx.compose.ui.layout                               81313            417               417
+androidx.constraintlayout.widget                         74884            100               100
+androidx.compose.runtime.snapshots                       74138            306               306
+com.omnidroid.app.mobile.feature.gamedetails             67882            125               125
+androidx.appcompat.view.menu                             67762            450               450
+kotlinx.serialization.json.internal                      65854            242               242
+androidx.compose.foundation.lazy.layout                  64734            257               257
+com.omnidroid.app.mobile.feature.settings.deviceprofile  63901             80                80
+androidx.compose.material3.internal                      63546            169               169
+androidx.appcompat.app                                   61032            180               180
+com.omnidroid.app.shared.game.viewmodel                  59275            188               188
+androidx.constraintlayout.core.widgets.analyzer          59128             95                95
+androidx.compose.ui.focus                                56962            151               151
+com.omnidroid.lib.library.scan                           55304            118               118
+androidx.exifinterface.media                             53985            113               113
+com.omnidroid.common.coroutines                          53852            102               102
+com.omnidroid.app.mobile.feature.settings.slices         53482             50                50
+okhttp3.internal.http2                                   51894            133               133
+kotlinx.serialization.internal                           50372            382               382
+androidx.core.widget                                     48443            163               163
+
+
