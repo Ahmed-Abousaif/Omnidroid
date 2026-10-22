@@ -7,6 +7,9 @@ import androidx.room.Query
 interface ArcadeSetDao {
     @Query("SELECT * FROM arcade_sets WHERE setHash = :setHash LIMIT 1")
     suspend fun find(setHash: Long): ArcadeSet?
+
+    @Query("SELECT * FROM arcade_sets WHERE setName = :setName LIMIT 1")
+    suspend fun findByName(setName: String): ArcadeSet?
 }
 
 @Dao

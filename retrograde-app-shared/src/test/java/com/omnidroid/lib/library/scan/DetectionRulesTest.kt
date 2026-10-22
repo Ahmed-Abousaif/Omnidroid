@@ -230,6 +230,19 @@ class DetectionRulesTest {
     }
 
     @Test
+    fun zipArcadeMultiEntryReturnsArcadeDetection() {
+        val zip = zipOf("rom.1" to byteArrayOf(1, 2, 3), "rom.2" to byteArrayOf(4, 5, 6))
+        val detection =
+            DetectionRules.identify(
+                ScanInput("double_dragon.zip", zip.size.toLong(), null, { ByteArraySource(zip) }),
+            )
+        assertTrue(detection is Detection.Arcade)
+        val arcade = detection as Detection.Arcade
+        assertEquals("double_dragon.zip", arcade.setName)
+        assertEquals(2, arcade.memberCrcs.size)
+    }
+
+    @Test
     fun cueUsesTheHighDensityTrack() {
         val sheet =
             """

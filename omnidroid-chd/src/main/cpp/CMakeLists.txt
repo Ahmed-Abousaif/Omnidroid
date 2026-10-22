@@ -8,4 +8,6 @@ add_subdirectory(libchdr)
 
 add_library(omnidroid-chd SHARED chd_jni.c)
 target_include_directories(omnidroid-chd PRIVATE libchdr/include)
+target_compile_options(omnidroid-chd PRIVATE -Os -flto -fvisibility=hidden)
+target_link_options(omnidroid-chd PRIVATE -flto -Wl,--gc-sections -Wl,--exclude-libs,ALL)
 target_link_libraries(omnidroid-chd chdr-static log)
