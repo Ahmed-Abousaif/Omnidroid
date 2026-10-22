@@ -118,6 +118,7 @@ import androidx.compose.ui.input.key.type
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.mobile.shared.controller.reportControllerGame
+import com.omnidroid.app.shared.covers.CoverUtils
 import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.lib.library.MetaSystemID
 import com.omnidroid.lib.library.db.entity.Game
@@ -885,7 +886,14 @@ private fun LibraryGameRow(
         }
     val adaptiveSpec = LocalAdaptiveLayout.current
     val thumbHeight = adaptiveSpec.listThumbHeight
-    val thumbWidth = thumbHeight * LibraryGameCardAspectRatio
+    val thumbSlotWidth = thumbHeight * 1.4f
+    val initialAspect =
+        remember(game.id, game.coverFrontUrl, game.customCoverPath) {
+            CoverUtils.getCachedCoverAspectRatio(context, game) ?: LibraryGameCardAspectRatio
+        }
+    var naturalAspect by remember(game.id, game.coverFrontUrl, game.customCoverPath) {
+        mutableStateOf(initialAspect)
+    }
     Surface(
         modifier =
             modifier
@@ -910,16 +918,38 @@ private fun LibraryGameRow(
                     .padding(end = coverInset),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            OmnidroidGameImage(
+            Box(
                 modifier =
                     Modifier
                         .padding(start = coverInset)
-                        .size(thumbWidth, thumbHeight)
-                        .clip(RoundedCornerShape(cornerAnim))
-                        .then(coverSharedModifier),
-                game = game,
-                aspectRatio = null,
-            )
+                        .size(thumbSlotWidth, thumbHeight),
+                contentAlignment = Alignment.Center,
+            ) {
+                val effectiveAspect =
+                    naturalAspect.takeIf { it > 0f && !it.isNaN() && !it.isInfinite() }
+                        ?: LibraryGameCardAspectRatio
+                val coverModifier =
+                    Modifier
+                        .fillMaxHeight()
+                        .then(
+                            if (thumbHeight * effectiveAspect <= thumbSlotWidth) {
+                                Modifier.aspectRatio(effectiveAspect, matchHeightConstraintsFirst = true)
+                            } else {
+                                Modifier.width(thumbSlotWidth).aspectRatio(effectiveAspect)
+                            },
+                        )
+
+                OmnidroidGameImage(
+                    modifier =
+                        coverModifier
+                            .clip(RoundedCornerShape(cornerAnim))
+                            .then(coverSharedModifier),
+                    game = game,
+                    aspectRatio = null,
+                    contentScale = ContentScale.Fit,
+                    onAspectRatio = { naturalAspect = it },
+                )
+            }
             Column(
                 modifier =
                     Modifier
