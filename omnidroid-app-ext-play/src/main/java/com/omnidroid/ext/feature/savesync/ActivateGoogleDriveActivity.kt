@@ -11,7 +11,6 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.Scope
-import com.google.api.services.drive.DriveScopes
 import com.omnidroid.ext.R
 import timber.log.Timber
 
@@ -55,7 +54,7 @@ class ActivateGoogleDriveActivity : Activity() {
 
     private fun authenticateGoogle() {
         val lastSignedInAccount = GoogleSignIn.getLastSignedInAccount(this)
-        val scope = Scope(DriveScopes.DRIVE_APPDATA)
+        val scope = Scope(GoogleDriveCloudSaveProvider.DRIVE_APPDATA_SCOPE)
         if (GoogleSignIn.hasPermissions(lastSignedInAccount, scope)) {
             finish()
             return
@@ -68,7 +67,7 @@ class ActivateGoogleDriveActivity : Activity() {
             GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestId()
                 .requestEmail()
-                .requestScopes(Scope(DriveScopes.DRIVE_APPDATA))
+                .requestScopes(Scope(GoogleDriveCloudSaveProvider.DRIVE_APPDATA_SCOPE))
                 .build()
         return GoogleSignIn.getClient(this, signInOptions)
     }

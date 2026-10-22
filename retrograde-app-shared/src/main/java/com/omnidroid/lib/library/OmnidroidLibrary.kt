@@ -272,8 +272,8 @@ class OmnidroidLibrary(
         startedAtMs: Long,
         metadata: GameMetadataProvider,
     ) {
-        val systemId = metadata.resolveArcade(detection.setName, detection.memberCrcs)
-        if (systemId == null) {
+        val resolved = metadata.resolveArcade(detection.setName, detection.memberCrcs)
+        if (resolved == null) {
             reject(
                 provider,
                 group,
@@ -284,15 +284,17 @@ class OmnidroidLibrary(
             )
             return
         }
+        val (systemId, driverName) = resolved
         saveGame(
             provider,
             group,
             existing,
             insertedId,
             systemByName(systemId),
-            MetadataKey(MetadataKeyType.ROM_NAME, detection.setName),
+            MetadataKey(MetadataKeyType.ROM_NAME, driverName),
             startedAtMs,
             metadata,
+            archiveEntry = "$driverName.zip",
         )
     }
 
