@@ -1,0 +1,108 @@
+=== COMPONENT BREAKDOWN (PLAY RELEASE APK) ===
+
+Component           Raw Bytes Download Bytes
+---------           --------- --------------
+classes.dex           3156916        3152071
+resources.arsc        1679268         314764
+lib/x86                826272         821785
+lib/x86_64             817071         812170
+lib/arm64-v8a          752657         748852
+lib/armeabi-v7a        658719         656086
+res/                   578745         547553
+assets/                410762         409002
+Other                  315056         314005
+META-INF/              112201         107664
+kotlin/                 12053          11993
+AndroidManifest.xml      4690           4690
+
+
+=== COMPONENT BREAKDOWN (FREE RELEASE APK) ===
+
+Component           Raw Bytes Download Bytes
+---------           --------- --------------
+classes.dex           2905972        2900683
+resources.arsc        1531956         275951
+lib/x86                826272         821785
+lib/x86_64             817071         812170
+lib/arm64-v8a          752657         748852
+lib/armeabi-v7a        658719         656086
+res/                   577509         546451
+assets/                410441         408681
+META-INF/              100297          96740
+kotlin/                 12053          11993
+AndroidManifest.xml      4079           4079
+Other                    1061           1061
+
+
+=== TOP 30 LARGEST FILES (PLAY RELEASE APK) ===
+
+   Size Path                                        
+   ---- ----                                        
+3156916 /classes.dex                                
+1679268 /resources.arsc                             
+ 417524 /lib/x86/libc++_shared.so                   
+ 413399 /lib/x86_64/libc++_shared.so                
+ 397503 /lib/arm64-v8a/libc++_shared.so             
+ 350078 /assets/libretro-detect.sqlite              
+ 345923 /lib/armeabi-v7a/libc++_shared.so           
+ 235709 /lib/x86_64/liblibretrodroid.so             
+ 232199 /lib/x86/liblibretrodroid.so                
+ 222704 /lib/arm64-v8a/liblibretrodroid.so          
+ 183821 /lib/armeabi-v7a/liblibretrodroid.so        
+ 171767 /lib/x86/libomnidroid-chd.so                
+ 163349 /lib/x86_64/libomnidroid-chd.so             
+ 128064 /lib/arm64-v8a/libomnidroid-chd.so          
+ 124911 /lib/armeabi-v7a/libomnidroid-chd.so        
+  76501 /com/google/api/client/googleapis/google.p12
+  73896 /mozilla/public-suffix-list.txt             
+  44684 /META-INF/CERT.SF                           
+  43243 /com/google/api/client/googleapis/google.jks
+  42484 /assets/PublicSuffixDatabase.list           
+  39622 /META-INF/MANIFEST.MF                       
+  25273 /res/SH.png                                 
+  19172 /drive.v3.json                              
+  17929 /res/pu.png                                 
+  15409 /res/eG.png                                 
+  13179 /res/Ww.png                                 
+  11868 /res/aC.png                                 
+  11351 /res/jm.png                                 
+  11041 /res/QM.png                                 
+   9432 /res/Ye.png                                 
+
+
+=== TOP 30 LARGEST FILES (FREE RELEASE APK) ===
+
+   Size Path                                    
+   ---- ----                                    
+2905972 /classes.dex                            
+1531956 /resources.arsc                         
+ 417524 /lib/x86/libc++_shared.so               
+ 413399 /lib/x86_64/libc++_shared.so            
+ 397503 /lib/arm64-v8a/libc++_shared.so         
+ 350078 /assets/libretro-detect.sqlite          
+ 345923 /lib/armeabi-v7a/libc++_shared.so       
+ 235709 /lib/x86_64/liblibretrodroid.so         
+ 232199 /lib/x86/liblibretrodroid.so            
+ 222704 /lib/arm64-v8a/liblibretrodroid.so      
+ 183821 /lib/armeabi-v7a/liblibretrodroid.so    
+ 171767 /lib/x86/libomnidroid-chd.so            
+ 163349 /lib/x86_64/libomnidroid-chd.so         
+ 128064 /lib/arm64-v8a/libomnidroid-chd.so      
+ 124911 /lib/armeabi-v7a/libomnidroid-chd.so    
+  42484 /assets/PublicSuffixDatabase.list       
+  38185 /META-INF/CERT.SF                       
+  34225 /META-INF/MANIFEST.MF                   
+  25273 /res/SH.png                             
+  17929 /res/pu.png                             
+  15409 /res/eG.png                             
+  13179 /res/Ww.png                             
+  11868 /res/aC.png                             
+  11351 /res/jm.png                             
+  11041 /res/QM.png                             
+   9432 /res/Ye.png                             
+   8756 /assets/licenses/soundtouch-lgpl-2.1.txt
+   8744 /res/ia.png                             
+   8249 /res/5M.png                             
+   8208 /assets/dexopt/baseline.prof            
+
+

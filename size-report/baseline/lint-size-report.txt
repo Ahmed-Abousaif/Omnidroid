@@ -1,0 +1,2 @@
+build.gradle.kts: Error: "omnidroid-app" is a Gradle project. To correctly analyze Gradle projects, you should run "gradlew lint" instead. [LintError]
+1 errors, 0 warnings
