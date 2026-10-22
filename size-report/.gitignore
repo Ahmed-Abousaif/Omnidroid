@@ -1,8 +1,0 @@
-# Ignore large temporary and binary build artifacts in size-report
-*.apk
-*.apks
-*.aab
-*.so
-*.sqlite
-*extracted*
-tools/
