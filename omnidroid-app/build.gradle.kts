@@ -91,7 +91,13 @@ android {
             useLegacyPackaging = true
         }
         resources {
-            excludes += setOf("META-INF/DEPENDENCIES", "META-INF/library_release.kotlin_module")
+            excludes += setOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/library_release.kotlin_module",
+                "org/apache/commons/codec/**",
+                "mozilla/public-suffix-list.txt",
+                "com/google/api/client/googleapis/google.jks",
+            )
         }
     }
 
