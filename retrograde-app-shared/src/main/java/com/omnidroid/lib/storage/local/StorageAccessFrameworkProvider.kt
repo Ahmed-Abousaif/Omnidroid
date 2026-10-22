@@ -143,7 +143,10 @@ class StorageAccessFrameworkProvider(private val context: Context) : StorageProv
         val originalDocumentUri = Uri.parse(game.fileUri)
         val originalDocument = DocumentFile.fromSingleUri(context, originalDocumentUri)!!
 
-        val isZipped = originalDocument.isZipped() && originalDocument.name != game.fileName
+        val isZipped =
+            originalDocument.isZipped() &&
+                originalDocument.name != game.fileName &&
+                !game.fileName.endsWith(".zip", ignoreCase = true)
 
         return when {
             isZipped && dataFiles.isEmpty() -> getGameRomFilesZipped(game, originalDocument)
