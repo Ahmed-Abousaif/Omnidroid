@@ -6,6 +6,7 @@ import com.omnidroid.lib.core.GithubCoreDownloader
 import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.core.SliceCatalog
 import com.omnidroid.lib.core.SliceInstallListener
+import com.omnidroid.lib.core.SyncProgressTracker
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.metadata.libretrodb.db.LibretroDatabase
 import com.omnidroid.metadata.libretrodb.db.entity.VerifiedManifest
@@ -34,12 +35,34 @@ class MetadataSliceInstallerImpl(
         force: Boolean,
     ): Set<String> {
         val installed = mutableSetOf<String>()
-        coreIDs.distinct().forEach { core ->
-            runCatching { installed += ensureCore(context, core, force) }
-                .onFailure {
-                    Log.e(TAG, "Slice install failed for ${core.coreName}", it)
-                    Timber.w(it, "Slice install failed for %s", core.coreName)
+        val distinctCores = coreIDs.distinct()
+        val dao = database.sliceDao()
+        val allExpected = distinctCores.flatMap { SliceCatalog.forCore(it) }.distinctBy { it.id }
+        val neededSlices = if (force) {
+            allExpected
+        } else {
+            allExpected.filter { slice ->
+                dao.find(slice.id)?.takeIf { it.schemaVersion == SliceCatalog.SCHEMA_VERSION } == null
+            }
+        }
+        val totalNeeded = neededSlices.size
+        var installedCount = 0
+
+        distinctCores.forEach { core ->
+            runCatching {
+                installed += ensureCore(context, core, force) { sliceId ->
+                    installedCount++
+                    SyncProgressTracker.update(
+                        stepText = "Installing database: ${SliceCatalog.displayName(sliceId)}",
+                        current = installedCount,
+                        total = totalNeeded.coerceAtLeast(installedCount),
+                        isIndeterminate = false,
+                    )
                 }
+            }.onFailure {
+                Log.e(TAG, "Slice install failed for ${core.coreName}", it)
+                Timber.w(it, "Slice install failed for %s", core.coreName)
+            }
         }
         if (installed.isNotEmpty()) {
             listener.onSlicesInstalled(installed)
@@ -51,6 +74,7 @@ class MetadataSliceInstallerImpl(
         context: Context,
         core: CoreID,
         force: Boolean = false,
+        onSliceInstalling: ((String) -> Unit)? = null,
     ): Set<String> {
         val expected = SliceCatalog.forCore(core)
         if (expected.isEmpty()) return emptySet()
@@ -95,6 +119,7 @@ class MetadataSliceInstallerImpl(
                 }
                 return@forEach
             }
+            onSliceInstalling?.invoke(slice.id)
             val imported =
                 runCatching {
                     import(context, core, slice, entry, bundle)
