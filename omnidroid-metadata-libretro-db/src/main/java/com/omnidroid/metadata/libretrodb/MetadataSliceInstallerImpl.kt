@@ -185,8 +185,20 @@ class MetadataSliceInstallerImpl(
         core: CoreID,
     ): SliceBundle? {
         assetBundle(context, "libretro-db/${core.coreName}")?.let { return it }
+        val sharedCore = when (core) {
+            CoreID.MAME2003PLUS -> CoreID.FBNEO
+            CoreID.CITRA -> CoreID.AZAHAR
+            else -> null
+        }
+        if (sharedCore != null) {
+            assetBundle(context, "libretro-db/${sharedCore.coreName}")?.let { return it }
+        }
         assetBundle(context, "libretro-db/bundled")?.let { return it }
-        return githubBundle(core)
+        val bundle = githubBundle(core)
+        if (bundle == null && sharedCore != null) {
+            return githubBundle(sharedCore)
+        }
+        return bundle
     }
 
     private fun assetBundle(
