@@ -6,10 +6,14 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "arcade_sets",
-    indices = [Index(value = ["setHash"], unique = true)],
+    indices = [
+        Index(value = ["setHash"], unique = true),
+        Index(value = ["setName"]),
+    ],
 )
 data class ArcadeSet(
-    @PrimaryKey(autoGenerate = true) val id: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val setName: String,
     val setHash: Long,
     val systems: String,
 )

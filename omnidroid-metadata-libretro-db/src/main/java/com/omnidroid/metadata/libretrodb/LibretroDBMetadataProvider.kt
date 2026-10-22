@@ -53,20 +53,66 @@ class LibretroDBMetadataProvider(
     override suspend fun resolveArcade(
         setName: String,
         memberCrcs: List<String>,
-    ): String? {
-        val setHash = ScanKeys.romHash(setName) ?: return null
-        val set = ovgdbManager.detectInstance.arcadeSets().find(setHash) ?: return null
-        val systems = set.systems.split(',')
-        if (systems.size == 1) return systems.first()
-        val hits = HashMap<String, Int>()
-        memberCrcs.distinct().chunked(400).forEach { chunk ->
-            ovgdbManager.detectInstance.arcadeMarkers().matching(setHash, chunk).forEach { marker ->
-                hits[marker.system] = (hits[marker.system] ?: 0) + 1
+    ): com.omnidroid.lib.library.metadata.ArcadeResolution? {
+        val cleanName = ScanKeys.romBase(setName)
+        val directHash = ScanKeys.romHash(cleanName)
+
+        // Stage 1: Direct driver lookup (e.g. "ddragon", "gunbird", "tetris")
+        var matchedSet: com.omnidroid.metadata.libretrodb.detect.ArcadeSet? =
+            directHash?.let { ovgdbManager.detectInstance.arcadeSets().find(it) }
+        var matchedDriver: String? = matchedSet?.setName ?: cleanName
+
+        // Stage 2: Fallback title matching against arcade database slice (e.g. "double_dragon" -> "Double Dragon" -> ddragon)
+        if (matchedSet == null) {
+            val arcadeRom =
+                findByLooseName(SystemID.FBNEO.dbname, cleanName)
+                    ?: findByLooseName(SystemID.MAME2003PLUS.dbname, cleanName)
+            if (arcadeRom?.romHash != null) {
+                val candidateSet = ovgdbManager.detectInstance.arcadeSets().find(arcadeRom.romHash)
+                if (candidateSet != null) {
+                    matchedSet = candidateSet
+                    matchedDriver = candidateSet.setName
+                }
             }
         }
-        val mameHits = hits[SystemID.MAME2003PLUS.dbname] ?: 0
-        val fbneoHits = hits[SystemID.FBNEO.dbname] ?: 0
-        return if (mameHits > fbneoHits) SystemID.MAME2003PLUS.dbname else SystemID.FBNEO.dbname
+
+        // Stage 3: Fallback member CRC matching (inspecting files inside the zip)
+        if (matchedSet == null && memberCrcs.isNotEmpty()) {
+            val dao = ovgdbManager.dbInstance.gameDao()
+            for (crc in memberCrcs.take(30)) {
+                val rom =
+                    dao.findBySystemAndCrc(SystemID.FBNEO.dbname, crc)
+                        ?: dao.findBySystemAndCrc(SystemID.MAME2003PLUS.dbname, crc)
+                if (rom?.romHash != null) {
+                    val found = ovgdbManager.detectInstance.arcadeSets().find(rom.romHash)
+                    if (found != null) {
+                        matchedSet = found
+                        matchedDriver = found.setName
+                        break
+                    }
+                }
+            }
+        }
+
+        if (matchedSet == null || matchedDriver == null) return null
+
+        val systems = matchedSet.systems.split(',')
+        val systemId =
+            if (systems.size == 1) {
+                systems.first()
+            } else {
+                val hits = HashMap<String, Int>()
+                memberCrcs.distinct().chunked(400).forEach { chunk ->
+                    ovgdbManager.detectInstance.arcadeMarkers().matching(matchedSet.setHash, chunk).forEach { marker ->
+                        hits[marker.system] = (hits[marker.system] ?: 0) + 1
+                    }
+                }
+                val mameHits = hits[SystemID.MAME2003PLUS.dbname] ?: 0
+                val fbneoHits = hits[SystemID.FBNEO.dbname] ?: 0
+                if (mameHits > fbneoHits) SystemID.MAME2003PLUS.dbname else SystemID.FBNEO.dbname
+            }
+
+        return com.omnidroid.lib.library.metadata.ArcadeResolution(systemId, matchedDriver)
     }
 
     override suspend fun findCartridge(crc: String): GameMetadata? {
@@ -125,7 +171,7 @@ class LibretroDBMetadataProvider(
                 serial = null,
                 code = null,
                 size = null,
-                romHash = null,
+                romHash = it.romHash,
                 normalizedName = it.normalizedName,
                 rawName = it.rawName,
             )
@@ -146,6 +192,9 @@ class LibretroDBMetadataProvider(
             "re1" to "resident evil",
             "re2" to "resident evil 2",
             "re3" to "resident evil 3",
+            "bros" to "brothers",
+            "pacman" to "pac man",
+            "ddragon" to "double dragon",
         )
 
     private val regionOrTagSuffix =
