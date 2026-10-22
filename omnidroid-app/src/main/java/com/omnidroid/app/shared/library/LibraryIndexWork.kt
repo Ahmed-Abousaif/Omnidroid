@@ -32,6 +32,11 @@ class LibraryIndexWork
 
             setForegroundAsync(foregroundInfo)
 
+            com.omnidroid.lib.core.SyncProgressTracker.update(
+                stepText = applicationContext.getString(com.omnidroid.R.string.library_scanning),
+                isIndeterminate = true,
+            )
+
             val result =
                 withContext(Dispatchers.IO) {
                     kotlin.runCatching {

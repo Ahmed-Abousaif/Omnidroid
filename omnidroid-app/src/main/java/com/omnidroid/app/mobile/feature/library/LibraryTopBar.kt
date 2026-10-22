@@ -6,13 +6,16 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,6 +34,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -59,6 +63,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -87,6 +92,7 @@ import com.omnidroid.app.mobile.shared.compose.ui.SystemStatusIndicators
 import com.omnidroid.app.mobile.shared.compose.ui.rememberDisplayCutoutInsetsForTopBar
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
+import com.omnidroid.lib.core.SyncProgress
 
 val LibraryTopBarRowHeight = 40.dp
 val LibraryTopBarPortraitHeight = 82.dp
@@ -97,6 +103,7 @@ private val LibrarySearchFieldHeight = 36.dp
 fun LibraryTopBar(
     modifier: Modifier = Modifier,
     operationInProgress: Boolean,
+    syncProgress: SyncProgress? = null,
     gamepadConnected: Boolean,
     onScanPressed: () -> Unit,
     onCastPressed: () -> Unit,
@@ -167,6 +174,7 @@ fun LibraryTopBar(
                 modifier = modifier,
                 gamepadConnected = gamepadConnected,
                 operationInProgress = operationInProgress,
+                syncProgress = syncProgress,
                 onBackPressed = onBackPressed,
             )
         } else if (portrait && !overlayMode && !showBack) {
@@ -174,6 +182,7 @@ fun LibraryTopBar(
                 modifier = modifier,
                 columnWidth = portraitColumnWidth,
                 operationInProgress = operationInProgress,
+                syncProgress = syncProgress,
                 gamepadConnected = gamepadConnected,
                 searchQuery = searchQuery,
                 searchExpanded = searchExpanded,
@@ -400,8 +409,15 @@ fun LibraryTopBar(
                     }
                 }
 
-                AnimatedVisibility(operationInProgress) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                AnimatedVisibility(
+                    visible = operationInProgress,
+                    enter = fadeIn(animationSpec = tween(180)) + expandVertically(animationSpec = tween(180)),
+                    exit = fadeOut(animationSpec = tween(180)) + shrinkVertically(animationSpec = tween(180)),
+                ) {
+                    SyncProgressBar(
+                        syncProgress = syncProgress,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
             }
             }
@@ -414,6 +430,7 @@ private fun PortraitHomeTopBar(
     modifier: Modifier,
     columnWidth: Dp,
     operationInProgress: Boolean,
+    syncProgress: SyncProgress? = null,
     gamepadConnected: Boolean,
     searchQuery: String,
     searchExpanded: Boolean,
@@ -527,12 +544,18 @@ private fun PortraitHomeTopBar(
                 )
             }
         }
-        if (operationInProgress) {
-            LinearProgressIndicator(
-                modifier =
-                    widthModifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = adaptiveSpec.topBarPortraitHeight - 2.dp),
+        AnimatedVisibility(
+            visible = operationInProgress,
+            enter = fadeIn(animationSpec = tween(180)) + expandVertically(animationSpec = tween(180)),
+            exit = fadeOut(animationSpec = tween(180)) + shrinkVertically(animationSpec = tween(180)),
+            modifier =
+                widthModifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = adaptiveSpec.topBarPortraitHeight),
+        ) {
+            SyncProgressBar(
+                syncProgress = syncProgress,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -543,6 +566,7 @@ private fun PortraitDetailsTopBar(
     modifier: Modifier,
     gamepadConnected: Boolean,
     operationInProgress: Boolean,
+    syncProgress: SyncProgress? = null,
     onBackPressed: () -> Unit,
 ) {
     val adaptiveSpec = LocalAdaptiveLayout.current
@@ -565,8 +589,15 @@ private fun PortraitDetailsTopBar(
             Spacer(modifier = Modifier.weight(1f))
             SystemStatusIndicators(gamepadConnected = gamepadConnected)
         }
-        if (operationInProgress) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        AnimatedVisibility(
+            visible = operationInProgress,
+            enter = fadeIn(animationSpec = tween(180)) + expandVertically(animationSpec = tween(180)),
+            exit = fadeOut(animationSpec = tween(180)) + shrinkVertically(animationSpec = tween(180)),
+        ) {
+            SyncProgressBar(
+                syncProgress = syncProgress,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }
@@ -819,3 +850,118 @@ fun FloatingChromeButton(
         }
     }
 }
+
+@Composable
+fun SyncProgressBar(
+    syncProgress: SyncProgress?,
+    modifier: Modifier = Modifier,
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulseTransition")
+    val dotAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1.0f,
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(800, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "pulseAlpha",
+    )
+
+    val displayText =
+        syncProgress?.stepText?.ifBlank { null }
+            ?: stringResource(R.string.library_scanning)
+    val hasCount = (syncProgress?.current ?: 0) > 0 && (syncProgress?.total ?: 0) > 0
+    val targetProgress =
+        if (hasCount) {
+            (syncProgress!!.current.toFloat() / syncProgress.total.toFloat()).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+    val animatedProgress by animateFloatAsState(
+        targetValue = targetProgress,
+        animationSpec = tween(300, easing = FastOutSlowInEasing),
+        label = "syncProgressAnimation",
+    )
+
+    Surface(
+        modifier = modifier,
+        color = Color(0xF2121212),
+        border = BorderStroke(0.5.dp, Color(0xFF262626)),
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(20.dp)
+                        .padding(horizontal = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f, fill = false),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(LibraryNeonGreen.copy(alpha = dotAlpha)),
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = displayText,
+                        style =
+                            MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                letterSpacing = 0.2.sp,
+                            ),
+                        color = Color.White.copy(alpha = 0.92f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+
+                if (hasCount) {
+                    Text(
+                        text = "${syncProgress!!.current} of ${syncProgress.total}",
+                        style =
+                            MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 0.3.sp,
+                            ),
+                        color = LibraryNeonGreen,
+                        maxLines = 1,
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
+            }
+
+            if (syncProgress != null && !syncProgress.isIndeterminate && hasCount) {
+                LinearProgressIndicator(
+                    progress = { animatedProgress },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(2.dp),
+                    color = LibraryNeonGreen,
+                    trackColor = Color(0x3338EF7D),
+                )
+            } else {
+                LinearProgressIndicator(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(2.dp),
+                    color = LibraryNeonGreen,
+                    trackColor = Color(0x3338EF7D),
+                )
+            }
+        }
+    }
+}
+

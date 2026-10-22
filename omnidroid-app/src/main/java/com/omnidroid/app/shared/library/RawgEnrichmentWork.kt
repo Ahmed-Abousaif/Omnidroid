@@ -11,6 +11,7 @@ import com.omnidroid.app.utils.android.createSyncForegroundInfo
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.RawgGameMetadata
 import com.omnidroid.metadata.rawg.RawgMetadataRepository
+import com.omnidroid.lib.core.SyncProgressTracker
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -58,8 +59,14 @@ class RawgEnrichmentWork
                     val missingIds = dao.selectGameIdsMissingMetadata()
                     Timber.i("RAWG enrichment: %d games missing metadata", missingIds.size)
 
-                    for (gameId in missingIds) {
+                    for ((index, gameId) in missingIds.withIndex()) {
                         val game = retrogradeDatabase.gameDao().selectById(gameId) ?: continue
+                        SyncProgressTracker.update(
+                            stepText = "Fetching info: ${game.displayName}",
+                            current = index + 1,
+                            total = missingIds.size,
+                            isIndeterminate = false,
+                        )
                         val fetched =
                             rawgMetadataRepository.fetchForGame(
                                 title = game.displayName,
