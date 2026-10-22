@@ -28,8 +28,6 @@ signing.properties
 
 # Private native engine source (kept in separate private repo)
 libretrodroid/
-tmp-libretrodroid/
-tmp-core-test/
 
 # Logs & error reports
 *.log
