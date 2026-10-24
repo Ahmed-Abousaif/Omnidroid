@@ -37,4 +37,6 @@ data class LibretroRom(
     val normalizedName: String? = null,
     @ColumnInfo(name = "rawName")
     val rawName: String? = null,
+    @ColumnInfo(name = "thumbnailPath")
+    val thumbnailPath: String? = null,
 )

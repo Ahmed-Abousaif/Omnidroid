@@ -140,7 +140,6 @@ object CoverUtils {
             }
             .okHttpClient {
                 OkHttpClient.Builder()
-                    .addInterceptor(LibretroThumbnailFallbackInterceptor)
                     .addInterceptor(SecureCoverInterceptor)
                     .addNetworkInterceptor(ThrottleFailedThumbnailsInterceptor)
                     .build()

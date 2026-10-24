@@ -3,7 +3,7 @@ package com.omnidroid.lib.core
 import com.omnidroid.lib.library.CoreID
 
 object SliceCatalog {
-    const val SCHEMA_VERSION = 3
+    const val SCHEMA_VERSION = 4
 
     data class Slice(
         val id: String,
@@ -40,6 +40,7 @@ object SliceCatalog {
             Slice("ps2", listOf("ps2"), listOf("armsx2")),
             Slice("gamecube", listOf("gamecube"), listOf("dolphin")),
             Slice("wii", listOf("wii"), listOf("dolphin")),
+            Slice("wiiu", listOf("wiiu"), listOf("cemu")),
             Slice("dreamcast", listOf("dreamcast"), listOf("flycast")),
         )
 
@@ -78,6 +79,7 @@ object SliceCatalog {
             "3ds" -> "Nintendo 3DS"
             "gamecube" -> "GameCube"
             "wii" -> "Wii"
+            "wiiu" -> "Wii U"
             "dreamcast" -> "Dreamcast"
             "atari2600" -> "Atari 2600"
             "atari7800" -> "Atari 7800"

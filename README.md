@@ -86,7 +86,7 @@ If Omnidroid helps you play, you can fuel continued development here:
 
 ### 1. Installation
 
-Download the latest APK from the [Releases](https://github.com/Ahmed-Abousaif/Omnidroid/releases) page and install it on your Android device (Android 8.0+ / API 23+ required).
+Download the latest APK from the [Releases](https://github.com/Ahmed-Abousaif/Omnidroid/releases) page and install it on your Android device (Android 7.0+ / API 24+ required).
 
 ### 2. Adding ROMs
 
@@ -240,7 +240,7 @@ Omnidroid/
 1. **Prerequisites:**
    - **Android Studio:** Ladybug (2024.2+) or Meerkat recommended.
    - **JDK:** Java 17 (e.g. Eclipse Temurin 17 or OpenJDK 17).
-   - **Android SDK:** `compileSdk` / `targetSdk` **36**, `minSdk` **23**, Build Tools **36.0.0**.
+   - **Android SDK:** `compileSdk` / `targetSdk` **36**, `minSdk` **24**, Build Tools **36.0.0**.
    - **NDK & CMake:** Installed via Android Studio SDK Manager.
 
 2. **Cloning the Repository:**

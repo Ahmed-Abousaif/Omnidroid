@@ -23,7 +23,7 @@ class CoverSearcher(private val dbManager: LibretroDBManager) {
         return results
             .mapNotNull { rom ->
                 val rawName = rom.rawName ?: rom.name ?: return@mapNotNull null
-                val url = computeCoverUrl(system, rawName) ?: return@mapNotNull null
+                val url = computeCoverUrl(system, rawName, rom.thumbnailPath) ?: return@mapNotNull null
                 val score = TokenMatcher.bestScore(cleaned, rom.normalizedName ?: "")
                 CoverSearchResult(rawName, url, score)
             }
@@ -32,7 +32,7 @@ class CoverSearcher(private val dbManager: LibretroDBManager) {
     }
 
     companion object {
-        private val THUMB_REPLACE = Regex("[&*/:`<>?\\\\|\"#%^~;\\[\\]{}@+=!\$]")
+        private val LIBRETRO_ILLEGAL = Regex("[&*/:`<>?\\\\|]")
         private val CONTROL_CHARS = Regex("[\\p{Cntrl}\\u0000-\\u001F\\u007F-\\u009F]")
         private val PATH_TRAVERSAL = Regex("\\.{2,}")
         private const val MAX_TITLE_LENGTH = 200
@@ -42,18 +42,28 @@ class CoverSearcher(private val dbManager: LibretroDBManager) {
         fun computeCoverUrl(
             system: GameSystem?,
             name: String?,
+            thumbnailPath: String? = null,
         ): String? {
-            if (system == null || name.isNullOrBlank()) return null
+            if (system == null) return null
             var systemName = system.libretroFullName
             if (system.libretroFullName == "FBNeo - Arcade Games") {
                 systemName = "MAME"
             }
             if (!systemName.all { it.isLetterOrDigit() || it == ' ' || it == '-' }) return null
+            val stored = thumbnailPath?.takeIf { it.isNotBlank() }
+            if (stored != null) {
+                if (stored.contains("..") || stored.length > MAX_TITLE_LENGTH + 32) return null
+                val segments = stored.split('/').filter { it.isNotBlank() }
+                if (segments.size !in 2..3) return null
+                if (segments.any { segment -> segment.any { it.isISOControl() || it == '\\' } }) return null
+                return "$BASE_THUMBNAIL_URL/${encode(systemName)}/" + segments.joinToString("/") { encode(it) }
+            }
+            if (name.isNullOrBlank()) return null
             val cleanName =
                 name
                     .replace(CONTROL_CHARS, "")
                     .replace(PATH_TRAVERSAL, "_")
-                    .replace(THUMB_REPLACE, "_")
+                    .replace(LIBRETRO_ILLEGAL, "_")
                     .trim()
                     .trim('.', '_', ' ')
             if (cleanName.isBlank() || cleanName.length > MAX_TITLE_LENGTH) return null

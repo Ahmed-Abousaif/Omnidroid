@@ -6,4 +6,5 @@ data class CandidateRom(
     val romHash: Long? = null,
     val normalizedName: String?,
     val rawName: String?,
+    val thumbnailPath: String? = null,
 )

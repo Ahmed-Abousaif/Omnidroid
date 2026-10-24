@@ -174,8 +174,8 @@ class MetadataSliceInstallerImpl(
                     db.execSQL("DELETE FROM games WHERE system IN ($systems)")
                     db.execSQL(
                         """
-                        INSERT INTO games (name, system, crc32, serial, code, size, romHash, normalizedName, rawName)
-                        SELECT name, system, crc32, serial, code, size, romHash, normalizedName, rawName FROM slice.games
+                        INSERT INTO games (name, system, crc32, serial, code, size, romHash, normalizedName, rawName, thumbnailPath)
+                        SELECT name, system, crc32, serial, code, size, romHash, normalizedName, rawName, thumbnailPath FROM slice.games
                         """.trimIndent(),
                     )
                     db.execSQL(

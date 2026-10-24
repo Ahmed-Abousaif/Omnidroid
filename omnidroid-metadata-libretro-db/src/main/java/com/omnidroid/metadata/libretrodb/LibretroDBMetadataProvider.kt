@@ -46,7 +46,7 @@ class LibretroDBMetadataProvider(
             system = systemId,
             romName = null,
             developer = null,
-            thumbnail = computeCoverUrl(GameSystem.findById(systemId), coverTitle),
+            thumbnail = computeCoverUrl(GameSystem.findById(systemId), coverTitle, row?.thumbnailPath),
         )
     }
 
@@ -174,6 +174,7 @@ class LibretroDBMetadataProvider(
                 romHash = it.romHash,
                 normalizedName = it.normalizedName,
                 rawName = it.rawName,
+                thumbnailPath = it.thumbnailPath,
             )
         }
     }
@@ -283,5 +284,6 @@ class LibretroDBMetadataProvider(
     private fun computeCoverUrl(
         system: GameSystem?,
         name: String?,
-    ): String? = CoverSearcher.computeCoverUrl(system, name)
+        thumbnailPath: String? = null,
+    ): String? = CoverSearcher.computeCoverUrl(system, name, thumbnailPath)
 }

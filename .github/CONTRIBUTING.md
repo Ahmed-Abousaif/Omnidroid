@@ -75,7 +75,7 @@ Have an idea for an enhancement or new capability?
 - **JDK:** Java Development Kit (JDK) 17 (e.g., Eclipse Temurin 17 or OpenJDK 17).
 - **Android SDK:**
   - `compileSdk` & `targetSdk`: 36
-  - `minSdk`: 23
+  - `minSdk`: 24
   - Build Tools: 36.0.0
   - NDK & CMake (for C++/native modules and submodules).
 - **Git:** Git 2.30+ with submodule support.

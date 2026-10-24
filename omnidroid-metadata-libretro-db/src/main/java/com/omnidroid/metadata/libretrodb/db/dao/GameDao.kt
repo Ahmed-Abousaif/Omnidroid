@@ -86,7 +86,7 @@ interface GameDao {
 
     @Query(
         """
-        SELECT name, system, romHash, normalizedName, rawName FROM games
+        SELECT name, system, romHash, normalizedName, rawName, thumbnailPath FROM games
         WHERE system = :system AND normalizedName LIKE :token || '%'
         ORDER BY normalizedName ASC
         LIMIT :limit
@@ -100,7 +100,7 @@ interface GameDao {
 
     @Query(
         """
-        SELECT name, system, romHash, normalizedName, rawName FROM games
+        SELECT name, system, romHash, normalizedName, rawName, thumbnailPath FROM games
         WHERE system = :system AND normalizedName LIKE '% ' || :token || '%'
         ORDER BY normalizedName ASC
         LIMIT :limit
@@ -126,7 +126,7 @@ interface GameDao {
 
     @Query(
         """
-        SELECT name, system, romHash, normalizedName, rawName FROM games
+        SELECT name, system, romHash, normalizedName, rawName, thumbnailPath FROM games
         WHERE system = :system AND normalizedName LIKE :query || '%'
         ORDER BY normalizedName ASC
         LIMIT :limit
@@ -140,7 +140,7 @@ interface GameDao {
 
     @Query(
         """
-        SELECT name, system, romHash, normalizedName, rawName FROM games
+        SELECT name, system, romHash, normalizedName, rawName, thumbnailPath FROM games
         WHERE system = :system AND (
             normalizedName LIKE '% ' || :query || '%' OR
             name LIKE '%' || :query || '%'
