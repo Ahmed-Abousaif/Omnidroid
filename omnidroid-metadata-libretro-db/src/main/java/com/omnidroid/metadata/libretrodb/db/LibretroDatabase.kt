@@ -19,6 +19,6 @@ abstract class LibretroDatabase : RoomDatabase() {
     abstract fun sliceDao(): SliceDao
 
     companion object {
-        const val VERSION = 13
+        const val VERSION = 14
     }
 }
