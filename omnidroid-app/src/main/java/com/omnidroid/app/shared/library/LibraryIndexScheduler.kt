@@ -34,9 +34,11 @@ object LibraryIndexScheduler {
 
     fun cancelLibrarySync(applicationContext: Context) {
         WorkManager.getInstance(applicationContext).cancelUniqueWork(LIBRARY_INDEX_WORK_ID)
+        com.omnidroid.lib.core.SyncProgressTracker.clear()
     }
 
     fun cancelCoreUpdate(applicationContext: Context) {
         WorkManager.getInstance(applicationContext).cancelUniqueWork(CORE_UPDATE_WORK_ID)
+        com.omnidroid.lib.core.SyncProgressTracker.clear()
     }
 }

@@ -1,6 +1,7 @@
 package com.omnidroid.app.mobile.feature.profile
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -77,6 +78,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -214,6 +216,7 @@ fun ProfileScreen(
                         achievements = state.achievements,
                         unlockedConsoles = state.unlockedConsoles,
                         totalConsoles = state.totalConsoles,
+                        isLandscape = isLandscape,
                         isLargeScreen = isLargeScreen,
                     )
 
@@ -280,6 +283,7 @@ fun ProfileScreen(
                         achievements = state.achievements,
                         unlockedConsoles = state.unlockedConsoles,
                         totalConsoles = state.totalConsoles,
+                        isLandscape = isLandscape,
                         isLargeScreen = true,
                     )
 
@@ -335,6 +339,7 @@ fun ProfileScreen(
                     achievements = state.achievements,
                     unlockedConsoles = state.unlockedConsoles,
                     totalConsoles = state.totalConsoles,
+                    isLandscape = isLandscape,
                     isLargeScreen = false,
                 )
 
@@ -804,12 +809,12 @@ private fun ProfileStreakCard(
 // Console Achievements Card
 // ─────────────────────────────────────────────────────────────────────────────
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ProfileAchievementsCard(
     achievements: List<ConsoleAchievement>,
     unlockedConsoles: Int,
     totalConsoles: Int,
+    isLandscape: Boolean = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE,
     isLargeScreen: Boolean = false,
 ) {
     Card(
@@ -856,28 +861,29 @@ private fun ProfileAchievementsCard(
 
             Spacer(modifier = Modifier.height(if (isLargeScreen) 14.dp else 12.dp))
 
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val spacing = if (isLargeScreen) 10.dp else 8.dp
-                val minCell = if (isLargeScreen) 78.dp else 64.dp
-                val columns =
-                    maxOf(
-                        1,
-                        ((maxWidth + spacing) / (minCell + spacing)).toInt(),
-                    )
-                val cellWidth = (maxWidth - spacing * (columns - 1)) / columns
+            val spacing = if (isLargeScreen) 10.dp else 8.dp
+            val columns = if (isLandscape) 5 else 4
 
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(spacing),
-                    verticalArrangement = Arrangement.spacedBy(spacing),
-                    maxItemsInEachRow = columns,
-                ) {
-                    achievements.forEach { achievement ->
-                        ConsoleAchievementItem(
-                            achievement = achievement,
-                            modifier = Modifier.width(cellWidth),
-                            isLargeScreen = isLargeScreen,
-                        )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(spacing),
+            ) {
+                achievements.chunked(columns).forEach { rowAchievements ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(spacing),
+                    ) {
+                        rowAchievements.forEach { achievement ->
+                            ConsoleAchievementItem(
+                                achievement = achievement,
+                                modifier = Modifier.weight(1f),
+                                isLargeScreen = isLargeScreen,
+                            )
+                        }
+                        val emptySlots = columns - rowAchievements.size
+                        repeat(emptySlots) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
                     }
                 }
             }

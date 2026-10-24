@@ -947,15 +947,21 @@ private fun LibraryGameRow(
             }
             when {
                 continueAction -> {
-                    Text(
-                        text = stringResource(R.string.continue_playing),
-                        style =
-                            MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                            ),
+                    Surface(
+                        shape = RoundedCornerShape((rowCorner - coverInset).coerceAtLeast(0.dp)),
                         color = LibraryNeonGreen,
-                        maxLines = 1,
-                    )
+                    ) {
+                        Text(
+                            text = stringResource(R.string.continue_playing),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            style =
+                                MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                ),
+                            color = Color.White,
+                            maxLines = 1,
+                        )
+                    }
                 }
                 game.isFavorite -> {
                     Icon(

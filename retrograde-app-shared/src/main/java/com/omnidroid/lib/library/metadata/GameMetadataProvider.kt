@@ -2,6 +2,11 @@ package com.omnidroid.lib.library.metadata
 
 import com.omnidroid.lib.library.scan.MetadataKey
 
+data class ArcadeResolution(
+    val systemId: String,
+    val driverName: String,
+)
+
 interface GameMetadataProvider {
     val databaseVersion: Int
 
@@ -17,7 +22,7 @@ interface GameMetadataProvider {
     suspend fun resolveArcade(
         setName: String,
         memberCrcs: List<String>,
-    ): String?
+    ): ArcadeResolution?
 
     suspend fun findCartridge(crc: String): GameMetadata?
 }

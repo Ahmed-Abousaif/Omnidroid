@@ -884,6 +884,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(),
                 operationInProgress =
                     libraryState.operationInProgress || mainUIState.operationInProgress,
+                syncProgress = libraryState.syncProgress,
                 gamepadConnected = gamepadConnected,
                 onScanPressed = { libraryViewModel.syncLibrary(this@MainActivity) },
                 onCastPressed = {

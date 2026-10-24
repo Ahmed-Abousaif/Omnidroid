@@ -10,6 +10,8 @@ import com.omnidroid.app.shared.library.LibraryIndexScheduler
 import com.omnidroid.app.shared.library.PendingOperationsMonitor
 import com.omnidroid.app.shared.settings.StorageFrameworkPickerLauncher
 import com.omnidroid.common.paging.buildFlowPaging
+import com.omnidroid.lib.core.SyncProgress
+import com.omnidroid.lib.core.SyncProgressTracker
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.MetaSystemID
 import com.omnidroid.lib.library.db.RetrogradeDatabase
@@ -52,6 +54,7 @@ class LibraryViewModel(
         val sidebarSystems: List<MetaSystemID> = emptyList(),
         val continueGame: Game? = null,
         val operationInProgress: Boolean = false,
+        val syncProgress: SyncProgress? = null,
         val zoomDensity: Int = 0,
         val layout: LibraryLayout = LibraryLayout.GRID,
         val portrait: Boolean = false,
@@ -61,6 +64,7 @@ class LibraryViewModel(
 
     private data class LibraryChrome(
         val operationInProgress: Boolean,
+        val syncProgress: SyncProgress?,
         val zoomDensity: Int,
         val layout: LibraryLayout,
         val portrait: Boolean,
@@ -82,6 +86,7 @@ class LibraryViewModel(
     private val zoomDensityFlow = MutableStateFlow(readZoomDensity())
     private val layoutFlow = MutableStateFlow(readLayout())
     private val portraitFlow = MutableStateFlow(readPortrait())
+    private val syncProgressFlow = SyncProgressTracker.progress
     private val presentationFlow =
         combine(zoomDensityFlow, layoutFlow, portraitFlow) { zoom, layout, portrait ->
             LibraryPresentation(zoom, layout, portrait)
@@ -96,14 +101,20 @@ class LibraryViewModel(
             sidebarSystems(),
             continueGame(),
             combine(
-                scanRequested,
-                libraryOperationInProgress,
+                combine(
+                    scanRequested,
+                    libraryOperationInProgress,
+                    syncProgressFlow,
+                ) { requested, inProgress, progress ->
+                    Pair(requested || inProgress, progress)
+                },
                 presentationFlow,
                 retrogradeDb.gameDao().selectSystemsWithCount(),
                 startupFilterFlow,
-            ) { requested, inProgress, presentation, counts, startup ->
+            ) { opStatus, presentation, counts, startup ->
                 LibraryChrome(
-                    requested || inProgress,
+                    opStatus.first,
+                    opStatus.second,
                     presentation.zoomDensity,
                     presentation.layout,
                     presentation.portrait,
@@ -123,6 +134,7 @@ class LibraryViewModel(
                 sidebarSystems = sidebarSystems,
                 continueGame = continueGames.firstOrNull(),
                 operationInProgress = chrome.operationInProgress,
+                syncProgress = if (chrome.operationInProgress) chrome.syncProgress else null,
                 zoomDensity = chrome.zoomDensity,
                 layout = chrome.layout,
                 portrait = chrome.portrait,

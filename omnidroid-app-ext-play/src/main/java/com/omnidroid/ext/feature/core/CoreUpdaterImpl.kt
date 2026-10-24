@@ -16,6 +16,7 @@ import com.omnidroid.lib.core.CoreLibraryLocator
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.GithubCoreDownloader
 import com.omnidroid.lib.core.MetadataSliceInstaller
+import com.omnidroid.lib.core.SyncProgressTracker
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.storage.DirectoriesManager
@@ -43,8 +44,17 @@ class CoreUpdaterImpl(
         coreIDs: List<CoreID>,
     ) {
         val missing = coreIDs.filter { CoreLibraryLocator.findBundled(context, it) == null }
+        val total = missing.size
 
         if (missing.isNotEmpty() && isInstalledFromPlayStore(context)) {
+            missing.forEachIndexed { index, coreID ->
+                SyncProgressTracker.update(
+                    stepText = "Installing core: ${coreID.coreDisplayName}",
+                    current = index + 1,
+                    total = total,
+                    isIndeterminate = false,
+                )
+            }
             val installManager = SplitInstallManagerFactory.create(context)
             val installSession = installCores(installManager, missing, context)
 
@@ -55,12 +65,16 @@ class CoreUpdaterImpl(
             }
         }
 
-        coreIDs
-            .filter { CoreLibraryLocator.findBundled(context, it) == null }
-            .forEach { coreID ->
-                log("Falling back to GitHub download for ${coreID.coreName}")
-                githubCoreDownloader.retrieve(coreID)
-            }
+        missing.forEachIndexed { index, coreID ->
+            SyncProgressTracker.update(
+                stepText = "Downloading core: ${coreID.coreDisplayName}",
+                current = index + 1,
+                total = total,
+                isIndeterminate = false,
+            )
+            log("Falling back to GitHub download for ${coreID.coreName}")
+            githubCoreDownloader.retrieve(coreID)
+        }
 
         try {
             installAssets(context, coreIDs)
