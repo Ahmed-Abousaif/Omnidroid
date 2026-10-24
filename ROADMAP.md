@@ -6,6 +6,12 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ## Completed
 
+### v2.5.4
+
+- Fixed missing box art when a console database name does not match the Libretro thumbnail filename ([#26](https://github.com/Ahmed-Abousaif/Omnidroid/issues/26)) (_Deus0_)
+- PlayStation 2 BIOS follows the game region, and USA, Europe, or Japan can be chosen in settings ([#25](https://github.com/Ahmed-Abousaif/Omnidroid/issues/25)) (_Deus0_)
+- Fixed Nintendo DS and 3DS game screen size in landscape
+
 ### v2.5.0
 
 - Added customizable startup screen (launch directly into All Games, Favorites, or a chosen console)

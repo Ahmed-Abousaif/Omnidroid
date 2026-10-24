@@ -2,6 +2,8 @@ package com.omnidroid.lib.core.assetsmanager
 
 import android.content.SharedPreferences
 import android.net.Uri
+import com.omnidroid.lib.bios.BiosManager
+import com.omnidroid.lib.bios.Ps2Bios
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.GithubCoreDownloader
 import com.omnidroid.lib.library.CoreID
@@ -28,139 +30,61 @@ class PCEE2AssetsManager : CoreID.AssetsManager {
     ) {
         withContext(Dispatchers.IO) {
             val systemDir = directoriesManager.getSystemDirectory()
-            val pcsx2BiosDir = File(systemDir, "pcsx2/bios").apply { mkdirs() }
-
-            // 1. Sync any existing local PS2 BIOS from system/ to system/pcsx2/bios/
-            val ps2BiosNames = listOf(
-                "scph39001.bin",
-                "scph39004.bin",
-                "scph39000.bin",
-                "scph70012.bin",
-                "scph77001.bin",
-            )
-            var hasLocalBios = false
-            for (biosName in ps2BiosNames) {
-                val src = File(systemDir, biosName)
-                val dest = File(pcsx2BiosDir, biosName)
-                if (src.exists()) {
-                    hasLocalBios = true
-                    if (!dest.exists() || dest.length() != src.length()) {
-                        try {
-                            src.copyTo(dest, overwrite = true)
-                            Timber.d("PCEE2AssetsManager: Copied $biosName to ${dest.path}")
-                        } catch (e: Exception) {
-                            Timber.e(e, "PCEE2AssetsManager: Error copying $biosName to $dest")
-                        }
-                    }
-                } else if (dest.exists()) {
-                    hasLocalBios = true
-                }
-            }
-
-            // Cross-alias standard BIOS: if user has scph39001.bin (USA), alias to European and Japanese names
-            val usBios = File(pcsx2BiosDir, "scph39001.bin")
-            if (usBios.exists()) {
-                val euBios = File(pcsx2BiosDir, "scph39004.bin")
-                if (!euBios.exists()) {
-                    try { usBios.copyTo(euBios, overwrite = false) } catch (_: Exception) {}
-                }
-                val jpBios = File(pcsx2BiosDir, "scph39000.bin")
-                if (!jpBios.exists()) {
-                    try { usBios.copyTo(jpBios, overwrite = false) } catch (_: Exception) {}
-                }
-            }
-
-            // 2. If no BIOS is found and update/download is needed, pull the remote assets
-            if (updatedRequested(directoriesManager, sharedPreferences, hasLocalBios)) {
-                try {
-                    val response = coreUpdaterApi.downloadZip(PCEE2_ASSETS_URL.toString())
-                    handleSuccess(systemDir, pcsx2BiosDir, response, sharedPreferences)
-                } catch (e: Throwable) {
-                    Timber.w(e, "PCEE2AssetsManager: Could not download assets from remote")
-                }
+            systemDir.mkdirs()
+            if (BiosManager.refreshPs2Library(systemDir).isNotEmpty()) return@withContext
+            try {
+                val response = coreUpdaterApi.downloadZip(PCEE2_ASSETS_URL.toString())
+                installServedBios(systemDir, response, sharedPreferences, ServedRegion.USA)
+            } catch (e: Throwable) {
+                Timber.w(e, "PCEE2AssetsManager: Could not download PS2 BIOS")
             }
         }
     }
 
-    private suspend fun handleSuccess(
+    private fun installServedBios(
         systemDir: File,
-        pcsx2BiosDir: File,
         response: Response<ResponseBody>,
         sharedPreferences: SharedPreferences,
+        region: ServedRegion,
     ) {
         if (!response.isSuccessful) {
-            throw Exception(response.errorBody()?.use { it.string() } ?: "PCEE2 assets download failed")
+            throw Exception(response.errorBody()?.use { it.string() } ?: "PS2 BIOS download failed")
         }
-
-        response.body()?.use { responseBody ->
-            ZipInputStream(responseBody.byteStream()).use { zipInputStream ->
-                while (true) {
-                    val entry = zipInputStream.nextEntry ?: break
-                    Timber.d("PCEE2AssetsManager: Extracting ${entry.name}")
-
-                    val entryName = entry.name.replace('\\', '/')
-                    val destFile = if (entryName.endsWith(".bin", ignoreCase = true)) {
-                        // Place BIOS binary in pcsx2/bios/ and mirror to system/
-                        val baseName = entryName.substringAfterLast("/")
-                        val pcsx2File = File(pcsx2BiosDir, baseName)
-                        val systemFile = File(systemDir, baseName)
-
-                        pcsx2File.outputStream().use { output ->
-                            zipInputStream.copyTo(output)
-                        }
-                        try {
-                            pcsx2File.copyTo(systemFile, overwrite = true)
-                            if (baseName.contains("39004", ignoreCase = true)) {
-                                val standardName = "scph39004.bin"
-                                pcsx2File.copyTo(File(pcsx2BiosDir, standardName), overwrite = true)
-                                pcsx2File.copyTo(File(systemDir, standardName), overwrite = true)
-                            } else if (baseName.contains("39000", ignoreCase = true)) {
-                                val standardName = "scph39000.bin"
-                                pcsx2File.copyTo(File(pcsx2BiosDir, standardName), overwrite = true)
-                                pcsx2File.copyTo(File(systemDir, standardName), overwrite = true)
-                            } else if (baseName.contains("39001", ignoreCase = true) || baseName.contains("scph", ignoreCase = true)) {
-                                val standardName = "scph39001.bin"
-                                pcsx2File.copyTo(File(pcsx2BiosDir, standardName), overwrite = true)
-                                pcsx2File.copyTo(File(systemDir, standardName), overwrite = true)
-                            }
-                        } catch (e: Exception) {
-                            Timber.e(e, "Error copying extracted bios to system root")
-                        }
-                        continue
-                    } else if (entryName.startsWith("pcsx2/", ignoreCase = true)) {
-                        File(systemDir, entryName)
-                    } else {
-                        File(systemDir, "pcsx2/$entryName")
-                    }
-
-                    if (entry.isDirectory || entryName.endsWith("/")) {
-                        destFile.mkdirs()
-                    } else {
-                        destFile.parentFile?.mkdirs()
-                        destFile.outputStream().use { output ->
-                            zipInputStream.copyTo(output)
+        val body = response.body() ?: throw Exception("Empty PS2 BIOS download")
+        val temp = File.createTempFile("ps2-bios", ".bin", systemDir)
+        try {
+            body.use { responseBody ->
+                ZipInputStream(responseBody.byteStream()).use { zip ->
+                    while (true) {
+                        val entry = zip.nextEntry ?: break
+                        if (!entry.name.endsWith(".bin", ignoreCase = true)) continue
+                        if (!region.matches(entry.name)) continue
+                        temp.outputStream().use { output -> zip.copyTo(output) }
+                        if (BiosManager.adoptPs2File(systemDir, temp)) {
+                            sharedPreferences.edit().putString(PCEE2_ASSETS_VERSION_KEY, PCEE2_ASSETS_VERSION).commit()
+                            return
                         }
                     }
                 }
             }
-        } ?: throw Exception("Empty PCEE2 assets body")
-
-        sharedPreferences.edit()
-            .putString(PCEE2_ASSETS_VERSION_KEY, PCEE2_ASSETS_VERSION)
-            .commit()
+            throw Exception("PS2 BIOS package has no ${region.name} image")
+        } finally {
+            temp.delete()
+        }
     }
 
-    private fun updatedRequested(
+    suspend fun installServedRegion(
+        coreUpdaterApi: CoreUpdater.CoreManagerApi,
         directoriesManager: DirectoriesManager,
         sharedPreferences: SharedPreferences,
-        hasLocalBios: Boolean,
-    ): Boolean {
-        val pcsx2BiosDir = File(directoriesManager.getSystemDirectory(), "pcsx2/bios")
-        val biosExists = hasLocalBios || (pcsx2BiosDir.exists() && (pcsx2BiosDir.listFiles()?.isNotEmpty() == true))
-        val currentVersion = sharedPreferences.getString(PCEE2_ASSETS_VERSION_KEY, "none")
-        val hasCurrentVersion = currentVersion == PCEE2_ASSETS_VERSION
-
-        return !biosExists || !hasCurrentVersion
+        region: ServedRegion,
+    ) {
+        withContext(Dispatchers.IO) {
+            val systemDir = directoriesManager.getSystemDirectory()
+            systemDir.mkdirs()
+            val response = coreUpdaterApi.downloadZip(PCEE2_ASSETS_URL.toString())
+            installServedBios(systemDir, response, sharedPreferences, region)
+        }
     }
 
     companion object {
@@ -174,5 +98,28 @@ class PCEE2AssetsManager : CoreID.AssetsManager {
                 .build()
 
         const val PCEE2_ASSETS_VERSION_KEY = "pcee2_assets_version_key"
+    }
+
+    enum class ServedRegion {
+        USA,
+        EUROPE,
+        JAPAN,
+        ;
+
+        fun matches(entryName: String): Boolean {
+            val name = entryName.uppercase()
+            return when (this) {
+                USA -> "39001" in name
+                EUROPE -> "39004" in name
+                JAPAN -> "30000" in name
+            }
+        }
+
+        fun fileName(): String =
+            when (this) {
+                USA -> Ps2Bios.USA
+                EUROPE -> Ps2Bios.EUROPE
+                JAPAN -> Ps2Bios.JAPAN_SERVED
+            }
     }
 }

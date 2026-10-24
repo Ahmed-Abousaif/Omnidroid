@@ -127,15 +127,16 @@ import com.omnidroid.ext.feature.review.ReviewManager
 import com.omnidroid.lib.android.RetrogradeComponentActivity
 import com.omnidroid.lib.bios.BiosManager
 import com.omnidroid.lib.core.CoreUpdater
+import com.omnidroid.lib.preferences.SharedPreferencesHelper
+import com.omnidroid.lib.storage.DirectoriesManager
+import retrofit2.Retrofit
 import com.omnidroid.lib.core.CoresSelection
 import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.library.MetaSystemID
 import com.omnidroid.lib.library.SystemID
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
-import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.savesync.SaveSyncManager
-import com.omnidroid.lib.storage.DirectoriesManager
 import dagger.hilt.android.AndroidEntryPoint
 import de.charlex.compose.material3.HtmlText
 import kotlinx.coroutines.Dispatchers
@@ -170,6 +171,15 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
     @Inject
     lateinit var biosManager: BiosManager
+
+    @Inject
+    lateinit var directoriesManager: DirectoriesManager
+
+    @Inject
+    lateinit var retrofit: Retrofit
+
+    @Inject
+    lateinit var sharedPreferences: android.content.SharedPreferences
 
     @Inject
     lateinit var coresSelection: CoresSelection
@@ -674,7 +684,13 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                     .padding(top = standardTopPadding),
                             viewModel =
                                 viewModel(
-                                    factory = BiosSettingsViewModel.Factory(biosManager),
+                                    factory =
+                                        BiosSettingsViewModel.Factory(
+                                            biosManager,
+                                            directoriesManager,
+                                            retrofit.create(CoreUpdater.CoreManagerApi::class.java),
+                                            sharedPreferences,
+                                        ),
                                 ),
                         )
                     }

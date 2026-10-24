@@ -152,9 +152,18 @@
     <string name="settings_graphics_api_vulkan_unavailable">Vulkan is not supported on this device. Cores will default to OpenGL ES.</string>
 
     <string name="settings_title_display_bios_info">BIOS</string>
-    <string name="settings_description_display_bios_info">Display detected and supported BIOS files</string>
+    <string name="settings_description_display_bios_info">PlayStation 2 is set up automatically. Pin a BIOS here only if you want a specific one.</string>
     <string name="settings_bios_category_detected">Detected</string>
     <string name="settings_bios_category_not_detected">Supported</string>
+    <string name="settings_bios_category_ps2">PlayStation 2</string>
+    <string name="settings_ps2_bios_auto">Automatic</string>
+    <string name="settings_ps2_bios_auto_subtitle">Uses the BIOS that matches the game</string>
+    <string name="settings_ps2_bios_pinned">Used for every PlayStation 2 game</string>
+    <string name="settings_ps2_bios_download">Download</string>
+    <string name="settings_ps2_bios_downloading">Downloading…</string>
+    <string name="settings_ps2_bios_usa">United States</string>
+    <string name="settings_ps2_bios_europe">Europe</string>
+    <string name="settings_ps2_bios_japan">Japan</string>
 
     <string name="settings_title_reset_settings">Factory reset</string>
     <string name="settings_title_unrecognized_files">Not recognised</string>

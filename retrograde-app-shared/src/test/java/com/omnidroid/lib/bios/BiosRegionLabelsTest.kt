@@ -24,6 +24,17 @@ class BiosRegionLabelsTest {
         assertEquals(listOf("scph39001.bin"), required)
     }
 
+    @Test
+    fun automaticChoiceFollowsRegionThenFatThenSlim() {
+        val all = setOf(Ps2Bios.USA, Ps2Bios.EUROPE, Ps2Bios.JAPAN, "scph70012.bin")
+        assertEquals(Ps2Bios.EUROPE, Ps2Bios.choose(setOf("Europe"), all, null))
+        assertEquals(Ps2Bios.USA, Ps2Bios.choose(setOf("World"), all, null))
+        assertEquals("scph70012.bin", Ps2Bios.choose(emptySet(), setOf("scph77001.bin", "scph70012.bin"), null))
+        assertEquals(Ps2Bios.JAPAN, Ps2Bios.choose(setOf("Europe"), all, Ps2Bios.JAPAN))
+        assertEquals(Ps2Bios.JAPAN_SERVED, Ps2Bios.choose(setOf("Japan"), setOf(Ps2Bios.JAPAN_SERVED), null))
+        assertEquals(Ps2Bios.JAPAN, Ps2Bios.choose(setOf("Japan"), setOf(Ps2Bios.JAPAN, Ps2Bios.JAPAN_SERVED), null))
+    }
+
     companion object {
         // Keep in sync with BiosManager.regionLabels.
         fun regionLabels(title: String): Set<String> {

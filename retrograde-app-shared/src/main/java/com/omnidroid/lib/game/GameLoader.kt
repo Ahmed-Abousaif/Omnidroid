@@ -20,6 +20,7 @@
 package com.omnidroid.lib.game
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import com.omnidroid.lib.bios.BiosManager
 import com.omnidroid.lib.core.CoreLibraryLocator
@@ -30,6 +31,7 @@ import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.OmnidroidLibrary
 import com.omnidroid.lib.library.SystemCoreConfig
+import com.omnidroid.lib.library.SystemID
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.saves.SaveState
@@ -53,6 +55,8 @@ class GameLoader(
     private val directoriesManager: DirectoriesManager,
     private val biosManager: BiosManager,
     private val coreUpdater: CoreUpdater,
+    private val coreApi: CoreUpdater.CoreManagerApi,
+    private val sharedPreferences: SharedPreferences,
 ) {
     sealed class LoadingState {
         object LoadingCore : LoadingState()
@@ -85,6 +89,12 @@ class GameLoader(
                     }.getOrElse { throw GameLoaderException(GameLoaderError.LoadCore) }
 
                 emit(LoadingState.LoadingGame)
+
+                if (system.id == SystemID.PS2) {
+                    CoreID.getAssetManager(CoreID.ARMSX2)
+                        .retrieveAssetsIfNeeded(coreApi, directoriesManager, sharedPreferences)
+                    biosManager.stageActivePs2Bios(game)
+                }
 
                 val missingBiosFiles = biosManager.getMissingBiosFiles(systemCoreConfig, game)
                 if (missingBiosFiles.isNotEmpty()) {
