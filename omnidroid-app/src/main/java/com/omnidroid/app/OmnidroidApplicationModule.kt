@@ -288,6 +288,8 @@ object OmnidroidApplicationModule {
         directoriesManager: DirectoriesManager,
         biosManager: BiosManager,
         coreUpdater: CoreUpdater,
+        retrofit: Retrofit,
+        sharedPreferences: SharedPreferences,
     ) = GameLoader(
         omnidroidLibrary,
         statesManager,
@@ -298,6 +300,8 @@ object OmnidroidApplicationModule {
         directoriesManager,
         biosManager,
         coreUpdater,
+        retrofit.create(CoreUpdater.CoreManagerApi::class.java),
+        sharedPreferences,
     )
 
     @Provides

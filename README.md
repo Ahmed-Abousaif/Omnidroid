@@ -99,7 +99,7 @@ Download the latest APK from the [Releases](https://github.com/Ahmed-Abousaif/Om
 
 Most retro consoles run immediately without external BIOS files. For systems that require BIOS dumps:
 
-- **PlayStation 2 (ARMSX2):** Place a legal PS2 BIOS (`scph39001.bin`, `scph70012.bin`, `scph77001.bin`, etc.) in your storage. Omnidroid automatically verifies and syncs it into `system/pcsx2/bios/`.
+- **PlayStation 2 (ARMSX2):** Compatible with USA, Europe, and Japan BIOS images.
 - Other BIOS files (e.g., PS1, Sega CD, GBA) can be placed in the standard Libretro system folder.
 
 ### 4. Controller Setup
