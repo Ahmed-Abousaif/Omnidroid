@@ -18,6 +18,8 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import timber.log.Timber
 
+import com.omnidroid.lib.core.SyncProgressTracker
+
 @HiltWorker
 class CoreUpdateWork
     @AssistedInject
@@ -59,6 +61,8 @@ class CoreUpdateWork
                 sliceInstaller.ensureSlices(applicationContext, requiredCores)
             } catch (e: Throwable) {
                 Timber.e(e, "Core update work failed with exception: ${e.message}")
+            } finally {
+                SyncProgressTracker.clear()
             }
 
             return Result.success()

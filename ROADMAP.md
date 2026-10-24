@@ -34,6 +34,7 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Fixed Dreamcast (Flycast) black screen under OpenGL ES by isolating frontend context state ([#15](https://github.com/Ahmed-Abousaif/Omnidroid/issues/15)) (_yurix_)
 - Fixed Nintendo 3DS touch screen input by routing secondary pointer gestures to the lower display ([#9](https://github.com/Ahmed-Abousaif/Omnidroid/issues/9)) (_vermahardik735_)
 - Added landscape dual-screen layout options (Side-by-Side, Top-Bottom, Single Screen) for Nintendo 3DS ([#10](https://github.com/Ahmed-Abousaif/Omnidroid/issues/10)) (_vermahardik735_)
+- Fixed arcade detection failure by resolving renamed archives via title and member CRC matching and aliasing driver names at launch ([#23](https://github.com/Ahmed-Abousaif/Omnidroid/issues/23)) (_Deus0_)
 
 ### v2.4.1
 

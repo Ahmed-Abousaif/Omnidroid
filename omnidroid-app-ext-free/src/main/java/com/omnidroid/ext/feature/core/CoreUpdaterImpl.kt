@@ -25,6 +25,7 @@ import com.omnidroid.lib.core.CoreLibraryLocator
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.GithubCoreDownloader
 import com.omnidroid.lib.core.MetadataSliceInstaller
+import com.omnidroid.lib.core.SyncProgressTracker
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.storage.DirectoriesManager
@@ -46,10 +47,18 @@ class CoreUpdaterImpl(
         coreIDs: List<CoreID>,
     ) {
         val sharedPreferences = SharedPreferencesHelper.getSharedPreferences(context.applicationContext)
-        coreIDs.asFlow()
-            .onEach { retrieveAssets(it, sharedPreferences) }
-            .onEach { retrieveFile(context, it) }
-            .collect()
+        val missing = coreIDs.filter { CoreLibraryLocator.findBundled(context, it) == null }
+        val total = missing.size
+        missing.forEachIndexed { index, coreID ->
+            SyncProgressTracker.update(
+                stepText = "Downloading core: ${coreID.coreDisplayName}",
+                current = index + 1,
+                total = total,
+                isIndeterminate = false,
+            )
+            retrieveAssets(coreID, sharedPreferences)
+            retrieveFile(context, coreID)
+        }
         sliceInstaller.ensureSlices(context, coreIDs)
     }
 

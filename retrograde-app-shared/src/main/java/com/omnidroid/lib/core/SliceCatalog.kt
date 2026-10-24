@@ -56,6 +56,40 @@ object SliceCatalog {
         if (schema != SCHEMA_VERSION) return false
         return installedSha != sha || installedSchema != schema
     }
+
+    fun displayName(sliceId: String): String {
+        return when (sliceId.lowercase()) {
+            "arcade" -> "Arcade"
+            "dos" -> "DOS"
+            "snes" -> "SNES"
+            "nes" -> "NES"
+            "md" -> "Genesis / Mega Drive"
+            "scd" -> "Sega CD"
+            "sms" -> "Master System"
+            "gg" -> "Game Gear"
+            "gb" -> "Game Boy"
+            "gbc" -> "Game Boy Color"
+            "gba" -> "Game Boy Advance"
+            "n64" -> "Nintendo 64"
+            "psx" -> "PlayStation"
+            "ps2" -> "PlayStation 2"
+            "psp" -> "PSP"
+            "nds" -> "Nintendo DS"
+            "3ds" -> "Nintendo 3DS"
+            "gamecube" -> "GameCube"
+            "wii" -> "Wii"
+            "dreamcast" -> "Dreamcast"
+            "atari2600" -> "Atari 2600"
+            "atari7800" -> "Atari 7800"
+            "lynx" -> "Atari Lynx"
+            "pce" -> "PC Engine"
+            "ngp" -> "Neo Geo Pocket"
+            "ngc" -> "Neo Geo Pocket Color"
+            "ws" -> "WonderSwan"
+            "wsc" -> "WonderSwan Color"
+            else -> sliceId.uppercase()
+        }
+    }
 }
 
 interface MetadataSliceInstaller {
