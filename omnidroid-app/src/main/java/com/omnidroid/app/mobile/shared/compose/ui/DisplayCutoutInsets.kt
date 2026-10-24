@@ -53,6 +53,41 @@ fun rememberDisplayCutoutInsetsForEdge(isLandscape: Boolean): WindowInsets =
         WindowInsets(0, 0, 0, 0)
     }
 
+/**
+ * Cutout insets for content pinned to the left edge, such as the left game pad in landscape.
+ * Only insets the left edge to avoid inward dead margins facing the game view.
+ */
+@Composable
+fun rememberDisplayCutoutInsetsForLeftPad(isLandscape: Boolean): WindowInsets =
+    if (isLandscape) {
+        rememberDisplayCutoutInsets(WindowInsetsSides.Left)
+    } else {
+        WindowInsets(0, 0, 0, 0)
+    }
+
+/**
+ * Cutout insets for content pinned to the right edge, such as the right game pad in landscape.
+ * Only insets the right edge to avoid inward dead margins facing the game view.
+ */
+@Composable
+fun rememberDisplayCutoutInsetsForRightPad(isLandscape: Boolean): WindowInsets =
+    if (isLandscape) {
+        rememberDisplayCutoutInsets(WindowInsetsSides.Right)
+    } else {
+        WindowInsets(0, 0, 0, 0)
+    }
+
+/**
+ * Cutout insets for content pinned to the bottom edge, such as the bottom pad in portrait.
+ */
+@Composable
+fun rememberDisplayCutoutInsetsForBottomPad(isLandscape: Boolean): WindowInsets =
+    if (!isLandscape) {
+        rememberDisplayCutoutInsets(WindowInsetsSides.Bottom)
+    } else {
+        WindowInsets(0, 0, 0, 0)
+    }
+
 /** Keeps this content out of the display cutout on [sides]. See [rememberDisplayCutoutInsets]. */
 @Composable
 fun Modifier.avoidDisplayCutout(sides: WindowInsetsSides): Modifier =

@@ -35,19 +35,23 @@ class TouchScreenLayoutController(
             CoreID.MELONDS_DS -> {
                 val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDSDS_LAYOUT_KEY, systemId.dbname)
                 val current = sharedPreferences.getString(key, null)
-                when {
-                    current == MELONDSDS_SINGLE_TOP -> 4f / 3f
-                    isLandscape -> 8f / 3f
-                    else -> 4f / 6f
+                when (current) {
+                    MELONDSDS_SINGLE_TOP, MELONDSDS_SINGLE_BOTTOM -> 4f / 3f
+                    MELONDSDS_DUAL_LANDSCAPE -> 8f / 3f
+                    MELONDSDS_DUAL_PORTRAIT -> 4f / 6f
+                    else -> if (isLandscape) 8f / 3f else 4f / 6f
                 }
             }
             CoreID.CITRA, CoreID.AZAHAR -> {
                 val layoutKey = CoreVariablesManager.computeSharedPreferenceKey(CITRA_LAYOUT_KEY, systemId.dbname)
                 val current = sharedPreferences.getString(layoutKey, null)
-                when {
-                    current == CITRA_SINGLE -> 5f / 3f
-                    isLandscape -> 3f
-                    else -> 5f / 6f
+                val swapKey = CoreVariablesManager.computeSharedPreferenceKey(CITRA_SWAP_KEY, systemId.dbname)
+                val swap = sharedPreferences.getString(swapKey, null)
+                when (current) {
+                    CITRA_SINGLE -> if (swap == CITRA_SWAP_BOTTOM) 4f / 3f else 5f / 3f
+                    CITRA_DUAL_LANDSCAPE -> 3f
+                    CITRA_DUAL_PORTRAIT -> 5f / 6f
+                    else -> if (isLandscape) 3f else 5f / 6f
                 }
             }
             CoreID.PCSX_REARMED -> {
@@ -150,7 +154,7 @@ class TouchScreenLayoutController(
         val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDSDS_LAYOUT_KEY, systemId.dbname)
         val current = sharedPreferences.getString(key, null)
         val next =
-            if (current == MELONDSDS_SINGLE_TOP) {
+            if (current == MELONDSDS_SINGLE_TOP || current == MELONDSDS_SINGLE_BOTTOM) {
                 melonDsDsDual(orientation)
             } else {
                 MELONDSDS_SINGLE_TOP
@@ -206,7 +210,7 @@ class TouchScreenLayoutController(
     private fun onOrientationChangedMelonDsDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
         val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDSDS_LAYOUT_KEY, systemId.dbname)
         val current = sharedPreferences.getString(key, null)
-        if (current == MELONDSDS_SINGLE_TOP) {
+        if (current == MELONDSDS_SINGLE_TOP || current == MELONDSDS_SINGLE_BOTTOM) {
             return emptyList()
         }
         val target = melonDsDsDual(orientation)
@@ -238,6 +242,7 @@ class TouchScreenLayoutController(
         const val MELONDSDS_DUAL_PORTRAIT = "top-bottom"
         const val MELONDSDS_DUAL_LANDSCAPE = "left-right"
         const val MELONDSDS_SINGLE_TOP = "top"
+        const val MELONDSDS_SINGLE_BOTTOM = "bottom"
 
         const val CITRA_LAYOUT_KEY = "citra_layout_option"
         const val CITRA_SWAP_KEY = "citra_swap_screen"
@@ -245,6 +250,7 @@ class TouchScreenLayoutController(
         const val CITRA_DUAL_LANDSCAPE = "Side by Side"
         const val CITRA_SINGLE = "Single Screen Only"
         const val CITRA_SWAP_TOP = "Top"
+        const val CITRA_SWAP_BOTTOM = "Bottom"
 
         const val PCSX_REARMED_ASPECT_RATIO_KEY = "pcsx_rearmed_aspect_ratio"
         const val SNES9X_ASPECT_RATIO_KEY = "snes9x_aspect_ratio"
