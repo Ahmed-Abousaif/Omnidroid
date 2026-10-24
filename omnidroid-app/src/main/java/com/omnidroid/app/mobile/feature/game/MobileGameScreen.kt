@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
@@ -83,7 +84,9 @@ import com.omnidroid.touchinput.radial.LocalOmnidroidPadTheme
 import com.omnidroid.touchinput.radial.sensors.TiltConfiguration
 import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
 import com.omnidroid.touchinput.radial.ui.GlassSurface
-import com.omnidroid.app.mobile.shared.compose.ui.rememberDisplayCutoutInsetsForEdge
+import com.omnidroid.app.mobile.shared.compose.ui.rememberDisplayCutoutInsetsForBottomPad
+import com.omnidroid.app.mobile.shared.compose.ui.rememberDisplayCutoutInsetsForLeftPad
+import com.omnidroid.app.mobile.shared.compose.ui.rememberDisplayCutoutInsetsForRightPad
 import com.omnidroid.app.mobile.shared.compose.ui.rememberDisplayCutoutInsetsForTopBar
 import com.omnidroid.app.shared.game.view.IRetroGameView
 import com.omnidroid.touchinput.radial.ui.OmnidroidButtonPressFeedback
@@ -140,8 +143,11 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
         // Pads are laid out edge-to-edge, and the user can raise `scale` or drop the
         // margins, so inset them out of the display cutout here rather than relying on a
-        // default margin. Otherwise a camera hole can end up underneath a button.
-        val padCutoutInsets = rememberDisplayCutoutInsetsForEdge(isLandscape)
+        // default margin. Directional insets ensure pads only inset on their outer edge
+        // away from the bezel, never creating dead padding facing the game viewport.
+        val leftPadCutoutInsets = rememberDisplayCutoutInsetsForLeftPad(isLandscape)
+        val rightPadCutoutInsets = rememberDisplayCutoutInsetsForRightPad(isLandscape)
+        val bottomPadCutoutInsets = rememberDisplayCutoutInsetsForBottomPad(isLandscape)
 
         val isVisible =
             touchControllerSettings != null &&
@@ -202,13 +208,18 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 val verticalBias = (screenPosY * 2f - 1f).coerceIn(-1f, 1f)
                 val targetAspect = gameAspectRatioState.value
 
+                val gameViewInsets =
+                    if (isLandscape && !(currentControllerConfig?.allowTouchOverlay ?: true) && isVisible) {
+                        WindowInsets(0, 0, 0, 0)
+                    } else {
+                        rememberDisplayCutoutInsetsForTopBar(isLandscape)
+                    }
+
                 BoxWithConstraints(
                     modifier =
                         Modifier
                             .layoutId(GameScreenLayout.CONSTRAINTS_GAME_VIEW)
-                            .windowInsetsPadding(
-                                rememberDisplayCutoutInsetsForTopBar(isLandscape),
-                            )
+                            .windowInsetsPadding(gameViewInsets)
                             .fillMaxSize(),
                 ) {
                     val containerAspect =
@@ -234,7 +245,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                                 modifier =
                                     Modifier
                                         .layoutId(GameScreenLayout.CONSTRAINTS_BOTTOM_CONTAINER)
-                                        .windowInsetsPadding(padCutoutInsets)
+                                        .windowInsetsPadding(bottomPadCutoutInsets)
                                         .alpha(padOpacity),
                             )
                         } else if (!currentControllerConfig.allowTouchOverlay) {
@@ -242,23 +253,24 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                                 modifier =
                                     Modifier
                                         .layoutId(GameScreenLayout.CONSTRAINTS_LEFT_CONTAINER)
-                                        .windowInsetsPadding(padCutoutInsets)
+                                        .windowInsetsPadding(leftPadCutoutInsets)
                                         .alpha(padOpacity),
                             )
                             PadContainer(
                                 modifier =
                                     Modifier
                                         .layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_CONTAINER)
-                                        .windowInsetsPadding(padCutoutInsets)
+                                        .windowInsetsPadding(rightPadCutoutInsets)
                                         .alpha(padOpacity),
                             )
                         }
 
+                        val leftPadInsets = if (isLandscape) leftPadCutoutInsets else bottomPadCutoutInsets
                         leftGamePad?.invoke(
                             this,
                             Modifier
                                 .layoutId(GameScreenLayout.CONSTRAINTS_LEFT_PAD)
-                                .windowInsetsPadding(padCutoutInsets)
+                                .windowInsetsPadding(leftPadInsets)
                                 .alpha(padOpacity),
                             touchControllerSettings,
                         )
@@ -266,7 +278,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                             this,
                             Modifier
                                 .layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_PAD)
-                                .windowInsetsPadding(padCutoutInsets)
+                                .windowInsetsPadding(rightPadCutoutInsets)
                                 .alpha(padOpacity),
                             touchControllerSettings,
                         )
