@@ -1,5 +1,6 @@
 package com.omnidroid.lib.library.scan
 
+import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemID
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -188,6 +189,34 @@ class DetectionRulesTest {
         val ready = detection as Detection.Ready
         assertEquals(SystemID.WII, ready.system)
         assertEquals("RMGE", ready.key?.value)
+    }
+
+    @Test
+    fun uniqueExtensionsAreScanned() {
+        val scanned = GameSystem.getSupportedExtensions().map { it.lowercase() }.toSet()
+        GameSystem.all().forEach { system ->
+            system.uniqueExtensions.forEach { extension ->
+                assertTrue(
+                    "${system.id.dbname} .$extension is not scanned",
+                    extension.lowercase() in scanned && LibraryFileFilter.accept("game.$extension", 1024),
+                )
+            }
+        }
+    }
+
+    @Test
+    fun headered7800AndPcEngineFilesIdentifyTheirSystem() {
+        val rom = byteArrayOf(1, 2, 3, 4)
+        val a78 =
+            DetectionRules.identify(
+                ScanInput("Donkey Kong.a78", rom.size.toLong(), null, { ByteArraySource(rom) }),
+            )
+        val pce =
+            DetectionRules.identify(
+                ScanInput("Bonk.pce", rom.size.toLong(), null, { ByteArraySource(rom) }),
+            )
+        assertEquals(SystemID.ATARI7800, (a78 as Detection.Ready).system)
+        assertEquals(SystemID.PC_ENGINE, (pce as Detection.Ready).system)
     }
 
     @Test
