@@ -10,7 +10,8 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 - Fixed missing box art when a console database name does not match the Libretro thumbnail filename ([#26](https://github.com/Ahmed-Abousaif/Omnidroid/issues/26)) (_Deus0_)
 - PlayStation 2 BIOS follows the game region, and USA, Europe, or Japan can be chosen in settings ([#25](https://github.com/Ahmed-Abousaif/Omnidroid/issues/25)) (_Deus0_)
-- Fixed Nintendo DS and 3DS game screen size in landscape
+- Fixed Nintendo DS and 3DS game screen size in landscape ([#28](https://github.com/Ahmed-Abousaif/Omnidroid/issues/28)) (_Deus0_)
+- Fixed Atari 7800 and PC Engine games not being detected, because `.a78` and `.pce` files were skipped during scanning ([#29](https://github.com/Ahmed-Abousaif/Omnidroid/issues/29)) (_Deus0_)
 
 ### v2.5.0
 

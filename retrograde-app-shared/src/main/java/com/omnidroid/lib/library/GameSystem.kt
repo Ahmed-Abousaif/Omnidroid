@@ -1317,7 +1317,7 @@ data class GameSystem(
                         ),
                     ),
                     uniqueExtensions = listOf("a78"),
-                    supportedExtensions = listOf("bin"),
+                    supportedExtensions = listOf("a78", "bin"),
                 ),
                 GameSystem(
                     SystemID.LYNX,
@@ -1380,7 +1380,7 @@ data class GameSystem(
                         ),
                     ),
                     uniqueExtensions = listOf("pce"),
-                    supportedExtensions = listOf("bin"),
+                    supportedExtensions = listOf("pce", "bin"),
                 ),
                 GameSystem(
                     SystemID.NGP,
