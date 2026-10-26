@@ -48,11 +48,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -335,6 +337,13 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         ),
                 )
             val libraryState = libraryViewModel.state.collectAsState().value
+            var launchScanDone by rememberSaveable { mutableStateOf(false) }
+            LaunchedEffect(Unit) {
+                if (!launchScanDone) {
+                    launchScanDone = true
+                    libraryViewModel.autoSyncLibrary(this@MainActivity)
+                }
+            }
             LaunchedEffect(libraryState.portrait) {
                 val orientation = LibraryViewModel.orientationFor(libraryState.portrait)
                 if (requestedOrientation != orientation) {
@@ -463,7 +472,12 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 controllerBridge.navigation = controllerNav
             }
 
-            BackHandler {
+            val detailsBackIsAPlainPop =
+                currentRoute == MainRoute.GAME_DETAILS &&
+                    selectedGameState.value == null &&
+                    !infoDialogDisplayed.value &&
+                    !showCastPicker.value
+            BackHandler(enabled = !detailsBackIsAPlainPop) {
                 if (selectedGameState.value != null) {
                     selectedGameState.value = null
                 } else if (currentRoute == MainRoute.GAME_DETAILS) {
@@ -509,6 +523,12 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         modifier = Modifier.fillMaxSize(),
                         navController = navController,
                         startDestination = MainRoute.HOME.route,
+                        predictivePopEnterTransition = { _ ->
+                            fadeIn(animationSpec = tween(predictiveFadeMillis(targetState)))
+                        },
+                        predictivePopExitTransition = { _ ->
+                            fadeOut(animationSpec = tween(predictiveFadeMillis(initialState)))
+                        },
                     ) {
                         composable(
                             MainRoute.HOME,
@@ -532,9 +552,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                     gameInteractor.onGamePlay(it)
                                 },
                                 onGameLongClick = onGameLongClick,
+                                onFavoriteToggle = onGameFavoriteToggle,
                                 onAddConsole = { navController.navigateToRoute(MainRoute.ADD_CONSOLES) },
                                 controllerConnected = gamepadConnected,
                                 portraitColumnWidth = portraitColumnWidth,
+                                backdropTopBleed = libraryTopPadding,
                             )
                         }
                         composable(
@@ -902,7 +924,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     libraryState.operationInProgress || mainUIState.operationInProgress,
                 syncProgress = libraryState.syncProgress,
                 gamepadConnected = gamepadConnected,
-                onScanPressed = { libraryViewModel.syncLibrary(this@MainActivity) },
+                onRandomPressed = {
+                    scope.launch { libraryViewModel.randomGame()?.let(openGameDetails) }
+                },
+                sort = libraryState.sort,
+                onSortChange = { libraryViewModel.setSort(it) },
                 onCastPressed = {
                     castDisplayManager.refresh()
                     showCastPicker.value = true
@@ -976,6 +1002,13 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+    }
+
+    private fun predictiveFadeMillis(entry: NavBackStackEntry): Int {
+        return when (entry.destination.route) {
+            MainRoute.HOME.route, MainRoute.GAME_DETAILS.route -> 400
+            else -> 700
+        }
     }
 
     private fun navigateToLibraryHome(navController: NavHostController) {
