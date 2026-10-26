@@ -75,7 +75,7 @@ import com.omnidroid.app.mobile.feature.main.MainRoute
 import com.omnidroid.app.mobile.feature.main.navigateToRoute
 import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
-import com.omnidroid.app.mobile.shared.compose.ui.avoidDisplayCutout
+import com.omnidroid.app.mobile.shared.compose.ui.hugDisplayCutout
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.shared.library.LibraryIndexScheduler
@@ -176,7 +176,7 @@ fun SettingsScreen(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .avoidDisplayCutout(WindowInsetsSides.Horizontal),
+                        .hugDisplayCutout(WindowInsetsSides.Horizontal),
             ) {
                 SettingsSidebar(
                     modifier =

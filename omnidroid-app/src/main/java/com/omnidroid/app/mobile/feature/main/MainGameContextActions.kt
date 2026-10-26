@@ -597,17 +597,19 @@ private fun ContextActionHeader(game: Game) {
         OmnidroidSmallGameImage(
             modifier =
                 Modifier
-                    .width(40.dp)
-                    .height(40.dp)
-                    .align(Alignment.CenterVertically),
+                    .width(56.dp)
+                    .align(Alignment.CenterVertically)
+                    .clip(RoundedCornerShape(4.dp)),
             game = game,
         )
         OmnidroidGameTexts(
             modifier =
                 Modifier
                     .weight(1f)
+                    .align(Alignment.CenterVertically)
                     .padding(start = 8.dp),
             game = game,
+            titleMaxLines = Int.MAX_VALUE,
         )
     }
 }

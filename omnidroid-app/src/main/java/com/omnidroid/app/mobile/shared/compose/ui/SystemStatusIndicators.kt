@@ -15,6 +15,7 @@ import android.telephony.PhoneStateListener
 import android.telephony.TelephonyCallback
 import android.telephony.TelephonyDisplayInfo
 import android.telephony.TelephonyManager
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -89,7 +90,7 @@ fun SystemStatusIndicators(
                 imageVector = Icons.Filled.SportsEsports,
                 contentDescription = stringResource(R.string.status_gamepad_connected),
                 modifier = Modifier.size(13.5.dp),
-                tint = MaterialTheme.colorScheme.primary,
+                tint = LocalContentColor.current.copy(alpha = StatusMutedAlpha),
             )
         }
         BatteryStatusIcon(battery)
@@ -119,6 +120,9 @@ private fun rememberCurrentTime(): String {
 
 private const val LOW_BATTERY_PERCENT = 15
 
+// Status glyphs stay neutral so the green accent is reserved for interactive chrome.
+private const val StatusMutedAlpha = 0.72f
+
 private fun formatStatusTime(): String {
     return SimpleDateFormat("h:mma", Locale.getDefault())
         .format(Date())
@@ -139,7 +143,7 @@ private fun ConnectionStatusIcon(status: ConnectionStatus) {
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = (-0.2).sp,
                 ),
-            color = MaterialTheme.colorScheme.primary,
+            color = LocalContentColor.current.copy(alpha = StatusMutedAlpha),
             modifier = Modifier.semantics { contentDescription = description },
         )
         return
@@ -155,7 +159,7 @@ private fun WifiStatusIcon(status: WifiStatus) {
             !status.connected -> stringResource(R.string.status_wifi_disconnected)
             else -> stringResource(R.string.status_wifi_connected)
         }
-    val active = MaterialTheme.colorScheme.primary
+    val active = LocalContentColor.current.copy(alpha = 0.85f)
     val inactive = LocalContentColor.current.copy(alpha = 0.28f)
 
     WifiArcsIcon(
@@ -175,7 +179,7 @@ private fun BatteryStatusIcon(status: BatteryStatus) {
         when {
             status.charging -> LibraryNeonGreen
             lowBattery -> BatteryLowRed
-            else -> LocalContentColor.current
+            else -> LocalContentColor.current.copy(alpha = 0.85f)
         }
     val description =
         when {
@@ -186,14 +190,8 @@ private fun BatteryStatusIcon(status: BatteryStatus) {
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(2.5.dp),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        BatteryLevelIcon(
-            percent = status.percent,
-            charging = status.charging,
-            color = color,
-            contentDescription = description,
-        )
         Text(
             text = "${status.percent}%",
             style =
@@ -203,6 +201,12 @@ private fun BatteryStatusIcon(status: BatteryStatus) {
                     letterSpacing = (-0.2).sp,
                 ),
             color = color,
+        )
+        BatteryLevelIcon(
+            percent = status.percent,
+            charging = status.charging,
+            color = color,
+            contentDescription = description,
         )
     }
 }
@@ -246,11 +250,11 @@ private fun rememberConnectionStatus(): ConnectionStatus {
     DisposableEffect(context) {
         val connectivityManager = context.getSystemService(ConnectivityManager::class.java)
         val telephonyManager = context.getSystemService(TelephonyManager::class.java)
-        var latestDisplayInfo = readTelephonyDisplayInfo(telephonyManager)
+        var displayLabel = readTelephonyDisplayLabel(telephonyManager)
 
         val refresh = {
-            context.mainExecutor.execute {
-                status = readConnectionStatus(context, latestDisplayInfo)
+            ContextCompat.getMainExecutor(context).execute {
+                status = readConnectionStatus(context, displayLabel)
             }
         }
 
@@ -304,7 +308,7 @@ private fun rememberConnectionStatus(): ConnectionStatus {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 object : TelephonyCallback(), TelephonyCallback.DisplayInfoListener {
                     override fun onDisplayInfoChanged(telephonyDisplayInfo: TelephonyDisplayInfo) {
-                        latestDisplayInfo = telephonyDisplayInfo
+                        displayLabel = telephonyDisplayLabel(telephonyDisplayInfo)
                         refresh()
                     }
                 }
@@ -320,7 +324,7 @@ private fun rememberConnectionStatus(): ConnectionStatus {
                 object : PhoneStateListener() {
                     @Deprecated("Deprecated in Java")
                     override fun onDisplayInfoChanged(telephonyDisplayInfo: TelephonyDisplayInfo) {
-                        latestDisplayInfo = telephonyDisplayInfo
+                        displayLabel = telephonyDisplayLabel(telephonyDisplayInfo)
                         refresh()
                     }
                 }
@@ -342,7 +346,7 @@ private fun rememberConnectionStatus(): ConnectionStatus {
             }
         }
 
-        status = readConnectionStatus(context, latestDisplayInfo)
+        status = readConnectionStatus(context, displayLabel)
 
         onDispose {
             runCatching { connectivityManager.unregisterNetworkCallback(callback) }
@@ -413,7 +417,7 @@ private fun readWifiStatus(context: Context): WifiStatus {
 
 private fun readConnectionStatus(
     context: Context,
-    displayInfo: TelephonyDisplayInfo?,
+    displayLabel: String?,
 ): ConnectionStatus {
     val wifi = readWifiStatus(context)
     val connectivityManager = context.getSystemService(ConnectivityManager::class.java)
@@ -427,7 +431,7 @@ private fun readConnectionStatus(
     val telephonyManager = context.getSystemService(TelephonyManager::class.java)
     val cellularLabel =
         if (usingCellular) {
-            cellularGenerationLabel(displayInfo, readDataNetworkType(telephonyManager))
+            displayLabel ?: mapNetworkType(readDataNetworkType(telephonyManager))
         } else {
             null
         }
@@ -438,14 +442,18 @@ private fun readConnectionStatus(
     )
 }
 
-private fun readTelephonyDisplayInfo(telephonyManager: TelephonyManager?): TelephonyDisplayInfo? {
+// TelephonyDisplayInfo only exists on API 30+, so it must never be stored or passed outside
+// R-guarded code: even a null reference typed as it fails class resolution on older devices.
+private fun readTelephonyDisplayLabel(telephonyManager: TelephonyManager?): String? {
     if (telephonyManager == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
         return null
     }
     return try {
-        TelephonyManager::class.java
-            .getMethod("getTelephonyDisplayInfo")
-            .invoke(telephonyManager) as? TelephonyDisplayInfo
+        val info =
+            TelephonyManager::class.java
+                .getMethod("getTelephonyDisplayInfo")
+                .invoke(telephonyManager) as? TelephonyDisplayInfo
+        info?.let(::telephonyDisplayLabel)
     } catch (_: Throwable) {
         null
     }
@@ -462,26 +470,21 @@ private fun readDataNetworkType(telephonyManager: TelephonyManager?): Int {
     }
 }
 
-private fun cellularGenerationLabel(
-    displayInfo: TelephonyDisplayInfo?,
-    networkType: Int,
-): String {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && displayInfo != null) {
-        when (displayInfo.overrideNetworkType) {
-            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA,
-            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED,
-            -> return "5G"
-            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_CA,
-            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_ADVANCED_PRO,
-            -> return "LTE"
-        }
-        @Suppress("DEPRECATION")
-        if (displayInfo.overrideNetworkType == TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA_MMWAVE) {
-            return "5G"
-        }
-        return mapNetworkType(displayInfo.networkType)
+@RequiresApi(Build.VERSION_CODES.R)
+private fun telephonyDisplayLabel(displayInfo: TelephonyDisplayInfo): String {
+    when (displayInfo.overrideNetworkType) {
+        TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA,
+        TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED,
+        -> return "5G"
+        TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_CA,
+        TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_ADVANCED_PRO,
+        -> return "LTE"
     }
-    return mapNetworkType(networkType)
+    @Suppress("DEPRECATION")
+    if (displayInfo.overrideNetworkType == TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA_MMWAVE) {
+        return "5G"
+    }
+    return mapNetworkType(displayInfo.networkType)
 }
 
 private fun mapNetworkType(networkType: Int): String {

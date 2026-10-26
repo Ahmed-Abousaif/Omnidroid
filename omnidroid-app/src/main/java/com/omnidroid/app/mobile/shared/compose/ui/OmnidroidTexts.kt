@@ -17,6 +17,7 @@ import com.omnidroid.lib.library.db.entity.Game
 fun OmnidroidGameTexts(
     modifier: Modifier = Modifier,
     game: Game,
+    titleMaxLines: Int = 1,
 ) {
     val context = LocalContext.current
     val subtitle =
@@ -24,7 +25,7 @@ fun OmnidroidGameTexts(
             GameUtils.getGameSubtitle(context, game)
         }
 
-    OmnidroidTexts(modifier, game.displayName, subtitle)
+    OmnidroidTexts(modifier, game.displayName, subtitle, titleMaxLines)
 }
 
 @Composable
@@ -32,6 +33,7 @@ fun OmnidroidTexts(
     modifier: Modifier = Modifier,
     title: String,
     subtitle: String,
+    titleMaxLines: Int = 1,
 ) {
     Column(
         modifier = modifier.padding(8.dp),
@@ -39,7 +41,7 @@ fun OmnidroidTexts(
         Text(
             text = title,
             style = MaterialTheme.typography.titleSmall,
-            maxLines = 1,
+            maxLines = titleMaxLines,
             overflow = TextOverflow.Ellipsis,
         )
         Text(
