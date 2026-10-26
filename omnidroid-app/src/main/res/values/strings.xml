@@ -161,6 +161,7 @@
     <string name="settings_ps2_bios_pinned">Used for every PlayStation 2 game</string>
     <string name="settings_ps2_bios_download">Download</string>
     <string name="settings_ps2_bios_downloading">Downloading…</string>
+    <string name="settings_ps2_bios_download_failed">Couldn\'t download. Try again.</string>
     <string name="settings_ps2_bios_usa">United States</string>
     <string name="settings_ps2_bios_europe">Europe</string>
     <string name="settings_ps2_bios_japan">Japan</string>

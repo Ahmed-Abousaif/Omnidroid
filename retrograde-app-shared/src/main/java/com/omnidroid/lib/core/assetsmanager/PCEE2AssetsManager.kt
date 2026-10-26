@@ -14,7 +14,7 @@ import okhttp3.ResponseBody
 import retrofit2.Response
 import timber.log.Timber
 import java.io.File
-import java.util.zip.ZipInputStream
+import java.util.zip.ZipFile
 
 class PCEE2AssetsManager : CoreID.AssetsManager {
     override suspend fun clearAssets(directoriesManager: DirectoriesManager) {
@@ -51,25 +51,34 @@ class PCEE2AssetsManager : CoreID.AssetsManager {
             throw Exception(response.errorBody()?.use { it.string() } ?: "PS2 BIOS download failed")
         }
         val body = response.body() ?: throw Exception("Empty PS2 BIOS download")
-        val temp = File.createTempFile("ps2-bios", ".bin", systemDir)
+        val archive = File.createTempFile("ps2-bios", ".zip", systemDir)
         try {
             body.use { responseBody ->
-                ZipInputStream(responseBody.byteStream()).use { zip ->
-                    while (true) {
-                        val entry = zip.nextEntry ?: break
-                        if (!entry.name.endsWith(".bin", ignoreCase = true)) continue
-                        if (!region.matches(entry.name)) continue
-                        temp.outputStream().use { output -> zip.copyTo(output) }
+                archive.outputStream().use { output -> responseBody.byteStream().copyTo(output) }
+            }
+            ZipFile(archive).use { zip ->
+                val entries = zip.entries()
+                while (entries.hasMoreElements()) {
+                    val entry = entries.nextElement()
+                    if (entry.isDirectory || !entry.name.endsWith(".bin", ignoreCase = true)) continue
+                    if (!region.matches(entry.name)) continue
+                    val temp = File.createTempFile("ps2-bios", ".bin", systemDir)
+                    try {
+                        zip.getInputStream(entry).use { input ->
+                            temp.outputStream().use { output -> input.copyTo(output) }
+                        }
                         if (BiosManager.adoptPs2File(systemDir, temp)) {
                             sharedPreferences.edit().putString(PCEE2_ASSETS_VERSION_KEY, PCEE2_ASSETS_VERSION).commit()
                             return
                         }
+                    } finally {
+                        temp.delete()
                     }
                 }
             }
             throw Exception("PS2 BIOS package has no ${region.name} image")
         } finally {
-            temp.delete()
+            archive.delete()
         }
     }
 
