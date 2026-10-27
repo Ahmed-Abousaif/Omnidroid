@@ -2,6 +2,7 @@ package com.omnidroid.app.shared.savesync
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -150,6 +151,11 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
             isExternalLaunch: Boolean = false,
         ): Intent {
             return Intent(activity, PreGameSyncActivity::class.java).apply {
+                val uri = Uri.parse(game.fileUri)
+                if (uri.scheme.equals("content", ignoreCase = true)) {
+                    data = uri
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
                 putExtra(EXTRA_GAME, game)
                 putExtra(EXTRA_CORE_CONFIG, coreConfig)
                 putExtra(EXTRA_LOAD_SAVE, loadSave)
