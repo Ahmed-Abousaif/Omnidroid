@@ -48,6 +48,12 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE fileUri = :fileUri")
     fun selectByFileUri(fileUri: String): Game?
 
+    @Query("SELECT * FROM games WHERE fileUri = :fileUri")
+    suspend fun asyncSelectByFileUri(fileUri: String): Game?
+
+    @Query("SELECT * FROM games WHERE fileName = :fileName")
+    suspend fun selectByFileName(fileName: String): List<Game>
+
     @Query("SELECT * FROM games WHERE lastIndexedAt < :lastIndexedAt")
     fun selectByLastIndexedAtLessThan(lastIndexedAt: Long): List<Game>
 

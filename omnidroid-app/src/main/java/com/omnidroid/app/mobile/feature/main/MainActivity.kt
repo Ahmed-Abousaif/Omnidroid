@@ -99,7 +99,6 @@ import com.omnidroid.app.mobile.feature.settings.slices.GameDatabasesScreen
 import com.omnidroid.app.mobile.feature.settings.slices.GameDatabasesViewModel
 import com.omnidroid.app.mobile.feature.settings.unrecognized.UnrecognizedFilesScreen
 import com.omnidroid.app.mobile.feature.settings.unrecognized.UnrecognizedFilesViewModel
-import com.omnidroid.app.mobile.feature.shortcuts.ShortcutsGenerator
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
 import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
@@ -822,7 +821,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
             MainGameContextActions(
                 selectedGameState = selectedGameState,
                 retrogradeDb = retrogradeDb,
-                shortcutSupported = gameInteractor.supportShortcuts(),
                 saveSyncSupported = gameInteractor.isSaveSyncSupported(),
                 cloudOverride = selectedGameState.value?.let { gameInteractor.getCloudOverride(it) },
                 frameSpeed = selectedGameState.value?.let { gameInteractor.getFrameSpeed(it) } ?: 1,
@@ -837,7 +835,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 onFavoriteToggle = { game: Game, isFavorite: Boolean ->
                     gameInteractor.onFavoriteToggle(game, isFavorite)
                 },
-                onCreateShortcut = { gameInteractor.onCreateShortcut(it) },
                 onCloudOverride = { game, override -> gameInteractor.setCloudOverride(game, override) },
                 onFrameSpeed = { game, speed -> gameInteractor.setFrameSpeed(game, speed) },
                 onSyncGameNow = { gameInteractor.syncGameNow(it) },
