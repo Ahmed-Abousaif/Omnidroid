@@ -21,6 +21,8 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import android.provider.OpenableColumns
 import java.io.File
+import java.util.Locale
+import java.util.zip.ZipInputStream
 import javax.inject.Inject
 
 /**
@@ -135,6 +137,31 @@ class ExternalGameLauncherActivity : AppCompatActivity() {
         return null
     }
 
+    private fun peekZipInnerExtension(uri: Uri): String? {
+        return runCatching {
+            val inputStream = contentResolver.openInputStream(uri) ?: return@runCatching null
+            ZipInputStream(inputStream).use { zipStream ->
+                var entry = zipStream.nextEntry
+                var count = 0
+                while (entry != null && count < 10) {
+                    if (!entry.isDirectory) {
+                        val name = entry.name
+                        val ext = name.substringAfterLast('.', "").lowercase(Locale.US)
+                        if (ext.isNotEmpty() && ext != "txt" && ext != "nfo" && ext != "diz" && ext != "xml" && ext != "png" && ext != "jpg") {
+                            val candidateSystem = SystemDetector.detectSystem(ext)
+                            if (candidateSystem != null) {
+                                return@runCatching ext
+                            }
+                        }
+                    }
+                    entry = zipStream.nextEntry
+                    count++
+                }
+                null
+            }
+        }.getOrNull()
+    }
+
     private suspend fun lookupOrBuildGame(resolved: ResolvedLaunchInput): Game? {
         val gameDao = retrogradeDatabase.gameDao()
         val parsedUri = Uri.parse(resolved.uriString)
@@ -166,9 +193,18 @@ class ExternalGameLauncherActivity : AppCompatActivity() {
 
         // 4. Not in library: detect system from file extension + optional SYSTEM extra
         val fileName = contentDisplayName ?: FileUriNormalizer.extractFileName(resolved.uriString) ?: "Unknown"
-        val extension = FileUriNormalizer.extractExtension(fileName)
+        var extension = FileUriNormalizer.extractExtension(fileName)
             ?: FileUriNormalizer.extractExtension(resolved.uriString)
             ?: return null
+
+        // If it's a zip and no SYSTEM extra is provided, peek inside to detect the actual ROM extension
+        if (extension == "zip" && resolved.systemExtra.isNullOrBlank()) {
+            val innerExt = peekZipInnerExtension(parsedUri)
+            if (innerExt != null) {
+                extension = innerExt
+            }
+        }
+
         val system = SystemDetector.detectSystem(extension, resolved.systemExtra) ?: return null
 
         val title = fileName.substringBeforeLast('.')
