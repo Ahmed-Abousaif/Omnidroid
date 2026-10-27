@@ -78,7 +78,9 @@ fun ZipInputStream.extractEntryToFile(
             val entry = inputStream.nextEntry ?: break
             if (entry.isDirectory) continue
 
-            if (entry.name == entryName) {
+            val simpleEntryName = entry.name.substringAfterLast('/')
+            val simpleTargetName = entryName.substringAfterLast('/')
+            if (entry.name == entryName || simpleEntryName == simpleTargetName) {
                 targetFound = true
                 gameFile.outputStream().use { out ->
                     var len: Int
@@ -113,9 +115,15 @@ fun ZipInputStream.extractEntryToFile(
     }
 }
 
-fun File.isZipped() = extension == "zip"
+fun File.isZipped() = extension.equals("zip", ignoreCase = true)
 
-fun DocumentFile.isZipped() = type == "application/zip"
+fun DocumentFile.isZipped(): Boolean {
+    val t = type?.lowercase()
+    if (t == "application/zip" || t == "application/x-zip" || t == "application/x-zip-compressed") {
+        return true
+    }
+    return name?.endsWith(".zip", ignoreCase = true) == true || uri.path?.endsWith(".zip", ignoreCase = true) == true
+}
 
 /** Returns the uncompressed input stream if gzip compressed. */
 private fun InputStream.uncompressedInputStream(): InputStream {

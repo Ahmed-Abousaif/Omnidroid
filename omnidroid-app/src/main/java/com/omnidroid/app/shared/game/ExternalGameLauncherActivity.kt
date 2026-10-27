@@ -20,6 +20,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import android.provider.OpenableColumns
+import com.omnidroid.lib.library.GameSystem
+import java.io.BufferedInputStream
 import java.io.File
 import java.util.Locale
 import java.util.zip.ZipInputStream
@@ -137,20 +139,27 @@ class ExternalGameLauncherActivity : AppCompatActivity() {
         return null
     }
 
-    private fun peekZipInnerExtension(uri: Uri): String? {
+    private data class ZipInnerRomInfo(val entryName: String, val extension: String, val system: GameSystem)
+
+    private fun peekZipInnerRom(uri: Uri): ZipInnerRomInfo? {
         return runCatching {
             val inputStream = contentResolver.openInputStream(uri) ?: return@runCatching null
-            ZipInputStream(inputStream).use { zipStream ->
+            ZipInputStream(BufferedInputStream(inputStream)).use { zipStream ->
                 var entry = zipStream.nextEntry
                 var count = 0
-                while (entry != null && count < 10) {
+                while (entry != null && count < 25) {
                     if (!entry.isDirectory) {
-                        val name = entry.name
-                        val ext = name.substringAfterLast('.', "").lowercase(Locale.US)
+                        val fullName = entry.name
+                        val simpleName = fullName.substringAfterLast('/')
+                        val ext = simpleName.substringAfterLast('.', "").lowercase(Locale.US)
                         if (ext.isNotEmpty() && ext != "txt" && ext != "nfo" && ext != "diz" && ext != "xml" && ext != "png" && ext != "jpg") {
                             val candidateSystem = SystemDetector.detectSystem(ext)
                             if (candidateSystem != null) {
-                                return@runCatching ext
+                                return@runCatching ZipInnerRomInfo(
+                                    entryName = simpleName,
+                                    extension = ext,
+                                    system = candidateSystem,
+                                )
                             }
                         }
                     }
@@ -166,18 +175,28 @@ class ExternalGameLauncherActivity : AppCompatActivity() {
         val gameDao = retrogradeDatabase.gameDao()
         val parsedUri = Uri.parse(resolved.uriString)
         val contentDisplayName = resolveDisplayName(parsedUri)
+        val rawFileName = contentDisplayName ?: FileUriNormalizer.extractFileName(resolved.uriString)
+        val rawExt = rawFileName?.let { FileUriNormalizer.extractExtension(it) }
+            ?: FileUriNormalizer.extractExtension(resolved.uriString)
+
+        val innerRom = if (rawExt.equals("zip", ignoreCase = true)) {
+            peekZipInnerRom(parsedUri)
+        } else {
+            null
+        }
 
         // 1. Direct match on exact stored fileUri
         var matched = gameDao.asyncSelectByFileUri(resolved.uriString)
             ?: gameDao.asyncSelectByFileUri(resolved.normalizedUriString)
 
-        // 2. Fallback: match candidates by fileName (using content display name or path file name)
+        // 2. Fallback: match candidates by fileName (using raw file name OR inner ROM entry name)
         if (matched == null) {
-            val fileName = contentDisplayName ?: FileUriNormalizer.extractFileName(resolved.uriString)
-            if (fileName != null) {
-                val candidates = gameDao.selectByFileName(fileName)
+            val candidateNames = listOfNotNull(innerRom?.entryName, rawFileName).distinct()
+            for (candidateName in candidateNames) {
+                val candidates = gameDao.selectByFileName(candidateName)
                 matched = candidates.firstOrNull { FileUriNormalizer.matches(resolved.uriString, it.fileUri) }
                     ?: if (candidates.size == 1) candidates.first() else null
+                if (matched != null) break
             }
         }
 
@@ -191,23 +210,17 @@ class ExternalGameLauncherActivity : AppCompatActivity() {
             return matched
         }
 
-        // 4. Not in library: detect system from file extension + optional SYSTEM extra
-        val fileName = contentDisplayName ?: FileUriNormalizer.extractFileName(resolved.uriString) ?: "Unknown"
-        var extension = FileUriNormalizer.extractExtension(fileName)
-            ?: FileUriNormalizer.extractExtension(resolved.uriString)
+        // 4. Not in library: detect system from inner ROM or outer file extension + optional SYSTEM extra
+        val fileName = innerRom?.entryName ?: rawFileName ?: "Unknown"
+        val extension = innerRom?.extension
+            ?: rawExt
             ?: return null
 
-        // If it's a zip and no SYSTEM extra is provided, peek inside to detect the actual ROM extension
-        if (extension == "zip" && resolved.systemExtra.isNullOrBlank()) {
-            val innerExt = peekZipInnerExtension(parsedUri)
-            if (innerExt != null) {
-                extension = innerExt
-            }
-        }
+        val system = innerRom?.system?.takeIf { resolved.systemExtra.isNullOrBlank() }
+            ?: SystemDetector.detectSystem(extension, resolved.systemExtra)
+            ?: return null
 
-        val system = SystemDetector.detectSystem(extension, resolved.systemExtra) ?: return null
-
-        val title = fileName.substringBeforeLast('.')
+        val title = (rawFileName ?: fileName).substringBeforeLast('.')
 
         return Game(
             id = 0,
