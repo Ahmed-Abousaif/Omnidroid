@@ -87,14 +87,17 @@ object FileUriNormalizer {
         val trimmed = rawOrUri.trim()
         if (trimmed.isEmpty()) return null
 
-        if (trimmed.contains(EXTERNAL_STORAGE_AUTHORITY)) {
-            val docIndex = trimmed.indexOf(DOCUMENT_SUBPATH)
-            if (docIndex != -1) {
-                val afterDoc = trimmed.substring(docIndex + DOCUMENT_SUBPATH.length)
-                    .substringBefore('?')
-                    .substringBefore('#')
-                return safeUrlDecode(afterDoc)
+        if (trimmed.startsWith("content://", ignoreCase = true)) {
+            if (trimmed.contains(EXTERNAL_STORAGE_AUTHORITY)) {
+                val docIndex = trimmed.indexOf(DOCUMENT_SUBPATH)
+                if (docIndex != -1) {
+                    val afterDoc = trimmed.substring(docIndex + DOCUMENT_SUBPATH.length)
+                        .substringBefore('?')
+                        .substringBefore('#')
+                    return safeUrlDecode(afterDoc)
+                }
             }
+            return null
         }
 
         val canonical = getCanonicalPath(trimmed) ?: return null
