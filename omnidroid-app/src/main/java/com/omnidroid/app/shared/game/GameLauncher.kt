@@ -35,6 +35,8 @@ class GameLauncher(
         game: Game,
         loadSave: Boolean,
         leanback: Boolean,
+        isExternalLaunch: Boolean = false,
+        onLaunched: (() -> Unit)? = null,
     ): Boolean {
         if (GameProcessLock.isHeldByAnotherProcess(activity.applicationContext)) {
             activity.displayToast(R.string.game_process_another_game_running)
@@ -61,9 +63,10 @@ class GameLauncher(
 
             if (shouldPreSync) {
                 activity.startActivityForResult(
-                    PreGameSyncActivity.intent(activity, game, coreConfig, loadSave, leanback),
+                    PreGameSyncActivity.intent(activity, game, coreConfig, loadSave, leanback, isExternalLaunch),
                     BaseGameActivity.REQUEST_PLAY_GAME,
                 )
+                onLaunched?.invoke()
             } else {
                 gameLaunchTaskHandler.handleGameStart(activity.applicationContext)
                 castDisplayManager.hideIdleForGame()
@@ -74,7 +77,9 @@ class GameLauncher(
                     loadSave,
                     leanback,
                     castDisplayManager.launchOptions(),
+                    isExternalLaunch,
                 )
+                onLaunched?.invoke()
             }
         }
 

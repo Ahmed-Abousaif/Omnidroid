@@ -3,6 +3,7 @@ package com.omnidroid.app.tv.channel
 import android.annotation.SuppressLint
 import android.content.ContentUris
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -15,16 +16,20 @@ import androidx.tvprovider.media.tv.PreviewProgram
 import androidx.tvprovider.media.tv.TvContractCompat
 import com.omnidroid.R
 import com.omnidroid.app.shared.covers.CoverUtils
-import com.omnidroid.app.shared.deeplink.DeepLink
+import com.omnidroid.app.shared.game.ExternalLaunchIntentBuilder
+import com.omnidroid.lib.launch.FileUriNormalizer
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.http.HEAD
 import retrofit2.http.Url
+import timber.log.Timber
+import java.io.File
 
 class ChannelHandler(
     private val appContext: Context,
@@ -53,7 +58,7 @@ class ChannelHandler(
             Channel.Builder()
                 .setType(TvContractCompat.Channels.TYPE_PREVIEW)
                 .setDisplayName(appName)
-                .setAppLinkIntentUri(DeepLink.openLeanbackUri(appContext))
+                .setAppLinkIntentUri(libraryUri())
 
         val channelUri =
             appContext.contentResolver.insert(
@@ -98,6 +103,13 @@ class ChannelHandler(
 
         val channelEntries =
             recentGames.asFlow()
+                .filter { game ->
+                    val accessible = hasReadPermission(game.fileUri)
+                    if (!accessible) {
+                        Timber.w("Omitting recent TV preview tile for inaccessible game: ${game.displayName} (${game.fileUri})")
+                    }
+                    accessible
+                }
                 .map { getChannelEntry(it) }
                 .toList()
 
@@ -106,7 +118,7 @@ class ChannelHandler(
         val channel = Channel.Builder()
         channel.setDisplayName(appName)
             .setType(TvContractCompat.Channels.TYPE_PREVIEW)
-            .setAppLinkIntentUri(DeepLink.openLeanbackUri(appContext))
+            .setAppLinkIntentUri(libraryUri())
             .build()
 
         appContext.contentResolver.delete(
@@ -135,6 +147,27 @@ class ChannelHandler(
         }
     }
 
+    private fun hasReadPermission(fileUri: String): Boolean {
+        return try {
+            val uri = Uri.parse(fileUri)
+            if (uri.scheme == "content") {
+                appContext.contentResolver.openInputStream(uri)?.use { true } ?: false
+            } else if (uri.scheme == "file") {
+                val path = uri.path ?: return false
+                File(path).canRead()
+            } else {
+                val path = FileUriNormalizer.getCanonicalPath(fileUri) ?: return false
+                File(path).canRead()
+            }
+        } catch (e: SecurityException) {
+            Timber.w(e, "Lost URI permission for %s", fileUri)
+            false
+        } catch (e: Exception) {
+            Timber.w(e, "Cannot access game file for %s", fileUri)
+            false
+        }
+    }
+
     private suspend fun getChannelEntry(game: Game): ChannelEntry {
         val hasThumbnail =
             game.coverFrontUrl
@@ -149,7 +182,7 @@ class ChannelHandler(
         game: Game,
         thumbnailExists: Boolean,
     ): PreviewProgram {
-        val intent = DeepLink.launchIntentForGame(appContext, game)
+        val intent = ExternalLaunchIntentBuilder.forFile(appContext, game.fileUri)
 
         val preview =
             PreviewProgram.Builder()
@@ -157,6 +190,7 @@ class ChannelHandler(
                 .setTitle(game.displayName)
                 .setDescription(game.developer)
                 .setIntent(intent)
+                .setIntentUri(Uri.parse(intent.toUri(Intent.URI_INTENT_SCHEME)))
                 .setStartTimeUtcMillis(game.lastPlayedAt ?: 0)
                 .setType(TvContractCompat.PreviewPrograms.TYPE_GAME)
                 .setPosterArtAspectRatio(TvContractCompat.PreviewProgramColumns.ASPECT_RATIO_1_1)
@@ -169,6 +203,16 @@ class ChannelHandler(
 
         return preview.build()
     }
+
+    private fun libraryIntent(): Intent {
+        return appContext.packageManager.getLaunchIntentForPackage(appContext.packageName)
+            ?: Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_LAUNCHER)
+                setPackage(appContext.packageName)
+            }
+    }
+
+    private fun libraryUri(): Uri = Uri.parse(libraryIntent().toUri(Intent.URI_INTENT_SCHEME))
 
     private fun findChannel(): Long? {
         val channels =
