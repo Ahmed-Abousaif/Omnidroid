@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
+import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
 import java.util.zip.ZipInputStream
@@ -144,7 +145,7 @@ class StorageAccessFrameworkProvider(private val context: Context) : StorageProv
         val originalDocument = DocumentFile.fromSingleUri(context, originalDocumentUri)!!
 
         val isZipped =
-            originalDocument.isZipped() &&
+            (originalDocument.isZipped() || originalDocument.name?.endsWith(".zip", ignoreCase = true) == true || originalDocumentUri.path?.endsWith(".zip", ignoreCase = true) == true) &&
                 originalDocument.name != game.fileName &&
                 !game.fileName.endsWith(".zip", ignoreCase = true)
 
@@ -170,14 +171,13 @@ class StorageAccessFrameworkProvider(private val context: Context) : StorageProv
         originalDocument: DocumentFile,
     ): RomFiles {
         val cacheFile = GameCacheUtils.getCacheFileForGame(SAF_CACHE_SUBFOLDER, context, game)
-        if (cacheFile.exists()) {
+        if (cacheFile.exists() && cacheFile.length() > 0L) {
             return RomFiles.Standard(listOf(cacheFile))
         }
 
-        val stream =
-            ZipInputStream(
-                context.contentResolver.openInputStream(originalDocument.uri),
-            )
+        val rawStream = context.contentResolver.openInputStream(originalDocument.uri)
+            ?: error("Cannot open stream for ${originalDocument.uri}")
+        val stream = ZipInputStream(BufferedInputStream(rawStream))
         stream.extractEntryToFile(game.fileName, cacheFile)
         return RomFiles.Standard(listOf(cacheFile))
     }
