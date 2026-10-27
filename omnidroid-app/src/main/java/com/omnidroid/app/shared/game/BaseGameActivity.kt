@@ -2,6 +2,7 @@ package com.omnidroid.app.shared.game
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.content.pm.ActivityInfo
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -576,6 +577,11 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         ) {
             val intent =
                 Intent(activity, GameActivity::class.java).apply {
+                    val uri = Uri.parse(game.fileUri)
+                    if (uri.scheme.equals("content", ignoreCase = true)) {
+                        data = uri
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
                     putExtra(EXTRA_GAME, game)
                     putExtra(EXTRA_LOAD_SAVE, loadSave)
                     putExtra(EXTRA_LEANBACK, useLeanback)
