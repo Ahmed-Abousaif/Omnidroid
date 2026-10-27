@@ -104,4 +104,21 @@ class FileUriNormalizerTest {
 
         assertFalse(FileUriNormalizer.matches(gameInNes, gameInFavorites))
     }
+
+    @Test
+    fun thirdPartyFileManagerUrisDoNotRecurse() {
+        val samsungUri = "content://com.sec.android.app.myfiles.FileProvider/root/storage/emulated/0/Download/game.zip"
+        val googleFilesUri = "content://com.google.android.apps.nbu.files.provider/1/12345"
+        val mediaUri = "content://media/external/file/98765"
+
+        assertNull(FileUriNormalizer.getDocumentId(samsungUri))
+        assertNull(FileUriNormalizer.getCanonicalPath(samsungUri))
+        assertNull(FileUriNormalizer.getDocumentId(googleFilesUri))
+        assertNull(FileUriNormalizer.getCanonicalPath(googleFilesUri))
+        assertNull(FileUriNormalizer.getDocumentId(mediaUri))
+        assertNull(FileUriNormalizer.getCanonicalPath(mediaUri))
+
+        assertFalse(FileUriNormalizer.matches(samsungUri, googleFilesUri))
+        assertTrue(FileUriNormalizer.matches(samsungUri, samsungUri))
+    }
 }
