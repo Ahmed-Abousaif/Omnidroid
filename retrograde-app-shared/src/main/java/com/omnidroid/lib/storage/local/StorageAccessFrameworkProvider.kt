@@ -145,7 +145,7 @@ class StorageAccessFrameworkProvider(private val context: Context) : StorageProv
         val originalDocument = DocumentFile.fromSingleUri(context, originalDocumentUri)!!
 
         val isZipped =
-            (originalDocument.isZipped() || originalDocument.name?.endsWith(".zip", ignoreCase = true) == true || originalDocumentUri.path?.endsWith(".zip", ignoreCase = true) == true) &&
+            originalDocument.isZipped() &&
                 originalDocument.name != game.fileName &&
                 !game.fileName.endsWith(".zip", ignoreCase = true)
 

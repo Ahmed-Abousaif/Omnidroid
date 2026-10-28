@@ -63,56 +63,34 @@ fun InputStream.writeToFile(file: File) {
     }
 }
 
-private val NON_GAME_EXTENSIONS = setOf("txt", "nfo", "url", "png", "jpg", "jpeg", "gif", "htm", "html", "pdf", "xml")
-
 fun ZipInputStream.extractEntryToFile(
     entryName: String,
     gameFile: File,
 ) {
     this.use { inputStream ->
-        var targetFound = false
-        var fallbackTempFile: File? = null
         val buffer = ByteArray(8192)
+        val simpleTargetName = entryName.substringAfterLast('/')
 
         while (true) {
             val entry = inputStream.nextEntry ?: break
             if (entry.isDirectory) continue
 
             val simpleEntryName = entry.name.substringAfterLast('/')
-            val simpleTargetName = entryName.substringAfterLast('/')
             if (entry.name == entryName || simpleEntryName == simpleTargetName) {
-                targetFound = true
                 gameFile.outputStream().use { out ->
                     var len: Int
                     while (inputStream.read(buffer).also { len = it } > 0) {
                         out.write(buffer, 0, len)
                     }
                 }
-                break
-            } else {
-                val ext = entry.name.substringAfterLast('.', "").lowercase()
-                val isLikelyRom = ext.isNotEmpty() && ext !in NON_GAME_EXTENSIONS
-                if (fallbackTempFile == null || isLikelyRom) {
-                    fallbackTempFile?.delete()
-                    val temp = File.createTempFile("zip_extract", ".tmp", gameFile.parentFile)
-                    temp.outputStream().use { out ->
-                        var len: Int
-                        while (inputStream.read(buffer).also { len = it } > 0) {
-                            out.write(buffer, 0, len)
-                        }
-                    }
-                    fallbackTempFile = temp
-                }
+                return
             }
         }
-
-        if (!targetFound && fallbackTempFile != null) {
-            fallbackTempFile.copyTo(gameFile, overwrite = true)
-            fallbackTempFile.delete()
-        } else {
-            fallbackTempFile?.delete()
-        }
     }
+
+    // Exact match not found: re-opening is not possible on a consumed stream.
+    // Callers that need fallback behaviour should supply the correct entryName
+    // (e.g. via peekZipInnerRom) before calling this method.
 }
 
 fun File.isZipped() = extension.equals("zip", ignoreCase = true)
