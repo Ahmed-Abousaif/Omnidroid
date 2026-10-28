@@ -6,11 +6,28 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
+import kotlin.math.roundToInt
 
 /**
- * Display-cutout (camera hole) insets for the given [sides].
+ * How far into the reported cutout safe area content sits. That area spans the whole status-bar
+ * depth, well past the camera hole itself, so content only needs [fraction] of it.
+ */
+enum class CutoutClearance(val fraction: Float) {
+    /** Library, settings and other app chrome. */
+    Chrome(0.5f),
+
+    /** On-screen pads and the game view during play. */
+    InGame(0.7f),
+}
+
+/**
+ * Display-cutout (camera hole) insets for the given [sides], reduced to the [clearance]
+ * fraction of the reported depth.
  *
  * Omnidroid draws edge to edge, so anything pinned to a screen edge - on-screen pads, side
  * rails, full-bleed bars - can end up underneath the hole. The cutout follows the rotation, so
@@ -19,76 +36,38 @@ import androidx.compose.ui.Modifier
  * Devices without a cutout report zero insets, so this is a no-op there.
  */
 @Composable
-fun rememberDisplayCutoutInsets(sides: WindowInsetsSides): WindowInsets {
+fun rememberHuggingCutoutInsets(
+    sides: WindowInsetsSides,
+    clearance: CutoutClearance = CutoutClearance.Chrome,
+): WindowInsets {
     val cutout = WindowInsets.displayCutout
-    return remember(cutout, sides) { cutout.only(sides) }
+    return remember(cutout, sides, clearance) { ScaledWindowInsets(cutout.only(sides), clearance.fraction) }
 }
 
-/**
- * Cutout insets for content spanning the full width or top chrome, such as the top bar
- * and the video surface.
- *
- * In landscape, camera cutouts on the side edges are inset to avoid overlap. In portrait,
- * no cutout insets are applied since cutouts do not interfere with portrait layouts.
- */
+/** Keeps this content clear of the display cutout on [sides]. See [rememberHuggingCutoutInsets]. */
 @Composable
-fun rememberDisplayCutoutInsetsForTopBar(isLandscape: Boolean): WindowInsets =
-    if (isLandscape) {
-        rememberDisplayCutoutInsets(WindowInsetsSides.Horizontal)
-    } else {
-        WindowInsets(0, 0, 0, 0)
-    }
+fun Modifier.hugDisplayCutout(
+    sides: WindowInsetsSides,
+    clearance: CutoutClearance = CutoutClearance.Chrome,
+): Modifier = windowInsetsPadding(rememberHuggingCutoutInsets(sides, clearance))
 
-/**
- * Cutout insets for content pinned to a side rail or edge, such as the on-screen pads.
- *
- * In landscape, camera cutouts on the side edges are inset to keep pads clear. In portrait,
- * no cutout insets are applied.
- */
-@Composable
-fun rememberDisplayCutoutInsetsForEdge(isLandscape: Boolean): WindowInsets =
-    if (isLandscape) {
-        rememberDisplayCutoutInsets(WindowInsetsSides.Horizontal)
-    } else {
-        WindowInsets(0, 0, 0, 0)
-    }
+@Stable
+private class ScaledWindowInsets(
+    private val insets: WindowInsets,
+    private val fraction: Float,
+) : WindowInsets {
+    override fun getLeft(density: Density, layoutDirection: LayoutDirection): Int =
+        (insets.getLeft(density, layoutDirection) * fraction).roundToInt()
 
-/**
- * Cutout insets for content pinned to the left edge, such as the left game pad in landscape.
- * Only insets the left edge to avoid inward dead margins facing the game view.
- */
-@Composable
-fun rememberDisplayCutoutInsetsForLeftPad(isLandscape: Boolean): WindowInsets =
-    if (isLandscape) {
-        rememberDisplayCutoutInsets(WindowInsetsSides.Left)
-    } else {
-        WindowInsets(0, 0, 0, 0)
-    }
+    override fun getTop(density: Density): Int = (insets.getTop(density) * fraction).roundToInt()
 
-/**
- * Cutout insets for content pinned to the right edge, such as the right game pad in landscape.
- * Only insets the right edge to avoid inward dead margins facing the game view.
- */
-@Composable
-fun rememberDisplayCutoutInsetsForRightPad(isLandscape: Boolean): WindowInsets =
-    if (isLandscape) {
-        rememberDisplayCutoutInsets(WindowInsetsSides.Right)
-    } else {
-        WindowInsets(0, 0, 0, 0)
-    }
+    override fun getRight(density: Density, layoutDirection: LayoutDirection): Int =
+        (insets.getRight(density, layoutDirection) * fraction).roundToInt()
 
-/**
- * Cutout insets for content pinned to the bottom edge, such as the bottom pad in portrait.
- */
-@Composable
-fun rememberDisplayCutoutInsetsForBottomPad(isLandscape: Boolean): WindowInsets =
-    if (!isLandscape) {
-        rememberDisplayCutoutInsets(WindowInsetsSides.Bottom)
-    } else {
-        WindowInsets(0, 0, 0, 0)
-    }
+    override fun getBottom(density: Density): Int = (insets.getBottom(density) * fraction).roundToInt()
 
-/** Keeps this content out of the display cutout on [sides]. See [rememberDisplayCutoutInsets]. */
-@Composable
-fun Modifier.avoidDisplayCutout(sides: WindowInsetsSides): Modifier =
-    windowInsetsPadding(rememberDisplayCutoutInsets(sides))
+    override fun equals(other: Any?): Boolean =
+        other is ScaledWindowInsets && other.insets == insets && other.fraction == fraction
+
+    override fun hashCode(): Int = 31 * insets.hashCode() + fraction.hashCode()
+}

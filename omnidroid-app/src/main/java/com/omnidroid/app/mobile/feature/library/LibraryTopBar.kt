@@ -1,8 +1,11 @@
 package com.omnidroid.app.mobile.feature.library
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
@@ -14,25 +17,31 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -40,13 +49,21 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Cast
 import androidx.compose.material.icons.filled.CastConnected
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SortByAlpha
+import androidx.compose.material.icons.outlined.Casino
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
@@ -57,6 +74,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,15 +87,25 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -89,15 +117,15 @@ import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.SystemStatusIndicators
-import com.omnidroid.app.mobile.shared.compose.ui.rememberDisplayCutoutInsetsForTopBar
+import com.omnidroid.app.mobile.shared.compose.ui.hugDisplayCutout
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.lib.core.SyncProgress
+import kotlin.math.roundToInt
 
 val LibraryTopBarRowHeight = 40.dp
 val LibraryTopBarPortraitHeight = 82.dp
 private val LibrarySearchCollapsedWidth = 200.dp
-private val LibrarySearchFieldHeight = 36.dp
 
 @Composable
 fun LibraryTopBar(
@@ -105,10 +133,12 @@ fun LibraryTopBar(
     operationInProgress: Boolean,
     syncProgress: SyncProgress? = null,
     gamepadConnected: Boolean,
-    onScanPressed: () -> Unit,
+    onRandomPressed: () -> Unit,
     onCastPressed: () -> Unit,
     onSettingsPressed: () -> Unit,
     onProfilePressed: () -> Unit = {},
+    sort: LibrarySort = LibrarySort.TITLE,
+    onSortChange: (LibrarySort) -> Unit = {},
     overlayTitleId: Int? = null,
     onBackPressed: () -> Unit = {},
     compactProgress: Float = 0f,
@@ -132,6 +162,7 @@ fun LibraryTopBar(
     val searchArmed = controllerNav?.searchArmed?.value == true
     var searchFocused by remember { mutableStateOf(false) }
     val searchExpanded = searchFocused || searchQuery.isNotEmpty()
+    val sortMenu = remember { SortMenuState() }
     var displayedConsoleTitleId by remember { mutableStateOf<Int?>(null) }
     var displayedConsoleGameCount by remember { mutableStateOf<Int?>(null) }
     if (consoleTitleId != null) {
@@ -140,6 +171,10 @@ fun LibraryTopBar(
     }
     val dismissSearchOnOutsideTap =
         searchFocused && searchQuery.isEmpty() && !overlayMode && !showBack
+
+    LaunchedEffect(showBack, overlayMode) {
+        if (showBack || overlayMode) sortMenu.open = false
+    }
 
     LaunchedEffect(showBack) {
         if (showBack) {
@@ -185,14 +220,13 @@ fun LibraryTopBar(
                 syncProgress = syncProgress,
                 gamepadConnected = gamepadConnected,
                 searchQuery = searchQuery,
-                searchExpanded = searchExpanded,
-                consoleTitleId = consoleTitleId,
-                consoleGameCount = consoleGameCount,
                 dismissSearchOnOutsideTap = dismissSearchOnOutsideTap,
-                onScanPressed = onScanPressed,
+                onRandomPressed = onRandomPressed,
                 onCastPressed = onCastPressed,
                 onSettingsPressed = onSettingsPressed,
                 onProfilePressed = onProfilePressed,
+                sort = sort,
+                sortMenu = sortMenu,
                 onSearchQueryChange = onSearchQueryChange,
                 onClearSearch = {
                     onClearSearch()
@@ -232,6 +266,20 @@ fun LibraryTopBar(
                             },
                 )
             }
+            // The backdrop runs edge to edge, under the cutout; only the bar contents are inset.
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(adaptiveSpec.topBarRowHeight)
+                        .align(Alignment.TopStart)
+                        .background(
+                            Brush.verticalGradient(
+                                0f to Color.Black,
+                                1f to Color.Transparent,
+                            ),
+                        ),
+            )
             // Full-bleed bar: the cutout is top-centre in portrait and moves to a side edge in
             // landscape, where the bar runs into it at one end.
             Box(
@@ -239,8 +287,8 @@ fun LibraryTopBar(
                     Modifier
                         .fillMaxWidth()
                         .align(Alignment.TopStart)
-                        .windowInsetsPadding(
-                            rememberDisplayCutoutInsetsForTopBar(isLandscape = !portrait),
+                        .then(
+                            if (portrait) Modifier else Modifier.hugDisplayCutout(WindowInsetsSides.Horizontal),
                         ),
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -249,12 +297,6 @@ fun LibraryTopBar(
                             Modifier
                                 .fillMaxWidth()
                                 .height(adaptiveSpec.topBarRowHeight)
-                                .background(
-                                    Brush.verticalGradient(
-                                        0f to Color.Black,
-                                        1f to Color.Transparent,
-                                    ),
-                                )
                                 .padding(start = if (overlayMode) 8.dp else 0.dp, end = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -324,6 +366,7 @@ fun LibraryTopBar(
                                         focusRequester = controllerNav?.searchFocusRequester,
                                         // Controller D-pad skips search unless Y armed it.
                                         canFocus = !gamepadConnected || searchArmed,
+                                        trailing = { LibrarySortButton(sort = sort, menu = sortMenu) },
                                         modifier = Modifier.width(searchWidth),
                                     )
                                     AnimatedVisibility(
@@ -368,43 +411,15 @@ fun LibraryTopBar(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Spacer(modifier = Modifier.width(10.dp))
-                            FloatingChromeButton(onClick = { if (!operationInProgress) onScanPressed() }) {
-                                RescanIcon(
-                                    spinning = operationInProgress,
-                                    modifier = Modifier.size(18.dp),
-                                    contentDescription =
-                                        stringResource(
-                                            if (operationInProgress) R.string.library_scanning else R.string.rescan,
-                                        ),
-                                )
-                            }
+                            LibraryUtilityButtons(
+                                casting = casting,
+                                iconSize = 18.dp,
+                                onRandomPressed = onRandomPressed,
+                                onCastPressed = onCastPressed,
+                                onSettingsPressed = onSettingsPressed,
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
-                            FloatingChromeButton(onClick = onCastPressed) {
-                                Icon(
-                                    imageVector =
-                                        if (casting) Icons.Filled.CastConnected else Icons.Filled.Cast,
-                                    contentDescription = stringResource(R.string.cast),
-                                    tint = if (casting) LibraryNeonGreen else LocalContentColor.current,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            FloatingChromeButton(onClick = onSettingsPressed) {
-                                Icon(
-                                    Icons.Outlined.Settings,
-                                    contentDescription = stringResource(R.string.settings),
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            FloatingChromeButton(onClick = onProfilePressed) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_profile_robot),
-                                    contentDescription = stringResource(R.string.title_profile),
-                                    tint = LibraryNeonGreen,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            }
+                            ProfileChromeButton(onClick = onProfilePressed, iconSize = 18.dp)
                         }
                     }
                 }
@@ -422,6 +437,7 @@ fun LibraryTopBar(
             }
             }
         }
+        LibrarySortMenu(menu = sortMenu, sort = sort, onSortChange = onSortChange)
     }
 }
 
@@ -433,14 +449,13 @@ private fun PortraitHomeTopBar(
     syncProgress: SyncProgress? = null,
     gamepadConnected: Boolean,
     searchQuery: String,
-    searchExpanded: Boolean,
-    consoleTitleId: Int?,
-    consoleGameCount: Int?,
     dismissSearchOnOutsideTap: Boolean,
-    onScanPressed: () -> Unit,
+    onRandomPressed: () -> Unit,
     onCastPressed: () -> Unit,
     onSettingsPressed: () -> Unit,
     onProfilePressed: () -> Unit,
+    sort: LibrarySort,
+    sortMenu: SortMenuState,
     onSearchQueryChange: (String) -> Unit,
     onClearSearch: () -> Unit,
     onSearchFocusChange: (Boolean) -> Unit,
@@ -489,38 +504,16 @@ private fun PortraitHomeTopBar(
                         .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                PortraitActionButtons(
-                    operationInProgress = operationInProgress,
+                ProfileChromeButton(onClick = onProfilePressed, iconSize = 16.dp)
+                Spacer(modifier = Modifier.width(6.dp))
+                LibraryUtilityButtons(
                     casting = casting,
-                    onScanPressed = onScanPressed,
+                    iconSize = 16.dp,
+                    onRandomPressed = onRandomPressed,
                     onCastPressed = onCastPressed,
                     onSettingsPressed = onSettingsPressed,
-                    onProfilePressed = onProfilePressed,
                 )
-                if (!searchExpanded && consoleTitleId != null) {
-                    val titleText =
-                        if (consoleGameCount != null) {
-                            "${stringResource(consoleTitleId)} ($consoleGameCount)"
-                        } else {
-                            stringResource(consoleTitleId)
-                        }
-                    Text(
-                        text = titleText,
-                        style =
-                            MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold,
-                            ),
-                        color = Color.White,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier =
-                            Modifier
-                                .weight(1f)
-                                .padding(horizontal = 8.dp),
-                    )
-                } else {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
+                Spacer(modifier = Modifier.weight(1f))
                 SystemStatusIndicators(gamepadConnected = gamepadConnected)
             }
             Spacer(modifier = Modifier.height(2.dp))
@@ -540,7 +533,8 @@ private fun PortraitHomeTopBar(
                     onActivate = onSearchActivate,
                     focusRequester = searchFocusRequester,
                     canFocus = searchCanFocus,
-                    modifier = Modifier.fillMaxWidth(),
+                    trailing = { LibrarySortButton(sort = sort, menu = sortMenu) },
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -602,54 +596,250 @@ private fun PortraitDetailsTopBar(
     }
 }
 
+/** Settings, cast and play-random: borderless utility actions, unlike the dock's console circles. */
 @Composable
-private fun PortraitActionButtons(
-    operationInProgress: Boolean,
+private fun LibraryUtilityButtons(
     casting: Boolean,
-    onScanPressed: () -> Unit,
+    iconSize: Dp,
+    onRandomPressed: () -> Unit,
     onCastPressed: () -> Unit,
     onSettingsPressed: () -> Unit,
-    onProfilePressed: () -> Unit,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        FloatingChromeButton(onClick = onProfilePressed) {
-            Icon(
-                painter = painterResource(R.drawable.ic_profile_robot),
-                contentDescription = stringResource(R.string.title_profile),
-                tint = LibraryNeonGreen,
-                modifier = Modifier.size(16.dp),
-            )
-        }
-        Spacer(modifier = Modifier.width(6.dp))
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
         FloatingChromeButton(onClick = onSettingsPressed) {
             Icon(
                 Icons.Outlined.Settings,
                 contentDescription = stringResource(R.string.settings),
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(iconSize),
             )
         }
-        Spacer(modifier = Modifier.width(6.dp))
         FloatingChromeButton(onClick = onCastPressed) {
             Icon(
                 imageVector = if (casting) Icons.Filled.CastConnected else Icons.Filled.Cast,
                 contentDescription = stringResource(R.string.cast),
                 tint = if (casting) LibraryNeonGreen else LocalContentColor.current,
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(iconSize),
             )
         }
-        Spacer(modifier = Modifier.width(6.dp))
-        FloatingChromeButton(onClick = { if (!operationInProgress) onScanPressed() }) {
-            RescanIcon(
-                spinning = operationInProgress,
-                modifier = Modifier.size(16.dp),
-                contentDescription =
-                    stringResource(
-                        if (operationInProgress) R.string.library_scanning else R.string.rescan,
-                    ),
+        FloatingChromeButton(onClick = onRandomPressed) {
+            Icon(
+                imageVector = Icons.Outlined.Casino,
+                contentDescription = stringResource(R.string.library_play_random),
+                modifier = Modifier.size(iconSize),
             )
         }
     }
 }
+
+@Composable
+private fun ProfileChromeButton(
+    onClick: () -> Unit,
+    iconSize: Dp,
+) {
+    val shape = RoundedCornerShape(30)
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val focused by interactionSource.collectIsFocusedAsState()
+    val background by animateColorAsState(
+        targetValue = if (pressed || focused) ChromeButtonPressedColor else Color.Transparent,
+        animationSpec = tween(120),
+        label = "profileButtonPressed",
+    )
+    Box(
+        modifier =
+            Modifier
+                .size(chromeButtonSize())
+                .controllerFocusGlow(shape)
+                .clip(shape)
+                .background(background)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    role = Role.Button,
+                    onClick = onClick,
+                ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_profile_robot),
+            contentDescription = stringResource(R.string.title_profile),
+            tint = LibraryNeonGreen,
+            modifier = Modifier.size(iconSize + 2.dp),
+        )
+    }
+}
+
+@Stable
+private class SortMenuState {
+    var open by mutableStateOf(false)
+    var anchor by mutableStateOf(Rect.Zero)
+}
+
+@Composable
+private fun LibrarySortButton(
+    sort: LibrarySort,
+    menu: SortMenuState,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(chromeButtonSize() - 6.dp)
+                .onGloballyPositioned { menu.anchor = it.boundsInRoot() }
+                .controllerFocusGlow(CircleShape)
+                .clip(CircleShape)
+                .clickable { menu.open = true },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.Sort,
+            contentDescription = stringResource(R.string.library_sort),
+            tint = if (sort != LibrarySort.TITLE) LibraryNeonGreen else Color.White.copy(alpha = 0.78f),
+            modifier = Modifier.size(16.dp),
+        )
+    }
+}
+
+/**
+ * Drawn in the activity window rather than a popup window: some foldable configurations leave
+ * popup surfaces hidden after a display switch.
+ */
+@Composable
+private fun LibrarySortMenu(
+    menu: SortMenuState,
+    sort: LibrarySort,
+    onSortChange: (LibrarySort) -> Unit,
+) {
+    BackHandler(enabled = menu.open) { menu.open = false }
+    val visibility = remember { MutableTransitionState(false) }
+    visibility.targetState = menu.open
+    if (!visibility.currentState && !visibility.targetState) return
+
+    val density = LocalDensity.current
+    val gap = with(density) { 6.dp.roundToPx() }
+    val edge = with(density) { 8.dp.roundToPx() }
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    val selectedRequester = remember { FocusRequester() }
+    LaunchedEffect(menu.open) {
+        if (menu.open) runCatching { selectedRequester.requestFocus() }
+    }
+    Layout(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .onGloballyPositioned { origin = it.positionInRoot() },
+        content = {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) { detectTapGestures { menu.open = false } },
+            )
+            AnimatedVisibility(
+                visibleState = visibility,
+                enter =
+                    fadeIn(tween(120)) +
+                        scaleIn(tween(120), initialScale = 0.92f, transformOrigin = TransformOrigin(1f, 0f)),
+                exit =
+                    fadeOut(tween(90)) +
+                        scaleOut(tween(90), targetScale = 0.92f, transformOrigin = TransformOrigin(1f, 0f)),
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFF1C1C1E),
+                    shadowElevation = 8.dp,
+                ) {
+                    Column(
+                        modifier =
+                            Modifier
+                                .width(IntrinsicSize.Max)
+                                .padding(vertical = 8.dp),
+                    ) {
+                        LibrarySort.entries.forEach { option ->
+                            LibrarySortMenuItem(
+                                option = option,
+                                selected = option == sort,
+                                onClick = {
+                                    menu.open = false
+                                    onSortChange(option)
+                                },
+                                modifier =
+                                    if (option == sort) Modifier.focusRequester(selectedRequester) else Modifier,
+                            )
+                        }
+                    }
+                }
+            }
+        },
+    ) { measurables, constraints ->
+        val scrim = measurables[0].measure(constraints)
+        val panel = measurables.getOrNull(1)?.measure(constraints.copy(minWidth = 0, minHeight = 0))
+        layout(constraints.maxWidth, constraints.maxHeight) {
+            scrim.place(0, 0)
+            if (panel != null) {
+                val maxX = (constraints.maxWidth - panel.width - edge).coerceAtLeast(edge)
+                val x = ((menu.anchor.right - origin.x).roundToInt() - panel.width).coerceIn(edge, maxX)
+                val y = (menu.anchor.bottom - origin.y).roundToInt() + gap
+                panel.place(x, y)
+            }
+        }
+    }
+}
+
+@Composable
+private fun LibrarySortMenuItem(
+    option: LibrarySort,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    DropdownMenuItem(
+        modifier = modifier,
+        text = {
+            Text(
+                text = stringResource(option.labelRes()),
+                color = if (selected) LibraryNeonGreen else Color.White,
+            )
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = option.icon(),
+                contentDescription = null,
+                tint = if (selected) LibraryNeonGreen else Color.White.copy(alpha = 0.72f),
+                modifier = Modifier.size(18.dp),
+            )
+        },
+        trailingIcon = {
+            if (selected) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = LibraryNeonGreen,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        },
+        onClick = onClick,
+    )
+}
+
+private fun LibrarySort.labelRes(): Int =
+    when (this) {
+        LibrarySort.TITLE -> R.string.library_sort_title
+        LibrarySort.RECENTLY_PLAYED -> R.string.library_sort_recent
+        LibrarySort.FAVORITES_FIRST -> R.string.library_sort_favorites
+        LibrarySort.CONSOLE -> R.string.library_sort_console
+    }
+
+private fun LibrarySort.icon(): ImageVector =
+    when (this) {
+        LibrarySort.TITLE -> Icons.Filled.SortByAlpha
+        LibrarySort.RECENTLY_PLAYED -> Icons.Outlined.History
+        LibrarySort.FAVORITES_FIRST -> Icons.Filled.FavoriteBorder
+        LibrarySort.CONSOLE -> Icons.Outlined.SportsEsports
+    }
 
 @Composable
 private fun LibrarySearchField(
@@ -661,14 +851,16 @@ private fun LibrarySearchField(
     onActivate: (() -> Unit)? = null,
     focusRequester: FocusRequester? = null,
     canFocus: Boolean = true,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     val focusManager = LocalFocusManager.current
     var focused by remember { mutableStateOf(false) }
     val active = focused || query.isNotEmpty()
+    val height = chromeButtonSize()
     Surface(
         modifier =
             modifier
-                .height(LibrarySearchFieldHeight)
+                .height(height)
                 .controllerFocusGlow(CircleShape)
                 .then(
                     if (!canFocus && onActivate != null) {
@@ -681,20 +873,20 @@ private fun LibrarySearchField(
                 ),
         shape = CircleShape,
         color = Color(0xFF161616),
-        shadowElevation = 6.dp,
         tonalElevation = 0.dp,
         border =
-            BorderStroke(
-                width = if (active) 2.dp else 1.dp,
-                color = if (active) LibraryNeonGreen else Color(0xFF2E2E2E),
-            ),
+            if (active) {
+                BorderStroke(1.5.dp, LibraryNeonGreen)
+            } else {
+                BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+            },
     ) {
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(LibrarySearchFieldHeight)
-                    .padding(start = 10.dp, end = 6.dp),
+                    .height(height)
+                    .padding(start = 10.dp, end = if (trailing != null) 3.dp else 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -758,6 +950,17 @@ private fun LibrarySearchField(
                             .clickable(onClick = onClear)
                             .padding(3.dp),
                 )
+            }
+            if (trailing != null) {
+                Box(
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 4.dp)
+                            .width(1.dp)
+                            .height(height / 2)
+                            .background(Color.White.copy(alpha = 0.12f)),
+                )
+                trailing()
             }
         }
     }
@@ -825,29 +1028,40 @@ private fun SpinningRescanIcon(
     )
 }
 
+private val ChromeButtonPressedColor = Color.White.copy(alpha = 0.14f)
+
+@Composable
+private fun chromeButtonSize(): Dp = if (LocalAdaptiveLayout.current.isCompact) 32.dp else 36.dp
+
+/** Borderless top bar icon button; it only shows a fill while pressed. */
 @Composable
 fun FloatingChromeButton(
     onClick: () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    val adaptiveSpec = LocalAdaptiveLayout.current
-    val buttonSize = if (adaptiveSpec.isCompact) 32.dp else 36.dp
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.size(buttonSize).controllerFocusGlow(CircleShape),
-        shape = CircleShape,
-        color = Color(0xFF161616),
-        shadowElevation = 6.dp,
-        tonalElevation = 0.dp,
-        border = BorderStroke(1.dp, Color(0xFF2E2E2E)),
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val background by animateColorAsState(
+        targetValue = if (pressed) ChromeButtonPressedColor else Color.Transparent,
+        animationSpec = tween(120),
+        label = "chromeButtonPressed",
+    )
+    Box(
+        modifier =
+            Modifier
+                .size(chromeButtonSize())
+                .controllerFocusGlow(CircleShape)
+                .clip(CircleShape)
+                .background(background)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    role = Role.Button,
+                    onClick = onClick,
+                ),
+        contentAlignment = Alignment.Center,
     ) {
-        Row(
-            modifier = Modifier.size(buttonSize),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            content()
-        }
+        content()
     }
 }
 

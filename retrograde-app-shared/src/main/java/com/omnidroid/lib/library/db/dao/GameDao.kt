@@ -24,7 +24,10 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.RawQuery
 import androidx.room.Update
+import androidx.sqlite.db.SimpleSQLiteQuery
+import androidx.sqlite.db.SupportSQLiteQuery
 import com.omnidroid.lib.library.db.entity.Game
 import kotlinx.coroutines.flow.Flow
 
@@ -45,11 +48,14 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE fileUri = :fileUri")
     fun selectByFileUri(fileUri: String): Game?
 
+    @Query("SELECT * FROM games WHERE fileUri = :fileUri")
+    suspend fun asyncSelectByFileUri(fileUri: String): Game?
+
+    @Query("SELECT * FROM games WHERE fileName = :fileName")
+    suspend fun selectByFileName(fileName: String): List<Game>
+
     @Query("SELECT * FROM games WHERE lastIndexedAt < :lastIndexedAt")
     fun selectByLastIndexedAtLessThan(lastIndexedAt: Long): List<Game>
-
-    @Query("SELECT * FROM games WHERE isFavorite = 1 ORDER BY title ASC")
-    fun selectFavorites(): PagingSource<Int, Game>
 
     @Query(
         """
@@ -70,48 +76,20 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE lastPlayedAt IS NULL LIMIT :limit")
     fun selectFirstNotPlayed(limit: Int): Flow<List<Game>>
 
-    @Query("SELECT * FROM games WHERE systemId = :systemId ORDER BY title ASC, id DESC")
-    fun selectBySystem(systemId: String): PagingSource<Int, Game>
-
-    @Query("SELECT * FROM games WHERE systemId IN (:systemIds) ORDER BY title ASC, id DESC")
-    fun selectBySystems(systemIds: List<String>): PagingSource<Int, Game>
-
-    @Query("SELECT * FROM games ORDER BY title ASC, id DESC")
-    fun selectAllPaged(): PagingSource<Int, Game>
-
     @Query("SELECT * FROM games WHERE lastPlayedAt IS NOT NULL ORDER BY lastPlayedAt DESC LIMIT 1")
     fun selectLastPlayed(): Flow<List<Game>>
 
-    @Query(
-        """
-        SELECT * FROM games
-        WHERE title LIKE '%' || :query || '%' OR customName LIKE '%' || :query || '%'
-        ORDER BY title ASC, id DESC
-        """,
-    )
-    fun searchByTitle(query: String): PagingSource<Int, Game>
+    @RawQuery(observedEntities = [Game::class])
+    fun selectPagedRaw(query: SupportSQLiteQuery): PagingSource<Int, Game>
 
-    @Query(
-        """
-        SELECT * FROM games
-        WHERE isFavorite = 1 AND (title LIKE '%' || :query || '%' OR customName LIKE '%' || :query || '%')
-        ORDER BY title ASC
-        """,
-    )
-    fun searchFavoritesByTitle(query: String): PagingSource<Int, Game>
+    @Query("SELECT * FROM games ORDER BY RANDOM() LIMIT 1")
+    suspend fun selectRandom(): Game?
 
-    @Query(
-        """
-        SELECT * FROM games
-        WHERE systemId IN (:systemIds)
-            AND (title LIKE '%' || :query || '%' OR customName LIKE '%' || :query || '%')
-        ORDER BY title ASC, id DESC
-        """,
-    )
-    fun searchBySystemsAndTitle(
-        systemIds: List<String>,
-        query: String,
-    ): PagingSource<Int, Game>
+    @Query("SELECT * FROM games WHERE isFavorite = 1 ORDER BY RANDOM() LIMIT 1")
+    suspend fun selectRandomFavorite(): Game?
+
+    @Query("SELECT * FROM games WHERE systemId IN (:systemIds) ORDER BY RANDOM() LIMIT 1")
+    suspend fun selectRandomBySystems(systemIds: List<String>): Game?
 
     @Query("SELECT DISTINCT systemId FROM games ORDER BY systemId ASC")
     suspend fun selectSystems(): List<String>
@@ -133,3 +111,45 @@ interface GameDao {
 }
 
 data class SystemCount(val systemId: String, val count: Int)
+
+enum class GameOrder(internal val sql: String) {
+    TITLE("title ASC, id DESC"),
+    RECENTLY_PLAYED("lastPlayedAt IS NULL, lastPlayedAt DESC, title ASC, id DESC"),
+    FAVORITES_FIRST("isFavorite DESC, title ASC, id DESC"),
+    CONSOLE("systemId ASC, title ASC, id DESC"),
+}
+
+/**
+ * Paged games, optionally narrowed to systems, favorites and a title search.
+ * [systemOrder] ranks systems for [GameOrder.CONSOLE]; unlisted systems follow by id.
+ */
+fun GameDao.selectPaged(
+    systemIds: List<String>? = null,
+    favoritesOnly: Boolean = false,
+    query: String = "",
+    order: GameOrder = GameOrder.TITLE,
+    systemOrder: List<String> = emptyList(),
+): PagingSource<Int, Game> {
+    val conditions = mutableListOf<String>()
+    val args = mutableListOf<Any>()
+    if (favoritesOnly) conditions += "isFavorite = 1"
+    if (systemIds != null) {
+        conditions += "systemId IN (${systemIds.joinToString(",") { "?" }})"
+        args.addAll(systemIds)
+    }
+    if (query.isNotEmpty()) {
+        conditions += "(title LIKE '%' || ? || '%' OR customName LIKE '%' || ? || '%')"
+        args += query
+        args += query
+    }
+    val where = if (conditions.isEmpty()) "" else " WHERE " + conditions.joinToString(" AND ")
+    val orderBy =
+        if (order == GameOrder.CONSOLE && systemOrder.isNotEmpty()) {
+            args.addAll(systemOrder)
+            val ranks = systemOrder.indices.joinToString(" ") { "WHEN ? THEN $it" }
+            "CASE systemId $ranks ELSE ${systemOrder.size} END, ${order.sql}"
+        } else {
+            order.sql
+        }
+    return selectPagedRaw(SimpleSQLiteQuery("SELECT * FROM games$where ORDER BY $orderBy", args.toTypedArray()))
+}

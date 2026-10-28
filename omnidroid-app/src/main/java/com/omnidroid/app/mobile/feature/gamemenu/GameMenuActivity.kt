@@ -247,12 +247,8 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                 controllerBridge.navigation = controllerNav
             }
 
-            BackHandler {
-                if (currentRoute.canGoBack()) {
-                    navController.popBackStack()
-                } else {
-                    requestClose()
-                }
+            BackHandler(enabled = !currentRoute.canGoBack()) {
+                requestClose()
             }
 
             val scrimAlpha by animateFloatAsState(
@@ -341,6 +337,8 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                                         startDestination = GameMenuRoute.HOME.route,
                                         enterTransition = { fadeIn(animationSpec = tween(160)) },
                                         exitTransition = { fadeOut(animationSpec = tween(160)) },
+                                        predictivePopEnterTransition = { _ -> fadeIn(animationSpec = tween(160)) },
+                                        predictivePopExitTransition = { _ -> fadeOut(animationSpec = tween(160)) },
                                     ) {
                                         composable(GameMenuRoute.HOME) {
                                             GameMenuHomeScreen(
