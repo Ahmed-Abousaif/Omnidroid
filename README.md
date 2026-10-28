@@ -41,15 +41,15 @@ If Omnidroid helps you play, you can fuel continued development here:
   <img src="docs/screenshots/launcher_landscape.jpg" alt="Omnidroid Handheld Landscape Launcher" width="100%" />
 </p>
 <p align="center">
-  <em>Dedicated landscape launcher engineered for Android handheld consoles, tablets, TVs, and phones with full gamepad focus</em>
+  <em>Landscape console view with cover artwork, full game details, and quick play actions</em>
 </p>
 
 <table align="center" width="100%">
   <tr>
     <td width="31.8%" rowspan="2" align="center" valign="middle">
-      <img src="docs/screenshots/library_grid_portrait.jpg" alt="Portrait Library Grid" width="100%" /><br />
-      <b>Portrait Library Grid</b><br />
-      <sub>Adaptive cover zoom slider, quick Continue & live search</sub>
+      <img src="docs/screenshots/library_grid_portrait.jpg" alt="Portrait Console Carousel" width="100%" /><br />
+      <b>Portrait Console Carousel</b><br />
+      <sub>Interactive cover flow carousel, quick Continue & live search</sub>
     </td>
     <td width="68.2%" align="center" valign="middle">
       <img src="docs/screenshots/console_management.jpg" alt="Console Selection Carousel" width="100%" /><br />
@@ -59,7 +59,7 @@ If Omnidroid helps you play, you can fuel continued development here:
   </tr>
   <tr>
     <td width="68.2%" align="center" valign="middle">
-      <img src="docs/screenshots/gamer_profile.jpg" alt="Gamer Profile & XP" width="100%" /><br />
+      <img src="docs/screenshots/gamer_profile.jpg" alt="Gamer Profile & Stats" width="100%" /><br />
       <b>Gamer Profile & Stats</b><br />
       <sub>Track play hours, daily streaks, XP leveling & session history</sub>
     </td>
@@ -73,10 +73,12 @@ If Omnidroid helps you play, you can fuel continued development here:
 - 🌋 **Native Vulkan & OpenGL ES Engine:** Powered by our custom [omni-libretrodroid](https://github.com/Ahmed-Abousaif/omni-libretrodroid) native C++ engine with per-system graphics API switching (Vulkan, GLES 2/3, Software) for rock-solid 60 FPS performance and reduced thermal throttling.
 - 🎮 **Controller-First Navigation:** Seamless navigation across the entire app (library, search, consoles, settings, game pages) using physical gamepads with focus glow and button hint bars.
 - 📱 **Handheld & Phone UI:** Fluid landscape and portrait modes with dedicated layouts for handhelds (Retroid, Odin, ANBERNIC), phones, tablets, and Android TV.
+- 🚀 **Frontend & File Manager Integration:** Exported launcher activity for external frontends (Daijishō, Pegasus, Beacon) and direct "Open With" file manager launching for ROMs and archives without requiring a prior library scan.
+- 📚 **Console Carousel & Library Sorting:** Dedicated console views with a portrait cover carousel, landscape details pane, flexible sorting (name, console, recently played, favorites), and random game selection.
 - ☁️ **Multi-Cloud Save Sync:** Sync saves seamlessly with **Google Drive**, **Dropbox**, or **OneDrive**, with conflict resolution and offline zip export/import.
 - 🎨 **Rich RAWG Game Details:** Automatic cover art, descriptions, genres, release dates, publishers, ratings, and video trailers without scraping YouTube.
 - 🏆 **Gamification & Profile System:** Earn XP from play sessions, maintain daily streaks, level up, and unlock collection badges (Collector → Enthusiast → Historian → Omnidroid Master).
-- 📺 **Big-Screen & TV Casting:** Cast gameplay wirelessly or over HDMI directly to TVs and monitors.
+- 📺 **Android TV & Big-Screen Integration:** Full Android TV Leanback launcher support with dynamic home screen preview channels for recently played games, plus wireless and HDMI casting.
 - 🔋 **Battery-Aware HD Mode:** Intelligently disables heavy HD enhancements when battery drops below 15% to conserve power.
 - 🛡️ **Lightweight & 16KB Page-Aligned:** Universal release APK is under 8.5 MB (~27% smaller than baseline) and fully aligned for Android 15+ 16KB memory page sizes.
 
@@ -159,11 +161,33 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 <summary><b>📱 Handheld-First Launcher & UI Customization</b></summary>
 <br>
 
+- **Console Carousel & Details View:** Portrait mode offers an interactive cover flow carousel, while landscape mode features a side-by-side view with cover art, release metadata, and instant play actions.
+- **Library Sorting & Random Play:** Sort by title, console, recently played, or favorites, plus a random game button for spontaneous gaming.
 - **Dual Layout Engines:** Switch seamlessly between **Grid View** (with dynamic zoom slider based on screen height) and a compact **List View**.
-- **Landscape Navigation:** Dedicated sidebar for quick navigation between All Games, Favorites, and specific consoles.
+- **Landscape Navigation:** Dedicated sidebar for quick navigation between All Games, Favorites, and specific consoles, showing uncropped covers and titles.
+- **Display Cutout Awareness:** In-game controls and library chrome hug closer to screen cutouts and camera notches for maximum screen utilization.
 - **Startup Screen Selector:** Choose what Omnidroid opens to on launch (All Games, Favorites, or a favorite console).
 - **Home Screen Launcher:** Set Omnidroid as your Android device's default launcher for a dedicated console feel.
 - **System Telemetry:** Live on-screen battery percentage, Wi-Fi/mobile network status, and connected gamepads right on the top bar.
+</details>
+
+<details>
+<summary><b>🚀 External Frontends & File Manager Launching</b></summary>
+<br>
+
+- **Frontend Launcher Contract:** Boot games directly from external launchers like Daijishō, Pegasus, and Beacon using `ExternalGameLauncherActivity` with standard Android `ACTION_VIEW` intents.
+- **Console Disambiguation:** Accepts the `SYSTEM` extra to automatically route shared formats (.chd, .iso, .zip) to the correct console core.
+- **"Open With" File Manager Support:** Tap any supported ROM or zipped archive in your Android file manager to boot directly into the game without requiring a prior library scan.
+- **Clean Return on Exit:** Quitting an externally launched game returns focus directly to the calling frontend without leaving stale tasks on your recent apps overview.
+</details>
+
+<details>
+<summary><b>📺 Android TV Home Screen & Leanback Support</b></summary>
+<br>
+
+- **Leanback Launcher:** Native Android TV home screen banner and D-pad optimized navigation designed for a 10-foot couch experience.
+- **Home Screen Channels:** Automatically publishes a dynamic "Omnidroid" recommendations row on the Android TV home screen displaying recently played games.
+- **Direct Resume:** Click any game tile directly from your TV home screen to resume playing immediately.
 </details>
 
 <details>
