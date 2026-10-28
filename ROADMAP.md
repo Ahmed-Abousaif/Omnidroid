@@ -14,6 +14,9 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Library chrome and in-game controls sit closer to display cutouts
 - Fixed PlayStation 2 BIOS downloads not installing, and a failed download is shown in BIOS settings
 - Fixed GameCube and Wii `.rvz` games crashing on launch by opening them from a real file instead of the virtual filesystem ([#19](https://github.com/Ahmed-Abousaif/Omnidroid/issues/19)) (_Deus0_)
+- Added frontend intent support to launch games directly from frontends like Daijishō, Pegasus, and Beacon (ES-DE WIP)
+- Added "Open with" file manager support for ROM files and zip archives, with automatic console detection and instant booting without prior library scanning
+- Added Android TV Leanback launcher integration and home screen preview channels for recently played games
 
 ### v2.5.4
 
