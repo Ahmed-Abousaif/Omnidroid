@@ -7,6 +7,8 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.tween
@@ -20,8 +22,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +44,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -57,8 +62,10 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.ScreenRotation
+import androidx.compose.material.icons.outlined.ViewCarousel
 import androidx.compose.material.icons.outlined.ZoomIn
 import androidx.compose.material.icons.outlined.ZoomOut
 import androidx.compose.material3.CircularProgressIndicator
@@ -70,22 +77,33 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -109,7 +127,7 @@ import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
-import com.omnidroid.app.mobile.shared.compose.ui.avoidDisplayCutout
+import com.omnidroid.app.mobile.shared.compose.ui.hugDisplayCutout
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -119,8 +137,10 @@ import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.mobile.shared.controller.reportControllerGame
 import com.omnidroid.app.utils.games.GameUtils
+import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.MetaSystemID
 import com.omnidroid.lib.library.db.entity.Game
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 val LibrarySidebarWidth = 80.dp
@@ -196,13 +216,18 @@ fun LibraryScreen(
     onGameClick: (Game) -> Unit,
     onContinueClick: (Game) -> Unit,
     onGameLongClick: (Game) -> Unit,
+    onFavoriteToggle: (Game, Boolean) -> Unit,
     onAddConsole: () -> Unit,
     controllerConnected: Boolean = false,
     portraitColumnWidth: Dp = Dp.Unspecified,
+    backdropTopBleed: Dp = 0.dp,
 ) {
     val state = viewModel.state.collectAsState().value
     val games = viewModel.games.collectAsLazyPagingItems()
     var startupTarget by remember { mutableStateOf<MetaSystemID?>(null) }
+    var backdropGame by remember { mutableStateOf<Game?>(null) }
+    val consoleSelection =
+        rememberConsoleSelection(listOf(state.filter, state.searchQuery, state.continueGame?.id, state.sort))
 
     Box(
         modifier =
@@ -210,6 +235,15 @@ fun LibraryScreen(
                 .fillMaxSize()
                 .background(HomeChromeBackground),
     ) {
+        if (state.layout == LibraryLayout.CONSOLE) {
+            ConsoleBackdrop(
+                game = backdropGame,
+                modifier =
+                    Modifier
+                        .matchParentSize()
+                        .bleedTop(backdropTopBleed),
+            )
+        }
         if (state.portrait) {
             Column(
                 modifier =
@@ -233,10 +267,13 @@ fun LibraryScreen(
                     onGameClick = onGameClick,
                     onContinueClick = onContinueClick,
                     onGameLongClick = onGameLongClick,
+                    onFavoriteToggle = onFavoriteToggle,
                     onSync = { viewModel.syncLibrary(it) },
                     onZoomDensityChange = { viewModel.setZoomDensity(it) },
                     onLayoutChange = { viewModel.setLayout(it) },
                     onPortraitChange = { viewModel.setPortrait(it) },
+                    onBackdropGameChange = { backdropGame = it },
+                    consoleSelection = consoleSelection,
                     requestInitialFocus = controllerConnected,
                     showZoomBar = !controllerConnected,
                     portrait = true,
@@ -244,6 +281,7 @@ fun LibraryScreen(
                 PortraitConsoleBar(
                     filter = state.filter,
                     systems = state.sidebarSystems,
+                    selectedGameCount = state.selectedSystemGameCount,
                     startupFilter = state.startupFilter,
                     onFilterSelected = { viewModel.selectFilter(it) },
                     onConsoleLongClick = { startupTarget = it },
@@ -258,7 +296,7 @@ fun LibraryScreen(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .avoidDisplayCutout(WindowInsetsSides.Horizontal),
+                        .hugDisplayCutout(WindowInsetsSides.Horizontal),
             ) {
                 LibrarySidebar(
                     modifier = Modifier,
@@ -278,10 +316,13 @@ fun LibraryScreen(
                     onGameClick = onGameClick,
                     onContinueClick = onContinueClick,
                     onGameLongClick = onGameLongClick,
+                    onFavoriteToggle = onFavoriteToggle,
                     onSync = { viewModel.syncLibrary(it) },
                     onZoomDensityChange = { viewModel.setZoomDensity(it) },
                     onLayoutChange = { viewModel.setLayout(it) },
                     onPortraitChange = { viewModel.setPortrait(it) },
+                    onBackdropGameChange = { backdropGame = it },
+                    consoleSelection = consoleSelection,
                     requestInitialFocus = controllerConnected,
                     showZoomBar = !controllerConnected,
                     portrait = false,
@@ -348,12 +389,18 @@ private fun LibrarySidebar(
             modifier = Modifier.width(if (adaptiveSpec.isCompact) 20.dp else 28.dp),
             color = Color.White.copy(alpha = 0.12f),
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        val scrollState = rememberScrollState()
         Column(
             modifier =
                 Modifier
                     .weight(1f)
-                    .verticalScroll(rememberScrollState()),
+                    .dockEdgeFade(
+                        horizontal = false,
+                        fadeStart = { scrollState.value > 0 },
+                        fadeEnd = { scrollState.value < scrollState.maxValue },
+                    )
+                    .verticalScroll(scrollState)
+                    .padding(vertical = DockFadeLength),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
@@ -376,6 +423,40 @@ private fun LibrarySidebar(
     }
 }
 
+private val DockButtonColor = Color(0xFF1C1C1E)
+private val DockMutedTint = Color.White.copy(alpha = 0.7f)
+private val DockFadeLength = 14.dp
+
+/** Fades scrolling dock content into its edges instead of clipping it against an invisible line. */
+private fun Modifier.dockEdgeFade(
+    horizontal: Boolean,
+    fadeStart: () -> Boolean,
+    fadeEnd: () -> Boolean,
+): Modifier =
+    graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+        .drawWithContent {
+            drawContent()
+            val length = DockFadeLength.toPx()
+            val extent = if (horizontal) size.width else size.height
+            fun mask(fromTransparent: Boolean, start: Float) {
+                val colors = if (fromTransparent) listOf(Color.Transparent, Color.Black) else listOf(Color.Black, Color.Transparent)
+                val brush =
+                    if (horizontal) {
+                        Brush.horizontalGradient(colors, startX = start, endX = start + length)
+                    } else {
+                        Brush.verticalGradient(colors, startY = start, endY = start + length)
+                    }
+                drawRect(
+                    brush = brush,
+                    topLeft = if (horizontal) Offset(start, 0f) else Offset(0f, start),
+                    size = if (horizontal) Size(length, size.height) else Size(size.width, length),
+                    blendMode = BlendMode.DstIn,
+                )
+            }
+            if (fadeStart()) mask(fromTransparent = true, start = 0f)
+            if (fadeEnd()) mask(fromTransparent = false, start = extent - length)
+        }
+
 @Composable
 private fun SidebarIconButton(
     selected: Boolean,
@@ -389,17 +470,16 @@ private fun SidebarIconButton(
         onClick = onClick,
         modifier = Modifier.size(adaptiveSpec.sidebarButtonSize).controllerFocusGlow(CircleShape),
         shape = CircleShape,
-        color = if (selected) Color(0xFF242424) else Color(0xFF161616),
-        shadowElevation = 6.dp,
+        color = DockButtonColor,
         tonalElevation = 0.dp,
-        border = sidebarSelectionBorder(selected),
+        border = if (selected) BorderStroke(2.dp, LibraryNeonGreen) else null,
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,
                 modifier = Modifier.size(adaptiveSpec.sidebarIconSize),
-                tint = if (selected) LibraryNeonGreen else Color.White,
+                tint = if (selected) LibraryNeonGreen else DockMutedTint,
             )
             StartupBadge(visible = pinned)
         }
@@ -417,6 +497,10 @@ private fun BoxScope.StartupBadge(visible: Boolean) {
     )
 }
 
+/**
+ * Consoles sit on the same charcoal as the other dock buttons and only take their brand colour
+ * when selected. With [label] set, the selected button widens into a pill showing it.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SidebarSystemLogoButton(
@@ -425,12 +509,20 @@ private fun SidebarSystemLogoButton(
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
     pinned: Boolean = false,
+    label: String? = null,
 ) {
     val adaptiveSpec = LocalAdaptiveLayout.current
+    val buttonSize = adaptiveSpec.sidebarButtonSize
+    val background by animateColorAsState(
+        targetValue = if (selected) Color(meta.color()) else DockButtonColor,
+        animationSpec = tween(220),
+        label = "dockConsoleColor",
+    )
     Surface(
         modifier =
             Modifier
-                .size(adaptiveSpec.sidebarButtonSize)
+                .height(buttonSize)
+                .widthIn(min = buttonSize)
                 .controllerFocusGlow(CircleShape)
                 .clip(CircleShape)
                 .combinedClickable(
@@ -439,33 +531,44 @@ private fun SidebarSystemLogoButton(
                     onLongClick = onLongClick,
                 ),
         shape = CircleShape,
-        color = Color(meta.color()),
-        shadowElevation = 6.dp,
+        color = background,
         tonalElevation = 0.dp,
-        border = sidebarSelectionBorder(selected),
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Image(
-                painter = painterResource(id = meta.imageResId),
-                contentDescription = stringResource(id = meta.titleResId),
-                modifier = Modifier.fillMaxSize(0.84f),
-                contentScale = ContentScale.Fit,
-            )
+        Box(contentAlignment = Alignment.CenterStart) {
+            Row(
+                modifier = Modifier.animateContentSize(tween(220, easing = FastOutSlowInEasing)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    painter = painterResource(id = meta.imageResId),
+                    contentDescription = stringResource(id = meta.titleResId),
+                    modifier =
+                        Modifier
+                            .size(buttonSize)
+                            .padding(buttonSize * 0.08f),
+                    contentScale = ContentScale.Fit,
+                    colorFilter = if (selected) null else ColorFilter.tint(DockMutedTint),
+                )
+                if (selected && label != null) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                        color = Color.White,
+                        maxLines = 1,
+                        modifier = Modifier.padding(end = 16.dp),
+                    )
+                }
+            }
             StartupBadge(visible = pinned)
         }
     }
 }
 
-private fun sidebarSelectionBorder(selected: Boolean) =
-    BorderStroke(
-        width = if (selected) 2.dp else 1.dp,
-        color = if (selected) LibraryNeonGreen else Color(0xFF2E2E2E),
-    )
-
 @Composable
 private fun PortraitConsoleBar(
     filter: LibraryFilter,
     systems: List<MetaSystemID>,
+    selectedGameCount: Int?,
     startupFilter: LibraryFilter,
     onFilterSelected: (LibraryFilter) -> Unit,
     onConsoleLongClick: (MetaSystemID) -> Unit,
@@ -478,6 +581,12 @@ private fun PortraitConsoleBar(
     LaunchedEffect(selectedSystemIndex, systems.size) {
         if (selectedSystemIndex >= 0) {
             runCatching { listState.animateScrollToItem(selectedSystemIndex) }
+            // The selected button widens into a pill after the scroll, which can push it past the end.
+            delay(260)
+            val layout = listState.layoutInfo
+            val item = layout.visibleItemsInfo.firstOrNull { it.index == selectedSystemIndex } ?: return@LaunchedEffect
+            val overflow = item.offset + item.size - (layout.viewportEndOffset - layout.afterContentPadding)
+            if (overflow > 0) runCatching { listState.animateScrollBy(overflow.toFloat()) }
         }
     }
     Row(
@@ -512,23 +621,36 @@ private fun PortraitConsoleBar(
                     .height(28.dp)
                     .background(Color.White.copy(alpha = 0.12f)),
         )
-        Spacer(modifier = Modifier.width(8.dp))
         LazyRow(
             state = listState,
-            modifier = Modifier.weight(1f),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .dockEdgeFade(
+                        horizontal = true,
+                        fadeStart = { listState.canScrollBackward },
+                        fadeEnd = { listState.canScrollForward },
+                    ),
+            contentPadding = PaddingValues(horizontal = DockFadeLength),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             items(systems, key = { it.name }) { system ->
+                val selected = (filter as? LibraryFilter.System)?.metaSystemID == system
+                val title =
+                    stringResource(
+                        GameSystem.findById(system.systemIDs.first().dbname).shortTitleResId,
+                    )
                 SidebarSystemLogoButton(
                     meta = system,
-                    selected = (filter as? LibraryFilter.System)?.metaSystemID == system,
+                    selected = selected,
                     pinned = startupFilter == LibraryFilter.System(system),
                     onClick = { onFilterSelected(LibraryFilter.System(system)) },
                     onLongClick = { onConsoleLongClick(system) },
+                    label = if (selectedGameCount != null) "$title • $selectedGameCount" else title,
                 )
             }
-            item(key = "add") {
+            item(key = "add_console") {
                 SidebarIconButton(
                     selected = false,
                     icon = Icons.Filled.Add,
@@ -551,10 +673,13 @@ private fun LibraryGames(
     onGameClick: (Game) -> Unit,
     onContinueClick: (Game) -> Unit,
     onGameLongClick: (Game) -> Unit,
+    onFavoriteToggle: (Game, Boolean) -> Unit,
     onSync: (Context) -> Unit,
     onZoomDensityChange: (Int) -> Unit,
     onLayoutChange: (LibraryLayout) -> Unit,
     onPortraitChange: (Boolean) -> Unit,
+    onBackdropGameChange: (Game?) -> Unit,
+    consoleSelection: MutableIntState,
     requestInitialFocus: Boolean = false,
     showZoomBar: Boolean = true,
     portrait: Boolean = false,
@@ -590,13 +715,22 @@ private fun LibraryGames(
             }
         }
     val showViewBar = games.itemCount > 0 || showContinue || portrait
+    val pinchScale = remember { mutableFloatStateOf(1f) }
+    val currentZoomDensity by rememberUpdatedState(state.zoomDensity)
+    val currentOnZoomDensityChange by rememberUpdatedState(onZoomDensityChange)
 
     Column(modifier = modifier.fillMaxSize()) {
         Box(
             modifier =
                 Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .libraryPinchZoom(
+                        enabled = state.layout == LibraryLayout.GRID,
+                        density = { currentZoomDensity },
+                        onDensityChange = { currentOnZoomDensityChange(it) },
+                        liveScale = pinchScale,
+                    ),
         ) {
             when {
                 isRefreshing && games.itemCount == 0 -> {
@@ -618,9 +752,34 @@ private fun LibraryGames(
                     OmnidroidEmptyView(modifier = Modifier)
                 }
                 else -> {
-                    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    BoxWithConstraints(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .graphicsLayer {
+                                    scaleX = pinchScale.floatValue
+                                    scaleY = pinchScale.floatValue
+                                },
+                    ) {
                     val featured = continueGame.takeIf { showContinue }
-                    if (state.layout == LibraryLayout.LIST) {
+                    if (state.layout == LibraryLayout.CONSOLE) {
+                        ConsoleLibrary(
+                            modifier = Modifier.fillMaxSize(),
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            games = games,
+                            featured = featured,
+                            selection = consoleSelection,
+                            portrait = portrait,
+                            showControllerGlyph = requestInitialFocus,
+                            focusRequester = firstItemRequester,
+                            onOpenGame = onGameClick,
+                            onPlayGame = onContinueClick,
+                            onGameLongClick = onGameLongClick,
+                            onFavoriteToggle = onFavoriteToggle,
+                            onBackdropGameChange = onBackdropGameChange,
+                        )
+                    } else if (state.layout == LibraryLayout.LIST) {
                         LazyColumn(
                             modifier =
                                 Modifier
@@ -945,18 +1104,31 @@ private fun LibraryGameRow(
                     modifier = Modifier.padding(top = 2.dp),
                 )
             }
+            // Trailing markers match the cover's height so the row inset frames them on every side.
+            val trailingShape = RoundedCornerShape(rowCorner - coverInset)
             when {
                 continueAction -> {
-                    Surface(
-                        shape = RoundedCornerShape((rowCorner - coverInset).coerceAtLeast(0.dp)),
-                        color = LibraryNeonGreen,
+                    Row(
+                        modifier =
+                            Modifier
+                                .height(thumbHeight)
+                                .clip(trailingShape)
+                                .background(LibraryNeonGreen)
+                                .padding(start = 12.dp, end = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        Icon(
+                            imageVector = Icons.Filled.PlayArrow,
+                            contentDescription = null,
+                            modifier = Modifier.size(22.dp),
+                            tint = Color.White,
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = stringResource(R.string.continue_playing),
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                             style =
-                                MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
+                                MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.Bold,
                                 ),
                             color = Color.White,
                             maxLines = 1,
@@ -964,12 +1136,21 @@ private fun LibraryGameRow(
                     }
                 }
                 game.isFavorite -> {
-                    Icon(
-                        imageVector = Icons.Filled.Favorite,
-                        contentDescription = stringResource(R.string.favorites),
-                        modifier = Modifier.size(16.dp),
-                        tint = LibraryNeonGreen,
-                    )
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(thumbHeight)
+                                .clip(trailingShape)
+                                .background(LibraryNeonGreen.copy(alpha = 0.16f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Favorite,
+                            contentDescription = stringResource(R.string.favorites),
+                            modifier = Modifier.size(24.dp),
+                            tint = LibraryNeonGreen,
+                        )
+                    }
                 }
             }
         }
@@ -1044,6 +1225,47 @@ private fun LibraryViewBar(
     }
 }
 
+/**
+ * Two-finger pinch steps through the grid densities. [liveScale] tracks the pinch between steps
+ * so the grid can follow the fingers before the next density lands.
+ */
+private fun Modifier.libraryPinchZoom(
+    enabled: Boolean,
+    density: () -> Int,
+    onDensityChange: (Int) -> Unit,
+    liveScale: MutableFloatState,
+): Modifier {
+    if (!enabled) return this
+    return pointerInput(Unit) {
+        awaitEachGesture {
+            awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            var scale = 1f
+            do {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+                if (event.changes.count { it.pressed } >= 2) {
+                    scale *= event.calculateZoom()
+                    val current = density()
+                    when {
+                        scale > PinchStepScale && current > 0 -> {
+                            onDensityChange(current - 1)
+                            scale = 1f
+                        }
+                        scale < 1f / PinchStepScale && current < LibraryViewModel.MAX_ZOOM_DENSITY -> {
+                            onDensityChange(current + 1)
+                            scale = 1f
+                        }
+                    }
+                    liveScale.floatValue = scale.coerceIn(1f / PinchStepScale, PinchStepScale)
+                    event.changes.forEach { it.consume() }
+                }
+            } while (event.changes.any { it.pressed })
+            liveScale.floatValue = 1f
+        }
+    }
+}
+
+private const val PinchStepScale = 1.25f
+
 @Composable
 private fun LibraryViewModeButtons(
     layout: LibraryLayout,
@@ -1100,6 +1322,12 @@ private fun LibraryLayoutToggle(
                 .padding(2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        LayoutToggleIcon(
+            selected = layout == LibraryLayout.CONSOLE,
+            icon = Icons.Outlined.ViewCarousel,
+            contentDescription = stringResource(R.string.library_view_console),
+            onClick = { onLayoutChange(LibraryLayout.CONSOLE) },
+        )
         LayoutToggleIcon(
             selected = layout == LibraryLayout.GRID,
             icon = Icons.Filled.GridView,

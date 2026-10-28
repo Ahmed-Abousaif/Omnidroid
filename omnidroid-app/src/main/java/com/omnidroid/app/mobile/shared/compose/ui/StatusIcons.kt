@@ -89,7 +89,7 @@ fun BatteryLevelIcon(
     Canvas(
         modifier =
             modifier
-                .size(16.dp, 9.5.dp)
+                .size(18.dp, 10.dp)
                 .semantics { this.contentDescription = contentDescription },
     ) {
         val strokeWidth = size.minDimension * 0.14f
@@ -114,16 +114,19 @@ fun BatteryLevelIcon(
             cornerRadius = CornerRadius(strokeWidth * 0.55f, strokeWidth * 0.55f),
         )
 
-        val innerLeft = strokeWidth
-        val innerTop = bodyTop + strokeWidth / 2f
-        val innerWidth = (bodyWidth - strokeWidth * 1.45f).coerceAtLeast(0f)
         val innerHeight = (bodyHeight - strokeWidth).coerceAtLeast(0f)
-        val fillWidth = innerWidth * fill
+        // Inset the level bar from the outline so a full battery reads as a stroked icon, not a solid block.
+        val gap = strokeWidth * 0.9f
+        val levelLeft = strokeWidth + gap
+        val levelTop = bodyTop + strokeWidth / 2f + gap
+        val levelWidth = (bodyWidth - strokeWidth * 1.45f - gap * 2f).coerceAtLeast(0f)
+        val levelHeight = (innerHeight - gap * 2f).coerceAtLeast(0f)
+        val fillWidth = levelWidth * fill
         if (fillWidth > 0f) {
             drawRoundRect(
                 color = color,
-                topLeft = Offset(innerLeft, innerTop),
-                size = Size(fillWidth, innerHeight),
+                topLeft = Offset(levelLeft, levelTop),
+                size = Size(fillWidth, levelHeight),
                 cornerRadius = CornerRadius(strokeWidth * 0.35f, strokeWidth * 0.35f),
             )
         }

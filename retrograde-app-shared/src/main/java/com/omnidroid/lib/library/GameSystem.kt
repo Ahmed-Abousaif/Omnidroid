@@ -1922,7 +1922,9 @@ data class GameSystem(
                                 ),
                             rumbleSupported = true,
                             statesSupported = true,
-                            supportsLibretroVFS = true,
+                            // A lone .rvz is handed to Dolphin as a virtual file and crashes on open.
+                            // The same file inside a zip is extracted to a real cache file and boots.
+                            supportsLibretroVFS = false,
                             supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
                             defaultSettings =
                                 listOf(
@@ -2005,7 +2007,9 @@ data class GameSystem(
                                 ),
                             rumbleSupported = true,
                             statesSupported = true,
-                            supportsLibretroVFS = true,
+                            // A lone .rvz is handed to Dolphin as a virtual file and crashes on open.
+                            // The same file inside a zip is extracted to a real cache file and boots.
+                            supportsLibretroVFS = false,
                             supportedOnlyArchitectures = setOf("arm64-v8a", "x86_64"),
                             defaultSettings =
                                 listOf(

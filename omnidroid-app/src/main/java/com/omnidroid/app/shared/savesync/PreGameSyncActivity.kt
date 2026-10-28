@@ -2,6 +2,7 @@ package com.omnidroid.app.shared.savesync
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -37,6 +38,7 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
 
     private var syncJob: Job? = null
     private var finished = false
+    private var isExternalLaunch = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +49,7 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
             intent.serializable<SystemCoreConfig>(EXTRA_CORE_CONFIG) ?: run { abort(); return }
         val loadSave = intent.getBooleanExtra(EXTRA_LOAD_SAVE, true)
         val leanback = intent.getBooleanExtra(EXTRA_LEANBACK, false)
+        isExternalLaunch = intent.getBooleanExtra(EXTRA_EXTERNAL_LAUNCH, false)
 
         findViewById<TextView>(R.id.pre_game_sync_message).text =
             getString(R.string.pre_game_sync_message, game.displayName)
@@ -99,6 +102,7 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
             loadSave,
             leanback,
             castDisplayManager.launchOptions(),
+            isExternalLaunch,
         )
     }
 
@@ -107,7 +111,11 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
         finished = true
         syncJob?.cancel()
         setResult(Activity.RESULT_CANCELED)
-        finish()
+        if (isExternalLaunch) {
+            finishAndRemoveTask()
+        } else {
+            finish()
+        }
     }
 
     override fun onActivityResult(
@@ -118,7 +126,11 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == BaseGameActivity.REQUEST_PLAY_GAME) {
             setResult(resultCode, data)
-            finish()
+            if (isExternalLaunch) {
+                finishAndRemoveTask()
+            } else {
+                finish()
+            }
         }
     }
 
@@ -127,6 +139,7 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
         private const val EXTRA_CORE_CONFIG = "EXTRA_CORE_CONFIG"
         private const val EXTRA_LOAD_SAVE = "EXTRA_LOAD_SAVE"
         private const val EXTRA_LEANBACK = "EXTRA_LEANBACK"
+        private const val EXTRA_EXTERNAL_LAUNCH = "EXTRA_EXTERNAL_LAUNCH"
         private const val TIMEOUT_MS = 20_000L
 
         fun intent(
@@ -135,12 +148,19 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
             coreConfig: SystemCoreConfig,
             loadSave: Boolean,
             leanback: Boolean,
+            isExternalLaunch: Boolean = false,
         ): Intent {
             return Intent(activity, PreGameSyncActivity::class.java).apply {
+                val uri = Uri.parse(game.fileUri)
+                if (uri.scheme.equals("content", ignoreCase = true)) {
+                    data = uri
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
                 putExtra(EXTRA_GAME, game)
                 putExtra(EXTRA_CORE_CONFIG, coreConfig)
                 putExtra(EXTRA_LOAD_SAVE, loadSave)
                 putExtra(EXTRA_LEANBACK, leanback)
+                putExtra(EXTRA_EXTERNAL_LAUNCH, isExternalLaunch)
             }
         }
     }

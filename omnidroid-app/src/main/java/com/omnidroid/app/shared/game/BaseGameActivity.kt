@@ -2,6 +2,7 @@ package com.omnidroid.app.shared.game
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.content.pm.ActivityInfo
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -27,8 +28,16 @@ import com.omnidroid.app.shared.game.viewmodel.GameViewModelSideEffects
 import com.omnidroid.app.shared.game.viewmodel.GameViewModelRetroGameView
 import com.omnidroid.app.shared.input.InputDeviceManager
 import com.omnidroid.app.shared.rumble.RumbleManager
+import com.omnidroid.app.mobile.feature.gamedetails.PlayTimeStore
+import com.omnidroid.app.mobile.feature.profile.UserProfileStore
+import com.omnidroid.app.mobile.feature.profile.XPCalculator
+import com.omnidroid.app.shared.savesync.SaveSyncWork
 import com.omnidroid.app.shared.settings.ControllerConfigsManager
+import com.omnidroid.app.shared.storage.cache.CacheCleanerWork
+import com.omnidroid.app.tv.channel.ChannelUpdateWork
 import com.omnidroid.app.tv.shared.TVHelper
+import com.omnidroid.lib.library.db.RetrogradeDatabase
+import com.omnidroid.lib.library.db.entity.GameSession
 import com.omnidroid.common.coroutines.safeCollect
 import com.omnidroid.common.animationDuration
 import com.omnidroid.common.coroutines.launchOnState
@@ -89,10 +98,14 @@ abstract class BaseGameActivity : ImmersiveActivity() {
     @Inject
     lateinit var sharedPreferences: Lazy<SharedPreferences>
 
+    @Inject
+    lateinit var retrogradeDatabase: RetrogradeDatabase
+
     private lateinit var baseGameScreenViewModel: BaseGameScreenViewModel
 
     private val startGameTime = System.currentTimeMillis()
     private var finishTriggered = false
+    private var isExternalLaunch = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Library portrait/landscape is MainActivity only. Games keep sensor rotation
@@ -101,6 +114,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         super.onCreate(savedInstanceState)
         setUpExceptionsHandler()
         GameService.startService(applicationContext, intent)
+        isExternalLaunch = intent.getBooleanExtra(EXTRA_EXTERNAL_LAUNCH, false)
         game = intent.getSerializableExtra(EXTRA_GAME) as Game
         systemCoreConfig = intent.getSerializableExtra(EXTRA_SYSTEM_CORE_CONFIG) as SystemCoreConfig
         system = GameSystem.findById(game.systemId)
@@ -399,11 +413,50 @@ abstract class BaseGameActivity : ImmersiveActivity() {
     private fun finishAndExitProcess() {
         onFinishTriggered()
         OmnidroidApplication.scope(this).launch {
+            if (isExternalLaunch) {
+                performExternalGameFinishCleanup()
+            }
             delay(animationDuration().toLong())
             GameService.requestTermination()
         }
-        finish()
+        if (isExternalLaunch) {
+            finishAndRemoveTask()
+        } else {
+            finish()
+        }
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+    }
+
+    private suspend fun performExternalGameFinishCleanup() {
+        try {
+            val duration = System.currentTimeMillis() - startGameTime
+            if (game.id != 0) {
+                retrogradeDatabase.gameDao().update(game.copy(lastPlayedAt = System.currentTimeMillis()))
+                val profileStore = UserProfileStore(this@BaseGameActivity)
+                profileStore.recordSessionStreak()
+                val streak = profileStore.getCurrentStreak()
+                val baseXP = XPCalculator.baseXPFromSession(duration)
+                val xpEarned = (baseXP * XPCalculator.streakMultiplier(streak)).toLong()
+                retrogradeDatabase.gameSessionDao().insert(
+                    GameSession(
+                        gameId = game.id,
+                        durationMs = duration,
+                        playedAt = System.currentTimeMillis(),
+                        xpEarned = xpEarned,
+                        streakDay = streak,
+                    ),
+                )
+                PlayTimeStore(this@BaseGameActivity).add(game.id, duration)
+                SaveSyncWork.enqueueGameWork(applicationContext, game.fileName)
+            }
+            SaveSyncWork.enqueueAutoWork(applicationContext, 5)
+            CacheCleanerWork.enqueueCleanCacheLRU(applicationContext)
+            if (TVHelper.isTV(applicationContext)) {
+                ChannelUpdateWork.enqueue(applicationContext)
+            }
+        } catch (e: Throwable) {
+            Timber.e(e, "Error performing external game finish cleanup")
+        }
     }
 
     open fun onFinishTriggered() {
@@ -508,6 +561,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         const val PLAY_GAME_RESULT_GAME = "PLAY_GAME_RESULT_GAME"
         const val PLAY_GAME_RESULT_LEANBACK = "PLAY_GAME_RESULT_LEANBACK"
         const val PLAY_GAME_RESULT_ERROR = "PLAY_GAME_RESULT_ERROR"
+        const val EXTRA_EXTERNAL_LAUNCH = "EXTRA_EXTERNAL_LAUNCH"
 
         const val RESULT_ERROR = Activity.RESULT_FIRST_USER + 2
         const val RESULT_UNEXPECTED_ERROR = Activity.RESULT_FIRST_USER + 3
@@ -519,18 +573,32 @@ abstract class BaseGameActivity : ImmersiveActivity() {
             loadSave: Boolean,
             useLeanback: Boolean,
             activityOptions: android.os.Bundle? = null,
+            isExternalLaunch: Boolean = false,
         ) {
             val intent =
                 Intent(activity, GameActivity::class.java).apply {
+                    val uri = Uri.parse(game.fileUri)
+                    if (uri.scheme.equals("content", ignoreCase = true)) {
+                        data = uri
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
                     putExtra(EXTRA_GAME, game)
                     putExtra(EXTRA_LOAD_SAVE, loadSave)
                     putExtra(EXTRA_LEANBACK, useLeanback)
                     putExtra(EXTRA_SYSTEM_CORE_CONFIG, systemCoreConfig)
+                    putExtra(EXTRA_EXTERNAL_LAUNCH, isExternalLaunch)
+                    if (isExternalLaunch) {
+                        addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT)
+                    }
                     if (activityOptions != null) {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
                     }
                 }
-            activity.startActivityForResult(intent, REQUEST_PLAY_GAME, activityOptions)
+            if (isExternalLaunch) {
+                activity.startActivity(intent, activityOptions)
+            } else {
+                activity.startActivityForResult(intent, REQUEST_PLAY_GAME, activityOptions)
+            }
             activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
     }

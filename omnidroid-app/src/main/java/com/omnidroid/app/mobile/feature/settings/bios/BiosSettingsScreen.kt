@@ -28,12 +28,17 @@ fun BiosScreen(
         viewModel.downloading
             .collectAsState()
             .value
+    val downloadFailed =
+        viewModel.downloadFailed
+            .collectAsState()
+            .value
 
     OmnidroidSettingsPage(modifier = modifier.fillMaxSize()) {
         Ps2Choices(
             detected = ps2.map { it.libretroFileName }.toSet(),
             selection = uiState.ps2Selection,
             downloading = downloading,
+            downloadFailed = downloadFailed,
             onSelect = viewModel::selectPs2Bios,
             onDownload = viewModel::downloadPs2Bios,
         )
@@ -51,6 +56,7 @@ private fun Ps2Choices(
     detected: Set<String>,
     selection: String?,
     downloading: String?,
+    downloadFailed: String?,
     onSelect: (String?) -> Unit,
     onDownload: (String) -> Unit,
 ) {
@@ -73,6 +79,7 @@ private fun Ps2Choices(
             val present = fileName in detected
             val pinned = selection == fileName
             val inProgress = downloading == fileName
+            val failed = downloadFailed == fileName
             OmnidroidSettingsMenuLink(
                 title = { Text(text = stringResource(id = title)) },
                 subtitle = {
@@ -82,6 +89,7 @@ private fun Ps2Choices(
                                 inProgress -> stringResource(id = R.string.settings_ps2_bios_downloading)
                                 pinned -> stringResource(id = R.string.settings_ps2_bios_pinned)
                                 present -> fileName
+                                failed -> stringResource(id = R.string.settings_ps2_bios_download_failed)
                                 else -> stringResource(id = R.string.settings_ps2_bios_download)
                             },
                     )

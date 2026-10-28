@@ -23,7 +23,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.room.Room
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
-import com.omnidroid.app.mobile.feature.shortcuts.ShortcutsGenerator
 import com.omnidroid.app.shared.cast.CastDisplayManager
 import com.omnidroid.app.shared.game.GameLauncher
 import com.omnidroid.app.shared.input.InputDeviceManager
@@ -108,7 +107,6 @@ object OmnidroidActivityModule {
     fun gameInteractor(
         activity: Activity,
         retrogradeDb: RetrogradeDatabase,
-        shortcutsGenerator: ShortcutsGenerator,
         gameLauncher: GameLauncher,
         saveSyncManager: SaveSyncManager,
     ): GameInteractor {
@@ -117,7 +115,6 @@ object OmnidroidActivityModule {
             mainActivity,
             retrogradeDb,
             TVHelper.isTV(activity),
-            shortcutsGenerator,
             gameLauncher,
             saveSyncManager,
             mainActivity::requestNotificationPermission,
@@ -339,13 +336,6 @@ object OmnidroidApplicationModule {
     @Singleton
     fun postGameHandler(retrogradeDatabase: RetrogradeDatabase) =
         GameLaunchTaskHandler(ReviewManager(), retrogradeDatabase)
-
-    @Provides
-    @Singleton
-    fun shortcutsGenerator(
-        @ApplicationContext context: Context,
-        retrofit: Retrofit,
-    ) = ShortcutsGenerator(context, retrofit)
 
     @Provides
     @Singleton

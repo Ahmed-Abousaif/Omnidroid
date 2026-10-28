@@ -161,6 +161,7 @@
     <string name="settings_ps2_bios_pinned">Used for every PlayStation 2 game</string>
     <string name="settings_ps2_bios_download">Download</string>
     <string name="settings_ps2_bios_downloading">Downloading…</string>
+    <string name="settings_ps2_bios_download_failed">Couldn\'t download. Try again.</string>
     <string name="settings_ps2_bios_usa">United States</string>
     <string name="settings_ps2_bios_europe">Europe</string>
     <string name="settings_ps2_bios_japan">Japan</string>
@@ -497,6 +498,14 @@
     <string name="library_view_list">List view</string>
     <string name="library_view_portrait">Portrait view</string>
     <string name="library_view_landscape">Landscape view</string>
+    <string name="library_view_console">Console view</string>
+    <string name="library_console_start">Start</string>
+    <string name="library_play_random">Play random game</string>
+    <string name="library_sort">Sort</string>
+    <string name="library_sort_title">Alphabetical</string>
+    <string name="library_sort_recent">Recently played</string>
+    <string name="library_sort_favorites">Favorites first</string>
+    <string name="library_sort_console">By console</string>
     <string name="controller_hint_install">Install</string>
     <string name="console_not_added">Not added yet</string>
 
