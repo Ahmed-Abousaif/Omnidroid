@@ -165,7 +165,6 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 - **Library Sorting & Random Play:** Sort by title, console, recently played, or favorites, plus a random game button for spontaneous gaming.
 - **Dual Layout Engines:** Switch seamlessly between **Grid View** (with dynamic zoom slider based on screen height) and a compact **List View**.
 - **Landscape Navigation:** Dedicated sidebar for quick navigation between All Games, Favorites, and specific consoles, showing uncropped covers and titles.
-- **Display Cutout Awareness:** In-game controls and library chrome hug closer to screen cutouts and camera notches for maximum screen utilization.
 - **Startup Screen Selector:** Choose what Omnidroid opens to on launch (All Games, Favorites, or a favorite console).
 - **Home Screen Launcher:** Set Omnidroid as your Android device's default launcher for a dedicated console feel.
 - **System Telemetry:** Live on-screen battery percentage, Wi-Fi/mobile network status, and connected gamepads right on the top bar.
@@ -176,7 +175,6 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 <br>
 
 - **Frontend Launcher Contract:** Boot games directly from external launchers like Daijishō, Pegasus, and Beacon using `ExternalGameLauncherActivity` with standard Android `ACTION_VIEW` intents.
-- **Console Disambiguation:** Accepts the `SYSTEM` extra to automatically route shared formats (.chd, .iso, .zip) to the correct console core.
 - **"Open With" File Manager Support:** Tap any supported ROM or zipped archive in your Android file manager to boot directly into the game without requiring a prior library scan.
 - **Clean Return on Exit:** Quitting an externally launched game returns focus directly to the calling frontend without leaving stale tasks on your recent apps overview.
 </details>
