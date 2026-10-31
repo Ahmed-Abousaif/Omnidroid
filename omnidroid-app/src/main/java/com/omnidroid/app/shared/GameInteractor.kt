@@ -11,7 +11,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.omnidroid.R
 import com.omnidroid.app.OmnidroidApplication
-import com.omnidroid.app.mobile.feature.shortcuts.ShortcutsGenerator
 import com.omnidroid.app.shared.covers.CustomCoverManager
 import com.omnidroid.app.shared.game.GameLauncher
 import com.omnidroid.app.shared.main.BusyActivity
@@ -33,7 +32,6 @@ class GameInteractor(
     private val activity: BusyActivity,
     private val retrogradeDb: RetrogradeDatabase,
     private val useLeanback: Boolean,
-    private val shortcutsGenerator: ShortcutsGenerator,
     private val gameLauncher: GameLauncher,
     private val saveSyncManager: SaveSyncManager,
     private val requestNotificationsPermission: ((onResult: (Boolean) -> Unit) -> Unit)? = null,
@@ -66,12 +64,6 @@ class GameInteractor(
     ) {
         appScope.launch {
             retrogradeDb.gameDao().update(game.copy(isFavorite = isFavorite))
-        }
-    }
-
-    fun onCreateShortcut(game: Game) {
-        appScope.launch {
-            shortcutsGenerator.pinShortcutForGame(game)
         }
     }
 
@@ -176,10 +168,6 @@ class GameInteractor(
         speed: Int,
     ) {
         frameSpeedPrefs.set(game.id, speed)
-    }
-
-    fun supportShortcuts(): Boolean {
-        return shortcutsGenerator.supportShortcuts()
     }
 
     fun isSaveSyncSupported(): Boolean = saveSyncManager.isSupported()

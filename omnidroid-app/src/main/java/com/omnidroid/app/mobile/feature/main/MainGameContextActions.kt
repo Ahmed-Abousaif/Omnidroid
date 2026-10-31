@@ -32,7 +32,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AppShortcut
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -96,14 +95,12 @@ private val PanelDivider = Color.White.copy(alpha = 0.08f)
 fun MainGameContextActions(
     selectedGameState: MutableState<Game?>,
     retrogradeDb: RetrogradeDatabase,
-    shortcutSupported: Boolean,
     saveSyncSupported: Boolean = false,
     cloudOverride: GameCloudSyncOverride? = null,
     frameSpeed: Int = 1,
     onGamePlay: (Game) -> Unit,
     onGameRestart: (Game) -> Unit,
     onFavoriteToggle: (Game, Boolean) -> Unit,
-    onCreateShortcut: (Game) -> Unit,
     onCloudOverride: (Game, GameCloudSyncOverride) -> Unit = { _, _ -> },
     onFrameSpeed: (Game, Int) -> Unit = { _, _ -> },
     onSyncGameNow: (Game) -> Unit = {},
@@ -165,7 +162,6 @@ fun MainGameContextActions(
             panelGame?.let { game ->
                 GameSettingsPanel(
                     game = game,
-                    shortcutSupported = shortcutSupported,
                     saveSyncSupported = saveSyncSupported,
                     initialCloudOverride = cloudOverride ?: GameCloudSyncOverride.INHERIT,
                     initialFrameSpeed = frameSpeed,
@@ -173,7 +169,6 @@ fun MainGameContextActions(
                     onGamePlay = onGamePlay,
                     onGameRestart = onGameRestart,
                     onFavoriteToggle = onFavoriteToggle,
-                    onCreateShortcut = onCreateShortcut,
                     onCloudOverride = onCloudOverride,
                     onFrameSpeed = onFrameSpeed,
                     onSyncGameNow = onSyncGameNow,
@@ -244,7 +239,6 @@ fun MainGameContextActions(
 @Composable
 private fun GameSettingsPanel(
     game: Game,
-    shortcutSupported: Boolean,
     saveSyncSupported: Boolean,
     initialCloudOverride: GameCloudSyncOverride,
     initialFrameSpeed: Int,
@@ -252,7 +246,6 @@ private fun GameSettingsPanel(
     onGamePlay: (Game) -> Unit,
     onGameRestart: (Game) -> Unit,
     onFavoriteToggle: (Game, Boolean) -> Unit,
-    onCreateShortcut: (Game) -> Unit,
     onCloudOverride: (Game, GameCloudSyncOverride) -> Unit,
     onFrameSpeed: (Game, Int) -> Unit,
     onSyncGameNow: (Game) -> Unit,
@@ -361,14 +354,6 @@ private fun GameSettingsPanel(
                                 onClick = { onFavoriteToggle(game, true) },
                             )
                         }
-                        if (shortcutSupported) {
-                            ContextActionEntry(
-                                label = stringResource(id = R.string.game_context_menu_create_shortcut),
-                                icon = Icons.Default.AppShortcut,
-                                onClick = { onCreateShortcut(game) },
-                            )
-                        }
-
                         if (fastForwardSupported) {
                             SectionLabel(text = stringResource(R.string.game_menu_fast_forward))
                             FastForwardSpeedSelector(

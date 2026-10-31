@@ -86,25 +86,27 @@ class GameLaunchTaskHandler(
                 ?: 0L
         val game = data?.extras?.getSerializable(BaseGameActivity.PLAY_GAME_RESULT_GAME) as Game
 
-        updateGamePlayedTimestamp(game)
-        // Keep per-game playtime in SharedPreferences for quick reads on game detail screens
-        PlayTimeStore(activity).add(game.id, duration)
+        if (game.id != 0) {
+            updateGamePlayedTimestamp(game)
+            // Keep per-game playtime in SharedPreferences for quick reads on game detail screens
+            PlayTimeStore(activity).add(game.id, duration)
 
-        // Record a session in Room — this is the source of truth for XP and total playtime
-        val profileStore = UserProfileStore(activity)
-        profileStore.recordSessionStreak()
-        val streak = profileStore.getCurrentStreak()
-        val baseXP = XPCalculator.baseXPFromSession(duration)
-        val xpEarned = (baseXP * XPCalculator.streakMultiplier(streak)).toLong()
-        retrogradeDb.gameSessionDao().insert(
-            GameSession(
-                gameId = game.id,
-                durationMs = duration,
-                playedAt = System.currentTimeMillis(),
-                xpEarned = xpEarned,
-                streakDay = streak,
-            ),
-        )
+            // Record a session in Room — this is the source of truth for XP and total playtime
+            val profileStore = UserProfileStore(activity)
+            profileStore.recordSessionStreak()
+            val streak = profileStore.getCurrentStreak()
+            val baseXP = XPCalculator.baseXPFromSession(duration)
+            val xpEarned = (baseXP * XPCalculator.streakMultiplier(streak)).toLong()
+            retrogradeDb.gameSessionDao().insert(
+                GameSession(
+                    gameId = game.id,
+                    durationMs = duration,
+                    playedAt = System.currentTimeMillis(),
+                    xpEarned = xpEarned,
+                    streakDay = streak,
+                ),
+            )
+        }
 
         if (enableRatingFlow) {
             displayReviewRequest(activity, duration)

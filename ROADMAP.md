@@ -6,6 +6,18 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ## Completed
 
+### v2.6.0
+
+- Added a console library view, with a cover carousel in portrait and the selected game's cover, title, and start actions in landscape
+- Added library sorting by name, console, recently played, and favorites, plus a button to play a random game
+- The game settings sidebar shows the full title and the cover without cropping
+- Library chrome and in-game controls sit closer to display cutouts
+- Fixed PlayStation 2 BIOS downloads not installing, and a failed download is shown in BIOS settings
+- Fixed GameCube and Wii `.rvz` games crashing on launch by opening them from a real file instead of the virtual filesystem ([#19](https://github.com/Ahmed-Abousaif/Omnidroid/issues/19)) (_Deus0_)
+- Added frontend intent support to launch games directly from frontends like Daijishō, Pegasus, and Beacon (ES-DE WIP)
+- Added "Open with" file manager support for ROM files and zip archives, with automatic console detection and instant booting without prior library scanning
+- Added Android TV Leanback launcher integration and home screen preview channels for recently played games
+
 ### v2.5.4
 
 - Fixed missing box art when a console database name does not match the Libretro thumbnail filename ([#26](https://github.com/Ahmed-Abousaif/Omnidroid/issues/26)) (_Deus0_)
@@ -34,7 +46,6 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Fixed Immersive mode dynamic background coloring across OpenGL ES 3 mobile GPUs ([#8](https://github.com/Ahmed-Abousaif/Omnidroid/issues/8)) (_u/-BMX-_)
 - Extended vertical gamepad positioning range in portrait mode to allow centered controls ([#11](https://github.com/Ahmed-Abousaif/Omnidroid/issues/11)) (_uiro1_)
 - Added 3DS .zcci/.cxi scanning ([#16](https://github.com/Ahmed-Abousaif/Omnidroid/issues/16)) (_Deus0_)
-- Added GameCube/Wii OpenGL stability default ([#19](https://github.com/Ahmed-Abousaif/Omnidroid/issues/19)) (_Deus0_)
 - Added PS2 regional BIOS fallback ([#18](https://github.com/Ahmed-Abousaif/Omnidroid/issues/18)) (_Deus0_)
 - Added safe zip ROM extraction ([#14](https://github.com/Ahmed-Abousaif/Omnidroid/issues/14)) (_Deus0_)
 - Fixed PSP .chd disc booting by disabling virtual file system routing for PPSSPP ([#20](https://github.com/Ahmed-Abousaif/Omnidroid/issues/20)) (_Deus0_)
