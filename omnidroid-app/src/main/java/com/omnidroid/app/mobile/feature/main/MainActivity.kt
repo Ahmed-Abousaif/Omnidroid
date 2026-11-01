@@ -779,6 +779,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                         SaveSyncSettingsViewModel.Factory(
                                             application,
                                             saveSyncManager,
+                                            directoriesManager,
                                         ),
                                 ),
                         )

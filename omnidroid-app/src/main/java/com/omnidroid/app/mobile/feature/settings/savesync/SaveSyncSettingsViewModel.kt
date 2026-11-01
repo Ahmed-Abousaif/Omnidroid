@@ -6,11 +6,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.omnidroid.app.shared.library.PendingOperationsMonitor
+import com.omnidroid.app.shared.savesync.LemuroidMigrationManager
+import com.omnidroid.app.shared.savesync.SaveBackupWork
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.savesync.CloudSaveProviderInfo
 import com.omnidroid.lib.savesync.ConflictResolution
 import com.omnidroid.lib.savesync.SaveConflict
 import com.omnidroid.lib.savesync.SaveSyncManager
+import com.omnidroid.lib.storage.DirectoriesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,13 +25,17 @@ import kotlinx.coroutines.withContext
 class SaveSyncSettingsViewModel(
     private val application: Application,
     private val saveSyncManager: SaveSyncManager,
+    private val directoriesManager: DirectoriesManager,
 ) : ViewModel() {
+    private val migrationManager = LemuroidMigrationManager(application.applicationContext, directoriesManager)
+
     class Factory(
         private val application: Application,
         private val saveSyncManager: SaveSyncManager,
+        private val directoriesManager: DirectoriesManager,
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return SaveSyncSettingsViewModel(application, saveSyncManager) as T
+            return SaveSyncSettingsViewModel(application, saveSyncManager, directoriesManager) as T
         }
     }
 
@@ -42,6 +49,7 @@ class SaveSyncSettingsViewModel(
         val coreVisibleNames: List<String> = emptyList(),
         val providers: List<CloudSaveProviderInfo> = emptyList(),
         val conflicts: List<SaveConflict> = emptyList(),
+        val lemuroidStats: LemuroidMigrationManager.LemuroidSaveStats? = null,
     )
 
     private val refreshTick = MutableStateFlow(0)
@@ -74,7 +82,15 @@ class SaveSyncSettingsViewModel(
         }
     }
 
-    private fun buildState(): State {
+    fun migrateFromLemuroid() {
+        SaveBackupWork.enqueueLemuroidMigration(getContext())
+        refresh()
+    }
+
+    private suspend fun buildState(): State {
+        val stats = withContext(Dispatchers.IO) {
+            migrationManager.detectLemuroidSaves()
+        }
         return State(
             isConfigured = saveSyncManager.isConfigured(),
             savesSpace = saveSyncManager.computeSavesSpace(),
@@ -83,6 +99,7 @@ class SaveSyncSettingsViewModel(
             coreVisibleNames = CoreID.values().map { saveSyncManager.getDisplayNameForCore(getContext(), it) },
             providers = saveSyncManager.getProviders(),
             conflicts = saveSyncManager.getConflicts(),
+            lemuroidStats = stats,
         )
     }
 

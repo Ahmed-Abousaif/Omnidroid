@@ -75,7 +75,7 @@ If Omnidroid helps you play, you can fuel continued development here:
 - 📱 **Handheld & Phone UI:** Fluid landscape and portrait modes with dedicated layouts for handhelds (Retroid, Odin, ANBERNIC), phones, tablets, and Android TV.
 - 🚀 **Frontend & File Manager Integration:** Exported launcher activity for external frontends (Daijishō, Pegasus, Beacon) and direct "Open With" file manager launching for ROMs and archives without requiring a prior library scan.
 - 📚 **Console Carousel & Library Sorting:** Dedicated console views with a portrait cover carousel, landscape details pane, flexible sorting (name, console, recently played, favorites), and random game selection.
-- ☁️ **Multi-Cloud Save Sync:** Sync saves seamlessly with **Google Drive**, **Dropbox**, or **OneDrive**, with conflict resolution and offline zip export/import.
+- 🔄 **Saves Backup & Lemuroid Migration:** Multi-tier save and state migration from Lemuroid (automatic 1-tap direct migration, uncompressed folder import via SAF, and lenient ZIP backup import), plus multi-provider cloud sync (**Google Drive**, **Dropbox**, **OneDrive**) with full conflict resolution.
 - 🎨 **Rich RAWG Game Details:** Automatic cover art, descriptions, genres, release dates, publishers, ratings, and video trailers without scraping YouTube.
 - 🏆 **Gamification & Profile System:** Earn XP from play sessions, maintain daily streaks, level up, and unlock collection badges (Collector → Enthusiast → Historian → Omnidroid Master).
 - 📺 **Android TV & Big-Screen Integration:** Full Android TV Leanback launcher support with dynamic home screen preview channels for recently played games, plus wireless and HDMI casting.
@@ -109,9 +109,12 @@ Most retro consoles run immediately without external BIOS files. For systems tha
 - **Physical Gamepads:** Plug in via USB or pair via Bluetooth (Xbox, PlayStation DualShock/DualSense, Nintendo Switch Pro, 8BitDo, and integrated handheld controls). Key mappings are applied automatically.
 - **Touch Controls:** On-screen virtual pads can be customized for size, position, opacity, and 4-way vs. 8-way D-Pad modes. Retro systems support routing the virtual analog stick to D-Pad inputs.
 
-### 5. Cloud Saves Setup
+### 5. Saves, Backup & Lemuroid Migration
 
-Under **Settings → Saves**, log into **Google Drive**, **Dropbox**, or **OneDrive** to enable automatic cloud backup and cross-device sync. You can also export or import a local `.zip` backup of all your saves anytime.
+Under **Settings → Saves & Backup**:
+- **Migrate from Lemuroid:** Move your battery saves (`.srm`) and save states (`.state`) seamlessly. If Lemuroid is detected on your device (Android ≤10, gaming handhelds, rooted devices), tap **Migrate from Lemuroid** for instant 1-tap migration. On Android 11+, use **Import from folder** or copy via PC USB using the in-app guide.
+- **Backup & Folder Import:** Import uncompressed save folders from SD cards or external storage, or export/import a local `.zip` backup.
+- **Cloud Saves (Play Build):** Connect **Google Drive**, **Dropbox**, or **OneDrive** for automatic cross-device synchronization and conflict management.
 
 ---
 
@@ -231,6 +234,18 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 
 - Under **Settings → Advanced → Device profile**, view detailed hardware specs: SoC, RAM, CPU cores/frequencies, GPU / OpenGL ES, and Vulkan driver versions.
 - Built-in 30-second CPU benchmark measures emulation throughput in ops/s.
+</details>
+
+<details>
+<summary><b>💾 Saves, Backup & Lemuroid Migration</b></summary>
+<br>
+
+- **Seamless Lemuroid Migration:** 100% format compatibility with Lemuroid and RetroArch saves (`.srm` raw SRAM and `.state` Libretro serialized states).
+- **1-Tap Direct Detection:** Automatically detects existing Lemuroid saves in `/sdcard/Android/data/com.swordfish.lemuroid/files/` when accessible, prompting a 1-tap migration with live file counts.
+- **Storage Access Framework (SAF) Folder Import:** Select any uncompressed folder on your device, SD card, or USB drive via the system document tree picker.
+- **Lenient ZIP Backup Import:** Supports Omnidroid backups, raw Lemuroid dumps, or loose `.srm` files without strict root folder hierarchies.
+- **Zero-Loss Conflict Resolution:** Existing files are preserved; differing incoming files are saved with timestamped backups and surfaced in an interactive conflict resolver.
+- **Built-in Migration Guide:** In-app walkthrough with step-by-step instructions for PC/USB file transfer and on-device file managers.
 </details>
 
 ---

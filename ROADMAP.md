@@ -17,6 +17,8 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Added frontend intent support to launch games directly from frontends like Daijishō, Pegasus, and Beacon (ES-DE WIP)
 - Added "Open with" file manager support for ROM files and zip archives, with automatic console detection and instant booting without prior library scanning
 - Added Android TV Leanback launcher integration and home screen preview channels for recently played games
+- Added multi-tier save and state migration from Lemuroid: automatic 1-tap migration when accessible on device (with live save/state count detection), uncompressed folder import via SAF, lenient ZIP backup import, and in-app migration guide (_u/Kwametoure1_)
+- Unified Saves & Backup settings across all builds (GitHub free and Google Play), adding local storage calculation, conflict resolution, and SAF folder import
 
 ### v2.5.4
 
@@ -120,7 +122,6 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ### Platform & distribution
 
-- Transfer saves from Lemuroid (simpler for GitHub installs; Play Store path still unclear) (_u/Kwametoure1_)
 - Donation option in the Play Store build (support links already exist on GitHub and in About) (_u/Tall-Average5330_)
 
 ---

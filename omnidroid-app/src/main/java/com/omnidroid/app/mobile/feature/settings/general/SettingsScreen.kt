@@ -742,15 +742,31 @@ private fun SavesSettings(
             title = { Text(text = stringResource(id = R.string.settings_title_enable_autosave)) },
             subtitle = { Text(text = stringResource(id = R.string.settings_description_enable_autosave)) },
         )
-        if (isSaveSyncSupported) {
-            OmnidroidSettingsMenuLink(
-                title = { Text(text = stringResource(id = R.string.settings_title_save_sync)) },
-                subtitle = {
-                    Text(text = stringResource(id = R.string.settings_description_save_sync))
-                },
-                onClick = { navController.navigateToRoute(MainRoute.SETTINGS_SAVE_SYNC) },
-            )
-        }
+        OmnidroidSettingsMenuLink(
+            title = {
+                Text(
+                    text = stringResource(
+                        id = if (isSaveSyncSupported) {
+                            R.string.settings_title_save_sync
+                        } else {
+                            R.string.settings_title_saves_backup
+                        },
+                    ),
+                )
+            },
+            subtitle = {
+                Text(
+                    text = stringResource(
+                        id = if (isSaveSyncSupported) {
+                            R.string.settings_description_save_sync
+                        } else {
+                            R.string.settings_description_saves_backup
+                        },
+                    ),
+                )
+            },
+            onClick = { navController.navigateToRoute(MainRoute.SETTINGS_SAVE_SYNC) },
+        )
     }
 }
 
