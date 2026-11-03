@@ -8,7 +8,7 @@ import androidx.work.WorkManager
 object LibraryIndexScheduler {
     val CORE_UPDATE_WORK_ID: String = CoreUpdateWork::class.java.simpleName
     val LIBRARY_INDEX_WORK_ID: String = LibraryIndexWork::class.java.simpleName
-    val RAWG_ENRICHMENT_WORK_ID: String = RawgEnrichmentWork::class.java.simpleName
+    val SWITCH_ICON_WORK_ID: String = SwitchIconExtractionWork::class.java.simpleName
 
     fun scheduleLibrarySync(applicationContext: Context) {
         WorkManager.getInstance(applicationContext)
@@ -17,8 +17,8 @@ object LibraryIndexScheduler {
                 ExistingWorkPolicy.APPEND_OR_REPLACE,
                 OneTimeWorkRequestBuilder<LibraryIndexWork>().build(),
             )
-            .then(OneTimeWorkRequestBuilder<RawgEnrichmentWork>().build())
             .then(OneTimeWorkRequestBuilder<CoreUpdateWork>().build())
+            .then(OneTimeWorkRequestBuilder<SwitchIconExtractionWork>().build())
             .enqueue()
     }
 
@@ -29,11 +29,13 @@ object LibraryIndexScheduler {
                 ExistingWorkPolicy.APPEND_OR_REPLACE,
                 OneTimeWorkRequestBuilder<CoreUpdateWork>().build(),
             )
+            .then(OneTimeWorkRequestBuilder<SwitchIconExtractionWork>().build())
             .enqueue()
     }
 
     fun cancelLibrarySync(applicationContext: Context) {
         WorkManager.getInstance(applicationContext).cancelUniqueWork(LIBRARY_INDEX_WORK_ID)
+        WorkManager.getInstance(applicationContext).cancelUniqueWork(SWITCH_ICON_WORK_ID)
         com.omnidroid.lib.core.SyncProgressTracker.clear()
     }
 

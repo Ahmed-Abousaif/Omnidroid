@@ -26,7 +26,6 @@ import com.omnidroid.libretrodroid.Variable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.launch
 import org.yuzu.yuzu_emu.NativeLibrary
 import org.yuzu.yuzu_emu.features.input.model.NativeAnalog
 import org.yuzu.yuzu_emu.features.input.model.NativeButton
@@ -51,17 +50,6 @@ class SwitchBackendSession(
             EdenBridge.initialize(activity.applicationContext)
         }.onFailure { e ->
             Timber.w(e, "EdenBridge initialization deferred in SwitchBackendSession.init")
-        }
-        if (game.customCoverPath == null) {
-            com.omnidroid.app.OmnidroidApplication.scope(activity).launch {
-                val app = activity.applicationContext as? com.omnidroid.app.OmnidroidApplication ?: return@launch
-                val extractor = com.omnidroid.app.shared.switch_emu.EdenIconExtractor(app)
-                val path = extractor.extractAndSave(game.id, game.fileUri)
-                if (path != null) {
-                    val current = app.retrogradeDb.gameDao().selectById(game.id) ?: game
-                    app.retrogradeDb.gameDao().update(current.copy(customCoverPath = path))
-                }
-            }
         }
     }
 

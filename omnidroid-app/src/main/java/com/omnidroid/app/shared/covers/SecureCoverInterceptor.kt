@@ -14,8 +14,6 @@ object SecureCoverInterceptor : Interceptor {
 
     private val ALLOWED_DOMAINS = listOf(
         "thumbnails.libretro.com",
-        "media.rawg.io",
-        "rawg.io",
         "images.igdb.com",
     )
 

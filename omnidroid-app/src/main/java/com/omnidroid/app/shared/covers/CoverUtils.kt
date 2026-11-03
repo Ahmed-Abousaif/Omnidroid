@@ -35,8 +35,8 @@ object CoverUtils {
 
     private val ALLOWED_COVER_HOSTS = setOf(
         "thumbnails.libretro.com",
-        "media.rawg.io",
-        "rawg.io",
+
+
         "images.igdb.com",
     )
 
@@ -51,7 +51,7 @@ object CoverUtils {
 
     fun coverData(game: Game): Any? =
         resolveCustomCoverFile(game)
-            ?: RawgCoverStore.get(game.id)?.takeIf(::isAllowedRemoteCoverUrl)
+
             ?: game.coverFrontUrl?.takeIf(::isAllowedRemoteCoverUrl)
 
     fun coverData(
@@ -60,7 +60,7 @@ object CoverUtils {
     ): Any? =
         resolveCustomCoverFile(game)
             ?: preferredCoverUrl?.takeIf(::isAllowedRemoteCoverUrl)
-            ?: RawgCoverStore.get(game.id)?.takeIf(::isAllowedRemoteCoverUrl)
+
             ?: game.coverFrontUrl?.takeIf(::isAllowedRemoteCoverUrl)
 
     fun coverCacheKey(

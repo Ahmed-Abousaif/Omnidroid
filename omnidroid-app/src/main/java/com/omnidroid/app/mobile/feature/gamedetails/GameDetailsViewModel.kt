@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
-import com.omnidroid.app.shared.covers.RawgCoverStore
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,16 +66,7 @@ class GameDetailsViewModel(
 
     init {
         viewModelScope.launch {
-            if (settingsManager.enableRawgMetadata()) {
-                val row = retrogradeDb.rawgGameMetadataDao().selectByGameId(gameId)
-                val metadata = GameMetadataMapper.fromRawg(row)
-                metadataFlow.value = metadata
-                metadata.coverImageUrl?.takeIf { it.isNotBlank() }?.let {
-                    RawgCoverStore.put(gameId, it)
-                }
-            } else {
-                metadataFlow.value = GameRemoteMetadata()
-            }
+            metadataFlow.value = GameRemoteMetadata()
             loadingMetadataFlow.value = false
         }
     }

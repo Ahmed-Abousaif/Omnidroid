@@ -90,6 +90,7 @@ When using multi-system file formats (such as `.chd`, `.iso`, `.bin`, `.zip`, `.
 | **Game Boy Color** | `gbc` | `gbc`, `gameboy_color` | — |
 | **Game Boy Advance** | `gba` | `gba`, `gameboy_advance` | — |
 | **Nintendo DS** | `nds` | `nds`, `ds` | — |
+| **Nintendo Switch** | `switch` | `switch`, `nintendo_switch` | — |
 | **Nintendo 3DS** | `3ds` | `3ds`, `nintendo_3ds` | — |
 | **Nintendo GameCube** | `gamecube` | `gamecube`, `gc` | — |
 | **Nintendo Wii** | `wii` | `wii` | — |

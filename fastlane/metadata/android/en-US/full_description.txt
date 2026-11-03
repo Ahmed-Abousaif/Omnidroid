@@ -25,6 +25,7 @@ Supported Systems:
 - Neo Geo Pocket Color (NGC)
 - WonderSwan (WS)
 - WonderSwan Color (WSC)
+- Nintendo Switch (Switch)
 - Nintendo 3DS (3DS)
 
 

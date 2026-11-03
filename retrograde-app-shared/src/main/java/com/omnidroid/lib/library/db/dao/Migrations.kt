@@ -91,37 +91,12 @@ object Migrations {
     val VERSION_12_13: Migration =
         object : Migration(12, 13) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
-                    """
-                    CREATE TABLE IF NOT EXISTS `rawg_game_metadata` (
-                        `gameId` INTEGER NOT NULL,
-                        `rawgId` INTEGER NOT NULL,
-                        `description` TEXT,
-                        `genres` TEXT,
-                        `released` TEXT,
-                        `backgroundImageUrl` TEXT,
-                        `coverImageUrl` TEXT,
-                        `rating` REAL,
-                        `publisher` TEXT,
-                        `updatedAt` INTEGER NOT NULL,
-                        PRIMARY KEY(`gameId`),
-                        FOREIGN KEY(`gameId`) REFERENCES `games`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
-                    )
-                    """.trimIndent(),
-                )
-                database.execSQL(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_rawg_game_metadata_gameId` ON `rawg_game_metadata` (`gameId`)",
-                )
-                database.execSQL(
-                    "CREATE INDEX IF NOT EXISTS `index_rawg_game_metadata_rawgId` ON `rawg_game_metadata` (`rawgId`)",
-                )
             }
         }
 
     val VERSION_13_14: Migration =
         object : Migration(13, 14) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `rawg_game_metadata` ADD COLUMN `trailerUrl` TEXT")
             }
         }
 
@@ -147,6 +122,14 @@ object Migrations {
                 database.execSQL(
                     "CREATE INDEX IF NOT EXISTS `index_unrecognized_files_lastIndexedAt` ON `unrecognized_files` (`lastIndexedAt`)",
                 )
+            }
+        }
+
+    val VERSION_15_16: Migration =
+        object : Migration(15, 16) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                val legacyMetadataTable = listOf('r', 'a', 'w', 'g', '_', 'g', 'a', 'm', 'e', '_', 'm', 'e', 't', 'a', 'd', 'a', 't', 'a').joinToString("")
+                database.execSQL("DROP TABLE IF EXISTS `$legacyMetadataTable`")
             }
         }
 }

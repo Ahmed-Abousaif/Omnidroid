@@ -20,6 +20,8 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Added multi-tier save and state migration from Lemuroid: automatic 1-tap migration when accessible on device (with live save/state count detection), uncompressed folder import via SAF, lenient ZIP backup import, and in-app migration guide (_u/Kwametoure1_)
 - Unified Saves & Backup settings across all builds (GitHub free and Google Play), adding local storage calculation, conflict resolution, and SAF folder import
 - Added Nintendo Switch emulation support via Eden with native Vulkan acceleration, docked/handheld modes, resolution scaling, in-game asynchronous shaders toggle, touch/gamepad controls, and prod.keys & optional system firmware import
+- Removed RAWG support given it's not a method that fits the goals of this app
+- fixed the d-pad analog emulation up-down flipped issue (\_u/Separate-Bluebird30)
 
 ### v2.5.4
 

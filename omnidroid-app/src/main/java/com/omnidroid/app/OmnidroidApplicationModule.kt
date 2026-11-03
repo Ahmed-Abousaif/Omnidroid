@@ -28,7 +28,6 @@ import com.omnidroid.app.shared.game.GameLauncher
 import com.omnidroid.app.shared.input.InputDeviceManager
 import com.omnidroid.app.shared.main.GameLaunchTaskHandler
 import com.omnidroid.app.shared.rumble.RumbleManager
-import com.omnidroid.app.shared.switch_emu.EdenIconExtractor
 import com.omnidroid.app.shared.settings.ControllerConfigsManager
 import com.omnidroid.app.tv.channel.ChannelHandler
 import com.omnidroid.ext.feature.core.CoreUpdaterImpl
@@ -64,9 +63,9 @@ import com.omnidroid.metadata.libretrodb.CoverSearcher
 import com.omnidroid.metadata.libretrodb.LibretroDBMetadataProvider
 import com.omnidroid.metadata.libretrodb.MetadataSliceInstallerImpl
 import com.omnidroid.metadata.libretrodb.db.LibretroDBManager
-import com.omnidroid.metadata.rawg.RawgApi
-import com.omnidroid.metadata.rawg.RawgConfig
-import com.omnidroid.metadata.rawg.RawgMetadataRepository
+
+
+
 import dagger.Lazy
 import android.app.Activity
 import com.omnidroid.app.mobile.feature.main.MainActivity
@@ -197,7 +196,6 @@ object OmnidroidApplicationModule {
         gameMetadataProvider,
         biosManager,
         SliceStampStore(SharedPreferencesHelper.getLegacySharedPreferences(context)),
-        EdenIconExtractor(context),
     )
 
     @Provides
@@ -216,18 +214,6 @@ object OmnidroidApplicationModule {
             .baseUrl("https://example.com/")
             .build()
 
-    @Provides
-    @Singleton
-    fun rawgApi(okHttpClient: OkHttpClient): RawgApi =
-        Retrofit.Builder()
-            .client(okHttpClient)
-            .baseUrl(RawgConfig.BASE_URL)
-            .build()
-            .create(RawgApi::class.java)
-
-    @Provides
-    @Singleton
-    fun rawgMetadataRepository(rawgApi: RawgApi) = RawgMetadataRepository(rawgApi)
 
     @Provides
     @Singleton

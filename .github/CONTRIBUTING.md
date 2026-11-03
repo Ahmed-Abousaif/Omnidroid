@@ -132,7 +132,6 @@ Omnidroid is a multi-module Gradle project:
 | `omnidroid-cores` | Libretro core configurations and definitions (Git submodule). |
 | `omnidroid-chd` | CHD compressed disc image support (`libchdr` C++ native submodule). |
 | `omnidroid-touchinput` | On-screen touch controller layouts, touch coordinates, and haptics. |
-| `omnidroid-metadata-rawg` | RAWG game metadata & trailer integration. |
 | `omnidroid-metadata-libretro-db` | Libretro DB game scanner and metadata provider. |
 | `retrograde-app-shared` | Shared database entities (Room), preferences, and repository layers. |
 | `retrograde-util` | Common utility classes and extensions. |

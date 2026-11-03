@@ -14,7 +14,6 @@ include(
     ":omnidroid-touchinput",
     ":omnidroid-app",
     ":omnidroid-metadata-libretro-db",
-    ":omnidroid-metadata-rawg",
     ":omnidroid-app-ext-free",
     ":omnidroid-app-ext-play",
     ":baselineprofile"

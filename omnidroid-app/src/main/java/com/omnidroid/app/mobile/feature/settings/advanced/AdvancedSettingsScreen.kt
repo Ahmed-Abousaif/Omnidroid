@@ -1,12 +1,10 @@
 package com.omnidroid.app.mobile.feature.settings.advanced
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -21,8 +19,6 @@ import android.widget.Toast
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.work.Constraints
@@ -34,8 +30,6 @@ import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.main.MainRoute
 import com.omnidroid.app.mobile.feature.main.navigateToRoute
 import com.omnidroid.app.shared.covers.CoverPreloadWorker
-import com.omnidroid.app.shared.covers.RawgCoverStore
-import com.omnidroid.app.shared.library.LibraryIndexScheduler
 import com.omnidroid.app.utils.android.settings.OmnidroidCardSettingsGroup
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsList
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
@@ -45,8 +39,6 @@ import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
 import com.omnidroid.app.utils.android.settings.booleanPreferenceState
 import com.omnidroid.app.utils.android.settings.indexPreferenceState
 import com.omnidroid.app.utils.android.settings.intPreferenceState
-import com.omnidroid.app.utils.android.settings.stringPreferenceState
-import kotlinx.coroutines.delay
 
 @Composable
 fun AdvancedSettingsScreen(
@@ -128,39 +120,6 @@ private fun GeneralSettings(
 ) {
     val factoryResetDialogState = remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val rawgEnabled = booleanPreferenceState(R.string.pref_key_enable_rawg_metadata, false)
-    val rawgApiKey = stringPreferenceState(R.string.pref_key_rawg_api_key, "")
-    var previousRawgEnabled by remember { mutableStateOf(rawgEnabled.value) }
-    var previousRawgApiKey by remember { mutableStateOf(rawgApiKey.value.trim()) }
-
-    LaunchedEffect(rawgEnabled.value) {
-        if (rawgEnabled.value == previousRawgEnabled) return@LaunchedEffect
-        previousRawgEnabled = rawgEnabled.value
-        if (rawgEnabled.value) {
-            if (rawgApiKey.value.trim().isNotEmpty()) {
-                LibraryIndexScheduler.scheduleLibrarySync(context.applicationContext)
-            }
-        } else {
-            RawgCoverStore.clear()
-        }
-    }
-
-    LaunchedEffect(rawgApiKey.value, rawgEnabled.value) {
-        val trimmed = rawgApiKey.value.trim()
-        if (!rawgEnabled.value) {
-            previousRawgApiKey = trimmed
-            return@LaunchedEffect
-        }
-        if (trimmed == previousRawgApiKey) return@LaunchedEffect
-        val becameAvailable = previousRawgApiKey.isEmpty() && trimmed.isNotEmpty()
-        previousRawgApiKey = trimmed
-        if (!becameAvailable) return@LaunchedEffect
-        // Debounce while the user is still typing/pasting the key.
-        delay(600)
-        if (rawgEnabled.value && rawgApiKey.value.trim() == trimmed) {
-            LibraryIndexScheduler.scheduleLibrarySync(context.applicationContext)
-        }
-    }
 
     OmnidroidCardSettingsGroup(
         title = { Text(text = stringResource(id = R.string.settings_category_general)) },
@@ -170,39 +129,6 @@ private fun GeneralSettings(
             title = { Text(text = stringResource(id = R.string.settings_title_low_latency_audio)) },
             subtitle = { Text(text = stringResource(id = R.string.settings_description_low_latency_audio)) },
         )
-        OmnidroidSettingsSwitch(
-            state = rawgEnabled,
-            title = { Text(text = stringResource(id = R.string.settings_title_enable_rawg_metadata)) },
-            subtitle = { Text(text = stringResource(id = R.string.settings_description_enable_rawg_metadata)) },
-        )
-        if (rawgEnabled.value) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(start = 40.dp, end = 16.dp, top = 0.dp, bottom = 12.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.settings_title_rawg_api_key),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = stringResource(R.string.settings_description_rawg_api_key),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 2.dp, bottom = 8.dp),
-                )
-                OutlinedTextField(
-                    value = rawgApiKey.value,
-                    onValueChange = { rawgApiKey.value = it.trim() },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    placeholder = { Text(text = stringResource(R.string.settings_hint_rawg_api_key)) },
-                    visualTransformation = PasswordVisualTransformation(),
-                )
-            }
-        }
         OmnidroidSettingsList(
             title = { Text(text = stringResource(R.string.settings_title_maximum_cache_usage)) },
             items = cacheState.displayNames,

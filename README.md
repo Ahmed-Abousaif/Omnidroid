@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Omnidroid</strong> is a modern, landscape-first, Libretro-powered multi-console emulation platform for Android. Forked from <a href="https://github.com/Swordfish90/Lemuroid">Lemuroid</a>, Omnidroid elevates mobile and handheld gaming with native <strong>Vulkan hardware acceleration</strong>, complete <strong>controller-first navigation</strong>, rich <strong>RAWG game metadata & trailers</strong>, multi-provider <strong>cloud saves</strong>, and a built-in <strong>gamer profile & XP progression system</strong> — all packaged into a lightweight release (&lt;8.5 MB APK).
+  <strong>Omnidroid</strong> is a modern, landscape-first, Libretro-powered multi-console emulation platform for Android. Forked from <a href="https://github.com/Swordfish90/Lemuroid">Lemuroid</a>, Omnidroid elevates mobile and handheld gaming with native <strong>Vulkan hardware acceleration</strong>, complete <strong>controller-first navigation</strong>, multi-provider <strong>cloud saves</strong>, and a built-in <strong>gamer profile & XP progression system</strong> — all packaged into a lightweight release (&lt;8.5 MB APK).
 </p>
 
 <p align="center">
@@ -76,7 +76,6 @@ If Omnidroid helps you play, you can fuel continued development here:
 - 🚀 **Frontend & File Manager Integration:** Exported launcher activity for external frontends (Daijishō, Pegasus, Beacon) and direct "Open With" file manager launching for ROMs and archives without requiring a prior library scan.
 - 📚 **Console Carousel & Library Sorting:** Dedicated console views with a portrait cover carousel, landscape details pane, flexible sorting (name, console, recently played, favorites), and random game selection.
 - 🔄 **Saves Backup & Lemuroid Migration:** Multi-tier save and state migration from Lemuroid (automatic 1-tap direct migration, uncompressed folder import via SAF, and lenient ZIP backup import), plus multi-provider cloud sync (**Google Drive**, **Dropbox**, **OneDrive**) with full conflict resolution.
-- 🎨 **Rich RAWG Game Details:** Automatic cover art, descriptions, genres, release dates, publishers, ratings, and video trailers without scraping YouTube.
 - 🏆 **Gamification & Profile System:** Earn XP from play sessions, maintain daily streaks, level up, and unlock collection badges (Collector → Enthusiast → Historian → Omnidroid Master).
 - 📺 **Android TV & Big-Screen Integration:** Full Android TV Leanback launcher support with dynamic home screen preview channels for recently played games, plus wireless and HDMI casting.
 - 🔋 **Battery-Aware HD Mode:** Intelligently disables heavy HD enhancements when battery drops below 15% to conserve power.
@@ -194,6 +193,17 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 </details>
 
 <details>
+<summary><b>🎮 Nintendo Switch Emulation (Eden Core)</b></summary>
+<br>
+
+- **Eden Core Architecture:** Powered by the dedicated Eden backend, delivering 64-bit ARM emulation with high-performance Vulkan graphics acceleration for smooth handheld and mobile gameplay.
+- **Broad Format Support:** Out-of-the-box detection and execution for Nintendo Switch packages (`.nsp`, `.xci`, `.nca`, and `.nro`).
+- **Direct Embedded Cover Extraction:** Automatic background icon extractor extracts high-resolution official game artwork straight from ROM packages into the library cache without requiring external network lookups.
+- **Complete Controller Mapping:** Native Pro Controller / Joy-Con layout with clickable dual analog sticks (L3/R3), D-pad, shoulder buttons and analog triggers (L/R/ZL/ZR), and system buttons (+, -, Home, Capture).
+- **On-Demand Dynamic Delivery:** Packaged as an isolated dynamic feature module, keeping the base APK installation lightweight and downloading core binaries only when needed.
+</details>
+
+<details>
 <summary><b>🕹️ Dual-Screen Layouts (Nintendo 3DS & DS)</b></summary>
 <br>
 
@@ -221,14 +231,6 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 - **Nintendo Wii U (Cemu):** Vulkan-accelerated 64-bit ARM core with Multi-Core Recompiler support, interactive touch GamePad view, and side-by-side TV/GamePad rendering.
 </details>
 
-<details>
-<summary><b>🌐 RAWG Metadata & In-App Search</b></summary>
-<br>
-
-- Under **Settings → Advanced**, enable **RAWG Game Metadata** and enter a free API key from [rawg.io/apidocs](https://rawg.io/apidocs).
-- Automatically fetches game backdrops, descriptions, release dates, ratings, and MP4 game trailers.
-- Includes in-app "Fix Match / Search Box Art" dialog with token-fuzzy search and franchise alias resolution.
-</details>
 
 <details>
 <summary><b>📊 Device Profile & Hardware Benchmarking</b></summary>
@@ -265,7 +267,6 @@ Omnidroid/
 ├── omnidroid-app-ext-play/      # Google Play flavor (Cloud services, Drive/Dropbox/OneDrive)
 ├── omnidroid-touchinput/        # Virtual touch controller overlay and input routing
 ├── omnidroid-chd/               # CHD compressed disc image decompression library
-├── omnidroid-metadata-rawg/     # RAWG.io API client for descriptions, ratings & trailers
 ├── omnidroid-metadata-libretro/ # Libretro DB offline game title identification
 ├── omni-libretrodroid/          # (Submodule) Custom native Vulkan/GLES C++ emulation runtime
 ├── omnidroid-cores/             # (Submodule) Prebuilt Libretro emulation core binaries

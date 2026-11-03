@@ -46,7 +46,7 @@ class LibretroDBMetadataProvider(
             system = systemId,
             romName = null,
             developer = null,
-            thumbnail = computeCoverUrl(GameSystem.findById(systemId), coverTitle, row?.thumbnailPath),
+            thumbnail = if (row != null) computeCoverUrl(GameSystem.findById(systemId), coverTitle, row.thumbnailPath) else null,
         )
     }
 

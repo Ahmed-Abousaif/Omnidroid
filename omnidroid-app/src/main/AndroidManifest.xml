@@ -103,7 +103,6 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="content" />
                 <data android:scheme="file" />
-                <data android:host="*" />
                 <data android:mimeType="*/*" />
 
                 <!-- Nintendo Switch (.nsp, .xci) -->
@@ -265,7 +264,6 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="content" />
                 <data android:scheme="file" />
-                <data android:host="*" />
 
                 <!-- Nintendo Switch (.nsp, .xci) -->
                 <data android:pathSuffix=".nsp" />

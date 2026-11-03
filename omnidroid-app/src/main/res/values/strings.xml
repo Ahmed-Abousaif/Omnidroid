@@ -275,11 +275,6 @@
     <string name="settings_title_virtual_pad_opacity">Virtual controller opacity</string>
     <string name="settings_description_virtual_pad_opacity">Lower values make the virtual controller see-through</string>
 
-    <string name="settings_title_enable_rawg_metadata">RAWG game metadata</string>
-    <string name="settings_description_enable_rawg_metadata">(Experimental) Fetch and cache game descriptions, genres, covers, and ratings from RAWG when your library syncs. Off by default.</string>
-    <string name="settings_title_rawg_api_key">RAWG API key</string>
-    <string name="settings_description_rawg_api_key">Get a free key at rawg.io/apidocs</string>
-    <string name="settings_hint_rawg_api_key">Paste your API key</string>
 
     <string name="settings_section_startup">Startup</string>
     <string name="settings_title_startup_destination">Startup screen</string>
@@ -428,8 +423,8 @@
     <string name="notification_channel_name">All notifications</string>
     <string name="library_index_notification_title">ROMs scanning in progress</string>
     <string name="library_index_notification_message">This can take up to a few minutes</string>
-    <string name="rawg_enrichment_notification_title">Fetching game metadata</string>
-    <string name="rawg_enrichment_notification_message">Downloading RAWG details for your library</string>
+    <string name="switch_icon_notification_title">Extracting Switch game covers</string>
+    <string name="switch_icon_notification_message">Reading embedded artwork from Switch ROMs</string>
 
     <string name="save_sync_notification_title">Cloud save Sync in progress</string>
     <string name="save_sync_notification_message">This can take up to a few minutes</string>

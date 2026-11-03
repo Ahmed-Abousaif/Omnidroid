@@ -23,8 +23,6 @@
     <string name="pref_key_max_cache_size" translatable="false">max_cache_size_bytes</string>
     <string name="pref_key_allow_direct_game_load" translatable="false">allow_direct_game_load</string>
     <string name="pref_key_enable_immersive_mode" translatable="false">enable_immersive_mode</string>
-    <string name="pref_key_enable_rawg_metadata" translatable="false">enable_rawg_metadata</string>
-    <string name="pref_key_rawg_api_key" translatable="false">rawg_api_key</string>
     <string name="pref_key_startup_destination" translatable="false">startup_destination</string>
 
     <string name="pref_key_save_sync_auto" translatable="false">save_sync_auto</string>

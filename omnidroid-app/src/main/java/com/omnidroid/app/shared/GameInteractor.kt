@@ -129,9 +129,6 @@ class GameInteractor(
                 ),
             )
             runCatching {
-                retrogradeDb.rawgGameMetadataDao().deleteByGameId(game.id)
-            }
-            runCatching {
                 com.omnidroid.app.shared.library.LibraryIndexScheduler.scheduleLibrarySync(
                     activity.activity().applicationContext,
                 )
