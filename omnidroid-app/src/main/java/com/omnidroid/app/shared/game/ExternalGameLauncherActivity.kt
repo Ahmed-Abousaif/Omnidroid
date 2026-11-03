@@ -217,7 +217,13 @@ class ExternalGameLauncherActivity : AppCompatActivity() {
             ?: return null
 
         val system = innerRom?.system?.takeIf { resolved.systemExtra.isNullOrBlank() }
-            ?: SystemDetector.detectSystem(extension, resolved.systemExtra)
+            ?: SystemDetector.detectSystem(extension, resolved.systemExtra) {
+                try {
+                    contentResolver.openInputStream(parsedUri)
+                } catch (e: Throwable) {
+                    null
+                }
+            }
             ?: return null
 
         val title = (rawFileName ?: fileName).substringBeforeLast('.')

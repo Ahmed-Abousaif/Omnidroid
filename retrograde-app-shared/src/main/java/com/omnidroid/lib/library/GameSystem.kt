@@ -1685,8 +1685,8 @@ data class GameSystem(
                             forceStandardAudioBuffer = true,
                         ),
                     ),
-                    uniqueExtensions = listOf("3ds"),
-                    supportedExtensions = listOf("3ds", "cci", "zcci", "cxi"),
+                    uniqueExtensions = listOf("3ds", "cci", "zcci", "cxi", "3dsx"),
+                    supportedExtensions = listOf("3ds", "cci", "zcci", "cxi", "3dsx", "cia"),
                     hasTouchScreen = true,
                 ),
                 GameSystem(

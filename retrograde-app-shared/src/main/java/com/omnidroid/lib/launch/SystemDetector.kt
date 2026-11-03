@@ -2,6 +2,9 @@ package com.omnidroid.lib.launch
 
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemID
+import com.omnidroid.lib.library.scan.ByteArraySource
+import com.omnidroid.lib.library.scan.NintendoDisc
+import java.io.InputStream
 import java.util.Locale
 
 /**
@@ -41,8 +44,10 @@ object SystemDetector {
         "gc" to SystemID.GAMECUBE,
         "wii" to SystemID.WII,
         "wiiu" to SystemID.WII_U,
+        "wii_u" to SystemID.WII_U,
         "switch" to SystemID.SWITCH,
         "nswitch" to SystemID.SWITCH,
+        "nintendo_switch" to SystemID.SWITCH,
         "dreamcast" to SystemID.DREAMCAST,
         "dc" to SystemID.DREAMCAST,
         "fbneo" to SystemID.FBNEO,
@@ -72,6 +77,10 @@ object SystemDetector {
         "pbp" to SystemID.PSX,
         "bin" to SystemID.GENESIS,
         "zip" to SystemID.FBNEO,
+        "rvz" to SystemID.WII,
+        "wia" to SystemID.WII,
+        "gcz" to SystemID.GAMECUBE,
+        "ciso" to SystemID.GAMECUBE,
     )
 
     /**
@@ -79,9 +88,14 @@ object SystemDetector {
      *
      * @param rawExtension The file extension with or without leading dot.
      * @param systemHint Optional system extra string passed from frontend.
+     * @param openStream Optional stream provider to sniff initial header bytes for disc disambiguation.
      * @return The resolved GameSystem, or null if unknown or unrecognizable.
      */
-    fun detectSystem(rawExtension: String, systemHint: String? = null): GameSystem? {
+    fun detectSystem(
+        rawExtension: String,
+        systemHint: String? = null,
+        openStream: (() -> InputStream?)? = null,
+    ): GameSystem? {
         val extension = rawExtension.trimStart('.').lowercase(Locale.US)
         if (extension.isEmpty()) return null
 
@@ -105,13 +119,36 @@ object SystemDetector {
             }
         }
 
-        // 2. Check unique extension across all systems
+        // 2. Sniff header for Nintendo disc images (RVZ / WIA) if stream is available
+        if (openStream != null && (extension == "rvz" || extension == "wia")) {
+            val discSystem = runCatching {
+                openStream()?.use { stream ->
+                    val buffer = ByteArray(0x100)
+                    var read = 0
+                    while (read < buffer.size) {
+                        val r = stream.read(buffer, read, buffer.size - read)
+                        if (r <= 0) break
+                        read += r
+                    }
+                    if (read >= 0x50) {
+                        NintendoDisc.fromRvz(ByteArraySource(buffer.copyOf(read)))?.system
+                    } else null
+                }
+            }.getOrNull()
+
+            if (discSystem != null) {
+                val candidate = runCatching { GameSystem.findById(discSystem.dbname) }.getOrNull()
+                if (candidate != null) return candidate
+            }
+        }
+
+        // 3. Check unique extension across all systems
         val uniqueMatch = GameSystem.findByUniqueFileExtension(extension)
         if (uniqueMatch != null) {
             return uniqueMatch
         }
 
-        // 3. Fallback for common colliding extensions without explicit hint
+        // 4. Fallback for common colliding extensions without explicit hint
         val defaultSystemId = DEFAULT_COLLISION_DEFAULTS[extension]
         if (defaultSystemId != null) {
             return runCatching { GameSystem.findById(defaultSystemId.dbname) }.getOrNull()
