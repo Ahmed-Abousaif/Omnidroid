@@ -41,6 +41,8 @@ object SystemDetector {
         "gc" to SystemID.GAMECUBE,
         "wii" to SystemID.WII,
         "wiiu" to SystemID.WII_U,
+        "switch" to SystemID.SWITCH,
+        "nswitch" to SystemID.SWITCH,
         "dreamcast" to SystemID.DREAMCAST,
         "dc" to SystemID.DREAMCAST,
         "fbneo" to SystemID.FBNEO,

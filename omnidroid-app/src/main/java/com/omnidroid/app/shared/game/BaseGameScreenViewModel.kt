@@ -1,5 +1,13 @@
 package com.omnidroid.app.shared.game
-
+import com.omnidroid.lib.backend.BackendID
+import android.app.Activity
+import android.view.View
+import com.omnidroid.lib.backend.BackendCapabilities
+import com.omnidroid.lib.backend.BackendSession
+import com.omnidroid.lib.backend.ConsoleBackendRegistry
+import com.omnidroid.lib.library.CoreID
+import com.omnidroid.app.shared.game.backend.libretro.LibretroBackendSession
+import com.omnidroid.app.shared.game.backend.switch_backend.SwitchBackendSession
 import android.content.Context
 import android.content.SharedPreferences
 import android.view.KeyEvent
@@ -43,311 +51,652 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class BaseGameScreenViewModel(
+
     private val appContext: Context,
-    game: Game,
+
+    val game: Game,
+
     settingsManager: SettingsManager,
+
     inputDeviceManager: InputDeviceManager,
+
     controllerConfigsManager: ControllerConfigsManager,
+
     val system: GameSystem,
-    systemCoreConfig: SystemCoreConfig,
-    sharedPreferences: SharedPreferences,
+
+    val systemCoreConfig: SystemCoreConfig,
+
+    private val sharedPreferences: SharedPreferences,
+
     savesManager: SavesManager,
+
     statesManager: StatesManager,
+
     statesPreviewManager: StatesPreviewManager,
+
     coreVariablesManager: CoreVariablesManager,
+
     rumbleManager: RumbleManager,
+
 ) : ViewModel(), DefaultLifecycleObserver {
+
+    var activeSession: BackendSession? = null
+
+        private set
+
     val hasTouchScreen: Boolean = system.hasTouchScreen
 
     class Factory(
+
         private val appContext: Context,
+
         private val game: Game,
+
         private val settingsManager: SettingsManager,
+
         private val inputDeviceManager: InputDeviceManager,
+
         private val controllerConfigsManager: ControllerConfigsManager,
+
         private val system: GameSystem,
+
         private val systemCoreConfig: SystemCoreConfig,
+
         private val sharedPreferences: SharedPreferences,
+
         private val savesManager: SavesManager,
+
         private val statesManager: StatesManager,
+
         private val statesPreviewManager: StatesPreviewManager,
+
         private val coreVariablesManager: CoreVariablesManager,
+
         private val rumbleManager: RumbleManager,
+
     ) : ViewModelProvider.Factory {
+
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
+
             return BaseGameScreenViewModel(
+
                 appContext,
+
                 game,
+
                 settingsManager,
+
                 inputDeviceManager,
+
                 controllerConfigsManager,
+
                 system,
+
                 systemCoreConfig,
+
                 sharedPreferences,
+
                 savesManager,
+
                 statesManager,
+
                 statesPreviewManager,
+
                 coreVariablesManager,
+
                 rumbleManager,
+
             ) as T
+
         }
+
     }
 
     private val sideEffects = GameViewModelSideEffects(viewModelScope)
+
     val retroGameView =
+
         GameViewModelRetroGameView(
+
             appContext,
+
             system,
+
             systemCoreConfig,
+
             settingsManager,
+
             coreVariablesManager,
+
             sideEffects,
+
             rumbleManager,
+
             viewModelScope,
+
         )
+
     private val tilt = GameViewModelTilt(appContext, settingsManager)
+
     private val inputs =
+
         GameViewModelInput(
+
             appContext,
+
             system,
+
             systemCoreConfig,
+
             inputDeviceManager,
+
             controllerConfigsManager,
+
             retroGameView,
+
             tilt,
+
             sideEffects,
+
             viewModelScope,
+
         )
+
     private val touchControls =
+
         GameViewModelTouchControls(
+
             appContext,
+
             settingsManager,
+
             TouchControllerSettingsManager(sharedPreferences),
+
             retroGameView,
+
             inputs,
+
             tilt,
+
             sideEffects,
+
             viewModelScope,
+
             system.id,
+
             systemCoreConfig,
+
             sharedPreferences,
+
             system.hasTouchScreen,
+
         )
+
     private val saves =
+
         GameViewModelSaves(
+
             appContext,
+
             system,
+
             game,
+
             systemCoreConfig,
+
             retroGameView,
+
             settingsManager,
+
             savesManager,
+
             statesManager,
+
             statesPreviewManager,
+
             sideEffects,
+
         )
 
     val loadingState = MutableStateFlow(false)
 
     private inline fun withLoading(block: () -> Unit) {
+
         loadingState.value = true
+
         block()
+
         loadingState.value = false
+
     }
 
     fun getGameState(): Flow<GameViewModelRetroGameView.GameState> {
+
         return retroGameView.getGameState()
+
     }
 
     fun getSideEffects(): Flow<GameViewModelSideEffects.UiEffect> {
+
         return sideEffects.getUiEffects()
+
     }
 
     fun getTiltConfiguration(): Flow<TiltConfiguration> {
+
         return tilt.getTiltConfiguration()
+
     }
 
     fun getSimulatedTiltEvents(): Flow<InputState> {
+
         return tilt.getSimulatedTiltEvents()
+
     }
 
     fun getTouchControlsSettings(): Flow<TouchControllerSettingsManager.Settings?> {
+
         return touchControls.getTouchControlsSettings()
+
     }
 
     fun getTouchHapticFeedbackMode(): Flow<HapticFeedbackMode> {
+
         return touchControls.getTouchHapticFeedbackMode()
+
     }
 
     fun getVirtualPadOpacity(): Flow<Float> {
+
         return touchControls.getVirtualPadOpacity()
+
+    }
+
+    fun loadSwitchGame(game: Game, systemCoreConfig: SystemCoreConfig) {
+
+        retroGameView.setReadyForSwitch()
+
+    }
+
+    fun createGameView(
+
+        context: Context,
+
+        lifecycle: LifecycleOwner,
+
+    ): View {
+
+        val descriptor = ConsoleBackendRegistry.findDescriptorForCore(systemCoreConfig.coreID)
+
+        val capabilities = descriptor?.capabilities(systemCoreConfig) ?: BackendCapabilities()
+
+        if (descriptor?.id == BackendID.SWITCH) {
+
+            val activity = context as? Activity ?: throw IllegalStateException("Context must be an Activity")
+
+            val session = SwitchBackendSession(
+
+                activity = activity,
+
+                game = game,
+
+                systemCoreConfig = systemCoreConfig,
+
+                sharedPreferences = sharedPreferences,
+
+                capabilities = capabilities,
+
+                onEmulationExit = { resultCode ->
+
+                    if (resultCode != 0) {
+
+                        sideEffects.requestFailureFinish("Emulation exited with code $resultCode")
+
+                    } else {
+
+                        sideEffects.requestSuccessfulFinish()
+
+                    }
+
+                },
+
+            )
+
+            activeSession = session
+
+            retroGameView.retroGameView = session
+
+            lifecycle.lifecycle.addObserver(object : DefaultLifecycleObserver {
+
+                override fun onPause(owner: LifecycleOwner) {
+
+                    session.pause()
+
+                }
+
+                override fun onResume(owner: LifecycleOwner) {
+
+                    session.resume()
+
+                }
+
+                override fun onDestroy(owner: LifecycleOwner) {
+
+                    session.stop()
+
+                }
+
+            })
+
+            return session.view
+
+        } else {
+
+            val retroView = createRetroView(context, lifecycle)
+
+            val session = LibretroBackendSession(
+
+                retroGameView = retroView,
+
+                capabilities = ConsoleBackendRegistry.findDescriptorForCore(systemCoreConfig.coreID)?.capabilities(systemCoreConfig) ?: BackendCapabilities(),
+
+            )
+
+            activeSession = session
+
+            return retroView.asView()
+
+        }
+
     }
 
     fun createRetroView(
+
         context: Context,
+
         lifecycle: LifecycleOwner,
+
     ): IRetroGameView {
+
         val (gameData, result) = retroGameView.createRetroView(context, lifecycle)
+
         viewModelScope.launch {
+
             gameData.quickSaveData?.let {
+
                 saves.restoreAutoSaveAsync(it)
+
             }
+
         }
+
         return result
+
     }
 
     suspend fun loadGame(
+
         applicationContext: Context,
+
         game: Game,
+
         systemCoreConfig: SystemCoreConfig,
+
         gameLoader: GameLoader,
+
         requestLoadSave: Boolean,
+
     ) {
+
         Timber.i("Calling load game: $game")
+
         retroGameView.initialize(applicationContext, game, systemCoreConfig, gameLoader, requestLoadSave)
+
     }
 
     fun showEditControls(show: Boolean) {
+
         touchControls.showEditControls(show)
+
     }
 
     fun isEditControlShown(): Flow<Boolean> {
+
         return touchControls.isEditControlsShown()
+
     }
 
     fun updateTouchControllerSettings(touchControllerSettings: TouchControllerSettingsManager.Settings) {
+
         touchControls.updateTouchControllerSettings(touchControllerSettings)
+
     }
 
     fun resetTouchControls() {
+
         touchControls.resetTouchControls()
+
     }
 
     fun onScreenOrientationChanged(orientation: TouchControllerSettingsManager.Orientation) {
+
         touchControls.updateScreenOrientation(orientation)
+
     }
 
     fun getGameAspectRatio(): Flow<Float> {
+
         return touchControls.getGameAspectRatio()
+
     }
 
     fun refreshSettings() {
+
         touchControls.refreshLayout()
+
         retroGameView.refreshCoreVariables()
+
     }
 
     fun isTouchControllerVisible(): Flow<Boolean> {
+
         return touchControls.isTouchControllerVisible()
+
     }
 
     fun isForceHideTouchControls(): Flow<Boolean> {
+
         return touchControls.isForceHideTouchControls()
+
     }
 
     fun showTouchControls() {
+
         touchControls.showTouchControls()
+
     }
 
     fun getTouchControllerConfig(): Flow<ControllerConfig> {
+
         return touchControls.getTouchControllerConfig()
+
     }
 
     fun changeTiltConfiguration(tiltConfig: TiltConfiguration) {
+
         tilt.changeTiltConfiguration(tiltConfig)
+
     }
 
     fun isMenuPressed(): Flow<Boolean> {
+
         return touchControls.isMenuPressed()
+
     }
 
     suspend fun saveSlot(index: Int) {
+
         if (loadingState.value) return
+
         withLoading {
+
             saves.saveSlot(index)
+
         }
+
     }
 
     suspend fun loadSlot(index: Int) {
+
         if (loadingState.value) return
+
         withLoading {
+
             saves.loadSlot(index)
+
         }
+
     }
 
     fun saveQuickSave() {
+
         Timber.d("Saving quick save")
+
         if (loadingState.value) return
+
         withLoading {
+
             saves.saveQuickSave()
+
         }
+
     }
 
     fun loadQuickSave() {
+
         Timber.d("Loading quick save")
+
         if (loadingState.value) return
+
         withLoading {
+
             saves.loadQuickSave()
+
         }
+
     }
 
     fun toggleFastForward() {
+
         retroGameView.retroGameView?.apply {
+
             val cycle = listOf(1, 2, 4)
+
             val index = cycle.indexOf(frameSpeed)
+
             frameSpeed = if (index >= 0) cycle[(index + 1) % cycle.size] else 1
+
         }
+
     }
 
     suspend fun reset() =
+
         withLoading {
+
             try {
+
                 delay(appContext.longAnimationDuration().toLong())
+
                 retroGameView.retroGameViewFlow().reset()
+
             } catch (e: Throwable) {
+
                 Timber.e(e, "Error in reset")
+
             }
+
         }
 
     fun requestFinish() {
+
         if (loadingState.value) return
+
         viewModelScope.launch {
+
             withLoading {
+
+                if (activeSession !is com.omnidroid.lib.backend.StateSaveableSession) {
+
+                    sideEffects.requestSuccessfulFinish()
+
+                    return@withLoading
+
+                }
+
                 val snapshot = saves.captureSaveSnapshot(true) ?: return@launch
+
                 saves.writeSaveSnapshot(snapshot)
+
                 sideEffects.requestSuccessfulFinish()
+
             }
+
         }
+
     }
 
     fun requestBackgroundSave() {
-        if (loadingState.value) return
+
+        if (loadingState.value || activeSession !is com.omnidroid.lib.backend.StateSaveableSession) return
+
         GameService.schedule {
+
             val snapshot = saves.captureSaveSnapshot(false)
+
             saves.writeSaveSnapshot(snapshot)
+
         }
+
     }
 
     fun handleVirtualInputEvent(events: List<InputEvent>) {
+
         touchControls.handleVirtualInputEvent(events)
+
     }
 
     override fun onCreate(owner: LifecycleOwner) {
+
         super.onCreate(owner)
 
         owner.lifecycle.addObserver(tilt)
+
         owner.lifecycle.addObserver(inputs)
+
         owner.lifecycle.addObserver(retroGameView)
+
         owner.lifecycle.addObserver(touchControls)
+
     }
 
     fun sendKeyEvent(
+
         keyCode: Int,
+
         event: KeyEvent,
+
     ): Boolean {
+
         return inputs.sendKeyEvent(keyCode, event)
+
     }
 
     fun sendMotionEvent(event: MotionEvent): Boolean {
+
         return inputs.sendMotionEvent(event)
+
     }
+
 }
+

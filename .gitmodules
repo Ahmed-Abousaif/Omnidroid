@@ -5,3 +5,11 @@
 [submodule "omnidroid-chd/src/main/cpp/libchdr"]
 	path = omnidroid-chd/src/main/cpp/libchdr
 	url = https://github.com/rtissera/libchdr.git
+[submodule "modules/switch/upstream/eden"]
+	path = modules/switch/upstream/eden
+	url = https://git.eden-emu.dev/eden-emu/eden.git
+	branch = master
+[submodule "modules/cemu/upstream/cemu-libretro-android"]
+	path = modules/cemu/upstream/cemu-libretro-android
+	url = https://github.com/Ahmed-Abousaif/cemu-libretro-android.git
+	branch = main

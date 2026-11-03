@@ -166,6 +166,21 @@
     <string name="settings_ps2_bios_europe">Europe</string>
     <string name="settings_ps2_bios_japan">Japan</string>
 
+    <string name="settings_bios_category_switch">Nintendo Switch</string>
+    <string name="settings_switch_keys_title">Decryption Keys (prod.keys)</string>
+    <string name="settings_switch_keys_installed">prod.keys installed</string>
+    <string name="settings_switch_keys_missing">Missing prod.keys - Tap to select file</string>
+    <string name="settings_switch_keys_import_success">prod.keys imported successfully</string>
+    <string name="settings_switch_keys_import_failed">Failed to import prod.keys</string>
+    <string name="game_loader_error_missing_switch_keys">Decryption keys (prod.keys) are required to run Nintendo Switch games. Please import your prod.keys file before starting the game.</string>
+    <string name="switch_keys_import_action">Import prod.keys</string>
+    <string name="settings_switch_firmware_title">System Firmware</string>
+    <string name="settings_switch_firmware_desc">Optional. Some Switch games require system firmware to run or render correctly.</string>
+    <string name="settings_switch_firmware_installed">Firmware installed</string>
+    <string name="settings_switch_firmware_missing">Not installed (Optional) - Tap to select firmware (.zip)</string>
+    <string name="settings_switch_firmware_import_success">Switch firmware installed successfully</string>
+    <string name="settings_switch_firmware_import_failed">Failed to install firmware. Make sure the archive contains .nca files</string>
+
     <string name="settings_title_reset_settings">Factory reset</string>
     <string name="settings_title_unrecognized_files">Not recognised</string>
     <string name="settings_title_game_databases">Game databases</string>
@@ -420,6 +435,12 @@
     <string name="save_sync_notification_message">This can take up to a few minutes</string>
     <string name="game_running_notification_title_alternative">Game is running</string>
     <string name="game_running_notification_message">Make sure to save your progress</string>
+    <string name="notification_channel_game_session">Active Game Session</string>
+    <string name="notification_channel_game_session_desc">Shows ongoing game status, playtime timer, and quick controls</string>
+    <string name="game_running_notification_subtitle_with_system">%1$s • In-Game</string>
+    <string name="game_running_notification_action_resume">Resume</string>
+    <string name="game_running_notification_action_quit">Save &amp; Quit</string>
+    <string name="game_running_notification_expanded_text">Active session in progress. Tap to return to your game or use the quick controls below.</string>
 
     <string name="game_loader_error_gl_incompatible">This Core requires an OpenGL ES version which is not supported by your device.</string>
     <string name="game_loader_error_load_game">Something bad happened while loading your game. Make sure the ROM is supported by Omnidroid and rescan your games.</string>

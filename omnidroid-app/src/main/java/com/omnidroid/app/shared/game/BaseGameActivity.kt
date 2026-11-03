@@ -47,6 +47,10 @@ import com.omnidroid.common.kotlin.serializable
 import com.omnidroid.lib.core.CoreVariable
 import com.omnidroid.lib.core.CoreVariablesManager
 import com.omnidroid.lib.game.GameLoader
+import com.omnidroid.lib.backend.ConsoleBackendRegistry
+import com.omnidroid.lib.backend.BackendID
+import com.omnidroid.lib.backend.BackendFeatureFlags
+import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.ExposedSetting
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemCoreConfig
@@ -64,77 +68,120 @@ import timber.log.Timber
 import javax.inject.Inject
 
 abstract class BaseGameActivity : ImmersiveActivity() {
+
     protected lateinit var game: Game
+
     private lateinit var system: GameSystem
+
     protected lateinit var systemCoreConfig: SystemCoreConfig
 
     @Inject
+
     lateinit var settingsManager: SettingsManager
 
     @Inject
+
     lateinit var statesManager: StatesManager
 
     @Inject
+
     lateinit var savesManager: SavesManager
 
     @Inject
+
     lateinit var statesPreviewManager: StatesPreviewManager
 
     @Inject
+
     lateinit var coreVariablesManager: CoreVariablesManager
 
     @Inject
+
     lateinit var inputDeviceManager: InputDeviceManager
 
     @Inject
+
     lateinit var gameLoader: GameLoader
 
     @Inject
+
     lateinit var controllerConfigsManager: ControllerConfigsManager
 
     @Inject
+
     lateinit var rumbleManager: RumbleManager
 
     @Inject
+
     lateinit var sharedPreferences: Lazy<SharedPreferences>
 
     @Inject
+
     lateinit var retrogradeDatabase: RetrogradeDatabase
 
     private lateinit var baseGameScreenViewModel: BaseGameScreenViewModel
 
     private val startGameTime = System.currentTimeMillis()
+
     private var finishTriggered = false
+
     private var isExternalLaunch = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         // Library portrait/landscape is MainActivity only. Games keep sensor rotation
+
         // so in-game screen layouts can still switch between portrait and landscape.
+
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+
         super.onCreate(savedInstanceState)
+
         setUpExceptionsHandler()
-        GameService.startService(applicationContext, intent)
+
+        GameService.activeGameActivity = this
+        GameService.startService(applicationContext, intent, startGameTime)
+
         isExternalLaunch = intent.getBooleanExtra(EXTRA_EXTERNAL_LAUNCH, false)
+
         game = intent.getSerializableExtra(EXTRA_GAME) as Game
+
         systemCoreConfig = intent.getSerializableExtra(EXTRA_SYSTEM_CORE_CONFIG) as SystemCoreConfig
+
         system = GameSystem.findById(game.systemId)
 
         val viewModel by viewModels<BaseGameScreenViewModel> {
+
             BaseGameScreenViewModel.Factory(
+
                 applicationContext,
+
                 game,
+
                 settingsManager,
+
                 inputDeviceManager,
+
                 controllerConfigsManager,
+
                 system,
+
                 systemCoreConfig,
+
                 sharedPreferences.get(),
+
                 savesManager,
+
                 statesManager,
+
                 statesPreviewManager,
+
                 coreVariablesManager,
+
                 rumbleManager,
+
             )
+
         }
 
         baseGameScreenViewModel = viewModel
@@ -142,464 +189,838 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         lifecycle.addObserver(baseGameScreenViewModel)
 
         setContent {
+
             AppTheme {
+
                 BaseGameScreen(viewModel = baseGameScreenViewModel) {
+
                     GameScreen(viewModel)
+
                 }
+
             }
+
         }
 
-        lifecycleScope.launch {
-            baseGameScreenViewModel.loadGame(
-                applicationContext,
-                game,
-                systemCoreConfig,
-                gameLoader,
-                intent.getBooleanExtra(EXTRA_LOAD_SAVE, false),
-            )
+        val descriptor = ConsoleBackendRegistry.findDescriptorForCore(systemCoreConfig.coreID)
+
+        if (descriptor?.id == BackendID.SWITCH) {
+
+            baseGameScreenViewModel.loadSwitchGame(game, systemCoreConfig)
+
+        } else {
+
+            lifecycleScope.launch {
+
+                baseGameScreenViewModel.loadGame(
+
+                    applicationContext,
+
+                    game,
+
+                    systemCoreConfig,
+
+                    gameLoader,
+
+                    intent.getBooleanExtra(EXTRA_LOAD_SAVE, false),
+
+                )
+
+            }
+
         }
 
         onBackPressedDispatcher.addCallback(
+
             this,
+
             object : OnBackPressedCallback(true) {
+
                 override fun handleOnBackPressed() {
+
                     baseGameScreenViewModel.requestFinish()
+
                 }
+
             },
+
         )
 
         initialiseFlows()
+
     }
 
     @Composable
+
     abstract fun GameScreen(viewModel: BaseGameScreenViewModel)
 
     private fun initialiseFlows() {
+
         launchOnState(Lifecycle.State.CREATED) {
+
             initializeViewModelsEffectsFlow()
+
         }
+
         launchOnState(Lifecycle.State.STARTED) {
+
             reportPlatformGameState()
+
         }
+
         if (TVHelper.isTV(this)) {
+
             launchOnState(Lifecycle.State.CREATED) {
+
                 inputDeviceManager
+
                     .getEnabledInputsObservable()
+
                     .filter { it.isEmpty() }
+
                     .safeCollect {
+
                         displayToast(R.string.tv_game_message_missing_gamepad)
+
                     }
+
             }
+
         }
+
     }
 
     private suspend fun reportPlatformGameState() {
+
         baseGameScreenViewModel.getGameState().collect { state ->
+
             when (state) {
+
                 is GameViewModelRetroGameView.GameState.Ready ->
+
                     GamePlatformSession.reportPlaying(this@BaseGameActivity)
+
                 else ->
+
                     GamePlatformSession.reportLoading(this@BaseGameActivity)
+
             }
+
         }
+
     }
 
     private fun setUpExceptionsHandler() {
+
         Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
+
             performUnexpectedErrorFinish(exception)
+
         }
+
     }
 
     private fun transformExposedSetting(
+
         exposedSetting: ExposedSetting,
+
         coreOptions: List<CoreOption>,
+
     ): OmnidroidCoreOption? {
+
         val matched = coreOptions.firstOrNull { it.variable.key == exposedSetting.key }
+
         if (matched != null) {
+
             return OmnidroidCoreOption(exposedSetting, matched)
+
         }
+
         if (exposedSetting.values.isNotEmpty()) {
+
             val key = CoreVariablesManager.computeSharedPreferenceKey(exposedSetting.key, system.id.dbname)
+
             val currentVal =
+
                 sharedPreferences.get().getString(key, exposedSetting.values.first().key)
+
                     ?: exposedSetting.values.first().key
+
             val variable = CoreVariable(exposedSetting.key, currentVal)
+
             val coreOption =
+
                 CoreOption(
+
                     variable,
+
                     getString(exposedSetting.titleId),
+
                     exposedSetting.values.map { it.key },
+
                 )
+
             return OmnidroidCoreOption(exposedSetting, coreOption)
+
         }
+
         val key = CoreVariablesManager.computeSharedPreferenceKey(exposedSetting.key, system.id.dbname)
+
         val isEnabled = sharedPreferences.get().getBoolean(key, false)
+
         val variable = CoreVariable(exposedSetting.key, if (isEnabled) "enabled" else "disabled")
+
         val coreOption = CoreOption(variable, getString(exposedSetting.titleId), listOf("disabled", "enabled"))
+
         return OmnidroidCoreOption(exposedSetting, coreOption)
+
     }
 
     private fun displayOptionsDialog(
+
         currentTiltConfiguration: TiltConfiguration,
+
         tiltConfigurations: List<TiltConfiguration>,
+
     ) {
+
         if (baseGameScreenViewModel.loadingState.value) {
+
             return
+
         }
 
         val coreOptions = getCoreOptions()
 
         val options =
+
             systemCoreConfig.exposedSettings
+
                 .mapNotNull { transformExposedSetting(it, coreOptions) }
 
         val advancedOptions =
+
             systemCoreConfig.exposedAdvancedSettings
+
                 .mapNotNull { transformExposedSetting(it, coreOptions) }
 
         val currentDisk =
+
             if (system.hasMultiDiskSupport) {
+
                 baseGameScreenViewModel.retroGameView.retroGameView?.getCurrentDisk(false) ?: 0
+
             } else {
+
                 0
+
             }
+
         val availableDisks =
+
             if (system.hasMultiDiskSupport) {
+
                 baseGameScreenViewModel.retroGameView.retroGameView?.getAvailableDisks(false) ?: 0
+
             } else {
+
                 0
+
             }
 
         val intent =
+
             Intent(this, getDialogClass()).apply {
+
                 this.putExtra(GameMenuContract.EXTRA_CORE_OPTIONS, options.toTypedArray())
+
                 this.putExtra(GameMenuContract.EXTRA_ADVANCED_CORE_OPTIONS, advancedOptions.toTypedArray())
+
                 this.putExtra(
+
                     GameMenuContract.EXTRA_CURRENT_DISK,
+
                     currentDisk,
+
                 )
+
                 this.putExtra(
+
                     GameMenuContract.EXTRA_DISKS,
+
                     availableDisks,
+
                 )
+
                 this.putExtra(GameMenuContract.EXTRA_GAME, game)
+
                 this.putExtra(GameMenuContract.EXTRA_SYSTEM_CORE_CONFIG, systemCoreConfig)
+
                 this.putExtra(
+
                     GameMenuContract.EXTRA_AUDIO_ENABLED,
+
                     baseGameScreenViewModel.retroGameView.retroGameView?.audioEnabled,
+
                 )
+
                 val currentFrameSpeed = baseGameScreenViewModel.retroGameView.retroGameView?.frameSpeed ?: 1
+
                 this.putExtra(GameMenuContract.EXTRA_FAST_FORWARD_SUPPORTED, system.fastForwardSupport)
+
                 this.putExtra(GameMenuContract.EXTRA_FRAME_SPEED, currentFrameSpeed)
+
                 this.putExtra(
+
                     GameMenuContract.EXTRA_FAST_FORWARD,
+
                     currentFrameSpeed > 1,
+
                 )
+
                 this.putExtra(GameMenuContract.EXTRA_CURRENT_TILT_CONFIG, currentTiltConfiguration)
+
                 // TODO PADS... Make sure to avoid passing this if a physical pad is connected.
+
                 this.putExtra(GameMenuContract.EXTRA_TILT_ALL_CONFIGS, tiltConfigurations.toTypedArray())
+
             }
+
         startActivityForResult(intent, DIALOG_REQUEST)
+
         overridePendingTransition(0, 0)
+
     }
 
     protected abstract fun getDialogClass(): Class<out Activity>
 
     private fun getCoreOptions(): List<CoreOption> {
+
         return baseGameScreenViewModel.retroGameView.retroGameView?.getVariables()
+
             ?.mapNotNull {
+
                 val coreOptionResult =
+
                     runCatching {
+
                         CoreOption.fromLibretroDroidVariable(it)
+
                     }
+
                 coreOptionResult.getOrNull()
+
             } ?: listOf()
+
     }
 
     private suspend fun initializeViewModelsEffectsFlow() {
+
         baseGameScreenViewModel.getSideEffects()
+
             .collect {
+
                 when (it) {
+
                     is GameViewModelSideEffects.UiEffect.ShowMenu ->
+
                         displayOptionsDialog(
+
                             it.currentTiltConfiguration,
+
                             it.tiltConfigurations,
+
                         )
+
                     is GameViewModelSideEffects.UiEffect.ShowToast -> displayToast(it.message)
+
                     is GameViewModelSideEffects.UiEffect.SuccessfulFinish -> performSuccessfulActivityFinish()
+
                     is GameViewModelSideEffects.UiEffect.FailureFinish -> performErrorFinish(it.message)
+
                     is GameViewModelSideEffects.UiEffect.SaveQuickSave -> performSaveQuickSave()
+
                     is GameViewModelSideEffects.UiEffect.LoadQuickSave -> performLoadQuickSave()
+
                     is GameViewModelSideEffects.UiEffect.ToggleFastForward -> performToggleFastForward()
+
                 }
+
             }
+
     }
 
     private fun performSaveQuickSave() {
+
         baseGameScreenViewModel.saveQuickSave()
+
     }
 
     private fun performLoadQuickSave() {
+
         baseGameScreenViewModel.loadQuickSave()
+
     }
 
     private fun performToggleFastForward() {
+
         baseGameScreenViewModel.toggleFastForward()
+
     }
 
     override fun onGenericMotionEvent(event: MotionEvent): Boolean {
+
         val handled = baseGameScreenViewModel.sendMotionEvent(event)
+
         if (handled) {
+
             return true
+
         }
+
         return super.onGenericMotionEvent(event)
+
     }
 
     override fun onKeyDown(
+
         keyCode: Int,
+
         event: KeyEvent,
+
     ): Boolean {
+
         val handled = baseGameScreenViewModel.sendKeyEvent(keyCode, event)
+
         if (handled) {
+
             return true
+
         }
+
         return super.onKeyDown(keyCode, event)
+
     }
 
     override fun onKeyUp(
+
         keyCode: Int,
+
         event: KeyEvent,
+
     ): Boolean {
+
         val handled = baseGameScreenViewModel.sendKeyEvent(keyCode, event)
+
         if (handled) {
+
             return true
+
         }
+
         return super.onKeyUp(keyCode, event)
+
+    }
+
+    private val sessionCoordinator by lazy {
+
+        GameSessionCoordinator(
+
+            activity = this,
+
+            retrogradeDatabase = retrogradeDatabase,
+
+            gameProvider = { if (::game.isInitialized) game else null },
+
+            startGameTime = startGameTime,
+
+            isExternalLaunch = isExternalLaunch,
+
+            onFinishTriggered = { onFinishTriggered() },
+
+        )
+
     }
 
     private fun performSuccessfulActivityFinish() {
-        val resultIntent =
-            Intent().apply {
-                putExtra(PLAY_GAME_RESULT_SESSION_DURATION, System.currentTimeMillis() - startGameTime)
-                putExtra(PLAY_GAME_RESULT_GAME, intent.getSerializableExtra(EXTRA_GAME))
-                putExtra(PLAY_GAME_RESULT_LEANBACK, intent.getBooleanExtra(EXTRA_LEANBACK, false))
-            }
 
-        setResult(RESULT_OK, resultIntent)
-        finishAndExitProcess()
+        sessionCoordinator.performSuccessfulActivityFinish()
+
     }
 
     private fun performUnexpectedErrorFinish(exception: Throwable) {
-        Timber.e(exception, "Handling java exception in BaseGameActivity")
-        val resultIntent =
-            Intent().apply {
-                putExtra(PLAY_GAME_RESULT_ERROR, exception.message)
-            }
 
-        setResult(RESULT_UNEXPECTED_ERROR, resultIntent)
-        finishAndExitProcess()
+        sessionCoordinator.performUnexpectedErrorFinish(exception)
+
     }
 
     private fun performErrorFinish(message: String) {
-        val resultIntent =
-            Intent().apply {
-                putExtra(PLAY_GAME_RESULT_ERROR, message)
-            }
 
-        setResult(RESULT_ERROR, resultIntent)
-        finishAndExitProcess()
+        sessionCoordinator.performErrorFinish(message)
+
     }
 
     private fun finishAndExitProcess() {
-        onFinishTriggered()
-        OmnidroidApplication.scope(this).launch {
-            if (isExternalLaunch) {
-                performExternalGameFinishCleanup()
-            }
-            delay(animationDuration().toLong())
-            GameService.requestTermination()
-        }
-        if (isExternalLaunch) {
-            finishAndRemoveTask()
-        } else {
-            finish()
-        }
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+
+        sessionCoordinator.finishAndExitProcess()
+
     }
 
     private suspend fun performExternalGameFinishCleanup() {
-        try {
-            val duration = System.currentTimeMillis() - startGameTime
-            if (game.id != 0) {
-                retrogradeDatabase.gameDao().update(game.copy(lastPlayedAt = System.currentTimeMillis()))
-                val profileStore = UserProfileStore(this@BaseGameActivity)
-                profileStore.recordSessionStreak()
-                val streak = profileStore.getCurrentStreak()
-                val baseXP = XPCalculator.baseXPFromSession(duration)
-                val xpEarned = (baseXP * XPCalculator.streakMultiplier(streak)).toLong()
-                retrogradeDatabase.gameSessionDao().insert(
-                    GameSession(
-                        gameId = game.id,
-                        durationMs = duration,
-                        playedAt = System.currentTimeMillis(),
-                        xpEarned = xpEarned,
-                        streakDay = streak,
-                    ),
-                )
-                PlayTimeStore(this@BaseGameActivity).add(game.id, duration)
-                SaveSyncWork.enqueueGameWork(applicationContext, game.fileName)
-            }
-            SaveSyncWork.enqueueAutoWork(applicationContext, 5)
-            CacheCleanerWork.enqueueCleanCacheLRU(applicationContext)
-            if (TVHelper.isTV(applicationContext)) {
-                ChannelUpdateWork.enqueue(applicationContext)
-            }
-        } catch (e: Throwable) {
-            Timber.e(e, "Error performing external game finish cleanup")
-        }
+
+        sessionCoordinator.performExternalGameFinishCleanup()
+
     }
 
     open fun onFinishTriggered() {
+
         finishTriggered = true
+
     }
 
     override fun onStop() {
+
         if (!finishTriggered && !isFinishing && !isChangingConfigurations) {
+
             baseGameScreenViewModel.requestBackgroundSave()
+
         }
+
         super.onStop()
+
     }
 
     override fun onDestroy() {
-        if (!isChangingConfigurations) {
-            GameService.requestTermination()
+
+        if (GameService.activeGameActivity == this) {
+
+            GameService.activeGameActivity = null
+
         }
+
+        if (!isChangingConfigurations) {
+
+            GameService.requestTermination()
+
+        }
+
         super.onDestroy()
+
+    }
+
+    override fun onNewIntent(intent: Intent) {
+
+        super.onNewIntent(intent)
+
+        setIntent(intent)
+
+    }
+
+    fun saveAndQuitFromNotification() {
+
+        Timber.i("BaseGameActivity: saveAndQuitFromNotification invoked")
+
+        if (baseGameScreenViewModel.loadingState.value) {
+
+            lifecycleScope.launch {
+
+                while (baseGameScreenViewModel.loadingState.value) {
+
+                    delay(100)
+
+                }
+
+                baseGameScreenViewModel.requestFinish()
+
+            }
+
+        } else {
+
+            baseGameScreenViewModel.requestFinish()
+
+        }
+
     }
 
     override fun onActivityResult(
+
         requestCode: Int,
+
         resultCode: Int,
+
         data: Intent?,
+
     ) {
+
         super.onActivityResult(requestCode, resultCode, data)
+
         if (requestCode == DIALOG_REQUEST) {
+
             Timber.i("Game menu dialog response: ${data?.extras.dump()}")
+
             baseGameScreenViewModel.refreshSettings()
+
             if (data?.getBooleanExtra(GameMenuContract.RESULT_RESET, false) == true) {
+
                 lifecycleScope.launch {
+
                     baseGameScreenViewModel.reset()
+
                 }
+
             }
+
             if (data?.hasExtra(GameMenuContract.RESULT_SAVE) == true) {
+
                 lifecycleScope.launch {
+
                     baseGameScreenViewModel.saveSlot(data.getIntExtra(GameMenuContract.RESULT_SAVE, 0))
+
                 }
+
             }
+
             if (data?.hasExtra(GameMenuContract.RESULT_LOAD) == true) {
+
                 lifecycleScope.launch {
+
                     baseGameScreenViewModel.loadSlot(data.getIntExtra(GameMenuContract.RESULT_LOAD, 0))
+
                 }
+
             }
+
             if (data?.getBooleanExtra(GameMenuContract.RESULT_QUIT, false) == true) {
+
                 baseGameScreenViewModel.requestFinish()
+
             }
+
             if (data?.hasExtra(GameMenuContract.RESULT_CHANGE_DISK) == true) {
+
                 val index = data.getIntExtra(GameMenuContract.RESULT_CHANGE_DISK, 0)
+
                 baseGameScreenViewModel.retroGameView.retroGameView?.changeDisk(index, false)
+
             }
+
             if (data?.hasExtra(GameMenuContract.RESULT_ENABLE_AUDIO) == true) {
+
                 baseGameScreenViewModel.retroGameView.retroGameView?.apply {
+
                     this.audioEnabled =
+
                         data.getBooleanExtra(
+
                             GameMenuContract.RESULT_ENABLE_AUDIO,
+
                             true,
+
                         )
+
                 }
+
             }
+
             val frameSpeedResult =
+
                 data?.takeIf { it.hasExtra(GameMenuContract.RESULT_SET_FRAME_SPEED) }
+
             if (frameSpeedResult != null) {
+
                 val frameSpeed =
+
                     frameSpeedResult.getIntExtra(
+
                         GameMenuContract.RESULT_SET_FRAME_SPEED,
+
                         1,
+
                     )
+
                 baseGameScreenViewModel.retroGameView.retroGameView?.frameSpeed = frameSpeed
+
                 GameFrameSpeedPreferences(applicationContext).set(game.id, frameSpeed)
+
             }
+
             if (frameSpeedResult == null && data?.hasExtra(GameMenuContract.RESULT_ENABLE_FAST_FORWARD) == true) {
+
                 baseGameScreenViewModel.retroGameView.retroGameView?.apply {
+
                     val fastForwardEnabled =
+
                         data.getBooleanExtra(
+
                             GameMenuContract.RESULT_ENABLE_FAST_FORWARD,
+
                             false,
+
                         )
+
                     this.frameSpeed = if (fastForwardEnabled) 2 else 1
+
                 }
+
             }
+
             if (data?.getBooleanExtra(GameMenuContract.RESULT_EDIT_TOUCH_CONTROLS, false) == true) {
+
                 baseGameScreenViewModel.showEditControls(true)
+
             }
+
             if (data?.hasExtra(GameMenuContract.RESULT_CHANGE_TILT_CONFIG) == true) {
+
                 val tiltConfig = data.serializable<TiltConfiguration>(GameMenuContract.RESULT_CHANGE_TILT_CONFIG)
+
                 baseGameScreenViewModel.changeTiltConfiguration(tiltConfig!!)
+
             }
+
         }
+
     }
 
     companion object {
+
         const val DIALOG_REQUEST = 100
 
-        private const val EXTRA_GAME = "GAME"
-        private const val EXTRA_LOAD_SAVE = "LOAD_SAVE"
-        private const val EXTRA_LEANBACK = "LEANBACK"
-        private const val EXTRA_SYSTEM_CORE_CONFIG = "EXTRA_SYSTEM_CORE_CONFIG"
+        const val EXTRA_GAME = "GAME"
+
+        const val EXTRA_LOAD_SAVE = "LOAD_SAVE"
+
+        const val EXTRA_LEANBACK = "LEANBACK"
+
+        const val EXTRA_SYSTEM_CORE_CONFIG = "EXTRA_SYSTEM_CORE_CONFIG"
 
         const val REQUEST_PLAY_GAME = 1001
+
         const val PLAY_GAME_RESULT_SESSION_DURATION = "PLAY_GAME_RESULT_SESSION_DURATION"
+
         const val PLAY_GAME_RESULT_GAME = "PLAY_GAME_RESULT_GAME"
+
         const val PLAY_GAME_RESULT_LEANBACK = "PLAY_GAME_RESULT_LEANBACK"
+
         const val PLAY_GAME_RESULT_ERROR = "PLAY_GAME_RESULT_ERROR"
+
         const val EXTRA_EXTERNAL_LAUNCH = "EXTRA_EXTERNAL_LAUNCH"
 
         const val RESULT_ERROR = Activity.RESULT_FIRST_USER + 2
+
         const val RESULT_UNEXPECTED_ERROR = Activity.RESULT_FIRST_USER + 3
 
         fun launchGame(
+
             activity: Activity,
+
             systemCoreConfig: SystemCoreConfig,
+
             game: Game,
+
             loadSave: Boolean,
+
             useLeanback: Boolean,
+
             activityOptions: android.os.Bundle? = null,
+
             isExternalLaunch: Boolean = false,
+
         ) {
-            val intent =
-                Intent(activity, GameActivity::class.java).apply {
-                    val uri = Uri.parse(game.fileUri)
-                    if (uri.scheme.equals("content", ignoreCase = true)) {
-                        data = uri
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                    putExtra(EXTRA_GAME, game)
-                    putExtra(EXTRA_LOAD_SAVE, loadSave)
-                    putExtra(EXTRA_LEANBACK, useLeanback)
-                    putExtra(EXTRA_SYSTEM_CORE_CONFIG, systemCoreConfig)
-                    putExtra(EXTRA_EXTERNAL_LAUNCH, isExternalLaunch)
-                    if (isExternalLaunch) {
-                        addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT)
-                    }
-                    if (activityOptions != null) {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                    }
-                }
-            if (isExternalLaunch) {
-                activity.startActivity(intent, activityOptions)
-            } else {
-                activity.startActivityForResult(intent, REQUEST_PLAY_GAME, activityOptions)
+
+            val descriptor = ConsoleBackendRegistry.findDescriptorForCore(systemCoreConfig.coreID)
+
+            val unfulfilled = descriptor?.requirementsFor(systemCoreConfig)?.items?.filter {
+
+                it.severity == com.omnidroid.lib.backend.RequirementSeverity.REQUIRED && !it.isFulfilled(activity)
+
             }
+
+            if (!unfulfilled.isNullOrEmpty()) {
+
+                if (!activity.isFinishing && !activity.isDestroyed) {
+
+                    val reqDesc = descriptor.requirementsFor(systemCoreConfig)!!
+
+                    val item = unfulfilled.first()
+
+                    androidx.appcompat.app.AlertDialog.Builder(activity)
+
+                        .setTitle(reqDesc.title)
+
+                        .setMessage(item.description)
+
+                        .setPositiveButton(R.string.switch_keys_import_action) { _, _ ->
+
+                            item.action?.let { action ->
+                                com.omnidroid.app.shared.game.backend.RequirementPickerLauncherActivity.launch(activity, action)
+                            }
+
+                        }
+
+                        .setNegativeButton(android.R.string.cancel, null)
+
+                        .show()
+
+                }
+
+                return
+
+            }
+
+            val intent =
+
+                Intent(activity, GameActivity::class.java).apply {
+
+                    val uri = Uri.parse(game.fileUri)
+
+                    if (uri.scheme.equals("content", ignoreCase = true)) {
+
+                        data = uri
+
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+                    }
+
+                    putExtra(EXTRA_GAME, game)
+
+                    putExtra(EXTRA_LOAD_SAVE, loadSave)
+
+                    putExtra(EXTRA_LEANBACK, useLeanback)
+
+                    putExtra(EXTRA_SYSTEM_CORE_CONFIG, systemCoreConfig)
+
+                    putExtra(EXTRA_EXTERNAL_LAUNCH, isExternalLaunch)
+
+                    if (isExternalLaunch) {
+
+                        addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT)
+
+                    }
+
+                    if (activityOptions != null) {
+
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+
+                    }
+
+                }
+
+            if (isExternalLaunch) {
+
+                activity.startActivity(intent, activityOptions)
+
+            } else {
+
+                activity.startActivityForResult(intent, REQUEST_PLAY_GAME, activityOptions)
+
+            }
+
             activity.overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+
         }
+
     }
+
 }
+

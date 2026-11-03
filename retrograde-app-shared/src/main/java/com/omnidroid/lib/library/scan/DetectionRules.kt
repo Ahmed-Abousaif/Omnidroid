@@ -78,6 +78,10 @@ object DetectionRules {
             "wua" to SystemID.WII_U,
             "rpx" to SystemID.WII_U,
             "irx" to SystemID.PS2,
+            "xci" to SystemID.SWITCH,
+            "nsp" to SystemID.SWITCH,
+            "nso" to SystemID.SWITCH,
+            "nca" to SystemID.SWITCH,
         )
 
     fun identify(

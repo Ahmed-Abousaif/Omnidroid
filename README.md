@@ -97,10 +97,11 @@ Download the latest APK from the [Releases](https://github.com/Ahmed-Abousaif/Om
 3. Omnidroid's **content-based ROM scanner** automatically identifies your games from file headers (no strict folder structure required).
 4. Supported compression formats include `.zip`, `.7z`, and `.chd`.
 
-### 3. BIOS Requirements
+### 3. BIOS & Decryption Keys
 
-Most retro consoles run immediately without external BIOS files. For systems that require BIOS dumps:
+Most retro consoles run immediately without external BIOS files. For systems that require BIOS dumps or decryption keys:
 
+- **Nintendo Switch (Eden):** Requires `prod.keys` and supports optional System Firmware for games that require system applets or fonts (import via Settings → BIOS/Keys or place in your Switch storage directory).
 - **PlayStation 2 (ARMSX2):** Compatible with USA, Europe, and Japan BIOS images.
 - Other BIOS files (e.g., PS1, Sega CD, GBA) can be placed in the standard Libretro system folder.
 
@@ -124,6 +125,7 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 
 | System                             | Console / Generation     | Emulation Core                                                                                                                                                      |
 | :--------------------------------- | :----------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Nintendo Switch** _(Beta)_      | Hybrid Console (8th Gen) | [Eden](https://github.com/eden-emulator/eden)                                                                                                                       |
 | **Nintendo 3DS**                   | Handheld (8th Gen)       | [Azahar](https://github.com/azahar-emu/azahar) / [Citra](https://docs.libretro.com/library/citra/)                                                                  |
 | **Nintendo Wii U** _(Beta)_        | Home Console (8th Gen)   | [Cemu](https://github.com/cemu-project/Cemu)                                                                                                                        |
 | **Nintendo Wii** _(Beta)_          | Home Console (7th Gen)   | [Dolphin](https://docs.libretro.com/library/dolphin/)                                                                                                               |

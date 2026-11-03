@@ -192,18 +192,20 @@ fun GameMenuHomeScreen(
         }
 
         OmnidroidCardSettingsGroup {
-            OmnidroidSettingsMenuLink(
-                title = { Text(text = stringResource(id = R.string.game_menu_edit_touch_controls)) },
-                icon = {
-                    Icon(
-                        painterResource(R.drawable.ic_menu_controls),
-                        contentDescription = stringResource(id = R.string.game_menu_edit_touch_controls),
-                    )
-                },
-                onClick = {
-                    onResult { putExtra(GameMenuContract.RESULT_EDIT_TOUCH_CONTROLS, true) }
-                },
-            )
+            if (gameMenuRequest.editTouchControlsSupported) {
+                OmnidroidSettingsMenuLink(
+                    title = { Text(text = stringResource(id = R.string.game_menu_edit_touch_controls)) },
+                    icon = {
+                        Icon(
+                            painterResource(R.drawable.ic_menu_controls),
+                            contentDescription = stringResource(id = R.string.game_menu_edit_touch_controls),
+                        )
+                    },
+                    onClick = {
+                        onResult { putExtra(GameMenuContract.RESULT_EDIT_TOUCH_CONTROLS, true) }
+                    },
+                )
+            }
 
             if (saveSyncSupported) {
                 val context = LocalContext.current

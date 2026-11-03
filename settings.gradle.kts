@@ -35,7 +35,8 @@ if (file("libretrodroid").exists()) {
 
 fun usePlayDynamicFeatures(): Boolean {
     val task = gradle.startParameter.taskRequests.toString()
-    return task.contains("Play") && task.contains("Dynamic")
+    return (task.contains("Play") && task.contains("Dynamic")) ||
+        task.contains("Switch") || task.contains("switch")
 }
 
 if (usePlayDynamicFeatures()) {
@@ -63,7 +64,8 @@ if (usePlayDynamicFeatures()) {
         ":omnidroid_core_armsx2",
         ":omnidroid_core_dolphin",
         ":omnidroid_core_flycast",
-        ":omnidroid_core_cemu"
+        ":omnidroid_core_cemu",
+        ":omnidroid_core_switch"
     )
 
     project(":omnidroid_core_gambatte").projectDir = File("omnidroid-cores/omnidroid_core_gambatte")
@@ -90,4 +92,5 @@ if (usePlayDynamicFeatures()) {
     project(":omnidroid_core_dolphin").projectDir = File("omnidroid-cores/omnidroid_core_dolphin")
     project(":omnidroid_core_flycast").projectDir = File("omnidroid-cores/omnidroid_core_flycast")
     project(":omnidroid_core_cemu").projectDir = File("omnidroid-cores/omnidroid_core_cemu")
+    project(":omnidroid_core_switch").projectDir = File("omnidroid-cores/omnidroid_core_switch")
 }

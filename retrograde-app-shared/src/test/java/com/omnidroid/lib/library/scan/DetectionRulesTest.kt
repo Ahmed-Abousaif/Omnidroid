@@ -465,4 +465,36 @@ class DetectionRulesTest {
         bytes[offset + 2] = (value ushr 16).toByte()
         bytes[offset + 3] = (value ushr 24).toByte()
     }
+
+    @Test
+    fun switchRomsAreIdentifiedByExtension() {
+        val xciResult = DetectionRules.identify(ScanInput("SuperMarioOdyssey.xci", 1024, null, { null }))
+        assertTrue(xciResult is Detection.Ready)
+        assertEquals(SystemID.SWITCH, (xciResult as Detection.Ready).system)
+
+        val nspResult = DetectionRules.identify(ScanInput("ZeldaTearsOfTheKingdom.nsp", 1024, null, { null }))
+        assertTrue(nspResult is Detection.Ready)
+        assertEquals(SystemID.SWITCH, (nspResult as Detection.Ready).system)
+
+        val nsoResult = DetectionRules.identify(ScanInput("homebrew.nso", 1024, null, { null }))
+        assertTrue(nsoResult is Detection.Ready)
+        assertEquals(SystemID.SWITCH, (nsoResult as Detection.Ready).system)
+
+        val ncaResult = DetectionRules.identify(ScanInput("archive.nca", 1024, null, { null }))
+        assertTrue(ncaResult is Detection.Ready)
+        assertEquals(SystemID.SWITCH, (ncaResult as Detection.Ready).system)
+    }
+
+    @Test
+    fun switchSystemSettingsAndAspectAreConfigured() {
+        val switchSystem = GameSystem.findById("switch")
+        assertEquals(SystemID.SWITCH, switchSystem.id)
+        assertEquals(16f / 9f, switchSystem.aspectRatio)
+        assertTrue(switchSystem.supportedExtensions.contains("xci"))
+        assertTrue(switchSystem.supportedExtensions.contains("nsp"))
+
+        val coreConfig = switchSystem.systemCoreConfigs.first()
+        assertEquals(com.omnidroid.lib.library.CoreID.SWITCH, coreConfig.coreID)
+        assertEquals(setOf("arm64-v8a"), coreConfig.supportedOnlyArchitectures)
+    }
 }

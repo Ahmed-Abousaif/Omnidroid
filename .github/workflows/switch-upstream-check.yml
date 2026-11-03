@@ -1,0 +1,57 @@
+name: Switch Upstream Check
+
+on:
+  schedule:
+    # Run every Monday at 04:00 UTC
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+jobs:
+  check-upstream:
+    name: Check Upstream Eden Releases
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Check Upstream Updates
+        id: check_update
+        run: |
+          chmod +x scripts/switch-update-upstream.sh
+          chmod +x gradlew
+          ./scripts/switch-update-upstream.sh
+          
+          if [ -n "$(git status --porcelain modules/switch/upstream/eden)" ]; then
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+            NEW_PIN="$(git -C modules/switch/upstream/eden rev-parse --short HEAD)"
+            echo "new_pin=$NEW_PIN" >> "$GITHUB_OUTPUT"
+          else
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify Kotlin Build
+        if: steps.check_update.outputs.updated == 'true'
+        run: |
+          ./gradlew :omnidroid-app:compilePlayDynamicDebugKotlin
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.check_update.outputs.updated }}" = "true" ]; then
+            echo "### Upstream Eden Update Available 🚀" >> $GITHUB_STEP_SUMMARY
+            echo "Eden submodule updated to commit \`${{ steps.check_update.outputs.new_pin }}\`." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Upstream Eden is up to date ✅" >> $GITHUB_STEP_SUMMARY
+            echo "No new release tags detected." >> $GITHUB_STEP_SUMMARY
+          fi
+

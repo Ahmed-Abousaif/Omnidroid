@@ -134,6 +134,11 @@ enum class CoreID(
         "Cemu",
         "libcemu_libretro_android.so",
     ),
+    SWITCH(
+        "switch",
+        "Eden",
+        "libyuzu-android.so",
+    ),
     ;
 
     companion object {

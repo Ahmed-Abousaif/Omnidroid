@@ -142,7 +142,7 @@ class TouchScreenLayoutController(
                 }
                 SystemID.GB, SystemID.GBC, SystemID.GG -> 10f / 9f
                 SystemID.GBA -> 3f / 2f
-                SystemID.PSP, SystemID.WII_U -> 16f / 9f
+                SystemID.PSP, SystemID.WII_U, SystemID.SWITCH -> 16f / 9f
                 SystemID.NGP -> 20f / 19f
                 SystemID.LYNX -> 160f / 102f
                 else -> 4f / 3f

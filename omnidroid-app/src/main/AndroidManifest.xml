@@ -100,12 +100,14 @@
 
         <activity
             android:name="com.omnidroid.app.mobile.feature.game.GameActivity"
+            android:launchMode="singleTop"
             android:allowEmbedded="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
             android:process=":game"
             android:resizeableActivity="true"
             android:screenOrientation="fullUser"
             android:theme="@style/OmnidroidMaterialTheme.Game" />
+
 
         <service
             android:name=".app.mobile.feature.game.GameService"
@@ -134,6 +136,10 @@
 
         <activity
             android:name="com.omnidroid.app.shared.settings.StorageFrameworkPickerLauncher"
+            android:theme="@style/OmnidroidMaterialTheme.Invisible" />
+
+        <activity
+            android:name="com.omnidroid.app.shared.game.backend.RequirementPickerLauncherActivity"
             android:theme="@style/OmnidroidMaterialTheme.Invisible" />
 
         <activity

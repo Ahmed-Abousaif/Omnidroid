@@ -73,6 +73,9 @@ object FolderHints {
             "wii" to SystemID.WII,
             "wiiu" to SystemID.WII_U,
             "wii-u" to SystemID.WII_U,
+            "switch" to SystemID.SWITCH,
+            "nswitch" to SystemID.SWITCH,
+            "nintendoswitch" to SystemID.SWITCH,
             "dreamcast" to SystemID.DREAMCAST,
             "dc" to SystemID.DREAMCAST,
         )

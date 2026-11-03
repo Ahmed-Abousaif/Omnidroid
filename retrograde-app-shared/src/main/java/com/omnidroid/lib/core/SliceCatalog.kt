@@ -42,6 +42,7 @@ object SliceCatalog {
             Slice("wii", listOf("wii"), listOf("dolphin")),
             Slice("wiiu", listOf("wiiu"), listOf("cemu")),
             Slice("dreamcast", listOf("dreamcast"), listOf("flycast")),
+            Slice("switch", listOf("switch"), listOf("switch")),
         )
 
     fun forCore(core: CoreID): List<Slice> = slices.filter { core.coreName in it.cores }
@@ -81,6 +82,7 @@ object SliceCatalog {
             "wii" -> "Wii"
             "wiiu" -> "Wii U"
             "dreamcast" -> "Dreamcast"
+            "switch" -> "Nintendo Switch"
             "atari2600" -> "Atari 2600"
             "atari7800" -> "Atari 7800"
             "lynx" -> "Atari Lynx"

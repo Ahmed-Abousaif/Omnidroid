@@ -122,7 +122,9 @@ fun getConsoleInfo(sliceId: String): ConsoleInfo {
         "ps2" -> ConsoleInfo(LibR.string.game_system_title_ps2, "PS2")
         "gamecube" -> ConsoleInfo(LibR.string.game_system_title_gamecube, "GCN")
         "wii" -> ConsoleInfo(LibR.string.game_system_title_wii, "WII")
+        "wiiu" -> ConsoleInfo(LibR.string.game_system_title_wii_u, "WIIU")
         "dreamcast" -> ConsoleInfo(LibR.string.game_system_title_dreamcast, "DC")
+        "switch" -> ConsoleInfo(LibR.string.game_system_title_switch, "NSW")
         else -> {
             val system = runCatching { GameSystem.findById(sliceId) }.getOrNull()
             if (system != null) {

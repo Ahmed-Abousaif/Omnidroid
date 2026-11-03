@@ -512,6 +512,26 @@ object ControllerConfigs {
                 ),
         )
 
+    val SWITCH_PRO =
+        ControllerConfig(
+            "switch_pro",
+            R.string.controller_switch_pro,
+            TouchControllerID.SWITCH_PRO,
+            allowTouchRotation = true,
+            hasAnalogStick = true,
+            libretroDescriptor = "Nintendo Switch Pro Controller",
+            libretroId = 1,
+            tiltConfigurations =
+                listOf(
+                    TILT_CONFIGURATION_DISABLED,
+                    TILT_CONFIGURATION_CROSS,
+                    TILT_CONFIGURATION_ANALOG_LEFT,
+                    TILT_CONFIGURATION_ANALOG_RIGHT,
+                    TILT_CONFIGURATION_L1_R1,
+                    TILT_CONFIGURATION_L2_R2,
+                ),
+        )
+
     val WII_U_PRO =
         ControllerConfig(
             "wii_u_pro",

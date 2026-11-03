@@ -42,7 +42,7 @@ data class GameSystem(
         get() = when (id) {
             SystemID.GB, SystemID.GBC, SystemID.GG -> 10f / 9f
             SystemID.GBA -> 3f / 2f
-            SystemID.PSP, SystemID.WII_U -> 16f / 9f
+            SystemID.PSP, SystemID.WII_U, SystemID.SWITCH -> 16f / 9f
             SystemID.NDS, SystemID.NINTENDO_3DS -> 4f / 6f
             SystemID.WS, SystemID.WSC -> 14f / 9f
             SystemID.NGP -> 20f / 19f
@@ -2348,6 +2348,110 @@ data class GameSystem(
                     uniqueExtensions = listOf("wud", "wux", "wua", "rpx"),
                     supportedExtensions = listOf("wud", "wux", "wua", "iso", "rpx", "elf"),
                     hasMultiDiskSupport = false,
+                ),
+                GameSystem(
+                    SystemID.SWITCH,
+                    "Nintendo - Switch",
+                    R.string.game_system_title_switch,
+                    R.string.game_system_abbr_switch,
+                    listOf(
+                        SystemCoreConfig(
+                            CoreID.SWITCH,
+                            controllerConfigs =
+                                hashMapOf(
+                                    0 to
+                                        arrayListOf(
+                                            ControllerConfigs.SWITCH_PRO,
+                                        ),
+                                    1 to
+                                        arrayListOf(
+                                            ControllerConfigs.SWITCH_PRO,
+                                        ),
+                                    2 to
+                                        arrayListOf(
+                                            ControllerConfigs.SWITCH_PRO,
+                                        ),
+                                    3 to
+                                        arrayListOf(
+                                            ControllerConfigs.SWITCH_PRO,
+                                        ),
+                                ),
+                            rumbleSupported = true,
+                            statesSupported = false,
+                            supportsLibretroVFS = false,
+                            supportedOnlyArchitectures = setOf("arm64-v8a"),
+                            defaultSettings =
+                                listOf(
+                                    CoreVariable("switch_docked_mode", "false"),
+                                    CoreVariable("switch_resolution", "3"),
+                                    CoreVariable("switch_async_shaders", "true"),
+                                ),
+                            exposedSettings =
+                                listOf(
+                                    ExposedSetting(
+                                        "switch_docked_mode",
+                                        R.string.setting_switch_docked_mode,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "false",
+                                                R.string.value_switch_docked_handheld,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "true",
+                                                R.string.value_switch_docked_docked,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "switch_resolution",
+                                        R.string.setting_switch_resolution,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "1",
+                                                R.string.value_switch_res_0_50x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "2",
+                                                R.string.value_switch_res_0_75x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "3",
+                                                R.string.value_switch_res_1_00x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "5",
+                                                R.string.value_switch_res_1_50x,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "6",
+                                                R.string.value_switch_res_2_00x,
+                                            ),
+                                        ),
+                                    ),
+                                    ExposedSetting(
+                                        "switch_async_shaders",
+                                        R.string.setting_switch_async_shaders,
+                                        arrayListOf(
+                                            ExposedSetting.Value(
+                                                "true",
+                                                R.string.value_switch_async_shaders_enabled,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "false",
+                                                R.string.value_switch_async_shaders_disabled,
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            skipDuplicateFrames = false,
+                            allowFrameCatchUp = false,
+                            forceStandardAudioBuffer = true,
+                        ),
+                    ),
+                    uniqueExtensions = listOf("xci", "nsp", "nso", "nca"),
+                    supportedExtensions = listOf("xci", "nsp", "nso", "nca"),
+                    hasMultiDiskSupport = false,
+                    hasTouchScreen = true,
                 ),
             )
 

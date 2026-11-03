@@ -1,0 +1,44 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="360"
+    android:viewportHeight="360">
+    <!-- Switch Body / Screen Bezel -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M95,115 H265 V245 H95 Z M107,125 H253 V235 H107 Z"/>
+    <!-- Left Joy-Con Body -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M70,115 C55,115 50,125 50,140 V220 C50,235 55,245 70,245 H90 V115 Z M86,120 H70 C58,120 55,128 55,140 V220 C55,232 58,240 70,240 H86 Z"/>
+    <!-- Right Joy-Con Body -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M270,115 H290 C305,115 310,125 310,140 V220 C310,235 305,245 290,245 H270 Z M274,120 H290 C302,120 305,128 305,140 V220 C305,232 302,240 290,240 H274 Z"/>
+    <!-- Left Joy-Con Left Stick (Top) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M70,150 m-10,0 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 M70,150 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0"/>
+    <!-- Left Joy-Con D-Pad Buttons (Bottom) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M70,185 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 M79,194 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 M70,203 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 M61,194 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"/>
+    <!-- Right Joy-Con ABXY Face Buttons (Top) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M290,141 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 M299,150 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 M290,159 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 M281,150 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"/>
+    <!-- Right Joy-Con Right Stick (Bottom) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M290,195 m-10,0 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 M290,195 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0"/>
+    <!-- Minus and Plus Buttons -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M76,128 h6 v2 h-6 Z M281,127 h2 v2 h2 v2 h-2 v2 h-2 v-2 h-2 v-2 h2 Z"/>
+    <!-- Capture and Home Buttons -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M74,222 h4 v4 h-4 Z M284,224 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0"/>
+</vector>
+

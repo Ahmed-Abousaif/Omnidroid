@@ -85,6 +85,10 @@ class GameViewModelRetroGameView(
         return gameState.debounce(200)
     }
 
+    fun setReadyForSwitch() {
+        gameState.value = GameState.Ready
+    }
+
     suspend fun initialize(
         applicationContext: Context,
         game: Game,

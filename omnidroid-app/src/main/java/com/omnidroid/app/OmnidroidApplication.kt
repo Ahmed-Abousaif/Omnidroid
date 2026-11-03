@@ -9,6 +9,9 @@ import androidx.work.WorkManager
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import com.google.android.material.color.DynamicColors
+import com.omnidroid.lib.backend.ConsoleBackendRegistry
+import com.omnidroid.lib.backend.libretro.LibretroBackendDescriptor
+import com.omnidroid.lib.backend.switch_backend.SwitchBackendDescriptor
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.app.shared.covers.CoverUtils
 import com.omnidroid.app.shared.covers.RawgCoverStore
@@ -65,6 +68,9 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
         AppInitializer.getInstance(this).initializeComponent(initializeComponent)
 
         DynamicColors.applyToActivitiesIfAvailable(this)
+
+        ConsoleBackendRegistry.registerDescriptor(LibretroBackendDescriptor())
+        ConsoleBackendRegistry.registerDescriptor(SwitchBackendDescriptor())
 
         if (isMainProcess()) {
             bootstrapRawgCovers()

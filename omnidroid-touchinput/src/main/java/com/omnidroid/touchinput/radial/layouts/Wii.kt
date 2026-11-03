@@ -64,8 +64,8 @@ fun PadKitScope.WiiClassicRight(
                     persistentListOf(
                         Id.Key(KeyEvent.KEYCODE_BUTTON_A),
                         Id.Key(KeyEvent.KEYCODE_BUTTON_B),
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_X),
                         Id.Key(KeyEvent.KEYCODE_BUTTON_Y),
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_X),
                     ),
                 idsForegrounds =
                     persistentMapOf<Id.Key, @Composable (State<Boolean>) -> Unit>(
@@ -200,8 +200,8 @@ fun PadKitScope.WiiSidewaysRight(
                     persistentListOf(
                         Id.Key(KeyEvent.KEYCODE_BUTTON_A),
                         Id.Key(KeyEvent.KEYCODE_BUTTON_B),
-                        Id.Key(KeyEvent.KEYCODE_BUTTON_X),
                         Id.Key(KeyEvent.KEYCODE_BUTTON_Y),
+                        Id.Key(KeyEvent.KEYCODE_BUTTON_X),
                     ),
                 idsForegrounds =
                     persistentMapOf<Id.Key, @Composable (State<Boolean>) -> Unit>(

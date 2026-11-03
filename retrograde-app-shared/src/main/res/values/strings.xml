@@ -17,6 +17,7 @@
     <string name="controller_wii_sideways">Wii Remote (Sideways)</string>
     <string name="controller_wii_u_gamepad">Wii U GamePad</string>
     <string name="controller_wii_u_pro">Wii U Pro Controller</string>
+    <string name="controller_switch_pro">Switch Pro Controller</string>
     <string name="controller_standard">Standard</string>
     <string name="controller_landscape">Landscape</string>
     <string name="controller_portrait">Portrait</string>
@@ -322,4 +323,26 @@
     <string name="value_cemu_volume_20">20%</string>
     <string name="value_cemu_volume_0">Mute</string>
 
+    <!-- Switch / Eden settings -->
+    <string name="setting_switch_touch_overlay">Touch Controls</string>
+    <string name="value_switch_touch_overlay_enabled">Enabled</string>
+    <string name="value_switch_touch_overlay_disabled">Disabled</string>
+    <string name="setting_switch_overlay_opacity">Overlay Opacity</string>
+    <string name="value_switch_opacity_100">100%</string>
+    <string name="value_switch_opacity_80">80%</string>
+    <string name="value_switch_opacity_60">60%</string>
+    <string name="value_switch_opacity_40">40%</string>
+    <string name="value_switch_opacity_20">20%</string>
+    <string name="setting_switch_docked_mode">Console Mode</string>
+    <string name="value_switch_docked_handheld">Handheld (720p)</string>
+    <string name="value_switch_docked_docked">Docked (1080p)</string>
+    <string name="setting_switch_resolution">Resolution Scale</string>
+    <string name="value_switch_res_0_50x">0.5x</string>
+    <string name="value_switch_res_0_75x">0.75x</string>
+    <string name="value_switch_res_1_00x">1.0x (Native)</string>
+    <string name="value_switch_res_1_50x">1.5x</string>
+    <string name="value_switch_res_2_00x">2.0x</string>
+    <string name="setting_switch_async_shaders">Asynchronous Shaders</string>
+    <string name="value_switch_async_shaders_enabled">Enabled</string>
+    <string name="value_switch_async_shaders_disabled">Disabled</string>
 </resources>
