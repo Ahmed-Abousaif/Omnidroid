@@ -28,6 +28,7 @@ import com.omnidroid.app.shared.game.GameLauncher
 import com.omnidroid.app.shared.input.InputDeviceManager
 import com.omnidroid.app.shared.main.GameLaunchTaskHandler
 import com.omnidroid.app.shared.rumble.RumbleManager
+import com.omnidroid.app.shared.switch_emu.EdenIconExtractor
 import com.omnidroid.app.shared.settings.ControllerConfigsManager
 import com.omnidroid.app.tv.channel.ChannelHandler
 import com.omnidroid.ext.feature.core.CoreUpdaterImpl
@@ -196,6 +197,7 @@ object OmnidroidApplicationModule {
         gameMetadataProvider,
         biosManager,
         SliceStampStore(SharedPreferencesHelper.getLegacySharedPreferences(context)),
+        EdenIconExtractor(context),
     )
 
     @Provides

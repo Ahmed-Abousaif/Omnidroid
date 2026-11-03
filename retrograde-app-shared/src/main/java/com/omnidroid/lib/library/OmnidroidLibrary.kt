@@ -32,6 +32,7 @@ class OmnidroidLibrary(
     private val gameMetadataProvider: Lazy<GameMetadataProvider>,
     private val biosManager: BiosManager,
     private val sliceStamps: SliceStampStore,
+    private val switchIconExtractor: SwitchIconExtractor? = null,
 ) {
     suspend fun indexLibrary() {
         val startedAtMs = System.currentTimeMillis()
@@ -103,6 +104,14 @@ class OmnidroidLibrary(
                         LibretroTitles.isArticleSorted(existing.title)
                 )
         if (existing != null && !shouldRelookup(existing, primary, stampChanged || needsTitle)) {
+            if (existing.systemId == SystemID.SWITCH.dbname && existing.customCoverPath == null) {
+                val iconPath = runCatching {
+                    switchIconExtractor?.extractAndSave(existing.id, primary.uri.toString())
+                }.getOrNull()
+                if (iconPath != null) {
+                    retrogradedb.gameDao().update(existing.copy(customCoverPath = iconPath))
+                }
+            }
             touch(existing, primary, startedAtMs, backfill = existing.fileSize == null)
             updateDataFiles(group, existing.id, startedAtMs)
             retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
@@ -204,6 +213,16 @@ class OmnidroidLibrary(
                 startedAtMs,
                 archiveEntry,
             )
+        if (system == SystemID.SWITCH && existing?.customCoverPath == null) {
+            val iconPath = runCatching {
+                switchIconExtractor?.extractAndSave(gameId, primary.uri.toString())
+            }.getOrNull()
+            if (iconPath != null) {
+                retrogradedb.gameDao().selectById(gameId)?.let { g ->
+                    retrogradedb.gameDao().update(g.copy(customCoverPath = iconPath))
+                }
+            }
+        }
         updateDataFiles(group, gameId, startedAtMs)
         retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
     }

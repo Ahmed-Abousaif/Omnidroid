@@ -27,29 +27,7 @@ class CustomCoverManager(private val context: Context) {
                 copySourceToFile(source, temp)
                 val processed = decodeAndProcess(temp)
                 try {
-                    val dest = coverFile(gameId)
-                    dest.parentFile?.mkdirs()
-                    val toWrite =
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
-                            processed.config == Bitmap.Config.HARDWARE
-                        ) {
-                            processed.copy(Bitmap.Config.ARGB_8888, false) ?: processed
-                        } else {
-                            processed
-                        }
-                    try {
-                        FileOutputStream(dest).use { output ->
-                            if (!toWrite.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, output)) {
-                                throw UnreadableImageException()
-                            }
-                        }
-                    } finally {
-                        if (toWrite !== processed) {
-                            toWrite.recycle()
-                        }
-                    }
-                    dest.setLastModified(System.currentTimeMillis())
-                    "${dest.absolutePath}?${dest.lastModified()}"
+                    writeBitmapToFile(processed, gameId)
                 } finally {
                     processed.recycle()
                 }
@@ -57,6 +35,68 @@ class CustomCoverManager(private val context: Context) {
                 temp.delete()
             }
         }
+
+    suspend fun saveFromBytes(
+        gameId: Int,
+        bytes: ByteArray,
+    ): String =
+        withContext(Dispatchers.IO) {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+                throw UnreadableImageException()
+            }
+
+            val decodeOptions =
+                BitmapFactory.Options().apply {
+                    inSampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight, MAX_SIZE)
+                    inPreferredConfig = Bitmap.Config.ARGB_8888
+                    inMutable = true
+                }
+            val decoded =
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, decodeOptions)
+                    ?: throw UnreadableImageException()
+
+            var processed = decoded
+            try {
+                processed = replaceBitmap(processed, processed.cropToSquare())
+                if (processed.width > MAX_SIZE || processed.height > MAX_SIZE) {
+                    processed = replaceBitmap(processed, Bitmap.createScaledBitmap(processed, MAX_SIZE, MAX_SIZE, true))
+                }
+                writeBitmapToFile(processed, gameId)
+            } finally {
+                processed.recycle()
+            }
+        }
+
+    private fun writeBitmapToFile(
+        processed: Bitmap,
+        gameId: Int,
+    ): String {
+        val dest = coverFile(gameId)
+        dest.parentFile?.mkdirs()
+        val toWrite =
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+                processed.config == Bitmap.Config.HARDWARE
+            ) {
+                processed.copy(Bitmap.Config.ARGB_8888, false) ?: processed
+            } else {
+                processed
+            }
+        try {
+            FileOutputStream(dest).use { output ->
+                if (!toWrite.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, output)) {
+                    throw UnreadableImageException()
+                }
+            }
+        } finally {
+            if (toWrite !== processed) {
+                toWrite.recycle()
+            }
+        }
+        dest.setLastModified(System.currentTimeMillis())
+        return "${dest.absolutePath}?${dest.lastModified()}"
+    }
 
     fun deleteCustomCover(
         gameId: Int,
