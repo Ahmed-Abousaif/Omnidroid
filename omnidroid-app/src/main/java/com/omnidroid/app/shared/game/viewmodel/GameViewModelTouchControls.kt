@@ -19,10 +19,10 @@ import com.omnidroid.lib.controller.ControllerConfig
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.SystemID
-import com.swordfish.libretrodroid.GLRetroView
-import com.swordfish.libretrodroid.GLRetroView.Companion.MOTION_SOURCE_ANALOG_LEFT
-import com.swordfish.libretrodroid.GLRetroView.Companion.MOTION_SOURCE_ANALOG_RIGHT
-import com.swordfish.libretrodroid.GLRetroView.Companion.MOTION_SOURCE_DPAD
+import com.omnidroid.libretrodroid.GLRetroView
+import com.omnidroid.libretrodroid.GLRetroView.Companion.MOTION_SOURCE_ANALOG_LEFT
+import com.omnidroid.libretrodroid.GLRetroView.Companion.MOTION_SOURCE_ANALOG_RIGHT
+import com.omnidroid.libretrodroid.GLRetroView.Companion.MOTION_SOURCE_DPAD
 import com.omnidroid.touchinput.radial.layouts.shared.ComposeTouchLayouts
 import com.omnidroid.touchinput.radial.settings.TouchControllerID
 import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager

@@ -5,12 +5,12 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.lifecycle.LifecycleOwner
 import com.omnidroid.common.view.disableTouchEvents
-import com.swordfish.libretrodroid.Controller
-import com.swordfish.libretrodroid.GLRetroView
-import com.swordfish.libretrodroid.LibretroDroid
-import com.swordfish.libretrodroid.RumbleEvent
-import com.swordfish.libretrodroid.ShaderConfig
-import com.swordfish.libretrodroid.Variable
+import com.omnidroid.libretrodroid.Controller
+import com.omnidroid.libretrodroid.GLRetroView
+import com.omnidroid.libretrodroid.LibretroDroid
+import com.omnidroid.libretrodroid.RumbleEvent
+import com.omnidroid.libretrodroid.ShaderConfig
+import com.omnidroid.libretrodroid.Variable
 import kotlinx.coroutines.flow.Flow
 
 /**

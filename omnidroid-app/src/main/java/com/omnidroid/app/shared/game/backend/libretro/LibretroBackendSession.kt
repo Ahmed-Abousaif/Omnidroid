@@ -14,7 +14,7 @@ import com.omnidroid.lib.backend.NormalizedMotionSource
 import com.omnidroid.lib.backend.RewindableSession
 import com.omnidroid.lib.backend.ScreenshotSession
 import com.omnidroid.lib.backend.StateSaveableSession
-import com.swordfish.libretrodroid.Variable
+import com.omnidroid.libretrodroid.Variable
 
 /**
  * Adapter wrapping [IRetroGameView] to satisfy [BackendSession] and optional capability interfaces.

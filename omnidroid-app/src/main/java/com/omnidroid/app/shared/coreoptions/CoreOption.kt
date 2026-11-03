@@ -1,7 +1,7 @@
 package com.omnidroid.app.shared.coreoptions
 
 import com.omnidroid.lib.core.CoreVariable
-import com.swordfish.libretrodroid.Variable
+import com.omnidroid.libretrodroid.Variable
 import java.io.Serializable
 
 data class CoreOption(

@@ -26,8 +26,6 @@ signing.properties
 .env
 .env.*
 
-# Private native engine source (kept in separate private repo)
-libretrodroid/
 
 # Logs & error reports
 *.log

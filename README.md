@@ -267,7 +267,6 @@ Omnidroid/
 ├── omnidroid-chd/               # CHD compressed disc image decompression library
 ├── omnidroid-metadata-rawg/     # RAWG.io API client for descriptions, ratings & trailers
 ├── omnidroid-metadata-libretro/ # Libretro DB offline game title identification
-├── libretrodroid/               # JNI bridge between Android and native Libretro cores
 ├── omni-libretrodroid/          # (Submodule) Custom native Vulkan/GLES C++ emulation runtime
 ├── omnidroid-cores/             # (Submodule) Prebuilt Libretro emulation core binaries
 ├── retrograde-app-shared/       # Shared UI components and emulation lifecycle utilities

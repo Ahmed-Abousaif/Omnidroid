@@ -13,3 +13,7 @@
 	path = modules/cemu/upstream/cemu-libretro-android
 	url = https://github.com/Ahmed-Abousaif/cemu-libretro-android.git
 	branch = main
+[submodule "omni-libretrodroid"]
+	path = omni-libretrodroid
+	url = https://github.com/Ahmed-Abousaif/omni-libretrodroid.git
+	branch = main

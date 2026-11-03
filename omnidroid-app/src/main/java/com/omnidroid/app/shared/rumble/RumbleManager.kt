@@ -9,7 +9,7 @@ import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.app.shared.input.InputDeviceManager
 import com.omnidroid.common.coroutines.safeCollect
 import com.omnidroid.lib.library.SystemCoreConfig
-import com.swordfish.libretrodroid.RumbleEvent
+import com.omnidroid.libretrodroid.RumbleEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

@@ -1,13 +1,13 @@
 package com.omnidroid.app.shared.game.view;
 
 import android.os.ParcelFileDescriptor;
-import com.swordfish.libretrodroid.DetachedVirtualFile;
-import com.swordfish.libretrodroid.GLRetroShader;
-import com.swordfish.libretrodroid.ImmersiveMode;
-import com.swordfish.libretrodroid.LibretroDroid;
-import com.swordfish.libretrodroid.ShaderConfig;
-import com.swordfish.libretrodroid.Variable;
-import com.swordfish.libretrodroid.VirtualFile;
+import com.omnidroid.libretrodroid.DetachedVirtualFile;
+import com.omnidroid.libretrodroid.GLRetroShader;
+import com.omnidroid.libretrodroid.ImmersiveMode;
+import com.omnidroid.libretrodroid.LibretroDroid;
+import com.omnidroid.libretrodroid.ShaderConfig;
+import com.omnidroid.libretrodroid.Variable;
+import com.omnidroid.libretrodroid.VirtualFile;
 
 import java.util.ArrayList;
 import java.util.Collections;

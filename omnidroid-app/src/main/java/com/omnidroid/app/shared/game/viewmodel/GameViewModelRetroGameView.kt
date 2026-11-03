@@ -30,11 +30,11 @@ import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.savesync.GameFrameSpeedPreferences
 import com.omnidroid.lib.storage.RomFiles
-import com.swordfish.libretrodroid.GLRetroView
-import com.swordfish.libretrodroid.GLRetroViewData
-import com.swordfish.libretrodroid.ImmersiveMode
-import com.swordfish.libretrodroid.Variable
-import com.swordfish.libretrodroid.VirtualFile
+import com.omnidroid.libretrodroid.GLRetroView
+import com.omnidroid.libretrodroid.GLRetroViewData
+import com.omnidroid.libretrodroid.ImmersiveMode
+import com.omnidroid.libretrodroid.Variable
+import com.omnidroid.libretrodroid.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview

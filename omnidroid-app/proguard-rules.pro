@@ -68,17 +68,17 @@
 }
 
 ## LibretroDroid JNI Interface (strictly scoped to C++ FindClass/GetMethodID/GetFieldID)
--keep class com.swordfish.libretrodroid.Variable { <fields>; }
--keep class com.swordfish.libretrodroid.Controller { <fields>; }
--keep class com.swordfish.libretrodroid.DetachedVirtualFile { *; }
--keep class com.swordfish.libretrodroid.GLRetroShader { <fields>; }
--keep class com.swordfish.libretrodroid.RetroException { *; }
--keep class com.swordfish.libretrodroid.GLRetroView {
+-keep class com.omnidroid.libretrodroid.Variable { <fields>; }
+-keep class com.omnidroid.libretrodroid.Controller { <fields>; }
+-keep class com.omnidroid.libretrodroid.DetachedVirtualFile { *; }
+-keep class com.omnidroid.libretrodroid.GLRetroShader { <fields>; }
+-keep class com.omnidroid.libretrodroid.RetroException { *; }
+-keep class com.omnidroid.libretrodroid.GLRetroView {
     void refreshAspectRatio();
     void sendRumbleEvent(int, float, float);
 }
--keep class com.swordfish.libretrodroid.ImmersiveMode* { *; }
--keepclasseswithmembernames class com.swordfish.libretrodroid.LibretroDroid {
+-keep class com.omnidroid.libretrodroid.ImmersiveMode* { *; }
+-keepclasseswithmembernames class com.omnidroid.libretrodroid.LibretroDroid {
     native <methods>;
 }
 

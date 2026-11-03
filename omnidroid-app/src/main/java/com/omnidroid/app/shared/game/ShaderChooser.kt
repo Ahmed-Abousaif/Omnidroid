@@ -5,7 +5,7 @@ import com.omnidroid.app.shared.settings.HDModeQuality
 import com.omnidroid.app.utils.android.getGLSLVersion
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemID
-import com.swordfish.libretrodroid.ShaderConfig
+import com.omnidroid.libretrodroid.ShaderConfig
 import timber.log.Timber
 
 object ShaderChooser {

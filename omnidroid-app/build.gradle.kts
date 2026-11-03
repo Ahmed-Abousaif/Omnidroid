@@ -638,9 +638,9 @@ dependencies {
 
 
 
-    if (findProject(":libretrodroid") != null) {
+    if (findProject(":omni-libretrodroid") != null) {
 
-        implementation(project(":libretrodroid"))
+        implementation(project(":omni-libretrodroid"))
 
     } else {
 

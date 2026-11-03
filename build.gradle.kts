@@ -36,7 +36,7 @@ allprojects {
 subprojects {
     tasks.matching {
         it.name.contains("AarMetadata") &&
-            !it.path.startsWith(":libretrodroid") &&
+            !it.path.startsWith(":omni-libretrodroid") && !it.path.startsWith(":libretrodroid") &&
             !it.path.startsWith(":omnidroid-chd")
     }.configureEach {
         enabled = false

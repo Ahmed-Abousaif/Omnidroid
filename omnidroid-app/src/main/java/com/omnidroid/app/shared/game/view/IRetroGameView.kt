@@ -7,11 +7,11 @@ import android.view.View
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.omnidroid.common.graphics.takeScreenshot
-import com.swordfish.libretrodroid.Controller
-import com.swordfish.libretrodroid.GLRetroView
-import com.swordfish.libretrodroid.RumbleEvent
-import com.swordfish.libretrodroid.ShaderConfig
-import com.swordfish.libretrodroid.Variable
+import com.omnidroid.libretrodroid.Controller
+import com.omnidroid.libretrodroid.GLRetroView
+import com.omnidroid.libretrodroid.RumbleEvent
+import com.omnidroid.libretrodroid.ShaderConfig
+import com.omnidroid.libretrodroid.Variable
 import kotlinx.coroutines.flow.Flow
 
 /**

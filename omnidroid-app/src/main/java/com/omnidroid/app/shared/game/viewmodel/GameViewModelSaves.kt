@@ -13,7 +13,7 @@ import com.omnidroid.lib.saves.SaveState
 import com.omnidroid.lib.saves.SavesManager
 import com.omnidroid.lib.saves.StatesManager
 import com.omnidroid.lib.saves.StatesPreviewManager
-import com.swordfish.libretrodroid.GLRetroView
+import com.omnidroid.libretrodroid.GLRetroView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
