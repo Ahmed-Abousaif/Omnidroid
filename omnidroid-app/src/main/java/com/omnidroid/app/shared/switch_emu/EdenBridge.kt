@@ -153,8 +153,9 @@ object EdenBridge {
     fun initialize(context: Context, customCoreFile: File? = null) {
         if (isInitialized.compareAndSet(false, true)) {
             FileUtil.init(context)
+            val coreFile: File?
             try {
-                val coreFile = customCoreFile ?: CoreLibraryLocator.find(context, CoreID.SWITCH)
+                coreFile = customCoreFile ?: CoreLibraryLocator.find(context, CoreID.SWITCH)
                 NativeLibrary.load(coreFile)
             } catch (e: Throwable) {
                 Timber.e(e, "Native library yuzu-android could not be loaded")
@@ -169,7 +170,15 @@ object EdenBridge {
             File(switchDir, "cache").mkdirs()
             File(switchDir, "keys").mkdirs()
 
-            val hookLibPath = context.applicationInfo.nativeLibraryDir + "/"
+            val nativeLibDir = File(context.applicationInfo.nativeLibraryDir)
+            val parentDir = coreFile?.parentFile
+            val hookLibPath = if (File(nativeLibDir, "libhook_impl.so").exists()) {
+                nativeLibDir.absolutePath + "/"
+            } else if (parentDir != null && File(parentDir, "libhook_impl.so").exists()) {
+                parentDir.absolutePath + "/"
+            } else {
+                nativeLibDir.absolutePath + "/"
+            }
             val redirectDir = File(switchDir, "gpu_redirect").apply { mkdirs() }.canonicalPath + "/"
             try {
                 Timber.i("Initializing GPU driver with hookLibPath: $hookLibPath")
@@ -204,7 +213,17 @@ object EdenBridge {
 
     fun ensureGpuDriver(context: Context) {
         val switchDir = getSwitchBaseDir(context)
-        val hookLibPath = context.applicationInfo.nativeLibraryDir + "/"
+        val nativeLibDir = File(context.applicationInfo.nativeLibraryDir)
+        val hookLibPath = if (File(nativeLibDir, "libhook_impl.so").exists()) {
+            nativeLibDir.absolutePath + "/"
+        } else {
+            val coreDir = File(context.filesDir, "cores/2.6.0")
+            if (File(coreDir, "libhook_impl.so").exists()) {
+                coreDir.absolutePath + "/"
+            } else {
+                nativeLibDir.absolutePath + "/"
+            }
+        }
         val redirectDir = File(switchDir, "gpu_redirect").apply { mkdirs() }.canonicalPath + "/"
         try {
             Timber.i("Ensuring GPU driver with hookLibPath: $hookLibPath")

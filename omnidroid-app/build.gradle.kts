@@ -210,7 +210,13 @@ android {
 
             keepDebugSymbols += setOf("*/*/libppsspp_libretro_android.so")
 
-            pickFirsts += setOf("**/liblibretrodroid.so")
+            pickFirsts += setOf(
+                "**/liblibretrodroid.so",
+                "**/libfile_redirect_hook.so",
+                "**/libgsl_alloc_hook.so",
+                "**/libhook_impl.so",
+                "**/libmain_hook.so",
+            )
 
             useLegacyPackaging = true
 

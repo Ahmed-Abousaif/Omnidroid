@@ -320,8 +320,11 @@ class BaseGameScreenViewModel(
     ) {
         retroGameView.setLoadingForSwitch("Loading Nintendo Switch core...")
         try {
-            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val coreFile = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 gameLoader.ensureCoreDownloaded(applicationContext, systemCoreConfig.coreID)
+            }
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                com.omnidroid.app.shared.switch_emu.EdenBridge.initialize(applicationContext, coreFile)
             }
             retroGameView.setReadyForSwitch()
         } catch (e: Throwable) {

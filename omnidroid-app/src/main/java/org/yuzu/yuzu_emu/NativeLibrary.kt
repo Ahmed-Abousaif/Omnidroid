@@ -72,7 +72,12 @@ object NativeLibrary {
     @Keep
     @JvmStatic
     fun getParentDirectory(path: String): String {
-        return java.io.File(path).parent ?: ""
+        val rawPath = if (path.startsWith("file://", ignoreCase = true)) {
+            android.net.Uri.parse(path).path ?: path.removePrefix("file://")
+        } else {
+            path
+        }
+        return java.io.File(rawPath).parent ?: ""
     }
 
     @Keep
@@ -120,6 +125,7 @@ object NativeLibrary {
     @JvmStatic
     fun exitEmulationActivity(resultCode: Int) {
         Timber.e("Native callback: exitEmulationActivity resultCode=$resultCode")
+        android.util.Log.e("NativeLibrary", "Native callback: exitEmulationActivity resultCode=$resultCode")
         emulationCallback?.onExitEmulation(resultCode)
     }
 

@@ -362,7 +362,11 @@ class SwitchBackendSession(
             sharedPreferences.getBoolean(asyncPrefKey, true)
         }
 
-        val targetPath = game.fileUri
+        val targetPath = if (game.fileUri.startsWith("file://", ignoreCase = true)) {
+            android.net.Uri.parse(game.fileUri).path ?: game.fileUri
+        } else {
+            game.fileUri
+        }
 
         EdenBridge.startEmulation(
             targetPath,

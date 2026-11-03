@@ -19,11 +19,25 @@ object FileUtil {
     private fun getContext(): Context =
         appContext ?: error("FileUtil appContext not initialized")
 
+    private fun toRawPath(path: String): String {
+        return if (path.startsWith("file://", ignoreCase = true)) {
+            Uri.parse(path).path ?: path.removePrefix("file://")
+        } else {
+            path
+        }
+    }
+
     @JvmStatic
     fun openContentUri(path: String, openMode: String?): Int {
         return try {
             val context = getContext()
-            val uri = Uri.parse(path)
+            val uri = if (path.startsWith("content://", ignoreCase = true)) {
+                Uri.parse(path)
+            } else if (path.startsWith("file://", ignoreCase = true)) {
+                Uri.parse(path)
+            } else {
+                Uri.fromFile(File(path))
+            }
             val pfd = context.contentResolver.openFileDescriptor(uri, openMode ?: "r")
             pfd?.detachFd() ?: -1
         } catch (e: Exception) {
@@ -34,7 +48,7 @@ object FileUtil {
 
     @JvmStatic
     fun getFileSize(path: String): Long {
-        if (path.startsWith("content://")) {
+        if (path.startsWith("content://", ignoreCase = true)) {
             return try {
                 val context = getContext()
                 context.contentResolver.query(Uri.parse(path), null, null, null, null)?.use { cursor ->
@@ -49,13 +63,13 @@ object FileUtil {
                 0L
             }
         }
-        val file = File(path)
+        val file = File(toRawPath(path))
         return if (file.exists()) file.length() else 0L
     }
 
     @JvmStatic
     fun exists(path: String): Boolean {
-        if (path.startsWith("content://")) {
+        if (path.startsWith("content://", ignoreCase = true)) {
             return try {
                 val context = getContext()
                 context.contentResolver.openFileDescriptor(Uri.parse(path), "r")?.use { true } ?: false
@@ -63,12 +77,27 @@ object FileUtil {
                 false
             }
         }
-        return File(path).exists()
+        return File(toRawPath(path)).exists()
     }
 
     @JvmStatic
     fun isDirectory(path: String): Boolean {
-        return File(path).isDirectory
+        if (path.startsWith("content://", ignoreCase = true)) {
+            return try {
+                val context = getContext()
+                val columns = arrayOf(android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE)
+                context.contentResolver.query(Uri.parse(path), columns, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        cursor.getString(0) == android.provider.DocumentsContract.Document.MIME_TYPE_DIR
+                    } else {
+                        false
+                    }
+                } ?: false
+            } catch (e: Exception) {
+                false
+            }
+        }
+        return File(toRawPath(path)).isDirectory
     }
 
     @JvmStatic

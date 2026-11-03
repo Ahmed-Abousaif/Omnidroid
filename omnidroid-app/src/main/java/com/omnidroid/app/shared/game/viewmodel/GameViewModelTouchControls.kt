@@ -220,7 +220,7 @@ class GameViewModelTouchControls(
                     if (event.id == ComposeTouchLayouts.MOTION_SOURCE_DPAD ||
                         event.id == ComposeTouchLayouts.MOTION_SOURCE_DPAD_AND_LEFT_STICK
                     ) {
-                        val (qX, qY) = translateAnalogToDpad(dir.x, -dir.y)
+                        val (qX, qY) = translateAnalogToDpad(dir.x, dir.y)
                         val prev = lastQuantizedDpadDirection
                         if (prev != (qX to qY)) {
                             lastQuantizedDpadDirection = qX to qY
