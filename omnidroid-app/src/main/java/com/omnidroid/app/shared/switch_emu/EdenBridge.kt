@@ -11,6 +11,8 @@ import org.yuzu.yuzu_emu.features.input.model.NativeButton
 import org.yuzu.yuzu_emu.features.input.model.NpadStyleIndex
 import org.yuzu.yuzu_emu.utils.FileUtil
 import org.yuzu.yuzu_emu.utils.NativeConfig
+import com.omnidroid.lib.core.CoreLibraryLocator
+import com.omnidroid.lib.library.CoreID
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
@@ -148,14 +150,16 @@ object EdenBridge {
         }
     }
 
-    fun initialize(context: Context) {
+    fun initialize(context: Context, customCoreFile: File? = null) {
         if (isInitialized.compareAndSet(false, true)) {
             FileUtil.init(context)
             try {
-                NativeLibrary.load()
+                val coreFile = customCoreFile ?: CoreLibraryLocator.find(context, CoreID.SWITCH)
+                NativeLibrary.load(coreFile)
             } catch (e: Throwable) {
                 Timber.e(e, "Native library yuzu-android could not be loaded")
-                return
+                isInitialized.set(false)
+                throw e
             }
 
             val switchDir = getSwitchBaseDir(context).also { cachedSwitchDir = it }
@@ -445,6 +449,11 @@ object EdenBridge {
     ) {
         isDockedMode = docked
         isAsyncShaders = asyncShaders
+        if (!NativeLibrary.isLoaded) {
+            Timber.e("Cannot start Eden emulation: native library is not loaded!")
+            callback.onExitEmulation(-1)
+            return
+        }
         NativeLibrary.emulationCallback = callback
         // NOTE: DO NOT call NativeLibrary.initializeSystem(false) here!
         // initializeSystem(false) was already called once during initialize().

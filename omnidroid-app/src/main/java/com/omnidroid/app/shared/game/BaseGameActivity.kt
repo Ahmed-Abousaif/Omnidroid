@@ -206,7 +206,21 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
         if (descriptor?.id == BackendID.SWITCH) {
 
-            baseGameScreenViewModel.loadSwitchGame(game, systemCoreConfig)
+            lifecycleScope.launch {
+
+                baseGameScreenViewModel.loadSwitchGame(
+
+                    applicationContext,
+
+                    game,
+
+                    systemCoreConfig,
+
+                    gameLoader,
+
+                )
+
+            }
 
         } else {
 

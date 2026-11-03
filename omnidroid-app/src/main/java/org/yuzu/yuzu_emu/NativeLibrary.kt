@@ -20,13 +20,19 @@ object NativeLibrary {
     var isLoaded = false
         private set
 
-    fun load() {
+    fun load(customFile: java.io.File? = null) {
         if (!isLoaded) {
             try {
-                System.loadLibrary("yuzu-android")
+                if (customFile != null && customFile.exists()) {
+                    Timber.i("Loading libyuzu-android.so from path: ${customFile.absolutePath}")
+                    System.load(customFile.absolutePath)
+                } else {
+                    Timber.i("Loading libyuzu-android.so via System.loadLibrary")
+                    System.loadLibrary("yuzu-android")
+                }
                 isLoaded = true
                 Timber.i("libyuzu-android.so loaded successfully")
-            } catch (e: UnsatisfiedLinkError) {
+            } catch (e: Throwable) {
                 Timber.e(e, "Failed to load libyuzu-android.so")
                 throw e
             }

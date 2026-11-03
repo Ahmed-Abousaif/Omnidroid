@@ -46,7 +46,11 @@ class SwitchBackendSession(
 ) : BackendSession, SurfaceHolder.Callback, NativeLibrary.EmulationCallback, IRetroGameView {
 
     init {
-        EdenBridge.initialize(activity.applicationContext)
+        runCatching {
+            EdenBridge.initialize(activity.applicationContext)
+        }.onFailure { e ->
+            Timber.w(e, "EdenBridge initialization deferred in SwitchBackendSession.init")
+        }
     }
 
     private val surfaceView: SurfaceView = SurfaceView(activity).apply {
@@ -326,6 +330,18 @@ class SwitchBackendSession(
         if (!EdenBridge.areKeysPresent(activity)) {
             Timber.w("Switch keys missing when attempting to start emulation")
             return
+        }
+
+        if (!NativeLibrary.isLoaded) {
+            Timber.w("Switch native library not loaded when starting emulation; attempting initialization")
+            runCatching { EdenBridge.initialize(activity.applicationContext) }
+            if (!NativeLibrary.isLoaded) {
+                Timber.e("Switch native library could not be loaded; aborting emulation")
+                activity.runOnUiThread {
+                    onEmulationExit(-1)
+                }
+                return
+            }
         }
 
         isEmulating = true

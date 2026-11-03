@@ -158,6 +158,19 @@ class GameLoader(
             }
         }
 
+    suspend fun ensureCoreDownloaded(
+        context: Context,
+        coreID: CoreID,
+    ): File {
+        val existing = CoreLibraryLocator.find(context, coreID)
+        if (existing != null && existing.exists() && existing.length() > 0L) {
+            return existing
+        }
+        coreUpdater.downloadCores(context, listOf(coreID))
+        return CoreLibraryLocator.find(context, coreID)
+            ?: throw GameLoaderException(GameLoaderError.LoadCore)
+    }
+
     private fun isArchitectureSupported(systemCoreConfig: SystemCoreConfig): Boolean {
         val supportedOnlyArchitectures = systemCoreConfig.supportedOnlyArchitectures ?: return true
         return Build.SUPPORTED_ABIS.toSet().intersect(supportedOnlyArchitectures).isNotEmpty()

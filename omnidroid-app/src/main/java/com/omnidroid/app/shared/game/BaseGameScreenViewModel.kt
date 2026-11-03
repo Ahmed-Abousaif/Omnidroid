@@ -312,10 +312,22 @@ class BaseGameScreenViewModel(
 
     }
 
-    fun loadSwitchGame(game: Game, systemCoreConfig: SystemCoreConfig) {
-
-        retroGameView.setReadyForSwitch()
-
+    suspend fun loadSwitchGame(
+        applicationContext: Context,
+        game: Game,
+        systemCoreConfig: SystemCoreConfig,
+        gameLoader: GameLoader,
+    ) {
+        retroGameView.setLoadingForSwitch("Loading Nintendo Switch core...")
+        try {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                gameLoader.ensureCoreDownloaded(applicationContext, systemCoreConfig.coreID)
+            }
+            retroGameView.setReadyForSwitch()
+        } catch (e: Throwable) {
+            Timber.e(e, "Failed to load Nintendo Switch core")
+            sideEffects.requestFailureFinish(e.message ?: "Failed to load Nintendo Switch core")
+        }
     }
 
     fun createGameView(

@@ -69,6 +69,8 @@ class GithubCoreDownloader(
             destFile.safeDelete()
             throw Exception("Downloaded core file was empty")
         }
+        destFile.setReadable(true, false)
+        destFile.setExecutable(true, false)
     }
 
     private fun deleteOutdatedCores(mainCoresDirectory: File) {
