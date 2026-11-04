@@ -14,9 +14,9 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Added frontend intent support to launch games directly from frontends like Daijishō, Pegasus, and Beacon (ES-DE WIP)
 - Added "Open with" file manager support for ROM files and zip archives, with automatic console detection and instant booting without prior library scanning
 - Added Android TV Leanback launcher integration and home screen preview channels for recently played games
-- Added a console library view, with a cover carousel in portrait and the selected game's cover, title, and start actions in landscape
+- Added a console library view, with a cover carousel in portrait and the selected game's cover, title, and start actions in landscape ([#17](https://github.com/Ahmed-Abousaif/Omnidroid/issues/17)) (_Deus0_)
 - Added library sorting by name, console, recently played, and favorites, plus a button to play a random game
-- Added light mode with a cool gray chrome theme; switch under Display settings (library, settings, profile, and game menus follow the theme; in-game view and gamepad binding stay dark)
+- Added light mode with a cool gray chrome theme; switch under Display settings (library, settings, profile, and game menus follow the theme; in-game view and gamepad binding stay dark) ([#33](https://github.com/Ahmed-Abousaif/Omnidroid/issues/33)) (_Deus0_)
 - Fixed GameCube and Wii `.rvz` games crashing on launch by opening them from a real file instead of the virtual filesystem ([#19](https://github.com/Ahmed-Abousaif/Omnidroid/issues/19)) (_Deus0_)
 - Fixed PlayStation 2 BIOS downloads not installing, and a failed download is shown in BIOS settings
 - Fixed the d-pad analog emulation up-down flipped issue (_u/Separate-Bluebird30_)
