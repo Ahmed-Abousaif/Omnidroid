@@ -8,20 +8,21 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ### v2.6.0
 
-- Added a console library view, with a cover carousel in portrait and the selected game's cover, title, and start actions in landscape
-- Added library sorting by name, console, recently played, and favorites, plus a button to play a random game
-- The game settings sidebar shows the full title and the cover without cropping
-- Library chrome and in-game controls sit closer to display cutouts
-- Fixed PlayStation 2 BIOS downloads not installing, and a failed download is shown in BIOS settings
-- Fixed GameCube and Wii `.rvz` games crashing on launch by opening them from a real file instead of the virtual filesystem ([#19](https://github.com/Ahmed-Abousaif/Omnidroid/issues/19)) (_Deus0_)
+- Added Nintendo Switch emulation support via Eden with native Vulkan acceleration, docked/handheld modes, resolution scaling, in-game asynchronous shaders toggle, touch/gamepad controls, and prod.keys & optional system firmware import
+- Added multi-tier save and state migration from Lemuroid: automatic 1-tap migration when accessible on device (with live save/state count detection), uncompressed folder import via SAF, lenient ZIP backup import, and in-app migration guide (_u/Kwametoure1_)
+- Unified Saves & Backup settings across all builds (GitHub free and Google Play), adding local storage calculation, conflict resolution, and SAF folder import
 - Added frontend intent support to launch games directly from frontends like Daijishō, Pegasus, and Beacon (ES-DE WIP)
 - Added "Open with" file manager support for ROM files and zip archives, with automatic console detection and instant booting without prior library scanning
 - Added Android TV Leanback launcher integration and home screen preview channels for recently played games
-- Added multi-tier save and state migration from Lemuroid: automatic 1-tap migration when accessible on device (with live save/state count detection), uncompressed folder import via SAF, lenient ZIP backup import, and in-app migration guide (_u/Kwametoure1_)
-- Unified Saves & Backup settings across all builds (GitHub free and Google Play), adding local storage calculation, conflict resolution, and SAF folder import
-- Added Nintendo Switch emulation support via Eden with native Vulkan acceleration, docked/handheld modes, resolution scaling, in-game asynchronous shaders toggle, touch/gamepad controls, and prod.keys & optional system firmware import
+- Added a console library view, with a cover carousel in portrait and the selected game's cover, title, and start actions in landscape
+- Added library sorting by name, console, recently played, and favorites, plus a button to play a random game
+- Added light mode with a cool gray chrome theme; switch under Display settings (library, settings, profile, and game menus follow the theme; in-game view and gamepad binding stay dark)
+- Fixed GameCube and Wii `.rvz` games crashing on launch by opening them from a real file instead of the virtual filesystem ([#19](https://github.com/Ahmed-Abousaif/Omnidroid/issues/19)) (_Deus0_)
+- Fixed PlayStation 2 BIOS downloads not installing, and a failed download is shown in BIOS settings
+- Fixed the d-pad analog emulation up-down flipped issue (_u/Separate-Bluebird30_)
+- The game settings sidebar shows the full title and the cover without cropping
+- Library chrome and in-game controls sit closer to display cutouts
 - Removed RAWG support given it's not a method that fits the goals of this app
-- fixed the d-pad analog emulation up-down flipped issue (\_u/Separate-Bluebird30)
 
 ### v2.5.4
 

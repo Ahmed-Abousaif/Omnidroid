@@ -64,46 +64,23 @@
             android:noHistory="true"
             android:stateNotNeeded="true"
             android:theme="@style/OmnidroidMaterialTheme.Invisible">
-            <!-- Filter A: ACTION_VIEW + CATEGORY_DEFAULT + BROWSABLE, schemes content and file, no mimeType (Daijishō / File Managers) -->
+            <!-- Open-with: game ROM/disc extensions only (no catch-all scheme/MIME filters). -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="content" />
                 <data android:scheme="file" />
-            </intent-filter>
-            <!-- Filter B: ACTION_VIEW + CATEGORY_DEFAULT + BROWSABLE, schemes content and file, mimeType application/octet-stream (PPSSPP/ES-DE / Binary File Managers) -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="content" android:mimeType="application/octet-stream" />
-                <data android:scheme="file" android:mimeType="application/octet-stream" />
-            </intent-filter>
-            <!-- Filter C: Archives / Compressed ROMs for file manager "Open with" (application/zip, etc.) -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="content" android:mimeType="application/zip" />
-                <data android:scheme="file" android:mimeType="application/zip" />
-                <data android:scheme="content" android:mimeType="application/x-zip" />
-                <data android:scheme="file" android:mimeType="application/x-zip" />
-                <data android:scheme="content" android:mimeType="application/x-zip-compressed" />
-                <data android:scheme="file" android:mimeType="application/x-zip-compressed" />
-                <data android:scheme="content" android:mimeType="application/x-7z-compressed" />
-                <data android:scheme="file" android:mimeType="application/x-7z-compressed" />
-                <data android:scheme="content" android:mimeType="application/x-iso9660-image" />
-                <data android:scheme="file" android:mimeType="application/x-iso9660-image" />
-            </intent-filter>
-            <!-- Filter D: Specific ROM file extensions for Android File Managers ("Open with" wildcard mimeType) -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="content" />
-                <data android:scheme="file" />
-                <data android:mimeType="*/*" />
+
+                <!-- Archives used as ROM containers -->
+                <data android:pathSuffix=".zip" />
+                <data android:pathSuffix=".ZIP" />
+                <data android:pathSuffix=".7z" />
+                <data android:pathSuffix=".7Z" />
+                <data android:pathPattern=".*\\.zip" />
+                <data android:pathPattern=".*\\.ZIP" />
+                <data android:pathPattern=".*\\.7z" />
+                <data android:pathPattern=".*\\.7Z" />
 
                 <!-- Nintendo Switch (.nsp, .xci) -->
                 <data android:pathSuffix=".nsp" />
@@ -226,10 +203,10 @@
                 <data android:pathSuffix=".Z64" />
                 <data android:pathSuffix=".v64" />
                 <data android:pathSuffix=".V64" />
-                <data android:pathSuffix=".md" />
-                <data android:pathSuffix=".MD" />
                 <data android:pathSuffix=".gen" />
                 <data android:pathSuffix=".GEN" />
+                <data android:pathSuffix=".smd" />
+                <data android:pathSuffix=".SMD" />
                 <data android:pathPattern=".*\\.nes" />
                 <data android:pathPattern=".*\\.NES" />
                 <data android:pathPattern=".*\\.snes" />
@@ -252,162 +229,10 @@
                 <data android:pathPattern=".*\\.Z64" />
                 <data android:pathPattern=".*\\.v64" />
                 <data android:pathPattern=".*\\.V64" />
-                <data android:pathPattern=".*\\.md" />
-                <data android:pathPattern=".*\\.MD" />
                 <data android:pathPattern=".*\\.gen" />
                 <data android:pathPattern=".*\\.GEN" />
-            </intent-filter>
-            <!-- Filter E: Specific ROM file extensions without MIME type -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="content" />
-                <data android:scheme="file" />
-
-                <!-- Nintendo Switch (.nsp, .xci) -->
-                <data android:pathSuffix=".nsp" />
-                <data android:pathSuffix=".NSP" />
-                <data android:pathSuffix=".xci" />
-                <data android:pathSuffix=".XCI" />
-                <data android:pathPattern=".*\\.nsp" />
-                <data android:pathPattern=".*\\.NSP" />
-                <data android:pathPattern=".*\\.xci" />
-                <data android:pathPattern=".*\\.XCI" />
-
-                <!-- Nintendo Wii U (.wux, .wud, .wua, .rpx) -->
-                <data android:pathSuffix=".wux" />
-                <data android:pathSuffix=".WUX" />
-                <data android:pathSuffix=".wud" />
-                <data android:pathSuffix=".WUD" />
-                <data android:pathSuffix=".wua" />
-                <data android:pathSuffix=".WUA" />
-                <data android:pathSuffix=".rpx" />
-                <data android:pathSuffix=".RPX" />
-                <data android:pathPattern=".*\\.wux" />
-                <data android:pathPattern=".*\\.WUX" />
-                <data android:pathPattern=".*\\.wud" />
-                <data android:pathPattern=".*\\.WUD" />
-                <data android:pathPattern=".*\\.wua" />
-                <data android:pathPattern=".*\\.WUA" />
-                <data android:pathPattern=".*\\.rpx" />
-                <data android:pathPattern=".*\\.RPX" />
-
-                <!-- Nintendo 3DS (.3ds, .cia, .3dsx, .cci, .cxi) -->
-                <data android:pathSuffix=".3ds" />
-                <data android:pathSuffix=".3DS" />
-                <data android:pathSuffix=".cia" />
-                <data android:pathSuffix=".CIA" />
-                <data android:pathSuffix=".3dsx" />
-                <data android:pathSuffix=".3DSX" />
-                <data android:pathSuffix=".cci" />
-                <data android:pathSuffix=".CCI" />
-                <data android:pathSuffix=".cxi" />
-                <data android:pathSuffix=".CXI" />
-                <data android:pathPattern=".*\\.3ds" />
-                <data android:pathPattern=".*\\.3DS" />
-                <data android:pathPattern=".*\\.cia" />
-                <data android:pathPattern=".*\\.CIA" />
-                <data android:pathPattern=".*\\.3dsx" />
-                <data android:pathPattern=".*\\.3DSX" />
-                <data android:pathPattern=".*\\.cci" />
-                <data android:pathPattern=".*\\.CCI" />
-                <data android:pathPattern=".*\\.cxi" />
-                <data android:pathPattern=".*\\.CXI" />
-
-                <!-- Nintendo GameCube / Wii (.rvz, .wia, .gcz, .wbfs, .gcm, .wad) -->
-                <data android:pathSuffix=".rvz" />
-                <data android:pathSuffix=".RVZ" />
-                <data android:pathSuffix=".wia" />
-                <data android:pathSuffix=".WIA" />
-                <data android:pathSuffix=".gcz" />
-                <data android:pathSuffix=".GCZ" />
-                <data android:pathSuffix=".wbfs" />
-                <data android:pathSuffix=".WBFS" />
-                <data android:pathSuffix=".gcm" />
-                <data android:pathSuffix=".GCM" />
-                <data android:pathSuffix=".wad" />
-                <data android:pathSuffix=".WAD" />
-                <data android:pathPattern=".*\\.rvz" />
-                <data android:pathPattern=".*\\.RVZ" />
-                <data android:pathPattern=".*\\.wia" />
-                <data android:pathPattern=".*\\.WIA" />
-                <data android:pathPattern=".*\\.gcz" />
-                <data android:pathPattern=".*\\.GCZ" />
-                <data android:pathPattern=".*\\.wbfs" />
-                <data android:pathPattern=".*\\.WBFS" />
-                <data android:pathPattern=".*\\.gcm" />
-                <data android:pathPattern=".*\\.GCM" />
-                <data android:pathPattern=".*\\.wad" />
-                <data android:pathPattern=".*\\.WAD" />
-
-                <!-- Disc & Optical ROM formats (.iso, .cso, .chd, .pbp, .cue) -->
-                <data android:pathSuffix=".iso" />
-                <data android:pathSuffix=".ISO" />
-                <data android:pathSuffix=".cso" />
-                <data android:pathSuffix=".CSO" />
-                <data android:pathSuffix=".chd" />
-                <data android:pathSuffix=".CHD" />
-                <data android:pathSuffix=".pbp" />
-                <data android:pathSuffix=".PBP" />
-                <data android:pathSuffix=".cue" />
-                <data android:pathSuffix=".CUE" />
-                <data android:pathPattern=".*\\.iso" />
-                <data android:pathPattern=".*\\.ISO" />
-                <data android:pathPattern=".*\\.cso" />
-                <data android:pathPattern=".*\\.CSO" />
-                <data android:pathPattern=".*\\.chd" />
-                <data android:pathPattern=".*\\.CHD" />
-                <data android:pathPattern=".*\\.pbp" />
-                <data android:pathPattern=".*\\.PBP" />
-                <data android:pathPattern=".*\\.cue" />
-                <data android:pathPattern=".*\\.CUE" />
-
-                <!-- Classic Cartridge ROM formats -->
-                <data android:pathSuffix=".nes" />
-                <data android:pathSuffix=".NES" />
-                <data android:pathSuffix=".snes" />
-                <data android:pathSuffix=".SNES" />
-                <data android:pathSuffix=".smc" />
-                <data android:pathSuffix=".SMC" />
-                <data android:pathSuffix=".sfc" />
-                <data android:pathSuffix=".SFC" />
-                <data android:pathSuffix=".gba" />
-                <data android:pathSuffix=".GBA" />
-                <data android:pathSuffix=".gbc" />
-                <data android:pathSuffix=".GBC" />
-                <data android:pathSuffix=".gb" />
-                <data android:pathSuffix=".GB" />
-                <data android:pathSuffix=".nds" />
-                <data android:pathSuffix=".NDS" />
-                <data android:pathSuffix=".n64" />
-                <data android:pathSuffix=".N64" />
-                <data android:pathSuffix=".z64" />
-                <data android:pathSuffix=".Z64" />
-                <data android:pathSuffix=".v64" />
-                <data android:pathSuffix=".V64" />
-                <data android:pathPattern=".*\\.nes" />
-                <data android:pathPattern=".*\\.NES" />
-                <data android:pathPattern=".*\\.snes" />
-                <data android:pathPattern=".*\\.SNES" />
-                <data android:pathPattern=".*\\.smc" />
-                <data android:pathPattern=".*\\.SMC" />
-                <data android:pathPattern=".*\\.sfc" />
-                <data android:pathPattern=".*\\.SFC" />
-                <data android:pathPattern=".*\\.gba" />
-                <data android:pathPattern=".*\\.GBA" />
-                <data android:pathPattern=".*\\.gbc" />
-                <data android:pathPattern=".*\\.GBC" />
-                <data android:pathPattern=".*\\.gb" />
-                <data android:pathPattern=".*\\.GB" />
-                <data android:pathPattern=".*\\.nds" />
-                <data android:pathPattern=".*\\.NDS" />
-                <data android:pathPattern=".*\\.n64" />
-                <data android:pathPattern=".*\\.N64" />
-                <data android:pathPattern=".*\\.z64" />
-                <data android:pathPattern=".*\\.Z64" />
-                <data android:pathPattern=".*\\.v64" />
-                <data android:pathPattern=".*\\.V64" />
+                <data android:pathPattern=".*\\.smd" />
+                <data android:pathPattern=".*\\.SMD" />
             </intent-filter>
         </activity>
 

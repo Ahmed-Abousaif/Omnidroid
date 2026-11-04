@@ -73,6 +73,7 @@ If Omnidroid helps you play, you can fuel continued development here:
 - 🌋 **Native Vulkan & OpenGL ES Engine:** Powered by our custom [omni-libretrodroid](https://github.com/Ahmed-Abousaif/omni-libretrodroid) native C++ engine with per-system graphics API switching (Vulkan, GLES 2/3, Software) for rock-solid 60 FPS performance and reduced thermal throttling.
 - 🎮 **Controller-First Navigation:** Seamless navigation across the entire app (library, search, consoles, settings, game pages) using physical gamepads with focus glow and button hint bars.
 - 📱 **Handheld & Phone UI:** Fluid landscape and portrait modes with dedicated layouts for handhelds (Retroid, Odin, ANBERNIC), phones, tablets, and Android TV.
+- ☀️ **Light & Dark Themes:** Switch between dark and light mode in Display settings — library, settings, profile, and game menus follow a cool gray chrome theme; in-game view and gamepad binding stay dark for play focus.
 - 🚀 **Frontend & File Manager Integration:** Exported launcher activity for external frontends (Daijishō, Pegasus, Beacon) and direct "Open With" file manager launching for ROMs and archives without requiring a prior library scan.
 - 📚 **Console Carousel & Library Sorting:** Dedicated console views with a portrait cover carousel, landscape details pane, flexible sorting (name, console, recently played, favorites), and random game selection.
 - 🔄 **Saves Backup & Lemuroid Migration:** Multi-tier save and state migration from Lemuroid (automatic 1-tap direct migration, uncompressed folder import via SAF, and lenient ZIP backup import), plus multi-provider cloud sync (**Google Drive**, **Dropbox**, **OneDrive**) with full conflict resolution.
@@ -170,6 +171,7 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 - **Dual Layout Engines:** Switch seamlessly between **Grid View** (with dynamic zoom slider based on screen height) and a compact **List View**.
 - **Landscape Navigation:** Dedicated sidebar for quick navigation between All Games, Favorites, and specific consoles, showing uncropped covers and titles.
 - **Startup Screen Selector:** Choose what Omnidroid opens to on launch (All Games, Favorites, or a favorite console).
+- **Light & Dark Mode:** Theme preference under Display settings applies instantly across library chrome, settings, profile, dialogs, and game menus (in-game view and gamepad screens remain dark).
 - **Home Screen Launcher:** Set Omnidroid as your Android device's default launcher for a dedicated console feel.
 - **System Telemetry:** Live on-screen battery percentage, Wi-Fi/mobile network status, and connected gamepads right on the top bar.
 </details>
