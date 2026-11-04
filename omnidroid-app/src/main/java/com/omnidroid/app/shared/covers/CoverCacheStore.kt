@@ -293,10 +293,10 @@ class CoverCacheStore(
 
     companion object {
         const val COVER_CACHE_DIR = "cover_cache"
-        const val SETTINGS_VERSION = 2
-        const val GRID_MAX_EDGE = 512
+        const val SETTINGS_VERSION = 3
+        const val GRID_MAX_EDGE = 480
         const val DETAIL_MAX_EDGE = 768
-        const val WEBP_QUALITY = 88
+        const val WEBP_QUALITY = 85
         const val JPEG_QUALITY = 90
         const val WEBP_SLOW_MS = 250L
         const val MAX_CACHE_BYTES = 300L * 1024L * 1024L
