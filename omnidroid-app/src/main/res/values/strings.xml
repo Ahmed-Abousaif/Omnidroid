@@ -329,7 +329,7 @@
     <string name="settings_save_sync_import">Import backup</string>
     <string name="settings_save_sync_import_description">Merge a Omnidroid backup zip into this device</string>
     <string name="settings_save_sync_import_folder">Import from folder</string>
-    <string name="settings_save_sync_import_folder_description">Import saves and states from an uncompressed folder (SD card, USB, or Downloads)</string>
+    <string name="settings_save_sync_import_folder_description">Import saves and states from an uncompressed folder (SD card, USB, or Downloads). Battery saves as .sav (PizzaBoy, My Boy!, etc.) are converted to .srm automatically</string>
     <string name="settings_save_sync_migrate_lemuroid">Migrate from Lemuroid</string>
     <string name="settings_save_sync_migrate_lemuroid_detected">Detected %1$d saves and %2$d states in Lemuroid. Tap to migrate automatically.</string>
     <string name="settings_save_sync_migrate_lemuroid_confirm_title">Migrate from Lemuroid?</string>

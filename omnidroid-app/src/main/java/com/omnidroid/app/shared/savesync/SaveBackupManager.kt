@@ -156,61 +156,80 @@ class SaveBackupManager(
     /**
      * Resolves an arbitrary path inside a ZIP or folder into a target folder & relative path.
      * Supports standard Omnidroid backups, raw Lemuroid dumps (com.swordfish.lemuroid/files/...),
-     * subfolders, and loose .srm / .state files.
+     * subfolders, and loose .srm / .sav / .state files.
+     *
+     * Standalone emulator battery saves (PizzaBoy, My Boy!, mGBA, etc.) commonly use `.sav`.
+     * Omnidroid/RetroArch use `.srm` for the same raw SRAM data, so `.sav` is rewritten to `.srm`
+     * on import.
      */
     private fun resolveDestination(name: String): Pair<CloudSaveFolder, String>? {
         val normalized = name.replace('\\', '/').trimStart('/')
 
-        return when {
-            normalized.startsWith("saves/") ->
-                CloudSaveFolder.SAVES to normalized.substringAfter("saves/")
-            normalized.contains("/saves/") ->
-                CloudSaveFolder.SAVES to normalized.substringAfter("/saves/")
+        val destination =
+            when {
+                normalized.startsWith("saves/") ->
+                    CloudSaveFolder.SAVES to normalized.substringAfter("saves/")
+                normalized.contains("/saves/") ->
+                    CloudSaveFolder.SAVES to normalized.substringAfter("/saves/")
 
-            normalized.startsWith("states/") ->
-                CloudSaveFolder.STATES to normalized.substringAfter("states/")
-            normalized.contains("/states/") ->
-                CloudSaveFolder.STATES to normalized.substringAfter("/states/")
+                normalized.startsWith("states/") ->
+                    CloudSaveFolder.STATES to normalized.substringAfter("states/")
+                normalized.contains("/states/") ->
+                    CloudSaveFolder.STATES to normalized.substringAfter("/states/")
 
-            normalized.startsWith("state-previews/") ->
-                CloudSaveFolder.STATE_PREVIEWS to normalized.substringAfter("state-previews/")
-            normalized.contains("/state-previews/") ->
-                CloudSaveFolder.STATE_PREVIEWS to normalized.substringAfter("/state-previews/")
+                normalized.startsWith("state-previews/") ->
+                    CloudSaveFolder.STATE_PREVIEWS to normalized.substringAfter("state-previews/")
+                normalized.contains("/state-previews/") ->
+                    CloudSaveFolder.STATE_PREVIEWS to normalized.substringAfter("/state-previews/")
 
-            normalized.startsWith("profile/") ->
-                CloudSaveFolder.PROFILE to normalized.substringAfter("profile/")
-            normalized.contains("/profile/") ->
-                CloudSaveFolder.PROFILE to normalized.substringAfter("/profile/")
+                normalized.startsWith("profile/") ->
+                    CloudSaveFolder.PROFILE to normalized.substringAfter("profile/")
+                normalized.contains("/profile/") ->
+                    CloudSaveFolder.PROFILE to normalized.substringAfter("/profile/")
 
-            normalized.endsWith(".srm", ignoreCase = true) || normalized.endsWith(".sav", ignoreCase = true) ->
-                CloudSaveFolder.SAVES to normalized.substringAfterLast('/')
+                normalized.endsWith(".srm", ignoreCase = true) ||
+                    normalized.endsWith(".sav", ignoreCase = true) ->
+                    CloudSaveFolder.SAVES to normalized.substringAfterLast('/')
 
-            normalized.endsWith(".state", ignoreCase = true) ||
-                normalized.endsWith(".state.metadata", ignoreCase = true) ||
-                normalized.matches(Regex(""".*\.slot[0-9]+(\.metadata)?""")) -> {
-                val parts = normalized.split('/')
-                if (parts.size >= 2) {
-                    val core = parts[parts.size - 2]
-                    val fileName = parts.last()
-                    CloudSaveFolder.STATES to "$core/$fileName"
-                } else {
-                    null
+                normalized.endsWith(".state", ignoreCase = true) ||
+                    normalized.endsWith(".state.metadata", ignoreCase = true) ||
+                    normalized.matches(Regex(""".*\.slot[0-9]+(\.metadata)?""")) -> {
+                    val parts = normalized.split('/')
+                    if (parts.size >= 2) {
+                        val core = parts[parts.size - 2]
+                        val fileName = parts.last()
+                        CloudSaveFolder.STATES to "$core/$fileName"
+                    } else {
+                        null
+                    }
                 }
-            }
 
-            normalized.endsWith(".jpg", ignoreCase = true) -> {
-                val parts = normalized.split('/')
-                if (parts.size >= 2) {
-                    val core = parts[parts.size - 2]
-                    val fileName = parts.last()
-                    CloudSaveFolder.STATE_PREVIEWS to "$core/$fileName"
-                } else {
-                    null
+                normalized.endsWith(".jpg", ignoreCase = true) -> {
+                    val parts = normalized.split('/')
+                    if (parts.size >= 2) {
+                        val core = parts[parts.size - 2]
+                        val fileName = parts.last()
+                        CloudSaveFolder.STATE_PREVIEWS to "$core/$fileName"
+                    } else {
+                        null
+                    }
                 }
-            }
 
-            else -> null
+                else -> null
+            } ?: return null
+
+        val (folder, relative) = destination
+        return if (folder == CloudSaveFolder.SAVES) {
+            folder to promoteSavExtensionToSrm(relative)
+        } else {
+            destination
         }
+    }
+
+    /** Battery saves from many standalone emulators use `.sav`; Omnidroid expects `.srm`. */
+    private fun promoteSavExtensionToSrm(relativePath: String): String {
+        if (!relativePath.endsWith(".sav", ignoreCase = true)) return relativePath
+        return relativePath.dropLast(4) + ".srm"
     }
 
     private fun getFileNameFromUri(uri: Uri): String? {

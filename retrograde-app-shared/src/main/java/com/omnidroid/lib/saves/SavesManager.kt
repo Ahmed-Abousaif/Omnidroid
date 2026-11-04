@@ -22,8 +22,18 @@ class SavesManager(private val directoriesManager: DirectoriesManager) {
                     if (saveFile.exists() && saveFile.length() > 0) {
                         saveFile.readBytes()
                     } else {
-                        val savesMigrator = systemCoreConfig.getSavesMigrator()
-                        savesMigrator?.loadPreviousSaveForGame(game, directoriesManager)
+                        // Standalone emulators (PizzaBoy, My Boy!, mGBA, …) often use .sav for
+                        // the same SRAM payload RetroArch/Omnidroid store as .srm. Promote on
+                        // first load so cloud sync and later launches use the canonical name.
+                        val legacySav = getSaveFile(getLegacySaveRAMFileName(game))
+                        if (legacySav.exists() && legacySav.length() > 0) {
+                            val bytes = legacySav.readBytes()
+                            saveFile.writeBytesAtomic(bytes)
+                            bytes
+                        } else {
+                            val savesMigrator = systemCoreConfig.getSavesMigrator()
+                            savesMigrator?.loadPreviousSaveForGame(game, directoriesManager)
+                        }
                     }
                 }
             result.getOrNull()
@@ -51,8 +61,13 @@ class SavesManager(private val directoriesManager: DirectoriesManager) {
     suspend fun getSaveRAMInfo(game: Game): SaveInfo {
         return withContext(Dispatchers.IO) {
             val saveFile = getSaveFile(getSaveRAMFileName(game))
-            val fileExists = saveFile.exists() && saveFile.length() > 0
-            SaveInfo(fileExists, saveFile.lastModified())
+            if (saveFile.exists() && saveFile.length() > 0) {
+                SaveInfo(true, saveFile.lastModified())
+            } else {
+                val legacySav = getSaveFile(getLegacySaveRAMFileName(game))
+                val fileExists = legacySav.exists() && legacySav.length() > 0
+                SaveInfo(fileExists, legacySav.lastModified())
+            }
         }
     }
 
@@ -65,6 +80,9 @@ class SavesManager(private val directoriesManager: DirectoriesManager) {
 
     /** This name should make it compatible with RetroArch so that users can freely sync saves across the two application. */
     private fun getSaveRAMFileName(game: Game) = "${game.fileName.substringBeforeLast(".")}.srm"
+
+    /** Battery-save naming used by many standalone GBA/GB emulators. */
+    private fun getLegacySaveRAMFileName(game: Game) = "${game.fileName.substringBeforeLast(".")}.sav"
 
     companion object {
         private const val FILE_ACCESS_RETRIES = 3
