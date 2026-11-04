@@ -45,6 +45,33 @@ interface GameDao {
     @Query("SELECT * FROM games")
     suspend fun selectAll(): List<Game>
 
+    @Query("SELECT * FROM games")
+    fun selectAllBlocking(): List<Game>
+
+    @Query("SELECT * FROM games ORDER BY title ASC, id DESC LIMIT :limit OFFSET :offset")
+    fun selectPage(offset: Int, limit: Int): List<Game>
+
+    @Query("SELECT COUNT(*) FROM games")
+    fun countAll(): Int
+
+    @Query("SELECT * FROM games WHERE isAvailable = 0")
+    fun selectUnavailable(): List<Game>
+
+    @Query("UPDATE games SET isAvailable = 0 WHERE isAvailable = 1")
+    fun markAllUnavailable()
+
+    @Query("UPDATE games SET isAvailable = 0 WHERE id IN (:ids)")
+    fun markUnavailable(ids: List<Int>)
+
+    @Query("UPDATE games SET isAvailable = 1 WHERE id IN (:ids)")
+    fun markAvailable(ids: List<Int>)
+
+    @Query("DELETE FROM games WHERE isAvailable = 0")
+    fun deleteUnavailable()
+
+    @Query("SELECT COUNT(*) FROM games WHERE isAvailable = 0")
+    fun countUnavailable(): Int
+
     @Query("SELECT * FROM games WHERE fileUri = :fileUri")
     fun selectByFileUri(fileUri: String): Game?
 

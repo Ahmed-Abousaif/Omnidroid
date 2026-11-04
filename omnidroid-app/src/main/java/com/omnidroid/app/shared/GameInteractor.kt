@@ -44,6 +44,10 @@ class GameInteractor(
         if (!ensureNotBusy()) {
             return
         }
+        if (!game.isAvailable) {
+            activity.activity().displayToast(R.string.game_unavailable)
+            return
+        }
         withNotificationsPermission {
             gameLauncher.launchGameAsync(activity.activity(), game, true, useLeanback)
         }
@@ -51,6 +55,10 @@ class GameInteractor(
 
     fun onGameRestart(game: Game) {
         if (!ensureNotBusy()) {
+            return
+        }
+        if (!game.isAvailable) {
+            activity.activity().displayToast(R.string.game_unavailable)
             return
         }
         withNotificationsPermission {

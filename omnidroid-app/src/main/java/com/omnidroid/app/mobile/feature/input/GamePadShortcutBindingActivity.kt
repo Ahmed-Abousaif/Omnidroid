@@ -33,7 +33,7 @@ class GamePadShortcutBindingActivity : RetrogradeComponentActivity() {
         shortcutBindingUpdater = ShortcutBindingUpdater(inputDeviceManager, intent)
 
         setContent {
-            AppTheme {
+            AppTheme(followUserPreference = false) {
                 val focusRequester = remember { FocusRequester() }
 
                 AlertDialog(

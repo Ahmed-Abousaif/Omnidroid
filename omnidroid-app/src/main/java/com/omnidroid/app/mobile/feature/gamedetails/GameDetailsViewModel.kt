@@ -69,6 +69,16 @@ class GameDetailsViewModel(
             metadataFlow.value = GameRemoteMetadata()
             loadingMetadataFlow.value = false
         }
+        viewModelScope.launch {
+            retrogradeDb.gameDao().observeById(gameId).collect { game ->
+                val url = game?.coverFrontUrl ?: return@collect
+                if (url.isBlank()) return@collect
+                runCatching {
+                    com.omnidroid.app.shared.covers.CoverUtils.coverCache(appContext)
+                        .ensureDetail(game.id, url)
+                }
+            }
+        }
     }
 
     fun toggleTrailer() {

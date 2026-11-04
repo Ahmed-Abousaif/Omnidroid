@@ -146,6 +146,8 @@ object OmnidroidApplicationModule {
                 Migrations.VERSION_12_13,
                 Migrations.VERSION_13_14,
                 Migrations.VERSION_14_15,
+                Migrations.VERSION_15_16,
+                Migrations.VERSION_16_17,
             )
             .fallbackToDestructiveMigration()
             .build()
@@ -162,10 +164,21 @@ object OmnidroidApplicationModule {
 
     @Provides
     @Singleton
+    fun safDirectorySkipCache(
+        db: RetrogradeDatabase,
+        @ApplicationContext context: Context,
+    ) = com.omnidroid.lib.library.scan.SafDirectorySkipCache(
+        db.scanDirectoryDao(),
+        SharedPreferencesHelper.getSharedPreferences(context),
+    )
+
+    @Provides
+    @Singleton
     @IntoSet
     fun localSAFStorageProvider(
         @ApplicationContext context: Context,
-    ): StorageProvider = StorageAccessFrameworkProvider(context)
+        skipCache: com.omnidroid.lib.library.scan.SafDirectorySkipCache,
+    ): StorageProvider = StorageAccessFrameworkProvider(context, skipCache)
 
     @Provides
     @Singleton
@@ -189,6 +202,7 @@ object OmnidroidApplicationModule {
         storageProviderRegistry: Lazy<StorageProviderRegistry>,
         gameMetadataProvider: Lazy<GameMetadataProvider>,
         biosManager: BiosManager,
+        directoriesManager: DirectoriesManager,
         @ApplicationContext context: Context,
     ) = OmnidroidLibrary(
         db,
@@ -196,6 +210,7 @@ object OmnidroidApplicationModule {
         gameMetadataProvider,
         biosManager,
         SliceStampStore(SharedPreferencesHelper.getLegacySharedPreferences(context)),
+        directoriesManager,
     )
 
     @Provides

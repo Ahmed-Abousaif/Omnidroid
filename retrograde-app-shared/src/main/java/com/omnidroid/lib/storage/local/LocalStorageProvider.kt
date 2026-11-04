@@ -57,8 +57,15 @@ class LocalStorageProvider(
 
     override val enabledByDefault = true
 
-    override fun listBaseStorageFiles(): Flow<List<BaseStorageFile>> =
+    override fun listBaseStorageFiles(
+        options: com.omnidroid.lib.storage.StorageListOptions,
+    ): Flow<List<BaseStorageFile>> =
         walkDirectory(getExternalFolder() ?: directoriesManager.getInternalRomsDirectory())
+
+    override fun isLibraryRootReadable(): Boolean {
+        val root = getExternalFolder() ?: directoriesManager.getInternalRomsDirectory()
+        return root.exists() && root.canRead()
+    }
 
     override fun openRandomAccess(uri: Uri): RandomAccessBytes? = ChannelBytes.open(context, uri)
 

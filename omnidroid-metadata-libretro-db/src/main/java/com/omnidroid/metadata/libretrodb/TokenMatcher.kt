@@ -5,7 +5,12 @@ internal object TokenMatcher {
         setOf("the", "a", "an", "and", "of", "in", "to", "for", "with", "super", "ultra", "mega", "new")
 
     fun selectSignificantToken(query: String): String? {
-        val tokens = tokenize(query).filter { it.length >= 3 }
+        // Ignore parenthetical/tag fragments like "(usa" or "(enfres)" so region
+        // dumps don't pick a useless token and miss the real title match.
+        val tokens =
+            tokenize(query).filter { token ->
+                token.length >= 3 && token.all { it.isLetterOrDigit() || it == '\'' }
+            }
         return tokens.filterNot { it in STOP_WORDS }.maxByOrNull { it.length }
             ?: tokens.maxByOrNull { it.length }
     }

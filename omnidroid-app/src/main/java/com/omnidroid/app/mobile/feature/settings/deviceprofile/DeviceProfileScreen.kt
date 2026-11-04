@@ -55,7 +55,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.shared.deviceprofile.BenchmarkResult
@@ -85,7 +85,7 @@ fun DeviceProfileScreen(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(HomeChromeBackground),
+                .homeChromeBackground(),
     ) {
         if (profile == null) {
             Column(

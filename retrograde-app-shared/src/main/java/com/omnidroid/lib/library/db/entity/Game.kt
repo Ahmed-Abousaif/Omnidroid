@@ -54,6 +54,8 @@ data class Game(
     val customName: String? = null,
     val fileSize: Long? = null,
     val fileLastModified: Long? = null,
+    val isAvailable: Boolean = true,
+    val partialHash: String? = null,
 ) : Serializable {
     @get:Ignore
     val displayName: String

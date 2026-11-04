@@ -38,7 +38,13 @@ interface StorageProvider {
 
     val enabledByDefault: Boolean
 
-    fun listBaseStorageFiles(): Flow<List<BaseStorageFile>>
+    fun listBaseStorageFiles(options: StorageListOptions = StorageListOptions()): Flow<List<BaseStorageFile>>
+
+    /** False when the configured library root cannot be opened (unplugged, permission lost). */
+    fun isLibraryRootReadable(): Boolean = true
+
+    /** Document IDs skipped via directory mtime cache during the last listing (SAF). */
+    fun lastSkippedDocumentIds(): Set<String> = emptySet()
 
     fun getInputStream(uri: Uri): InputStream?
 

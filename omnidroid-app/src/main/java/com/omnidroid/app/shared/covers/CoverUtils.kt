@@ -9,14 +9,29 @@ import coil.load
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import coil.size.Precision
+import coil.size.Size
 import com.omnidroid.common.drawable.TextDrawable
 import com.omnidroid.common.graphics.ColorUtils
 import com.omnidroid.lib.library.db.entity.Game
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
+import android.graphics.BitmapFactory
 import java.io.File
+import java.util.Locale
 
 object CoverUtils {
+    @Volatile
+    private var coverCacheStore: CoverCacheStore? = null
+
+    fun coverCache(context: Context): CoverCacheStore {
+        coverCacheStore?.let { return it }
+        return synchronized(this) {
+            coverCacheStore ?: CoverCacheStore(context.applicationContext).also { coverCacheStore = it }
+        }
+    }
+
     fun loadCover(
         game: Game,
         imageView: ImageView?,
@@ -33,12 +48,11 @@ object CoverUtils {
         }
     }
 
-    private val ALLOWED_COVER_HOSTS = setOf(
-        "thumbnails.libretro.com",
-
-
-        "images.igdb.com",
-    )
+    private val ALLOWED_COVER_HOSTS =
+        setOf(
+            "thumbnails.libretro.com",
+            "images.igdb.com",
+        )
 
     fun isAllowedRemoteCoverUrl(url: String?): Boolean {
         if (url.isNullOrBlank()) return false
@@ -51,7 +65,7 @@ object CoverUtils {
 
     fun coverData(game: Game): Any? =
         resolveCustomCoverFile(game)
-
+            ?: resolveProcessedCover(game)
             ?: game.coverFrontUrl?.takeIf(::isAllowedRemoteCoverUrl)
 
     fun coverData(
@@ -59,9 +73,19 @@ object CoverUtils {
         preferredCoverUrl: String?,
     ): Any? =
         resolveCustomCoverFile(game)
+            ?: resolveProcessedCover(game, preferredCoverUrl)
             ?: preferredCoverUrl?.takeIf(::isAllowedRemoteCoverUrl)
-
             ?: game.coverFrontUrl?.takeIf(::isAllowedRemoteCoverUrl)
+
+    private fun resolveProcessedCover(
+        game: Game,
+        preferredCoverUrl: String? = null,
+        context: Context? = null,
+    ): File? {
+        val url = preferredCoverUrl ?: game.coverFrontUrl ?: return null
+        val store = coverCacheStore ?: return null
+        return store.preferredCoverFile(game.id, url, CoverCacheStore.Tier.GRID)
+    }
 
     fun coverCacheKey(
         game: Game,
@@ -71,6 +95,10 @@ object CoverUtils {
         if (file != null) {
             return "custom:${game.id}:${file.absolutePath}:${file.lastModified()}"
         }
+        val processed = resolveProcessedCover(game, preferredCoverUrl)
+        if (processed != null) {
+            return "processed:${game.id}:${processed.absolutePath}:${processed.lastModified()}"
+        }
         val data = coverData(game, preferredCoverUrl)?.toString() ?: "game:${game.id}"
         return "cover:${game.id}:$data"
     }
@@ -79,12 +107,36 @@ object CoverUtils {
         context: Context,
         game: Game,
         preferredCoverUrl: String? = null,
+        size: Size = Size.ORIGINAL,
     ): ImageRequest {
+        coverCache(context)
+        val processed =
+            resolveCustomCoverFile(game)
+                ?: coverCache(context).preferredCoverFile(
+                    game.id,
+                    preferredCoverUrl ?: game.coverFrontUrl,
+                    CoverCacheStore.Tier.GRID,
+                )
+        val data =
+            processed
+                ?: (preferredCoverUrl ?: game.coverFrontUrl)?.takeIf(::isAllowedRemoteCoverUrl)
         val key = coverCacheKey(game, preferredCoverUrl)
         return ImageRequest.Builder(context)
-            .data(coverData(game, preferredCoverUrl))
+            .data(data)
             .memoryCacheKey(key)
             .diskCacheKey(key)
+            .size(size)
+            .precision(Precision.INEXACT)
+            .listener(
+                onStart = {
+                    val url = preferredCoverUrl ?: game.coverFrontUrl
+                    if (processed == null && !url.isNullOrBlank()) {
+                        com.omnidroid.app.OmnidroidApplication.scope(context).launch(Dispatchers.IO) {
+                            coverCache(context).ensureGrid(game.id, url)
+                        }
+                    }
+                },
+            )
             .build()
     }
 
@@ -95,8 +147,8 @@ object CoverUtils {
     ): Float? {
         val file = resolveCustomCoverFile(game)
         if (file != null && file.isFile && file.length() > 0L) {
-            val options = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            android.graphics.BitmapFactory.decodeFile(file.absolutePath, options)
+            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeFile(file.absolutePath, options)
             if (options.outWidth > 0 && options.outHeight > 0) {
                 return options.outWidth.toFloat() / options.outHeight.toFloat()
             }
@@ -126,16 +178,17 @@ object CoverUtils {
     }
 
     fun buildImageLoader(applicationContext: Context): ImageLoader {
+        coverCache(applicationContext)
         return ImageLoader.Builder(applicationContext)
             .diskCache(
                 DiskCache.Builder()
                     .directory(applicationContext.cacheDir.resolve("image_cache"))
-                    .maxSizePercent(0.20)
+                    .maxSizePercent(0.10)
                     .build(),
             )
             .memoryCache {
                 MemoryCache.Builder(applicationContext)
-                    .maxSizePercent(0.20)
+                    .maxSizePercent(0.15)
                     .build()
             }
             .okHttpClient {
@@ -150,6 +203,12 @@ object CoverUtils {
             .memoryCachePolicy(CachePolicy.ENABLED)
             .respectCacheHeaders(false)
             .build()
+    }
+
+    fun trimMemory(context: Context) {
+        runCatching {
+            coil.Coil.imageLoader(context).memoryCache?.clear()
+        }
     }
 
     fun getFallbackDrawable(game: Game) = TextDrawable(computeTitle(game), computeColor(game))
@@ -170,7 +229,7 @@ object CoverUtils {
             .take(3)
             .joinToString("")
             .ifBlank { game.title.first().toString() }
-            .capitalize()
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     }
 
     private fun computeColor(game: Game): Int {

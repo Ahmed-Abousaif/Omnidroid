@@ -1,6 +1,7 @@
 package com.omnidroid.app.shared.library
 
 import android.content.Context
+import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -10,12 +11,20 @@ object LibraryIndexScheduler {
     val LIBRARY_INDEX_WORK_ID: String = LibraryIndexWork::class.java.simpleName
     val SWITCH_ICON_WORK_ID: String = SwitchIconExtractionWork::class.java.simpleName
 
-    fun scheduleLibrarySync(applicationContext: Context) {
+    const val KEY_FORCE_DEEP = "force_deep"
+
+    fun scheduleLibrarySync(
+        applicationContext: Context,
+        forceDeep: Boolean = false,
+    ) {
+        val input = Data.Builder().putBoolean(KEY_FORCE_DEEP, forceDeep).build()
         WorkManager.getInstance(applicationContext)
             .beginUniqueWork(
                 LIBRARY_INDEX_WORK_ID,
                 ExistingWorkPolicy.APPEND_OR_REPLACE,
-                OneTimeWorkRequestBuilder<LibraryIndexWork>().build(),
+                OneTimeWorkRequestBuilder<LibraryIndexWork>()
+                    .setInputData(input)
+                    .build(),
             )
             .then(OneTimeWorkRequestBuilder<CoreUpdateWork>().build())
             .then(OneTimeWorkRequestBuilder<SwitchIconExtractionWork>().build())

@@ -73,8 +73,11 @@ import com.omnidroid.app.mobile.feature.library.startupDestinationLabel
 import com.omnidroid.app.mobile.feature.library.startupDestinations
 import com.omnidroid.app.mobile.feature.main.MainRoute
 import com.omnidroid.app.mobile.feature.main.navigateToRoute
-import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
+import com.omnidroid.app.mobile.shared.compose.ui.chromeMutedContentColor
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeCardColor
 import com.omnidroid.app.mobile.shared.compose.ui.hugDisplayCutout
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
@@ -97,7 +100,6 @@ import kotlinx.coroutines.yield
 private val SettingsSidebarWidth = 220.dp
 private val SettingsCardHeight = 96.dp
 private val SettingsCardShape = RoundedCornerShape(8.dp)
-private val SettingsCardColor = Color(0xFF242424)
 
 private enum class SettingsSection(
     @StringRes val titleId: Int,
@@ -165,7 +167,7 @@ fun SettingsScreen(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(HomeChromeBackground),
+                .homeChromeBackground(),
     ) {
         val isLandscape = maxWidth > maxHeight
 
@@ -285,7 +287,7 @@ private fun SettingsTopMenu(
         modifier =
             modifier
                 .fillMaxWidth()
-                .background(HomeChromeBackground),
+                .homeChromeBackground(),
     ) {
         LazyRow(
             state = listState,
@@ -307,7 +309,12 @@ private fun SettingsTopMenu(
                             .focusRequester(focusRequesters.getValue(item))
                             .onFocusChanged { if (it.isFocused) onFocused(item) },
                     shape = RectangleShape,
-                    color = if (isSelected) Color.White.copy(alpha = 0.08f) else Color.Transparent,
+                    color =
+                        if (isSelected) {
+                            chromeContentColor.copy(alpha = 0.08f)
+                        } else {
+                            Color.Transparent
+                        },
                 ) {
                     Box(
                         modifier =
@@ -320,7 +327,7 @@ private fun SettingsTopMenu(
                             text = stringResource(item.titleId),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.72f),
+                            color = if (isSelected) chromeContentColor else chromeMutedContentColor,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -341,7 +348,7 @@ private fun SettingsTopMenu(
                 Modifier
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(Color.White.copy(alpha = 0.08f)),
+                    .background(chromeContentColor.copy(alpha = 0.08f)),
         )
     }
 }
@@ -372,7 +379,12 @@ private fun SettingsSidebar(
                         .focusRequester(focusRequesters.getValue(item))
                         .onFocusChanged { if (it.isFocused) onFocused(item) },
                 shape = RectangleShape,
-                color = if (isSelected) Color.White.copy(alpha = 0.08f) else Color.Transparent,
+                color =
+                    if (isSelected) {
+                        chromeContentColor.copy(alpha = 0.08f)
+                    } else {
+                        Color.Transparent
+                    },
             ) {
                 Row(
                     modifier = Modifier.height(48.dp),
@@ -389,7 +401,7 @@ private fun SettingsSidebar(
                         text = stringResource(item.titleId),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (isSelected) Color.White else Color.White.copy(alpha = 0.72f),
+                        color = if (isSelected) chromeContentColor else chromeMutedContentColor,
                         modifier = Modifier.padding(start = 16.dp, end = 12.dp),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -530,7 +542,7 @@ private fun SettingsHubCard(
                 .height(SettingsCardHeight)
                 .controllerFocusGlow(SettingsCardShape),
         shape = SettingsCardShape,
-        color = SettingsCardColor,
+        color = homeChromeCardColor,
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
     ) {
@@ -544,13 +556,13 @@ private fun SettingsHubCard(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = Color.White,
+                tint = chromeContentColor,
                 modifier = Modifier.size(28.dp),
             )
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.White,
+                color = chromeContentColor,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(start = 16.dp),
@@ -867,6 +879,16 @@ private fun DisplaySettings() {
     }
 
     OmnidroidCardSettingsGroup {
+        OmnidroidSettingsList(
+            state =
+                indexPreferenceState(
+                    R.string.pref_key_app_theme,
+                    "dark",
+                    stringListResource(R.array.pref_key_app_theme_values).toList(),
+                ),
+            title = { Text(text = stringResource(id = R.string.settings_title_app_theme)) },
+            items = stringListResource(R.array.pref_key_app_theme_display_names),
+        )
         OmnidroidSettingsSwitch(
             state = immersiveMode,
             title = { Text(text = stringResource(id = R.string.settings_title_immersive_mode)) },

@@ -83,6 +83,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.Color
@@ -112,10 +113,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.paging.compose.LazyPagingItems
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
+import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.lib.library.GameSystem
@@ -131,7 +133,6 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.math.sign
 
-private val ConsoleCardColor = Color(0xFF161616)
 private val LandscapeCardCorner = 10.dp
 private val PortraitCardCorner = 18.dp
 private val ConsoleActionHeight = 40.dp
@@ -397,6 +398,16 @@ private fun Modifier.carouselDrag(
         }
     }
 
+/**
+ * Fade carousel chrome without an offscreen layer — the default alpha strategy clips
+ * Material shadowElevation to the content bounds (very visible in light mode).
+ */
+private fun Modifier.carouselChromeFade(alpha: () -> Float): Modifier =
+    graphicsLayer {
+        this.alpha = alpha()
+        compositingStrategy = CompositingStrategy.ModulateAlpha
+    }
+
 /** How settled the carousel is on a single item: 1 when resting, 0 halfway between two. */
 private fun ConsoleCarouselState.settledAmount(): Float {
     val p = position
@@ -436,6 +447,8 @@ private fun ConsoleLandscapeCarousel(
     onPlay: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    // Glow sits outside sharedBounds, so hide it while the cover flies to/from details.
+    val coverTransitioning = sharedTransitionScope.isTransitionActive
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val metrics = remember(maxWidth, maxHeight) { LandscapeMetrics(maxWidth, maxHeight) }
         val first = (selectedIndex - 2).coerceAtLeast(0)
@@ -456,7 +469,9 @@ private fun ConsoleLandscapeCarousel(
                             game = game,
                             renderWidth = metrics.bigWidth,
                             renderHeight = metrics.bigHeight,
-                            focus = { state.focusOf(index) },
+                            focus = {
+                                if (coverTransitioning) 0f else state.focusOf(index)
+                            },
                             pulse = pulse,
                             sharedModifier =
                                 game?.let {
@@ -477,6 +492,7 @@ private fun ConsoleLandscapeCarousel(
                             val settled = state.settledAmount()
                             alpha = settled
                             translationY = (1f - settled) * 10.dp.toPx()
+                            compositingStrategy = CompositingStrategy.ModulateAlpha
                         },
                     onPlay = onPlay,
                     onFavoriteToggle = onFavoriteToggle,
@@ -556,7 +572,7 @@ private fun ConsoleLandscapeCard(
                 .consoleSelectionGlow(LandscapeCardCorner, focus, pulse)
                 .then(sharedModifier)
                 .shadow(elevation = 6.dp, shape = shape)
-                .background(ConsoleCardColor)
+                .background(chromeColors.listRow)
                 .focusProperties { canFocus = false }
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
@@ -586,6 +602,7 @@ private fun ConsoleRotatingTitle(
     maxLines: Int,
     active: Boolean,
     modifier: Modifier = Modifier,
+    color: Color = chromeColors.content,
 ) {
     var overflowing by remember(text) { mutableStateOf(false) }
     var rotating by remember(text) { mutableStateOf(false) }
@@ -606,7 +623,7 @@ private fun ConsoleRotatingTitle(
             Text(
                 text = text,
                 style = style,
-                color = Color.White,
+                color = color,
                 maxLines = 1,
                 softWrap = false,
                 modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = 0),
@@ -616,7 +633,7 @@ private fun ConsoleRotatingTitle(
         Text(
             text = text,
             style = style,
-            color = Color.White,
+            color = color,
             maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
             onTextLayout = {
@@ -659,7 +676,7 @@ private fun LandscapeInfoPanel(
         Text(
             text = subtitle,
             style = MaterialTheme.typography.labelMedium,
-            color = Color(0xFFBDBDBD),
+            color = chromeColors.muted,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -700,6 +717,8 @@ private fun ConsolePortraitCarousel(
     onPlay: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    // Glow sits outside sharedBounds, so hide it while the cover flies to/from details.
+    val coverTransitioning = sharedTransitionScope.isTransitionActive
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val metrics = remember(maxWidth, maxHeight) { PortraitMetrics(maxWidth, maxHeight) }
         val first = (selectedIndex - 3).coerceAtLeast(0)
@@ -718,7 +737,9 @@ private fun ConsolePortraitCarousel(
                         val game = items.gameAt(index)
                         ConsolePortraitCard(
                             game = game,
-                            focus = { state.focusOf(index) },
+                            focus = {
+                                if (coverTransitioning) 0f else state.focusOf(index)
+                            },
                             pulse = pulse,
                             sharedModifier =
                                 game?.let {
@@ -735,7 +756,7 @@ private fun ConsolePortraitCarousel(
                             if (items.isFeatured(selectedIndex)) R.string.continue_playing else R.string.library_console_start,
                         ),
                     showControllerGlyph = showControllerGlyph,
-                    modifier = Modifier.graphicsLayer { alpha = state.settledAmount() },
+                    modifier = Modifier.carouselChromeFade(alpha = { state.settledAmount() }),
                     game = items.gameAt(selectedIndex),
                     onPlay = onPlay,
                     onFavoriteToggle = onFavoriteToggle,
@@ -805,7 +826,7 @@ private fun ConsolePortraitCard(
                     ambientColor = Color.Black,
                     spotColor = Color.Black,
                 )
-                .background(ConsoleCardColor)
+                .background(chromeColors.listRow)
                 .focusProperties { canFocus = false }
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
@@ -844,6 +865,8 @@ private fun ConsolePortraitCard(
                         ),
                     maxLines = 2,
                     active = centered,
+                    // Overlay sits on a dark gradient over the cover, so stay light in both themes.
+                    color = Color.White,
                 )
             }
         }
@@ -934,7 +957,7 @@ private fun ConsoleActions(
         ConsoleIconButton(
             imageVector = if (favorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
             contentDescription = stringResource(R.string.favorites),
-            tint = if (favorite) LibraryNeonGreen else Color.White.copy(alpha = 0.85f),
+            tint = if (favorite) LibraryNeonGreen else chromeColors.muted,
             onClick = {
                 game?.let {
                     favorite = !favorite
@@ -955,7 +978,7 @@ private fun ConsoleActions(
 private fun ConsoleIconButton(
     imageVector: ImageVector,
     contentDescription: String,
-    tint: Color = Color.White.copy(alpha = 0.85f),
+    tint: Color = chromeColors.muted,
     onClick: () -> Unit,
 ) {
     Surface(
@@ -965,8 +988,8 @@ private fun ConsoleIconButton(
                 .size(ConsoleActionHeight)
                 .focusProperties { canFocus = false },
         shape = ConsoleActionShape,
-        color = Color(0xFF2A2A2A),
-        border = BorderStroke(1.dp, Color(0xFF3A3A3A)),
+        color = chromeColors.iconButton,
+        border = BorderStroke(1.dp, chromeColors.iconButtonBorder),
         shadowElevation = 6.dp,
     ) {
         Box(contentAlignment = Alignment.Center) {
@@ -1063,15 +1086,16 @@ internal fun ConsoleBackdrop(
                 )
             }
         }
+        val chrome = homeChromeColor
         Box(
             modifier =
                 Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            0f to HomeChromeBackground.copy(alpha = 0.35f),
-                            0.6f to HomeChromeBackground.copy(alpha = 0.65f),
-                            1f to HomeChromeBackground.copy(alpha = 0.95f),
+                            0f to chrome.copy(alpha = 0.35f),
+                            0.6f to chrome.copy(alpha = 0.65f),
+                            1f to chrome.copy(alpha = 0.95f),
                         ),
                     ),
         )

@@ -31,7 +31,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.Dispatchers
 
 class LibraryViewModel(
     private val appContext: Context,
@@ -266,15 +268,29 @@ class LibraryViewModel(
         }
     }
 
-    /** Picks up newly added games on launch without prompting for a folder. */
+    /** Reconcile folder changes on resume / watcher without prompting for a folder. */
     fun autoSyncLibrary(context: Context) {
         val folderKey = context.getString(com.omnidroid.lib.R.string.pref_key_extenral_folder)
         val folder =
             SharedPreferencesHelper.getLegacySharedPreferences(context)
                 .getString(folderKey, null)
         if (folder.isNullOrBlank()) return
-        syncLibrary(context)
+        syncLibrary(context, forceDeep = false)
     }
+
+    suspend fun clearMissingGames(): Int =
+        withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val missing = retrogradeDb.gameDao().selectUnavailable()
+            missing.forEach { game ->
+                game.customCoverPath?.let { path ->
+                    runCatching { java.io.File(path.substringBefore('?')).delete() }
+                }
+            }
+            if (missing.isNotEmpty()) {
+                retrogradeDb.gameDao().delete(missing)
+            }
+            missing.size
+        }
 
     fun zoomIn() {
         if (layoutFlow.value != LibraryLayout.GRID) return
@@ -286,7 +302,10 @@ class LibraryViewModel(
         setZoomDensity(zoomDensityFlow.value + 1)
     }
 
-    fun syncLibrary(context: Context) {
+    fun syncLibrary(
+        context: Context,
+        forceDeep: Boolean = true,
+    ) {
         if (scanRequested.value || state.value.operationInProgress) return
 
         val folderKey = context.getString(com.omnidroid.lib.R.string.pref_key_extenral_folder)
@@ -302,7 +321,10 @@ class LibraryViewModel(
         viewModelScope.launch {
             scanRequested.value = true
             try {
-                LibraryIndexScheduler.scheduleLibrarySync(context.applicationContext)
+                LibraryIndexScheduler.scheduleLibrarySync(
+                    context.applicationContext,
+                    forceDeep = forceDeep,
+                )
                 val started = withTimeoutOrNull(3_000) { libraryOperationInProgress.first { it } }
                 if (started == true) {
                     libraryOperationInProgress.first { !it }

@@ -86,6 +86,20 @@ interface GameDao {
 
     @Query(
         """
+        SELECT * FROM games
+        WHERE system = :system AND normalizedName LIKE :prefix || '%'
+        ORDER BY normalizedName ASC
+        LIMIT :limit
+        """,
+    )
+    suspend fun findAllByNormalizedNamePrefix(
+        system: String,
+        prefix: String,
+        limit: Int = 25,
+    ): List<LibretroRom>
+
+    @Query(
+        """
         SELECT name, system, romHash, normalizedName, rawName, thumbnailPath FROM games
         WHERE system = :system AND normalizedName LIKE :token || '%'
         ORDER BY normalizedName ASC

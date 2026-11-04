@@ -6,7 +6,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.size.Size
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.omnidroid.app.shared.covers.CoverUtils
 import com.omnidroid.lib.library.db.entity.Game
@@ -17,18 +21,29 @@ fun OmnidroidGameImage(
     game: Game,
     aspectRatio: Float? = LibraryGameCardAspectRatio,
     contentScale: ContentScale = ContentScale.Crop,
+    decodeWidth: Dp = 160.dp,
     onAspectRatio: ((Float) -> Unit)? = null,
 ) {
+    val context = LocalContext.current
+    val density = LocalDensity.current
+    val decodePx = density.run { decodeWidth.roundToPx() }
     val fallbackDrawable =
         remember(game) {
             CoverUtils.getFallbackDrawable(game)
         }
 
     val fallbackPainter = rememberDrawablePainter(drawable = fallbackDrawable)
+    val request =
+        remember(game.id, game.coverFrontUrl, game.customCoverPath, decodePx) {
+            CoverUtils.coverRequest(
+                context,
+                game,
+                size = Size(decodePx, (decodePx / (aspectRatio ?: LibraryGameCardAspectRatio)).toInt()),
+            )
+        }
 
     AsyncImage(
-        model =
-            CoverUtils.coverRequest(LocalContext.current, game),
+        model = request,
         contentDescription = game.displayName,
         modifier =
             modifier

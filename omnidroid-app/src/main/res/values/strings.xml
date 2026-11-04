@@ -81,6 +81,14 @@
     <string name="game_settings">Game settings</string>
     <string name="game_no_description">No description available for this game.</string>
     <string name="game_settings_unavailable">No extra settings for this game.</string>
+    <string name="game_unavailable">This game is unavailable. Reconnect the folder or remove it from the library.</string>
+    <string name="game_unavailable_badge">Unavailable</string>
+    <string name="settings_title_clear_missing_games">Clear missing games</string>
+    <string name="settings_description_clear_missing_games">Permanently remove games whose files are no longer in the library folder.</string>
+    <string name="settings_title_periodic_library_scan">Periodic library check</string>
+    <string name="settings_description_periodic_library_scan">When charging and idle, occasionally rescan the games folder in the background. Off by default.</string>
+    <string name="settings_clear_missing_games_done">Removed %1$d missing games</string>
+    <string name="settings_clear_missing_games_none">No missing games to clear</string>
     <string name="install_console">Install</string>
     <string name="console_installed">Installed</string>
     <string name="back">Back</string>
@@ -132,6 +140,11 @@
 
     <string name="settings_title_immersive_mode">Immersive mode</string>
     <string name="settings_description_immersive_mode">Dynamically colors the background based on game visuals</string>
+
+    <string name="settings_title_app_theme">Theme</string>
+    <string name="settings_description_app_theme">Switch between dark and light appearance</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_light">Light</string>
 
     <string name="settings_title_gamepad_settings">External devices</string>
     <string name="settings_description_gamepad_settings">Configure external gamepads and keyboards</string>

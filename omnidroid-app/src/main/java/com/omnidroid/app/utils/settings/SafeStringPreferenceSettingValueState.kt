@@ -2,6 +2,7 @@ package com.omnidroid.app.utils.settings
 
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,13 +18,23 @@ fun rememberSafePreferenceStringSettingState(
     defaultValue: String,
     preferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(LocalContext.current),
 ): SafeStringPreferenceSettingValueState {
-    return remember {
-        SafeStringPreferenceSettingValueState(
-            preferences = preferences,
-            key = key,
-            defaultValue = defaultValue,
-        )
+    val state =
+        remember(key, preferences) {
+            SafeStringPreferenceSettingValueState(
+                preferences = preferences,
+                key = key,
+                defaultValue = defaultValue,
+            )
+        }
+    DisposableEffect(state, preferences, key) {
+        val listener =
+            SharedPreferences.OnSharedPreferenceChangeListener { _, changedKey ->
+                if (changedKey == key) state.reloadFromPreferences()
+            }
+        preferences.registerOnSharedPreferenceChangeListener(listener)
+        onDispose { preferences.unregisterOnSharedPreferenceChangeListener(listener) }
     }
+    return state
 }
 
 class SafeStringPreferenceSettingValueState(
@@ -39,6 +50,10 @@ class SafeStringPreferenceSettingValueState(
             preferences.edit { putString(key, value) }
         }
         get() = _value
+
+    fun reloadFromPreferences() {
+        _value = preferences.getString(key, defaultValue) ?: defaultValue
+    }
 
     override fun reset() {
         value = defaultValue

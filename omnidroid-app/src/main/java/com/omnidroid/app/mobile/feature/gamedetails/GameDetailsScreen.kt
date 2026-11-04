@@ -17,6 +17,7 @@ import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -80,8 +81,11 @@ import coil.compose.AsyncImage
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.library.LibraryTopBarRowHeight
-import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
+import com.omnidroid.app.mobile.shared.compose.ui.chromeMutedContentColor
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.shared.covers.CoverUtils
@@ -181,7 +185,7 @@ fun GameDetailsScreen(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(HomeChromeBackground),
+                .homeChromeBackground(),
     ) {
         Box(
             modifier =
@@ -339,6 +343,7 @@ private fun GameBackdrop(
         contentScale = ContentScale.Crop,
         alpha = 0.18f,
     )
+    val chrome = homeChromeColor
     Box(
         modifier =
             Modifier
@@ -346,8 +351,8 @@ private fun GameBackdrop(
                 .background(
                     Brush.horizontalGradient(
                         listOf(
-                            HomeChromeBackground.copy(alpha = 0.82f),
-                            HomeChromeBackground.copy(alpha = 0.96f),
+                            chrome.copy(alpha = 0.82f),
+                            chrome.copy(alpha = 0.96f),
                         ),
                     ),
                 ),
@@ -550,7 +555,6 @@ private fun GameTrailerPlayer(
 
 private val DetailsActionCorner = RoundedCornerShape(4.dp)
 private val DetailsActionHeight = 52.dp
-private val DetailsActionFill = Color(0xFF161616)
 
 @Composable
 private fun GameDetailsInfo(
@@ -593,7 +597,7 @@ private fun GameDetailsInfo(
                 Icon(
                     imageVector = Icons.Outlined.Edit,
                     contentDescription = stringResource(R.string.game_context_menu_change_name),
-                    tint = Color.White.copy(alpha = 0.55f),
+                    tint = chromeMutedContentColor.copy(alpha = 0.75f),
                     modifier = Modifier.size(18.dp),
                 )
             }
@@ -728,13 +732,14 @@ private fun GameDetailsActions(
                     .size(DetailsActionHeight)
                     .controllerFocusGlow(DetailsActionCorner),
             shape = DetailsActionCorner,
-            color = DetailsActionFill,
+            color = chromeColors.panel,
+            border = BorderStroke(1.dp, chromeColors.panelBorder),
         ) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                     contentDescription = stringResource(R.string.favorites),
-                    tint = if (isFavorite) LibraryNeonGreen else Color.White,
+                    tint = if (isFavorite) LibraryNeonGreen else chromeColors.content,
                     modifier = Modifier.size(26.dp),
                 )
             }
@@ -746,13 +751,14 @@ private fun GameDetailsActions(
                     .size(DetailsActionHeight)
                     .controllerFocusGlow(DetailsActionCorner),
             shape = DetailsActionCorner,
-            color = DetailsActionFill,
+            color = chromeColors.panel,
+            border = BorderStroke(1.dp, chromeColors.panelBorder),
         ) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = Icons.Outlined.Settings,
                     contentDescription = stringResource(R.string.game_settings),
-                    tint = Color.White,
+                    tint = chromeColors.content,
                     modifier = Modifier.size(26.dp),
                 )
             }

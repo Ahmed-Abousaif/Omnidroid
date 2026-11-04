@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -81,9 +82,11 @@ fun OmnidroidGameCard(
         return
     }
 
+    val availabilityAlpha = if (game.isAvailable) 1f else 0.45f
     Surface(
         modifier =
             modifier
+                .alpha(availabilityAlpha)
                 .controllerFocusGlow(cardShape)
                 .reportControllerGame(game)
                 .combinedClickable(
@@ -105,7 +108,7 @@ fun OmnidroidGameCard(
             )
             CoverForeground(
                 game = game,
-                badge = badge,
+                badge = if (!game.isAvailable) stringResource(R.string.game_unavailable_badge) else badge,
                 continueAction = continueAction,
                 infoStyle = infoStyle,
                 showTitles = showTitles,
@@ -126,6 +129,7 @@ private fun CaptionBelowGameCard(
     onLongClick: () -> Unit,
 ) {
     val cardShape = RoundedCornerShape(cornerRadius)
+    val availabilityAlpha = if (game.isAvailable) 1f else 0.45f
     BoxWithConstraints(modifier = modifier) {
         val coverHeight = (maxHeight - CaptionFooterHeight).coerceAtLeast(48.dp)
         val coverWidth = coverHeight * LibraryGameCardAspectRatio
@@ -134,6 +138,7 @@ private fun CaptionBelowGameCard(
                 Modifier
                     .width(coverWidth)
                     .fillMaxHeight()
+                    .alpha(availabilityAlpha)
                     .controllerFocusGlow(cardShape)
                     .reportControllerGame(game)
                     .combinedClickable(
@@ -141,7 +146,7 @@ private fun CaptionBelowGameCard(
                         onLongClick = onLongClick,
                     ),
             shape = cardShape,
-            color = Color(0xFF161616),
+            color = chromeColors.panel,
             shadowElevation = 4.dp,
             tonalElevation = 0.dp,
         ) {
@@ -317,6 +322,8 @@ private fun GameCardInfo(
         } else {
             Shadow(color = Color.Transparent)
         }
+    val titleColor = if (overlay) Color.White else chromeContentColor
+    val subtitleColor = if (overlay) Color(0xFFBDBDBD) else chromeMutedContentColor
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = consoleName,
@@ -325,7 +332,7 @@ private fun GameCardInfo(
                     fontWeight = FontWeight.Medium,
                     shadow = textShadow,
                 ),
-            color = Color(0xFFBDBDBD),
+            color = subtitleColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -336,7 +343,7 @@ private fun GameCardInfo(
                     fontWeight = FontWeight.SemiBold,
                     shadow = textShadow,
                 ),
-            color = Color.White,
+            color = titleColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )

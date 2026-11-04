@@ -22,8 +22,19 @@
     <string name="pref_key_enable_device_rumble" translatable="false">enable_device_rumble</string>
     <string name="pref_key_max_cache_size" translatable="false">max_cache_size_bytes</string>
     <string name="pref_key_allow_direct_game_load" translatable="false">allow_direct_game_load</string>
+    <string name="pref_key_periodic_library_scan" translatable="false">periodic_library_scan</string>
     <string name="pref_key_enable_immersive_mode" translatable="false">enable_immersive_mode</string>
+    <string name="pref_key_app_theme" translatable="false">app_theme</string>
     <string name="pref_key_startup_destination" translatable="false">startup_destination</string>
+
+    <string-array translatable="false" name="pref_key_app_theme_values">
+        <item>dark</item>
+        <item>light</item>
+    </string-array>
+    <string-array translatable="false" name="pref_key_app_theme_display_names">
+        <item>@string/settings_theme_dark</item>
+        <item>@string/settings_theme_light</item>
+    </string-array>
 
     <string name="pref_key_save_sync_auto" translatable="false">save_sync_auto</string>
     <string name="pref_key_save_sync_enable" translatable="false">save_sync_enable</string>

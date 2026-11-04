@@ -39,9 +39,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -71,8 +72,10 @@ import com.omnidroid.app.mobile.feature.gamemenu.coreoptions.GameMenuCoreOptions
 import com.omnidroid.app.mobile.feature.gamemenu.states.GameMenuStatesScreen
 import com.omnidroid.app.mobile.feature.gamemenu.states.GameMenuStatesViewModel
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
-import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
+import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
 import com.omnidroid.app.mobile.shared.controller.ControllerHintBar
 import com.omnidroid.app.mobile.shared.controller.ControllerHintBarRowHeight
 import com.omnidroid.app.mobile.shared.controller.ControllerHints
@@ -188,7 +191,7 @@ class GameMenuActivity : RetrogradeComponentActivity() {
 
     @Composable
     private fun GameMenuScreen(gameMenuRequest: GameMenuRequest) {
-        AppTheme {
+        AppTheme(syncSystemBars = false) {
             val navController = rememberNavController()
             val controllerNav = remember { ControllerNavigationState() }
             val panelState =
@@ -197,6 +200,9 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                 }
             var pendingResult by remember { mutableStateOf<Intent.() -> Unit>({}) }
             var hasOpened by remember { mutableStateOf(false) }
+            val panelContentColor = chromeContentColor
+            val panelDivider = chromeColors.divider
+            val panelBackground = homeChromeColor
 
             val currentRoute =
                 navController.currentBackStackEntryAsState().value?.destination?.route
@@ -294,12 +300,13 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                     ) {
                         Surface(
                             modifier = Modifier.fillMaxHeight().width(panelWidth),
-                            color = HomeChromeBackground,
-                            contentColor = Color.White,
+                            color = panelBackground,
+                            contentColor = panelContentColor,
                             shape = RectangleShape,
                             tonalElevation = 0.dp,
                             shadowElevation = 0.dp,
                         ) {
+                            CompositionLocalProvider(LocalContentColor provides panelContentColor) {
                             Row(modifier = Modifier.fillMaxSize()) {
                                 Box(
                                     modifier =
@@ -329,7 +336,7 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                                             Modifier
                                                 .fillMaxWidth()
                                                 .height(1.dp)
-                                                .background(Color.White.copy(alpha = 0.08f)),
+                                                .background(panelDivider),
                                     )
                                     NavHost(
                                         modifier =
@@ -399,6 +406,7 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                                     }
                                 }
                             }
+                            }
                         }
                     }
 
@@ -429,6 +437,7 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                     .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val headerContentColor = chromeContentColor
             Surface(
                 onClick = { if (canGoBack) onBack() else onClose() },
                 modifier =
@@ -437,7 +446,7 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                         .controllerFocusGlow(CircleShape),
                 shape = CircleShape,
                 color = Color.Transparent,
-                contentColor = Color.White,
+                contentColor = headerContentColor,
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     if (canGoBack) {
@@ -459,7 +468,7 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                     MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                     ),
-                color = Color.White,
+                color = headerContentColor,
                 modifier = Modifier.padding(start = 8.dp),
                 maxLines = 1,
             )

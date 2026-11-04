@@ -85,6 +85,7 @@ fun BatteryLevelIcon(
     modifier: Modifier = Modifier,
 ) {
     val fill = percent.coerceIn(0, 100) / 100f
+    val boltStrokeColor = homeChromeColor
 
     Canvas(
         modifier =
@@ -144,7 +145,7 @@ fun BatteryLevelIcon(
                 }
             drawPath(
                 path = bolt,
-                color = HomeChromeBackground,
+                color = boltStrokeColor,
                 style =
                     Stroke(
                         width = strokeWidth * 1.15f,

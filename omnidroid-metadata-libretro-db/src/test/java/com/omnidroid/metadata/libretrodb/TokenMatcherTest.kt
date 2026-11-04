@@ -13,6 +13,16 @@ class TokenMatcherTest {
     }
 
     @Test
+    fun selectSignificantTokenIgnoresParentheticalTags() {
+        assertEquals(
+            "legend",
+            TokenMatcher.selectSignificantToken(
+                "the legend of zelda the wind waker hd (usa asia) (enfres)",
+            ),
+        )
+    }
+
+    @Test
     fun exactMatchScores100() {
         assertEquals(100, TokenMatcher.bestScore("super mario world", "super mario world"))
     }

@@ -132,4 +132,37 @@ object Migrations {
                 database.execSQL("DROP TABLE IF EXISTS `$legacyMetadataTable`")
             }
         }
+
+    val VERSION_16_17: Migration =
+        object : Migration(16, 17) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE `games` ADD COLUMN `isAvailable` INTEGER NOT NULL DEFAULT 1",
+                )
+                database.execSQL("ALTER TABLE `games` ADD COLUMN `partialHash` TEXT")
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `scan_directories` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `treeUri` TEXT NOT NULL,
+                        `documentId` TEXT NOT NULL,
+                        `lastModified` INTEGER NOT NULL,
+                        `probedAt` INTEGER NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+                database.execSQL(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS `index_scan_directories_treeUri_documentId`
+                    ON `scan_directories` (`treeUri`, `documentId`)
+                    """.trimIndent(),
+                )
+                database.execSQL(
+                    """
+                    CREATE INDEX IF NOT EXISTS `index_scan_directories_treeUri`
+                    ON `scan_directories` (`treeUri`)
+                    """.trimIndent(),
+                )
+            }
+        }
 }

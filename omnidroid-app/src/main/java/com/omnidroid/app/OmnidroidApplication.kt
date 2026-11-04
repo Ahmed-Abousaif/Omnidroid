@@ -1,6 +1,7 @@
 package com.omnidroid.app
 
 import android.annotation.SuppressLint
+import android.content.ComponentCallbacks2
 import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.startup.AppInitializer
@@ -69,6 +70,10 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
 
         ConsoleBackendRegistry.registerDescriptor(LibretroBackendDescriptor())
         ConsoleBackendRegistry.registerDescriptor(SwitchBackendDescriptor())
+
+        if (isMainProcess()) {
+            com.omnidroid.app.shared.library.LibraryPeriodicScanScheduler.syncWithPreference(this)
+        }
     }
 
     override fun attachBaseContext(base: Context) {
@@ -78,5 +83,14 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
 
     override fun newImageLoader(): ImageLoader {
         return CoverUtils.buildImageLoader(applicationContext)
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= ComponentCallbacks2.TRIM_MEMORY_BACKGROUND ||
+            level == ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN
+        ) {
+            CoverUtils.trimMemory(this)
+        }
     }
 }

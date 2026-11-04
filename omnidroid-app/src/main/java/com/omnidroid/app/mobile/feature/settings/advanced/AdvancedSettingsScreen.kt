@@ -14,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import android.widget.Toast
 import androidx.compose.ui.Modifier
@@ -39,6 +40,7 @@ import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
 import com.omnidroid.app.utils.android.settings.booleanPreferenceState
 import com.omnidroid.app.utils.android.settings.indexPreferenceState
 import com.omnidroid.app.utils.android.settings.intPreferenceState
+import kotlinx.coroutines.launch
 
 @Composable
 fun AdvancedSettingsScreen(
@@ -119,7 +121,9 @@ private fun GeneralSettings(
     navController: NavController,
 ) {
     val factoryResetDialogState = remember { mutableStateOf(false) }
+    val clearMissingDialogState = remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     OmnidroidCardSettingsGroup(
         title = { Text(text = stringResource(id = R.string.settings_category_general)) },
@@ -175,6 +179,20 @@ private fun GeneralSettings(
                 ).show()
             },
         )
+        val periodicScan = booleanPreferenceState(R.string.pref_key_periodic_library_scan, false)
+        OmnidroidSettingsSwitch(
+            state = periodicScan,
+            title = { Text(text = stringResource(id = R.string.settings_title_periodic_library_scan)) },
+            subtitle = { Text(text = stringResource(id = R.string.settings_description_periodic_library_scan)) },
+        )
+        LaunchedEffect(periodicScan.value) {
+            com.omnidroid.app.shared.library.LibraryPeriodicScanScheduler.syncWithPreference(context)
+        }
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_clear_missing_games)) },
+            subtitle = { Text(text = stringResource(id = R.string.settings_description_clear_missing_games)) },
+            onClick = { clearMissingDialogState.value = true },
+        )
         OmnidroidSettingsMenuLink(
             title = { Text(text = stringResource(id = R.string.settings_title_reset_settings)) },
             subtitle = { Text(text = stringResource(id = R.string.settings_description_reset_settings)) },
@@ -184,6 +202,52 @@ private fun GeneralSettings(
 
     if (factoryResetDialogState.value) {
         FactoryResetDialog(factoryResetDialogState, viewModel, navController)
+    }
+    if (clearMissingDialogState.value) {
+        AlertDialog(
+            title = { Text(stringResource(id = R.string.settings_title_clear_missing_games)) },
+            text = { Text(stringResource(id = R.string.settings_description_clear_missing_games)) },
+            onDismissRequest = { clearMissingDialogState.value = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        clearMissingDialogState.value = false
+                        scope.launch {
+                            val removed =
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                    val db =
+                                        (context.applicationContext as com.omnidroid.app.OmnidroidApplication)
+                                            .retrogradeDb
+                                    val missing = db.gameDao().selectUnavailable()
+                                    missing.forEach { game ->
+                                        game.customCoverPath?.let { path ->
+                                            runCatching { java.io.File(path.substringBefore('?')).delete() }
+                                        }
+                                    }
+                                    if (missing.isNotEmpty()) {
+                                        db.gameDao().delete(missing)
+                                    }
+                                    missing.size
+                                }
+                            val message =
+                                if (removed == 0) {
+                                    context.getString(R.string.settings_clear_missing_games_none)
+                                } else {
+                                    context.getString(R.string.settings_clear_missing_games_done, removed)
+                                }
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                ) {
+                    Text(text = stringResource(id = R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { clearMissingDialogState.value = false }) {
+                    Text(text = stringResource(id = R.string.cancel))
+                }
+            },
+        )
     }
 }
 

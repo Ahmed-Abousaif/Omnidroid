@@ -11,13 +11,16 @@ import com.omnidroid.common.kotlin.writeToFile
 import com.omnidroid.lib.R
 import com.omnidroid.lib.library.db.entity.DataFile
 import com.omnidroid.lib.library.db.entity.Game
-import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.library.scan.ChdSectors
 import com.omnidroid.lib.library.scan.LibraryFileFilter
 import com.omnidroid.lib.library.scan.RandomAccessBytes
+import com.omnidroid.lib.library.scan.SafDirectorySkipCache
+import com.omnidroid.lib.library.scan.SkippedSubtreeTracker
+import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.storage.BaseStorageFile
 import com.omnidroid.lib.storage.RomFiles
 import com.omnidroid.lib.storage.StorageFile
+import com.omnidroid.lib.storage.StorageListOptions
 import com.omnidroid.lib.storage.StorageProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -28,7 +31,10 @@ import java.io.File
 import java.io.InputStream
 import java.util.zip.ZipInputStream
 
-class StorageAccessFrameworkProvider(private val context: Context) : StorageProvider {
+class StorageAccessFrameworkProvider(
+    private val context: Context,
+    private val skipCache: SafDirectorySkipCache? = null,
+) : StorageProvider {
     override val id: String = "access_framework"
 
     override val name: String = context.getString(R.string.local_storage)
@@ -39,10 +45,30 @@ class StorageAccessFrameworkProvider(private val context: Context) : StorageProv
 
     override val enabledByDefault = true
 
-    override fun listBaseStorageFiles(): Flow<List<BaseStorageFile>> {
+    private val skippedTracker = SkippedSubtreeTracker()
+
+    override fun listBaseStorageFiles(options: StorageListOptions): Flow<List<BaseStorageFile>> {
         return getExternalFolder()?.let { folder ->
-            traverseDirectoryEntries(Uri.parse(folder))
+            traverseDirectoryEntries(Uri.parse(folder), options)
         } ?: emptyFlow()
+    }
+
+    override fun lastSkippedDocumentIds(): Set<String> = skippedTracker.snapshot()
+
+    override fun isLibraryRootReadable(): Boolean {
+        val folder = getExternalFolder() ?: return false
+        return runCatching {
+            val rootUri = Uri.parse(folder)
+            val documentId = DocumentsContract.getTreeDocumentId(rootUri) ?: return false
+            val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(rootUri, documentId)
+            context.contentResolver.query(
+                childrenUri,
+                arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID),
+                null,
+                null,
+                null,
+            )?.use { true } ?: false
+        }.getOrDefault(false)
     }
 
     override fun openRandomAccess(uri: Uri): RandomAccessBytes? = ChannelBytes.open(context, uri)
@@ -59,38 +85,101 @@ class StorageAccessFrameworkProvider(private val context: Context) : StorageProv
         return preferenceManager.getString(prefString, null)
     }
 
-    private fun traverseDirectoryEntries(rootUri: Uri): Flow<List<BaseStorageFile>> =
+    private fun traverseDirectoryEntries(
+        rootUri: Uri,
+        options: StorageListOptions,
+    ): Flow<List<BaseStorageFile>> =
         flow {
-            val directoryDocumentIds = mutableListOf<String>()
-            DocumentsContract.getTreeDocumentId(rootUri)?.let { directoryDocumentIds.add(it) }
+            skippedTracker.clear()
+            val treeUriString = rootUri.toString()
+            val rootId = DocumentsContract.getTreeDocumentId(rootUri) ?: return@flow
 
-            while (directoryDocumentIds.isNotEmpty()) {
-                val currentDirectoryDocumentId = directoryDocumentIds.removeAt(0)
+            val cache = skipCache
+            val reliability = cache?.reliability(treeUriString) ?: SafDirectorySkipCache.Reliability.UNKNOWN
+            val forceDeep =
+                options.forceDeep ||
+                    cache == null ||
+                    reliability != SafDirectorySkipCache.Reliability.RELIABLE ||
+                    cache.shouldForceDeepThisRun(treeUriString)
+
+            if (forceDeep) {
+                Timber.i("SAF deep listing for $treeUriString (force=${options.forceDeep}, reliability=$reliability)")
+            }
+
+            data class DirJob(val documentId: String, val knownMtime: Long)
+
+            val queue = ArrayDeque<DirJob>()
+            queue.add(DirJob(rootId, knownMtime = 0L))
+
+            val seenDirectoryMtimes = mutableListOf<Long>()
+            val visitedDirectoryIds = mutableSetOf<String>()
+            val directoryMtimesToStore = mutableMapOf<String, Long>()
+
+            while (queue.isNotEmpty()) {
+                val job = queue.removeFirst()
+                if (!visitedDirectoryIds.add(job.documentId)) continue
+
+                // !forceDeep implies cache != null (null cache always forces a deep walk).
+                if (!forceDeep &&
+                    job.knownMtime > 0L &&
+                    cache!!.cachedMtime(treeUriString, job.documentId) == job.knownMtime
+                ) {
+                    skippedTracker.add(job.documentId)
+                    directoryMtimesToStore[job.documentId] = job.knownMtime
+                    continue
+                }
 
                 val result =
                     runCatching {
-                        listBaseStorageFiles(rootUri, currentDirectoryDocumentId)
+                        listChildren(rootUri, job.documentId)
                     }
                 if (result.isFailure) {
                     Timber.e(result.exceptionOrNull(), "Error while listing files")
                 }
 
-                val (files, directories) =
+                val listing =
                     result.getOrDefault(
-                        listOf<BaseStorageFile>() to listOf<String>(),
+                        Listing(emptyList(), emptyList()),
                     )
 
-                emit(files)
-                directoryDocumentIds.addAll(directories)
+                emit(listing.files)
+
+                if (job.knownMtime > 0L) {
+                    directoryMtimesToStore[job.documentId] = job.knownMtime
+                    seenDirectoryMtimes += job.knownMtime
+                }
+
+                for (dir in listing.directories) {
+                    seenDirectoryMtimes += dir.lastModified
+                    if (dir.lastModified > 0L) {
+                        directoryMtimesToStore[dir.documentId] = dir.lastModified
+                    }
+                    queue.add(DirJob(dir.documentId, dir.lastModified))
+                }
             }
+
+            cache?.upsertAll(treeUriString, directoryMtimesToStore)
+            cache?.pruneMissing(treeUriString, visitedDirectoryIds + directoryMtimesToStore.keys)
+            if (forceDeep) {
+                cache?.evaluateProbe(treeUriString, seenDirectoryMtimes)
+            }
+
+            SkippedSubtreeTracker.lastSkipped = skippedTracker.snapshot()
         }
 
-    private fun listBaseStorageFiles(
+    private data class DirEntry(val documentId: String, val lastModified: Long)
+
+    private data class Listing(
+        val files: List<BaseStorageFile>,
+        val directories: List<DirEntry>,
+    )
+
+    private fun listChildren(
         treeUri: Uri,
         rootDocumentId: String,
-    ): Pair<List<BaseStorageFile>, List<String>> {
+    ): Listing {
         val resultFiles = mutableListOf<BaseStorageFile>()
-        val resultDirectories = mutableListOf<String>()
+        val resultDirectories = mutableListOf<DirEntry>()
 
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, rootDocumentId)
 
@@ -113,7 +202,7 @@ class StorageAccessFrameworkProvider(private val context: Context) : StorageProv
                 val lastModified = if (it.isNull(4)) 0L else it.getLong(4)
 
                 if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
-                    resultDirectories.add(documentId)
+                    resultDirectories.add(DirEntry(documentId, lastModified))
                 } else if (LibraryFileFilter.accept(documentName, documentSize)) {
                     val documentUri =
                         DocumentsContract.buildDocumentUriUsingTree(
@@ -133,7 +222,7 @@ class StorageAccessFrameworkProvider(private val context: Context) : StorageProv
             }
         }
 
-        return resultFiles to resultDirectories
+        return Listing(resultFiles, resultDirectories)
     }
 
     override fun getGameRomFiles(

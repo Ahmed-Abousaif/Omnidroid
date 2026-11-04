@@ -93,18 +93,16 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
+import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
+import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
+import com.omnidroid.app.mobile.shared.compose.ui.chromeMutedContentColor
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-private val PanelColor = Color(0xFF1A1A1A)
-private val DialogColor = Color(0xFF1E1E1E)
-private val PanelBorder = Color.White.copy(alpha = 0.08f)
-private val DialogBorder = Color.White.copy(alpha = 0.14f)
-private val SubtitleColor = Color.White.copy(alpha = 0.55f)
 private val PanelShape = RoundedCornerShape(14.dp)
 private val FireColor = Color(0xFFFF6D00)
 private val DangerColor = Color(0xFFFF5252)
@@ -139,7 +137,7 @@ fun ProfileScreen(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(HomeChromeBackground),
+                .homeChromeBackground(),
     ) {
         val isLandscape = maxWidth > maxHeight
         val isLargeLandscape = isLandscape && (maxWidth >= 840.dp || maxHeight >= 500.dp)
@@ -401,8 +399,8 @@ private fun ProfileHeaderSection(
 ) {
     Card(
         shape = PanelShape,
-        colors = CardDefaults.cardColors(containerColor = PanelColor),
-        border = BorderStroke(1.dp, PanelBorder),
+        colors = CardDefaults.cardColors(containerColor = chromeColors.panel),
+        border = BorderStroke(1.dp, chromeColors.panelBorder),
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(
@@ -432,7 +430,7 @@ private fun ProfileHeaderSection(
                                     ),
                                 shape = CircleShape,
                             )
-                            .background(Color(0xFF222222))
+                            .background(chromeColors.listRow)
                             .clickable(onClick = onAvatarClick),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -486,7 +484,7 @@ private fun ProfileHeaderSection(
             ) {
                 Text(
                     text = tag,
-                    color = Color.White,
+                    color = chromeContentColor,
                     fontSize = if (isLargeScreen) 23.sp else if (compact) 17.sp else 21.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -512,7 +510,7 @@ private fun ProfileHeaderSection(
                         ConsoleAchievementsStore.MilestoneBadge.OMNIDROID_MASTER -> stringResource(R.string.profile_badge_master)
                     }
                 val isMaster = milestoneBadge == ConsoleAchievementsStore.MilestoneBadge.OMNIDROID_MASTER
-                val rankColor = if (isMaster) LibraryNeonGreen else SubtitleColor
+                val rankColor = if (isMaster) LibraryNeonGreen else chromeMutedContentColor
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
@@ -560,8 +558,8 @@ private fun ProfileLevelCard(
 
     Card(
         shape = PanelShape,
-        colors = CardDefaults.cardColors(containerColor = PanelColor),
-        border = BorderStroke(1.dp, PanelBorder),
+        colors = CardDefaults.cardColors(containerColor = chromeColors.panel),
+        border = BorderStroke(1.dp, chromeColors.panelBorder),
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(
@@ -586,7 +584,7 @@ private fun ProfileLevelCard(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = stringResource(R.string.profile_level, level),
-                        color = Color.White,
+                        color = chromeContentColor,
                         fontSize = if (isLargeScreen) 20.sp else if (compact) 15.sp else 18.sp,
                         fontWeight = FontWeight.Bold,
                     )
@@ -594,7 +592,7 @@ private fun ProfileLevelCard(
 
                 Text(
                     text = stringResource(R.string.profile_xp_to_next, xpToNext),
-                    color = SubtitleColor,
+                    color = chromeMutedContentColor,
                     fontSize = if (isLargeScreen) 13.sp else if (compact) 11.sp else 12.sp,
                 )
             }
@@ -610,7 +608,7 @@ private fun ProfileLevelCard(
                         .height(if (isLargeScreen) 9.dp else if (compact) 6.dp else 8.dp)
                         .clip(RoundedCornerShape(4.dp)),
                 color = LibraryNeonGreen,
-                trackColor = Color.White.copy(alpha = 0.1f),
+                trackColor = chromeColors.pressed,
             )
 
             Spacer(modifier = Modifier.height(if (isLargeScreen) 6.dp else if (compact) 4.dp else 6.dp))
@@ -626,7 +624,7 @@ private fun ProfileLevelCard(
                         String.format(Locale.US, "%,d", xpCurrent),
                         String.format(Locale.US, "%,d", xpForNext),
                     ),
-                    color = SubtitleColor,
+                    color = chromeMutedContentColor,
                     fontSize = if (isLargeScreen) 13.sp else if (compact) 10.sp else 12.sp,
                 )
                 Text(
@@ -638,7 +636,7 @@ private fun ProfileLevelCard(
             }
 
             Spacer(modifier = Modifier.height(if (isLargeScreen) 12.dp else if (compact) 6.dp else 14.dp))
-            Divider(color = PanelBorder, thickness = 1.dp)
+            Divider(color = chromeColors.panelBorder, thickness = 1.dp)
             Spacer(modifier = Modifier.height(if (isLargeScreen) 10.dp else if (compact) 6.dp else 12.dp))
 
             // Stats row: Playtime + Total XP
@@ -684,14 +682,14 @@ private fun ProfileStatColumn(
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = title,
-                color = SubtitleColor,
+                color = chromeMutedContentColor,
                 fontSize = if (isLargeScreen) 13.sp else if (compact) 10.sp else 12.sp,
             )
         }
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = value,
-            color = Color.White,
+            color = chromeContentColor,
             fontSize = if (isLargeScreen) 18.sp else if (compact) 13.sp else 16.sp,
             fontWeight = FontWeight.Bold,
         )
@@ -711,8 +709,8 @@ private fun ProfileStreakCard(
 ) {
     Card(
         shape = PanelShape,
-        colors = CardDefaults.cardColors(containerColor = PanelColor),
-        border = BorderStroke(1.dp, PanelBorder),
+        colors = CardDefaults.cardColors(containerColor = chromeColors.panel),
+        border = BorderStroke(1.dp, chromeColors.panelBorder),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
@@ -736,7 +734,7 @@ private fun ProfileStreakCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = stringResource(R.string.profile_streak_current),
-                        color = Color.White,
+                        color = chromeContentColor,
                         fontSize = if (isLargeScreen) 17.sp else 15.sp,
                         fontWeight = FontWeight.Bold,
                     )
@@ -744,7 +742,7 @@ private fun ProfileStreakCard(
 
                 Text(
                     text = stringResource(R.string.profile_streak_multiplier, streakMultiplier),
-                    color = if (streakMultiplier > 1.0) FireColor else SubtitleColor,
+                    color = if (streakMultiplier > 1.0) FireColor else chromeMutedContentColor,
                     fontSize = if (isLargeScreen) 15.sp else 13.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -760,13 +758,13 @@ private fun ProfileStreakCard(
                 Column {
                     Text(
                         text = stringResource(R.string.profile_streak_days, currentStreak),
-                        color = Color.White,
+                        color = chromeContentColor,
                         fontSize = if (isLargeScreen) 26.sp else 22.sp,
                         fontWeight = FontWeight.ExtraBold,
                     )
                     Text(
                         text = "${stringResource(R.string.profile_streak_best)}: ${stringResource(R.string.profile_streak_days, bestStreak)}",
-                        color = SubtitleColor,
+                        color = chromeMutedContentColor,
                         fontSize = if (isLargeScreen) 13.sp else 11.sp,
                     )
                 }
@@ -794,7 +792,7 @@ private fun ProfileStreakCard(
                                         if (active) {
                                             if (isMaxBonus) LibraryNeonGreen else FireColor
                                         } else {
-                                            Color.White.copy(alpha = 0.12f)
+                                            chromeColors.divider
                                         },
                                     ),
                         )
@@ -819,8 +817,8 @@ private fun ProfileAchievementsCard(
 ) {
     Card(
         shape = PanelShape,
-        colors = CardDefaults.cardColors(containerColor = PanelColor),
-        border = BorderStroke(1.dp, PanelBorder),
+        colors = CardDefaults.cardColors(containerColor = chromeColors.panel),
+        border = BorderStroke(1.dp, chromeColors.panelBorder),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
@@ -845,7 +843,7 @@ private fun ProfileAchievementsCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = stringResource(R.string.profile_achievements),
-                        color = Color.White,
+                        color = chromeContentColor,
                         fontSize = if (isLargeScreen) 17.sp else 15.sp,
                         fontWeight = FontWeight.Bold,
                     )
@@ -853,7 +851,7 @@ private fun ProfileAchievementsCard(
 
                 Text(
                     text = stringResource(R.string.profile_consoles_unlocked, unlockedConsoles, totalConsoles),
-                    color = SubtitleColor,
+                    color = chromeMutedContentColor,
                     fontSize = if (isLargeScreen) 14.sp else 12.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -900,11 +898,11 @@ private fun ConsoleAchievementItem(
     val unlocked = achievement.unlocked
     Surface(
         shape = RoundedCornerShape(12.dp),
-        color = if (unlocked) Color(0xFF242424) else Color(0xFF121212),
+        color = if (unlocked) chromeColors.panelSelected else chromeColors.listRow,
         border =
             BorderStroke(
                 1.dp,
-                if (unlocked) LibraryNeonGreen.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.07f),
+                if (unlocked) LibraryNeonGreen.copy(alpha = 0.45f) else chromeColors.panelBorder.copy(alpha = 0.55f),
             ),
         modifier = modifier.aspectRatio(1f),
     ) {
@@ -926,7 +924,7 @@ private fun ConsoleAchievementItem(
                 Icon(
                     painter = painterResource(achievement.imageResId),
                     contentDescription = stringResource(achievement.nameResId),
-                    tint = if (unlocked) Color.White else Color.White.copy(alpha = 0.18f),
+                    tint = if (unlocked) chromeContentColor else chromeColors.faint,
                     modifier =
                         Modifier
                             .fillMaxWidth(0.62f)
@@ -937,7 +935,7 @@ private fun ConsoleAchievementItem(
                     Surface(
                         shape = CircleShape,
                         color = Color(0xEE000000),
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)),
+                        border = BorderStroke(1.dp, chromeColors.panelBorder),
                         modifier = Modifier.fillMaxWidth(0.34f).aspectRatio(1f),
                     ) {
                         Box(
@@ -957,7 +955,7 @@ private fun ConsoleAchievementItem(
 
             Text(
                 text = stringResource(achievement.nameResId),
-                color = if (unlocked) Color.White else Color.White.copy(alpha = 0.4f),
+                color = if (unlocked) chromeContentColor else chromeColors.faint,
                 fontSize = if (isLargeScreen) 10.sp else 9.sp,
                 fontWeight = if (unlocked) FontWeight.Bold else FontWeight.Normal,
                 maxLines = 1,
@@ -984,8 +982,8 @@ private fun ProfileRecentSessionsCard(
 
     Card(
         shape = PanelShape,
-        colors = CardDefaults.cardColors(containerColor = PanelColor),
-        border = BorderStroke(1.dp, PanelBorder),
+        colors = CardDefaults.cardColors(containerColor = chromeColors.panel),
+        border = BorderStroke(1.dp, chromeColors.panelBorder),
         modifier = Modifier.fillMaxWidth().animateContentSize(),
     ) {
         Column(
@@ -1009,7 +1007,7 @@ private fun ProfileRecentSessionsCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = stringResource(R.string.profile_recent_sessions),
-                        color = Color.White,
+                        color = chromeContentColor,
                         fontSize = if (isLargeScreen) 17.sp else 15.sp,
                         fontWeight = FontWeight.Bold,
                     )
@@ -1018,7 +1016,7 @@ private fun ProfileRecentSessionsCard(
                 if (recentSessions.isNotEmpty()) {
                     Text(
                         text = "${recentSessions.size} total",
-                        color = SubtitleColor,
+                        color = chromeMutedContentColor,
                         fontSize = if (isLargeScreen) 13.sp else 11.sp,
                     )
                 }
@@ -1036,7 +1034,7 @@ private fun ProfileRecentSessionsCard(
                 ) {
                     Text(
                         text = stringResource(R.string.profile_no_sessions),
-                        color = SubtitleColor,
+                        color = chromeMutedContentColor,
                         fontSize = if (isLargeScreen) 14.sp else 12.sp,
                         textAlign = TextAlign.Center,
                     )
@@ -1045,7 +1043,7 @@ private fun ProfileRecentSessionsCard(
                 displayedSessions.forEachIndexed { index, item ->
                     if (index > 0) {
                         Divider(
-                            color = PanelBorder,
+                            color = chromeColors.panelBorder,
                             thickness = 0.5.dp,
                             modifier = Modifier.padding(vertical = if (isLargeScreen) 8.dp else 6.dp),
                         )
@@ -1055,7 +1053,7 @@ private fun ProfileRecentSessionsCard(
 
                 if (hasMore) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    Divider(color = PanelBorder, thickness = 0.5.dp)
+                    Divider(color = chromeColors.panelBorder, thickness = 0.5.dp)
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(
                         modifier =
@@ -1114,7 +1112,7 @@ private fun RecentSessionRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = item.gameTitle,
-                color = Color.White,
+                color = chromeContentColor,
                 fontSize = if (isLargeScreen) 15.sp else 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -1122,7 +1120,7 @@ private fun RecentSessionRow(
             )
             Text(
                 text = "$durationMin min • $dateText",
-                color = SubtitleColor,
+                color = chromeMutedContentColor,
                 fontSize = if (isLargeScreen) 12.sp else 11.sp,
             )
         }
@@ -1166,8 +1164,8 @@ private fun EditTagDialog(
     ) {
         Surface(
             shape = RoundedCornerShape(20.dp),
-            color = DialogColor,
-            border = BorderStroke(1.dp, DialogBorder),
+            color = chromeColors.menu,
+            border = BorderStroke(1.dp, chromeColors.panelBorder),
             shadowElevation = 16.dp,
             modifier =
                 Modifier
@@ -1206,13 +1204,13 @@ private fun EditTagDialog(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = stringResource(R.string.profile_change_tag),
-                            color = Color.White,
+                            color = chromeContentColor,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
                             text = "Choose your display tag across Omnidroid",
-                            color = SubtitleColor,
+                            color = chromeMutedContentColor,
                             fontSize = 12.sp,
                         )
                     }
@@ -1224,7 +1222,7 @@ private fun EditTagDialog(
                         Icon(
                             Icons.Filled.Close,
                             contentDescription = stringResource(android.R.string.cancel),
-                            tint = SubtitleColor,
+                            tint = chromeMutedContentColor,
                             modifier = Modifier.size(18.dp),
                         )
                     }
@@ -1243,7 +1241,7 @@ private fun EditTagDialog(
                     placeholder = {
                         Text(
                             stringResource(R.string.profile_tag_hint),
-                            color = Color.White.copy(alpha = 0.3f),
+                            color = chromeColors.faint,
                         )
                     },
                     singleLine = true,
@@ -1254,7 +1252,7 @@ private fun EditTagDialog(
                                 Icon(
                                     Icons.Filled.Close,
                                     contentDescription = "Clear",
-                                    tint = SubtitleColor,
+                                    tint = chromeMutedContentColor,
                                     modifier = Modifier.size(16.dp),
                                 )
                             }
@@ -1270,13 +1268,13 @@ private fun EditTagDialog(
                         ),
                     colors =
                         OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF141414),
-                            unfocusedContainerColor = Color(0xFF141414),
+                            focusedContainerColor = chromeColors.listRow,
+                            unfocusedContainerColor = chromeColors.listRow,
                             focusedBorderColor = LibraryNeonGreen,
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                            unfocusedBorderColor = chromeColors.divider,
                             cursorColor = LibraryNeonGreen,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
+                            focusedTextColor = chromeContentColor,
+                            unfocusedTextColor = chromeContentColor,
                         ),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -1286,7 +1284,7 @@ private fun EditTagDialog(
                 // Character Counter
                 Text(
                     text = "${tagText.length} / ${UserProfileStore.MAX_TAG_LENGTH}",
-                    color = if (tagText.length >= UserProfileStore.MAX_TAG_LENGTH) FireColor else SubtitleColor,
+                    color = if (tagText.length >= UserProfileStore.MAX_TAG_LENGTH) FireColor else chromeMutedContentColor,
                     fontSize = 11.sp,
                     modifier = Modifier.align(Alignment.End),
                 )
@@ -1305,7 +1303,7 @@ private fun EditTagDialog(
                     ) {
                         Text(
                             stringResource(android.R.string.cancel),
-                            color = Color.White.copy(alpha = 0.7f),
+                            color = chromeMutedContentColor,
                             fontWeight = FontWeight.Medium,
                         )
                     }
@@ -1318,8 +1316,8 @@ private fun EditTagDialog(
                             ButtonDefaults.buttonColors(
                                 containerColor = LibraryNeonGreen,
                                 contentColor = Color.Black,
-                                disabledContainerColor = Color.White.copy(alpha = 0.1f),
-                                disabledContentColor = Color.White.copy(alpha = 0.3f),
+                                disabledContainerColor = chromeColors.pressed,
+                                disabledContentColor = chromeColors.faint,
                             ),
                     ) {
                         Text("Save Tag", fontWeight = FontWeight.Bold)
@@ -1344,8 +1342,8 @@ private fun PhotoOptionsDialog(
     ) {
         Surface(
             shape = RoundedCornerShape(20.dp),
-            color = DialogColor,
-            border = BorderStroke(1.dp, DialogBorder),
+            color = chromeColors.menu,
+            border = BorderStroke(1.dp, chromeColors.panelBorder),
             shadowElevation = 16.dp,
             modifier =
                 Modifier
@@ -1385,13 +1383,13 @@ private fun PhotoOptionsDialog(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = stringResource(R.string.profile_change_picture),
-                            color = Color.White,
+                            color = chromeContentColor,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
                             text = "Customize your profile avatar",
-                            color = SubtitleColor,
+                            color = chromeMutedContentColor,
                             fontSize = 12.sp,
                         )
                     }
@@ -1403,7 +1401,7 @@ private fun PhotoOptionsDialog(
                         Icon(
                             Icons.Filled.Close,
                             contentDescription = stringResource(android.R.string.cancel),
-                            tint = SubtitleColor,
+                            tint = chromeMutedContentColor,
                             modifier = Modifier.size(18.dp),
                         )
                     }
@@ -1425,7 +1423,7 @@ private fun PhotoOptionsDialog(
                                     ),
                                 shape = CircleShape,
                             )
-                            .background(Color(0xFF222222)),
+                            .background(chromeColors.listRow),
                     contentAlignment = Alignment.Center,
                 ) {
                     if (currentPhotoUri != null) {

@@ -59,7 +59,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.addconsole.AddConsoleViewModel.ConsoleItem
-import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import kotlin.math.absoluteValue
@@ -139,7 +139,7 @@ fun AddConsoleScreen(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(HomeChromeBackground)
+                .homeChromeBackground()
                 .centerGlow(accent)
                 .focusRequester(focusRequester)
                 .focusable()

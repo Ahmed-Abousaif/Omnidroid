@@ -12,7 +12,6 @@ import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -33,8 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
-import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 
 class CastIdlePresentation(
     context: Context,
@@ -59,7 +58,7 @@ class CastIdlePresentation(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .background(HomeChromeBackground),
+                            .homeChromeBackground(),
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -71,7 +70,7 @@ class CastIdlePresentation(
                         )
                         Text(
                             text = stringResource(R.string.cast_idle_title),
-                            color = Color.White,
+                            color = chromeContentColor,
                             fontSize = 28.sp,
                             fontWeight = FontWeight.SemiBold,
                             textAlign = TextAlign.Center,
@@ -79,7 +78,7 @@ class CastIdlePresentation(
                         )
                         Text(
                             text = stringResource(R.string.cast_idle_message),
-                            color = Color.White.copy(alpha = 0.72f),
+                            color = chromeContentColor.copy(alpha = 0.72f),
                             fontSize = 16.sp,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(top = 8.dp, start = 32.dp, end = 32.dp),

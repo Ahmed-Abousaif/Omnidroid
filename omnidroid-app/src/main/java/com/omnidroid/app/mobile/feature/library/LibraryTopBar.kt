@@ -117,6 +117,9 @@ import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.SystemStatusIndicators
+import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
+import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
 import com.omnidroid.app.mobile.shared.compose.ui.hugDisplayCutout
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
@@ -126,6 +129,9 @@ import kotlin.math.roundToInt
 val LibraryTopBarRowHeight = 40.dp
 val LibraryTopBarPortraitHeight = 82.dp
 private val LibrarySearchCollapsedWidth = 200.dp
+
+@Composable
+private fun topBarShadowColor(): Color = homeChromeColor
 
 @Composable
 fun LibraryTopBar(
@@ -203,7 +209,7 @@ fun LibraryTopBar(
         }
     }
 
-    CompositionLocalProvider(LocalContentColor provides Color.White) {
+    CompositionLocalProvider(LocalContentColor provides chromeContentColor) {
         if (portrait && !overlayMode && showBack) {
             PortraitDetailsTopBar(
                 modifier = modifier,
@@ -275,7 +281,7 @@ fun LibraryTopBar(
                         .align(Alignment.TopStart)
                         .background(
                             Brush.verticalGradient(
-                                0f to Color.Black,
+                                0f to topBarShadowColor(),
                                 1f to Color.Transparent,
                             ),
                         ),
@@ -391,7 +397,7 @@ fun LibraryTopBar(
                                                     MaterialTheme.typography.titleMedium.copy(
                                                         fontWeight = FontWeight.SemiBold,
                                                     ),
-                                                color = Color.White,
+                                                color = chromeColors.content,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                                 modifier = Modifier.padding(start = 14.dp),
@@ -425,7 +431,7 @@ fun LibraryTopBar(
                 }
 
                 AnimatedVisibility(
-                    visible = operationInProgress,
+                    visible = syncProgress != null,
                     enter = fadeIn(animationSpec = tween(180)) + expandVertically(animationSpec = tween(180)),
                     exit = fadeOut(animationSpec = tween(180)) + shrinkVertically(animationSpec = tween(180)),
                 ) {
@@ -491,7 +497,7 @@ private fun PortraitHomeTopBar(
                     .align(Alignment.TopCenter)
                     .background(
                         Brush.verticalGradient(
-                            0f to Color.Black,
+                            0f to topBarShadowColor(),
                             1f to Color.Transparent,
                         ),
                     ),
@@ -539,7 +545,7 @@ private fun PortraitHomeTopBar(
             }
         }
         AnimatedVisibility(
-            visible = operationInProgress,
+            visible = syncProgress != null,
             enter = fadeIn(animationSpec = tween(180)) + expandVertically(animationSpec = tween(180)),
             exit = fadeOut(animationSpec = tween(180)) + shrinkVertically(animationSpec = tween(180)),
             modifier =
@@ -584,7 +590,7 @@ private fun PortraitDetailsTopBar(
             SystemStatusIndicators(gamepadConnected = gamepadConnected)
         }
         AnimatedVisibility(
-            visible = operationInProgress,
+            visible = syncProgress != null,
             enter = fadeIn(animationSpec = tween(180)) + expandVertically(animationSpec = tween(180)),
             exit = fadeOut(animationSpec = tween(180)) + shrinkVertically(animationSpec = tween(180)),
         ) {
@@ -644,7 +650,7 @@ private fun ProfileChromeButton(
     val pressed by interactionSource.collectIsPressedAsState()
     val focused by interactionSource.collectIsFocusedAsState()
     val background by animateColorAsState(
-        targetValue = if (pressed || focused) ChromeButtonPressedColor else Color.Transparent,
+        targetValue = if (pressed || focused) chromeColors.pressed else Color.Transparent,
         animationSpec = tween(120),
         label = "profileButtonPressed",
     )
@@ -696,7 +702,7 @@ private fun LibrarySortButton(
         Icon(
             imageVector = Icons.AutoMirrored.Filled.Sort,
             contentDescription = stringResource(R.string.library_sort),
-            tint = if (sort != LibrarySort.TITLE) LibraryNeonGreen else Color.White.copy(alpha = 0.78f),
+            tint = if (sort != LibrarySort.TITLE) LibraryNeonGreen else chromeColors.muted,
             modifier = Modifier.size(16.dp),
         )
     }
@@ -748,7 +754,7 @@ private fun LibrarySortMenu(
             ) {
                 Surface(
                     shape = RoundedCornerShape(14.dp),
-                    color = Color(0xFF1C1C1E),
+                    color = chromeColors.menu,
                     shadowElevation = 8.dp,
                 ) {
                     Column(
@@ -800,14 +806,14 @@ private fun LibrarySortMenuItem(
         text = {
             Text(
                 text = stringResource(option.labelRes()),
-                color = if (selected) LibraryNeonGreen else Color.White,
+                color = if (selected) LibraryNeonGreen else chromeColors.content,
             )
         },
         leadingIcon = {
             Icon(
                 imageVector = option.icon(),
                 contentDescription = null,
-                tint = if (selected) LibraryNeonGreen else Color.White.copy(alpha = 0.72f),
+                tint = if (selected) LibraryNeonGreen else chromeColors.muted,
                 modifier = Modifier.size(18.dp),
             )
         },
@@ -872,13 +878,13 @@ private fun LibrarySearchField(
                     },
                 ),
         shape = CircleShape,
-        color = Color(0xFF161616),
+        color = chromeColors.panel,
         tonalElevation = 0.dp,
         border =
             if (active) {
                 BorderStroke(1.5.dp, LibraryNeonGreen)
             } else {
-                BorderStroke(1.dp, Color.White.copy(alpha = 0.08f))
+                BorderStroke(1.dp, chromeColors.panelBorder)
             },
     ) {
         Row(
@@ -893,7 +899,7 @@ private fun LibrarySearchField(
                 imageVector = Icons.Filled.Search,
                 contentDescription = stringResource(R.string.title_search),
                 modifier = Modifier.size(16.dp),
-                tint = Color.White.copy(alpha = 0.78f),
+                tint = chromeColors.muted,
             )
             BasicTextField(
                 value = query,
@@ -916,10 +922,10 @@ private fun LibrarySearchField(
                             onFocusChange(it.isFocused)
                         },
                 singleLine = true,
-                cursorBrush = SolidColor(Color.White),
+                cursorBrush = SolidColor(chromeColors.content),
                 textStyle =
                     TextStyle(
-                        color = Color.White,
+                        color = chromeColors.content,
                         fontSize = 13.sp,
                     ),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -929,7 +935,7 @@ private fun LibrarySearchField(
                         if (query.isEmpty()) {
                             Text(
                                 text = stringResource(R.string.title_search),
-                                color = Color.White.copy(alpha = 0.42f),
+                                color = chromeColors.faint,
                                 fontSize = 13.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -943,7 +949,7 @@ private fun LibrarySearchField(
                 Icon(
                     imageVector = Icons.Filled.Close,
                     contentDescription = stringResource(R.string.cancel),
-                    tint = Color.White.copy(alpha = 0.78f),
+                    tint = chromeColors.muted,
                     modifier =
                         Modifier
                             .size(22.dp)
@@ -958,7 +964,7 @@ private fun LibrarySearchField(
                             .padding(horizontal = 4.dp)
                             .width(1.dp)
                             .height(height / 2)
-                            .background(Color.White.copy(alpha = 0.12f)),
+                            .background(chromeColors.divider),
                 )
                 trailing()
             }
@@ -982,7 +988,7 @@ private fun OverlayTitle(
         Text(
             text = stringResource(titleId),
             style = MaterialTheme.typography.titleMedium,
-            color = Color.White,
+            color = chromeColors.content,
             modifier = Modifier.padding(start = 12.dp),
         )
     }
@@ -1028,8 +1034,6 @@ private fun SpinningRescanIcon(
     )
 }
 
-private val ChromeButtonPressedColor = Color.White.copy(alpha = 0.14f)
-
 @Composable
 private fun chromeButtonSize(): Dp = if (LocalAdaptiveLayout.current.isCompact) 32.dp else 36.dp
 
@@ -1042,7 +1046,7 @@ fun FloatingChromeButton(
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val background by animateColorAsState(
-        targetValue = if (pressed) ChromeButtonPressedColor else Color.Transparent,
+        targetValue = if (pressed) chromeColors.pressed else Color.Transparent,
         animationSpec = tween(120),
         label = "chromeButtonPressed",
     )
@@ -1100,8 +1104,8 @@ fun SyncProgressBar(
 
     Surface(
         modifier = modifier,
-        color = Color(0xF2121212),
-        border = BorderStroke(0.5.dp, Color(0xFF262626)),
+        color = chromeColors.progressBar,
+        border = BorderStroke(0.5.dp, chromeColors.progressBarBorder),
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
@@ -1133,7 +1137,7 @@ fun SyncProgressBar(
                                 fontWeight = FontWeight.Medium,
                                 letterSpacing = 0.2.sp,
                             ),
-                        color = Color.White.copy(alpha = 0.92f),
+                        color = chromeColors.content.copy(alpha = 0.92f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )

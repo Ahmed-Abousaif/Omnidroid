@@ -9,8 +9,9 @@ import com.omnidroid.lib.library.scan.MetadataKeyType
 import com.omnidroid.lib.library.scan.ScanKeys
 import com.omnidroid.metadata.libretrodb.db.LibretroDBManager
 import com.omnidroid.metadata.libretrodb.db.LibretroDatabase
+import com.omnidroid.metadata.libretrodb.db.dao.GameDao
+import com.omnidroid.metadata.libretrodb.db.entity.CandidateRom
 import com.omnidroid.metadata.libretrodb.db.entity.LibretroRom
-import java.net.URLEncoder
 
 class LibretroDBMetadataProvider(
     private val ovgdbManager: LibretroDBManager,
@@ -130,26 +131,25 @@ class LibretroDBMetadataProvider(
         systemId: String,
         fallbackTitle: String,
     ): LibretroRom? {
-        val variants = titleVariants(fallbackTitle)
+        val variants = LibretroTitleMatching.titleVariants(fallbackTitle)
         if (variants.isEmpty()) return null
         val dao = ovgdbManager.dbInstance.gameDao()
+        val queryNorm = LibretroTitleMatching.normalizeTitle(fallbackTitle) ?: return null
 
-        // Stage 1: Exact and Prefix lookups (fast path)
+        // Stage 1: Exact lookups, then region-ranked prefix lookups
         for (normalized in variants) {
             dao.findByNormalizedName(systemId, normalized)?.takeIf { isLibraryTitle(it.name) }?.let {
                 return it
             }
-            dao.findByNormalizedNamePrefix(systemId, "$normalized ")?.takeIf { isLibraryTitle(it.name) }?.let {
-                return it
-            }
-            dao.findByNormalizedNamePrefix(systemId, "$normalized (")?.takeIf { isLibraryTitle(it.name) }?.let {
-                return it
-            }
+        }
+        for (normalized in variants) {
+            pickBestPrefixMatch(dao, systemId, "$normalized ", queryNorm)?.let { return it }
+            pickBestPrefixMatch(dao, systemId, "$normalized (", queryNorm)?.let { return it }
         }
 
         // Stage 2: Token-Fuzzy fallback (smarter recovery)
-        val queryNorm = normalizeTitle(fallbackTitle) ?: return null
-        val significantToken = TokenMatcher.selectSignificantToken(queryNorm) ?: return null
+        val queryCore = LibretroTitleMatching.stripTags(queryNorm).ifBlank { queryNorm }
+        val significantToken = TokenMatcher.selectSignificantToken(queryCore) ?: return null
         val candidates = dao.findCandidatesByToken(systemId, significantToken)
 
         val bestMatch =
@@ -157,10 +157,18 @@ class LibretroDBMetadataProvider(
                 .asSequence()
                 .filter { isLibraryTitle(it.name) }
                 .map { candidate ->
-                    candidate to TokenMatcher.bestScore(queryNorm, candidate.normalizedName ?: "")
+                    val candidateNorm = candidate.normalizedName ?: ""
+                    val candidateCore =
+                        LibretroTitleMatching.stripTags(candidateNorm).ifBlank { candidateNorm }
+                    val tokenScore = TokenMatcher.bestScore(queryCore, candidateCore)
+                    val regionScore = LibretroTitleMatching.regionScore(queryNorm, candidateNorm)
+                    candidate to (tokenScore to regionScore)
                 }
-                .filter { it.second >= 85 }
-                .maxByOrNull { it.second }
+                .filter { it.second.first >= 85 }
+                .maxWithOrNull(
+                    compareBy<Pair<CandidateRom, Pair<Int, Int>>> { it.second.first }
+                        .thenBy { it.second.second },
+                )
                 ?.first
 
         return bestMatch?.let {
@@ -179,83 +187,23 @@ class LibretroDBMetadataProvider(
         }
     }
 
-    private val commonAliases =
-        mapOf(
-            "megaman" to "mega man",
-            "thps" to "tony hawk's pro skater",
-            "sf2" to "street fighter ii",
-            "sfii" to "street fighter ii",
-            "mk" to "mortal kombat",
-            "smb" to "super mario bros",
-            "tmnt" to "teenage mutant ninja turtles",
-            "zelda" to "the legend of zelda",
-            "castlevania sotn" to "castlevania symphony of the night",
-            "re1" to "resident evil",
-            "re2" to "resident evil 2",
-            "re3" to "resident evil 3",
-            "bros" to "brothers",
-            "pacman" to "pac man",
-            "ddragon" to "double dragon",
+    private suspend fun pickBestPrefixMatch(
+        dao: GameDao,
+        systemId: String,
+        prefix: String,
+        queryNorm: String,
+    ): LibretroRom? {
+        val matches =
+            dao.findAllByNormalizedNamePrefix(systemId, prefix)
+                .filter { isLibraryTitle(it.name) }
+        if (matches.isEmpty()) return null
+        if (matches.size == 1) return matches.first()
+        return matches.maxWithOrNull(
+            compareBy<LibretroRom> {
+                LibretroTitleMatching.regionScore(queryNorm, it.normalizedName ?: "")
+            }.thenByDescending { it.thumbnailPath != null }
+                .thenBy { it.normalizedName ?: "" },
         )
-
-    private val regionOrTagSuffix =
-        Regex(
-            """\s*\((?:usa|europe|japan|world|rev\s*\d+|v\d+\.\d+|beta|proto|track\s*\d+)[^)]*\)$""",
-            RegexOption.IGNORE_CASE,
-        )
-
-    private fun titleVariants(value: String): List<String> {
-        val base = normalizeTitle(value) ?: return emptyList()
-        val variants = linkedSetOf(base)
-
-        // 1. Article variations ("the", "a", "an")
-        if (base.startsWith("the ")) {
-            variants += base.removePrefix("the ").trim()
-        } else {
-            variants += "the $base"
-        }
-        if (base.endsWith(" the")) {
-            variants += "the " + base.removeSuffix(" the").trim()
-            variants += base.removeSuffix(" the").trim()
-        }
-
-        // 2. Region / Tag Stripping
-        val withoutTags = base.replace(regionOrTagSuffix, "").trim()
-        if (withoutTags.isNotEmpty() && withoutTags != base) {
-            variants += withoutTags
-            if (withoutTags.startsWith("the ")) {
-                variants += withoutTags.removePrefix("the ").trim()
-            }
-        }
-        val genericNoParen = base.substringBefore('(').trim()
-        if (genericNoParen.isNotEmpty() && genericNoParen != base) {
-            variants += genericNoParen
-        }
-
-        // 3. Common Alias Mapping
-        for (v in variants.toList()) {
-            for ((alias, canonical) in commonAliases) {
-                if (v.contains(alias)) {
-                    variants += v.replace(alias, canonical).trim()
-                }
-            }
-        }
-
-        return variants.filter { it.isNotBlank() }
-    }
-
-    private fun normalizeTitle(value: String): String? {
-        val cleaned =
-            value
-                .lowercase(java.util.Locale.US)
-                .replace(Regex("""\.\w{1,4}$"""), "")
-                .replace(Regex("""\s*\[[^\]]*\]"""), "")
-                .replace('_', ' ')
-                .replace(",", "")
-                .replace(Regex("""[-:]+"""), " ")
-                .replace(Regex("""\s+"""), " ")
-                .trim()
-        return cleaned.takeIf { it.isNotBlank() }
     }
 
     private fun isLibraryTitle(name: String?): Boolean {

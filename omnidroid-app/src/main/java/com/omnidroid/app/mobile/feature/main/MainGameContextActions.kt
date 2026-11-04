@@ -76,10 +76,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameTexts
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidSmallGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
+import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
+import com.omnidroid.app.mobile.shared.compose.ui.chromeMutedContentColor
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.shared.covers.CoverUtils
 import com.omnidroid.lib.library.GameSystem
@@ -88,8 +90,6 @@ import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.savesync.GameCloudSyncOverride
 
 private val GameSettingsOverlayWidth = 380.dp
-private val PanelMutedWhite = Color.White.copy(alpha = 0.72f)
-private val PanelDivider = Color.White.copy(alpha = 0.08f)
 
 @Composable
 fun MainGameContextActions(
@@ -276,12 +276,12 @@ private fun GameSettingsPanel(
                 .fillMaxHeight()
                 .width(GameSettingsOverlayWidth),
         shape = RectangleShape,
-        color = HomeChromeBackground,
-        contentColor = Color.White,
+        color = chromeColors.panel,
+        contentColor = chromeContentColor,
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
     ) {
-        CompositionLocalProvider(LocalContentColor provides Color.White) {
+        CompositionLocalProvider(LocalContentColor provides chromeContentColor) {
             Row(modifier = Modifier.fillMaxSize()) {
                 Box(
                     modifier =
@@ -307,7 +307,7 @@ private fun GameSettingsPanel(
                             Modifier
                                 .fillMaxWidth()
                                 .height(1.dp)
-                                .background(PanelDivider),
+                                .background(chromeColors.divider),
                     )
                     Column(
                         modifier =
@@ -323,7 +323,7 @@ private fun GameSettingsPanel(
                                     .fillMaxWidth()
                                     .padding(vertical = 8.dp)
                                     .height(1.dp)
-                                    .background(PanelDivider),
+                                    .background(chromeColors.divider),
                         )
                         ContextActionEntry(
                             label = stringResource(id = R.string.game_context_menu_resume),
@@ -368,7 +368,7 @@ private fun GameSettingsPanel(
                             Text(
                                 text = stringResource(R.string.game_menu_fast_forward_note),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = PanelMutedWhite,
+                                color = chromeMutedContentColor,
                                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
                             )
                         }
@@ -479,7 +479,7 @@ private fun GameSettingsHeader(onClose: () -> Unit) {
                     .controllerFocusGlow(CircleShape),
             shape = CircleShape,
             color = Color.Transparent,
-            contentColor = Color.White,
+            contentColor = chromeContentColor,
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
@@ -494,7 +494,7 @@ private fun GameSettingsHeader(onClose: () -> Unit) {
                 MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                 ),
-            color = Color.White,
+            color = chromeContentColor,
             modifier = Modifier.padding(start = 8.dp),
             maxLines = 1,
         )
@@ -506,12 +506,11 @@ private fun SectionLabel(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelLarge,
-        color = PanelMutedWhite,
+        color = chromeMutedContentColor,
         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 4.dp),
     )
 }
 
-private val SpeedSelectorTrack = Color.White.copy(alpha = 0.08f)
 private val SpeedSelectorHeight = 40.dp
 private val SpeedSelectorShape = RoundedCornerShape(10.dp)
 
@@ -529,7 +528,7 @@ private fun FastForwardSpeedSelector(
                 .padding(horizontal = 16.dp, vertical = 4.dp)
                 .height(SpeedSelectorHeight)
                 .clip(SpeedSelectorShape)
-                .background(SpeedSelectorTrack)
+                .background(chromeColors.divider)
                 .padding(3.dp),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -546,7 +545,7 @@ private fun FastForwardSpeedSelector(
                         .controllerFocusGlow(RoundedCornerShape(8.dp)),
                 shape = RoundedCornerShape(8.dp),
                 color = if (isSelected) LibraryNeonGreen else Color.Transparent,
-                contentColor = if (isSelected) Color.Black else Color.White,
+                contentColor = if (isSelected) Color.Black else chromeContentColor,
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -558,7 +557,7 @@ private fun FastForwardSpeedSelector(
                             MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                             ),
-                        color = if (isSelected) Color.Black else PanelMutedWhite,
+                        color = if (isSelected) Color.Black else chromeMutedContentColor,
                         textAlign = TextAlign.Center,
                         maxLines = 1,
                     )
@@ -619,12 +618,12 @@ private fun ContextActionEntry(
             modifier = Modifier.padding(start = 16.dp),
             imageVector = icon,
             contentDescription = label,
-            tint = Color.White,
+            tint = chromeContentColor,
         )
         Text(
             modifier = Modifier.padding(start = 16.dp),
             text = label,
-            color = Color.White,
+            color = chromeContentColor,
         )
     }
 }
@@ -650,9 +649,9 @@ private fun ChoiceRow(
             colors =
                 RadioButtonDefaults.colors(
                     selectedColor = LibraryNeonGreen,
-                    unselectedColor = PanelMutedWhite,
+                    unselectedColor = chromeMutedContentColor,
                 ),
         )
-        Text(text = label, color = Color.White)
+        Text(text = label, color = chromeContentColor)
     }
 }

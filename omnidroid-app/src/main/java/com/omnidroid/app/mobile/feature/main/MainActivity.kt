@@ -40,6 +40,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
@@ -52,7 +53,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
@@ -100,7 +104,7 @@ import com.omnidroid.app.mobile.feature.settings.slices.GameDatabasesViewModel
 import com.omnidroid.app.mobile.feature.settings.unrecognized.UnrecognizedFilesScreen
 import com.omnidroid.app.mobile.feature.settings.unrecognized.UnrecognizedFilesViewModel
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
-import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.calculateAdaptiveLayoutSpec
 import com.omnidroid.app.mobile.shared.controller.ControllerHintBar
@@ -336,12 +340,19 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         ),
                 )
             val libraryState = libraryViewModel.state.collectAsState().value
-            var launchScanDone by rememberSaveable { mutableStateOf(false) }
-            LaunchedEffect(Unit) {
-                if (!launchScanDone) {
-                    launchScanDone = true
+            val lifecycleOwner = LocalLifecycleOwner.current
+            LaunchedEffect(lifecycleOwner) {
+                lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                     libraryViewModel.autoSyncLibrary(this@MainActivity)
                 }
+            }
+            DisposableEffect(libraryViewModel) {
+                val watcher =
+                    com.omnidroid.app.shared.library.LocalFolderWatcher(this@MainActivity) {
+                        libraryViewModel.autoSyncLibrary(this@MainActivity)
+                    }
+                watcher.start()
+                onDispose { watcher.stop() }
             }
             LaunchedEffect(libraryState.portrait) {
                 val orientation = LibraryViewModel.orientationFor(libraryState.portrait)
@@ -506,7 +517,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 LocalAdaptiveLayout provides adaptiveSpec,
             ) {
             Scaffold(
-                containerColor = HomeChromeBackground,
+                containerColor = homeChromeColor,
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
                 bottomBar = {
                     if (gamepadConnected) {

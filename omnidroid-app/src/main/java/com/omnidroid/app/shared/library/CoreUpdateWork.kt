@@ -34,16 +34,6 @@ class CoreUpdateWork
         override suspend fun doWork(): Result {
             Timber.i("Checking core existence for scanned games")
 
-            val notificationsManager = NotificationsManager(applicationContext)
-
-            val foregroundInfo =
-                createSyncForegroundInfo(
-                    NotificationsManager.CORE_INSTALL_NOTIFICATION_ID,
-                    notificationsManager.installingCoresNotification(),
-                )
-
-            setForegroundAsync(foregroundInfo)
-
             try {
                 val requiredCores = requiredCores()
                 val missingCores =
@@ -55,7 +45,28 @@ class CoreUpdateWork
                     "Cores required=${requiredCores.map { it.coreName }}, missing=${missingCores.map { it.coreName }}",
                 )
 
-                if (missingCores.isNotEmpty()) {
+                val needsDownload = missingCores.isNotEmpty()
+                val lastIndex = LastLibraryIndexResult.get()
+                val noisy =
+                    needsDownload ||
+                        lastIndex.deltaCount >= LibraryIndexWork.SILENT_DELTA_THRESHOLD ||
+                        lastIndex.newSystemIds.isNotEmpty()
+
+                if (noisy) {
+                    val notificationsManager = NotificationsManager(applicationContext)
+                    val foregroundInfo =
+                        createSyncForegroundInfo(
+                            NotificationsManager.CORE_INSTALL_NOTIFICATION_ID,
+                            notificationsManager.installingCoresNotification(),
+                        )
+                    setForegroundAsync(foregroundInfo)
+                    SyncProgressTracker.update(
+                        stepText = applicationContext.getString(com.omnidroid.R.string.library_scanning),
+                        isIndeterminate = true,
+                    )
+                }
+
+                if (needsDownload) {
                     coreUpdater.downloadCores(applicationContext, missingCores)
                 }
                 sliceInstaller.ensureSlices(applicationContext, requiredCores)

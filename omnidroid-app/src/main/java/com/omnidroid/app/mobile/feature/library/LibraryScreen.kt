@@ -84,10 +84,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import com.omnidroid.app.shared.library.LibraryCoverPrefetcher
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
@@ -120,13 +123,14 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.GameCardInfoStyle
-import com.omnidroid.app.mobile.shared.compose.ui.HomeChromeBackground
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidEmptyView
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameCard
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
+import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.hugDisplayCutout
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -233,7 +237,7 @@ fun LibraryScreen(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(HomeChromeBackground),
+                .homeChromeBackground(),
     ) {
         if (state.layout == LibraryLayout.CONSOLE) {
             ConsoleBackdrop(
@@ -387,7 +391,7 @@ private fun LibrarySidebar(
         Spacer(modifier = Modifier.height(4.dp))
         HorizontalDivider(
             modifier = Modifier.width(if (adaptiveSpec.isCompact) 20.dp else 28.dp),
-            color = Color.White.copy(alpha = 0.12f),
+            color = chromeColors.divider,
         )
         val scrollState = rememberScrollState()
         Column(
@@ -423,8 +427,6 @@ private fun LibrarySidebar(
     }
 }
 
-private val DockButtonColor = Color(0xFF1C1C1E)
-private val DockMutedTint = Color.White.copy(alpha = 0.7f)
 private val DockFadeLength = 14.dp
 
 /** Fades scrolling dock content into its edges instead of clipping it against an invisible line. */
@@ -470,16 +472,21 @@ private fun SidebarIconButton(
         onClick = onClick,
         modifier = Modifier.size(adaptiveSpec.sidebarButtonSize).controllerFocusGlow(CircleShape),
         shape = CircleShape,
-        color = DockButtonColor,
+        color = chromeColors.panel,
         tonalElevation = 0.dp,
-        border = if (selected) BorderStroke(2.dp, LibraryNeonGreen) else null,
+        border =
+            if (selected) {
+                BorderStroke(2.dp, LibraryNeonGreen)
+            } else {
+                BorderStroke(1.dp, chromeColors.panelBorder)
+            },
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,
                 modifier = Modifier.size(adaptiveSpec.sidebarIconSize),
-                tint = if (selected) LibraryNeonGreen else DockMutedTint,
+                tint = if (selected) LibraryNeonGreen else chromeColors.muted,
             )
             StartupBadge(visible = pinned)
         }
@@ -513,8 +520,9 @@ private fun SidebarSystemLogoButton(
 ) {
     val adaptiveSpec = LocalAdaptiveLayout.current
     val buttonSize = adaptiveSpec.sidebarButtonSize
+    val dockIdle = chromeColors.panel
     val background by animateColorAsState(
-        targetValue = if (selected) Color(meta.color()) else DockButtonColor,
+        targetValue = if (selected) Color(meta.color()) else dockIdle,
         animationSpec = tween(220),
         label = "dockConsoleColor",
     )
@@ -547,7 +555,7 @@ private fun SidebarSystemLogoButton(
                             .size(buttonSize)
                             .padding(buttonSize * 0.08f),
                     contentScale = ContentScale.Fit,
-                    colorFilter = if (selected) null else ColorFilter.tint(DockMutedTint),
+                    colorFilter = if (selected) null else ColorFilter.tint(chromeColors.muted),
                 )
                 if (selected && label != null) {
                     Text(
@@ -619,7 +627,7 @@ private fun PortraitConsoleBar(
                     .padding(horizontal = 2.dp)
                     .width(1.dp)
                     .height(28.dp)
-                    .background(Color.White.copy(alpha = 0.12f)),
+                    .background(chromeColors.divider),
         )
         LazyRow(
             state = listState,
@@ -718,6 +726,19 @@ private fun LibraryGames(
     val pinchScale = remember { mutableFloatStateOf(1f) }
     val currentZoomDensity by rememberUpdatedState(state.zoomDensity)
     val currentOnZoomDensityChange by rememberUpdatedState(onZoomDensityChange)
+
+    val prefetchScope = rememberCoroutineScope()
+    LaunchedEffect(games.itemCount, state.layout, state.zoomDensity) {
+        if (games.itemCount <= 0) return@LaunchedEffect
+        LibraryCoverPrefetcher.prefetchAhead(
+            context = context,
+            scope = prefetchScope,
+            games = games,
+            firstVisible = 0,
+            visibleCount = 30,
+            columnsOrRows = 5,
+        )
+    }
 
     Column(modifier = modifier.fillMaxSize()) {
         Box(
@@ -1045,10 +1066,12 @@ private fun LibraryGameRow(
     val adaptiveSpec = LocalAdaptiveLayout.current
     val thumbHeight = adaptiveSpec.listThumbHeight
     val thumbWidth = thumbHeight * LibraryGameCardAspectRatio
+    val availabilityAlpha = if (game.isAvailable) 1f else 0.45f
     Surface(
         modifier =
             modifier
                 .fillMaxWidth()
+                .alpha(availabilityAlpha)
                 .controllerFocusGlow(shape)
                 .reportControllerGame(game)
                 .combinedClickable(
@@ -1056,10 +1079,10 @@ private fun LibraryGameRow(
                     onLongClick = onLongClick,
                 ),
         shape = shape,
-        color = Color(0xFF161616),
+        color = chromeColors.listRow,
         shadowElevation = 4.dp,
         tonalElevation = 0.dp,
-        border = BorderStroke(1.dp, Color(0xFF2E2E2E)),
+        border = BorderStroke(1.dp, chromeColors.listRowBorder),
     ) {
         Row(
             modifier =
@@ -1091,14 +1114,14 @@ private fun LibraryGameRow(
                         MaterialTheme.typography.titleSmall.copy(
                             fontWeight = FontWeight.SemiBold,
                         ),
-                    color = Color.White,
+                    color = chromeColors.content,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFFBDBDBD),
+                    color = chromeColors.muted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(top = 2.dp),
@@ -1287,9 +1310,9 @@ private fun LibraryViewModeButtons(
             modifier =
                 Modifier
                     .size(28.dp)
-                    .background(Color(0xFF161616), CircleShape)
+                    .background(chromeColors.panel, CircleShape)
                     .border(
-                        BorderStroke(1.dp, if (portrait) LibraryNeonGreen else Color(0xFF2E2E2E)),
+                        BorderStroke(1.dp, if (portrait) LibraryNeonGreen else chromeColors.panelBorder),
                         CircleShape,
                     ),
         ) {
@@ -1317,8 +1340,8 @@ private fun LibraryLayoutToggle(
         modifier =
             Modifier
                 .height(28.dp)
-                .background(Color(0xFF161616), CircleShape)
-                .border(BorderStroke(1.dp, Color(0xFF2E2E2E)), CircleShape)
+                .background(chromeColors.panel, CircleShape)
+                .border(BorderStroke(1.dp, chromeColors.panelBorder), CircleShape)
                 .padding(2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1358,7 +1381,7 @@ private fun LayoutToggleIcon(
                 .size(boxSize)
                 .controllerFocusGlow(CircleShape)
                 .background(
-                    color = if (selected) Color(0xFF242424) else Color.Transparent,
+                    color = if (selected) chromeColors.panelSelected else Color.Transparent,
                     shape = CircleShape,
                 )
                 .clickable(onClick = onClick),
@@ -1368,7 +1391,7 @@ private fun LayoutToggleIcon(
             imageVector = icon,
             contentDescription = contentDescription,
             modifier = Modifier.size(iconSize),
-            tint = if (selected) LibraryNeonGreen else Color.White.copy(alpha = 0.72f),
+            tint = if (selected) LibraryNeonGreen else chromeColors.muted,
         )
     }
 }
@@ -1400,7 +1423,7 @@ private fun LibraryZoomControls(
                 imageVector = Icons.Outlined.ZoomOut,
                 contentDescription = stringResource(R.string.library_zoom_out),
                 modifier = Modifier.size(18.dp),
-                tint = Color.White.copy(alpha = if (zoomOutEnabled) 1f else 0.35f),
+                tint = chromeColors.content.copy(alpha = if (zoomOutEnabled) 1f else 0.35f),
             )
         }
         ZoomTrack(
@@ -1448,7 +1471,7 @@ private fun LibraryZoomControls(
                 imageVector = Icons.Outlined.ZoomIn,
                 contentDescription = stringResource(R.string.library_zoom_in),
                 modifier = Modifier.size(18.dp),
-                tint = Color.White.copy(alpha = if (zoomInEnabled) 1f else 0.35f),
+                tint = chromeColors.content.copy(alpha = if (zoomInEnabled) 1f else 0.35f),
             )
         }
     }
@@ -1461,7 +1484,7 @@ private fun ZoomTrack(
     modifier: Modifier = Modifier,
 ) {
     val thumbColor = LibraryNeonGreen
-    val trackColor = Color(0xFF8A8A8A)
+    val trackColor = chromeColors.muted.copy(alpha = 0.45f)
     Box(
         modifier =
             modifier.pointerInput(Unit) {
