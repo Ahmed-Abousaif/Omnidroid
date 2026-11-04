@@ -22,6 +22,10 @@ import com.omnidroid.app.shared.game.view.IRetroGameView
  * This overlay must be placed **outside** PadKit as a sibling sized to the game viewport only.
  * Nesting a consuming `pointerInput` inside PadKit breaks simultaneous virtual-button presses.
  *
+ * Callers must not mount this above PadKit when virtual pads are drawn over the same viewport
+ * (landscape overlay pads, e.g. Switch); Compose hit-tests the top sibling first and those
+ * pad presses would never reach PadKit.
+ *
  * @param retroViewBoundsInRoot Bounds of the full-screen [IRetroGameView] in Compose root coordinates.
  * @param touchScreenBoundsInRoot Bounds of this overlay / game viewport in root coordinates.
  */

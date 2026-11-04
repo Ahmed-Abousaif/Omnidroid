@@ -70,7 +70,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
@@ -84,7 +83,6 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.Color
@@ -114,7 +112,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.paging.compose.LazyPagingItems
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.LocalAppDarkTheme
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
@@ -138,11 +135,8 @@ import kotlin.math.sign
 private val LandscapeCardCorner = 10.dp
 private val PortraitCardCorner = 18.dp
 private val ConsoleActionHeight = 40.dp
-private val ConsoleActionCorner = 8.dp
-private val ConsoleActionShape = RoundedCornerShape(ConsoleActionCorner)
+private val ConsoleActionShape = RoundedCornerShape(8.dp)
 private val ConsoleStartMinWidth = 168.dp
-/** In-layout bleed so soft shadows are drawn without Material elevation clipping. */
-private val ConsoleActionShadowBleed = 4.dp
 private val GlowSpread = 14.dp
 private const val GlowLayers = 14
 private const val GlowLayerAlpha = 0.016f
@@ -403,43 +397,6 @@ private fun Modifier.carouselDrag(
         }
     }
 
-/**
- * Fade carousel actions with ModulateAlpha so drawn soft shadows fade with the buttons.
- * Material shadowElevation cannot do this: Offscreen clips it, ModulateAlpha leaves ghosts.
- */
-private fun Modifier.carouselChromeFade(alpha: () -> Float): Modifier =
-    graphicsLayer {
-        this.alpha = alpha()
-        compositingStrategy = CompositingStrategy.ModulateAlpha
-    }
-
-/** Soft drop shadow drawn in-bounds (with [ConsoleActionShadowBleed] padding around the face). */
-private fun Modifier.consoleActionSoftShadow(): Modifier =
-    composed {
-        val darkTheme = LocalAppDarkTheme.current
-        drawBehind {
-            val bleed = ConsoleActionShadowBleed.toPx()
-            val radius = ConsoleActionCorner.toPx()
-            val faceW = size.width - bleed * 2
-            val faceH = size.height - bleed * 2
-            val layers =
-                if (darkTheme) {
-                    listOf(4.5f to 0.28f, 3f to 0.16f, 1.5f to 0.08f)
-                } else {
-                    listOf(4.5f to 0.14f, 3f to 0.09f, 1.5f to 0.05f)
-                }
-            for ((offsetDp, alpha) in layers) {
-                val o = offsetDp.dp.toPx()
-                drawRoundRect(
-                    color = Color.Black.copy(alpha = alpha),
-                    topLeft = Offset(bleed, bleed + o),
-                    size = Size(faceW, faceH),
-                    cornerRadius = CornerRadius(radius),
-                )
-            }
-        }
-    }
-
 /** How settled the carousel is on a single item: 1 when resting, 0 halfway between two. */
 private fun ConsoleCarouselState.settledAmount(): Float {
     val p = position
@@ -524,7 +481,6 @@ private fun ConsoleLandscapeCarousel(
                             val settled = state.settledAmount()
                             alpha = settled
                             translationY = (1f - settled) * 10.dp.toPx()
-                            compositingStrategy = CompositingStrategy.ModulateAlpha
                         },
                     onPlay = onPlay,
                     onFavoriteToggle = onFavoriteToggle,
@@ -726,7 +682,7 @@ private fun LandscapeInfoPanel(
 
 private class PortraitMetrics(maxWidth: Dp, maxHeight: Dp) {
     val buttonGap = 20.dp
-    val buttonArea = ConsoleActionHeight + ConsoleActionShadowBleed * 2 + buttonGap
+    val buttonArea = 40.dp + buttonGap
     val cardWidth = min(maxWidth * 0.68f, (maxHeight - 32.dp - buttonArea) * LibraryGameCardAspectRatio).coerceAtLeast(80.dp)
     val cardHeight = cardWidth / LibraryGameCardAspectRatio
     val top = ((maxHeight - cardHeight - buttonArea) / 2).coerceAtLeast(0.dp)
@@ -788,7 +744,7 @@ private fun ConsolePortraitCarousel(
                             if (items.isFeatured(selectedIndex)) R.string.continue_playing else R.string.library_console_start,
                         ),
                     showControllerGlyph = showControllerGlyph,
-                    modifier = Modifier.carouselChromeFade(alpha = { state.settledAmount() }),
+                    modifier = Modifier.graphicsLayer { alpha = state.settledAmount() },
                     game = items.gameAt(selectedIndex),
                     onPlay = onPlay,
                     onFavoriteToggle = onFavoriteToggle,
@@ -976,8 +932,6 @@ private fun ConsoleActions(
 ) {
     // Paging only re-emits the game after the database write lands, so flip the heart immediately.
     var favorite by remember(game?.id, game?.isFavorite) { mutableStateOf(game?.isFavorite == true) }
-    // Bleed padding is on each button; keep face-to-face gap at 8.dp.
-    val faceGap = (8.dp - ConsoleActionShadowBleed * 2).coerceAtLeast(0.dp)
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
@@ -987,7 +941,7 @@ private fun ConsoleActions(
             showControllerGlyph = showControllerGlyph,
             onClick = onPlay,
         )
-        Spacer(modifier = Modifier.width(faceGap))
+        Spacer(modifier = Modifier.width(8.dp))
         ConsoleIconButton(
             imageVector = if (favorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
             contentDescription = stringResource(R.string.favorites),
@@ -999,7 +953,7 @@ private fun ConsoleActions(
                 }
             },
         )
-        Spacer(modifier = Modifier.width(faceGap))
+        Spacer(modifier = Modifier.width(8.dp))
         ConsoleIconButton(
             imageVector = Icons.Outlined.Settings,
             contentDescription = stringResource(R.string.game_settings),
@@ -1015,32 +969,24 @@ private fun ConsoleIconButton(
     tint: Color = chromeColors.muted,
     onClick: () -> Unit,
 ) {
-    Box(
+    Surface(
+        onClick = onClick,
         modifier =
             Modifier
-                .size(ConsoleActionHeight + ConsoleActionShadowBleed * 2)
-                .consoleActionSoftShadow()
-                .padding(ConsoleActionShadowBleed),
+                .size(ConsoleActionHeight)
+                .focusProperties { canFocus = false },
+        shape = ConsoleActionShape,
+        color = chromeColors.iconButton,
+        border = BorderStroke(1.dp, chromeColors.iconButtonBorder),
+        shadowElevation = 6.dp,
     ) {
-        Surface(
-            onClick = onClick,
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .focusProperties { canFocus = false },
-            shape = ConsoleActionShape,
-            color = chromeColors.iconButton,
-            border = BorderStroke(1.dp, chromeColors.iconButtonBorder),
-            shadowElevation = 0.dp,
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = imageVector,
-                    contentDescription = contentDescription,
-                    modifier = Modifier.size(20.dp),
-                    tint = tint,
-                )
-            }
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = imageVector,
+                contentDescription = contentDescription,
+                modifier = Modifier.size(20.dp),
+                tint = tint,
+            )
         }
     }
 }
@@ -1052,24 +998,16 @@ private fun ConsoleStartButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    Box(
-        modifier =
-            modifier
-                .height(ConsoleActionHeight + ConsoleActionShadowBleed * 2)
-                .widthIn(min = ConsoleStartMinWidth + ConsoleActionShadowBleed * 2)
-                .consoleActionSoftShadow()
-                .padding(ConsoleActionShadowBleed),
-    ) {
     Surface(
         onClick = onClick,
         modifier =
-            Modifier
-                .fillMaxSize()
+            modifier
+                .height(ConsoleActionHeight)
                 .widthIn(min = ConsoleStartMinWidth)
                 .focusProperties { canFocus = false },
         shape = ConsoleActionShape,
         color = LibraryNeonGreen,
-        shadowElevation = 0.dp,
+        shadowElevation = 6.dp,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 20.dp),
@@ -1107,7 +1045,6 @@ private fun ConsoleStartButton(
                 maxLines = 1,
             )
         }
-    }
     }
 }
 

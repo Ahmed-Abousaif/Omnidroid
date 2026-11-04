@@ -2,6 +2,7 @@ package com.omnidroid.app.shared.game.backend.switch_backend
 
 import android.app.Activity
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.RectF
 import android.view.KeyEvent
@@ -9,6 +10,8 @@ import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import com.omnidroid.app.shared.game.view.IRetroGameView
 import com.omnidroid.app.shared.switch_emu.EdenBridge
 import com.omnidroid.lib.backend.BackendCapabilities
@@ -53,13 +56,23 @@ class SwitchBackendSession(
         }
     }
 
-    private val surfaceView: SurfaceView = SurfaceView(activity).apply {
-        isFocusable = false
-        isClickable = false
-        holder.setKeepScreenOn(true)
-        holder.setFormat(PixelFormat.RGBX_8888)
-        holder.addCallback(this@SwitchBackendSession)
-    }
+    // Fullscreen host returned to Compose AndroidView. Eden renders into [surfaceView],
+    // which is laid out to the normalized [viewport] rect (aspect fit + screen position).
+    private val container: FrameLayout =
+        FrameLayout(activity).apply {
+            isFocusable = false
+            isClickable = false
+            setBackgroundColor(Color.BLACK)
+        }
+
+    private val surfaceView: SurfaceView =
+        SurfaceView(activity).apply {
+            isFocusable = false
+            isClickable = false
+            holder.setKeepScreenOn(true)
+            holder.setFormat(PixelFormat.RGBX_8888)
+            holder.addCallback(this@SwitchBackendSession)
+        }
 
     private val glRetroEvents = MutableSharedFlow<GLRetroView.GLRetroEvents>(replay = 1)
     private var isSurfaceCreated = false
@@ -71,6 +84,23 @@ class SwitchBackendSession(
     private var dpadUpPressed = false
     private var dpadDownPressed = false
 
+    init {
+        // Start at 1×1 so Eden cannot create a fullscreen swapchain before Compose
+        // measures the letterboxed viewport (that race squished landscape on first boot).
+        container.addView(
+            surfaceView,
+            FrameLayout.LayoutParams(1, 1),
+        )
+        // Parent size is often 0 when viewport is first assigned; re-apply after layout.
+        // Skip while viewport is still null so we don't expand to fullscreen before Compose
+        // measures the letterbox (that would recreate the landscape squish race).
+        container.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            if (viewport != null) {
+                applyViewportLayout(viewport)
+            }
+        }
+    }
+
     override var audioEnabled: Boolean
         get() = !isAudioMuted
         set(value) {
@@ -80,10 +110,14 @@ class SwitchBackendSession(
     override var frameSpeed: Int = 1
     override var shader: ShaderConfig? = null
     override var viewport: RectF? = null
+        set(value) {
+            field = value
+            applyViewportLayout(value)
+        }
 
-    override fun asView(): View = surfaceView
+    override fun asView(): View = container
     override val view: View
-        get() = surfaceView
+        get() = container
 
     override fun start() {
         startEmulationIfReady()
@@ -160,8 +194,10 @@ class SwitchBackendSession(
         val actionMasked = event.actionMasked
         val pointerIndex = event.actionIndex
         val fingerId = event.getPointerId(pointerIndex)
-        val x = event.getX(pointerIndex)
-        val y = event.getY(pointerIndex)
+        // TouchScreenPointerOverlay maps into [container] space (asView); Eden expects
+        // coordinates relative to the SurfaceView swapchain.
+        val x = event.getX(pointerIndex) - surfaceView.left
+        val y = event.getY(pointerIndex) - surfaceView.top
         EdenBridge.sendTouch(fingerId, x, y, actionMasked)
         return true
     }
@@ -225,8 +261,88 @@ class SwitchBackendSession(
     override fun getGLRetroErrors(): Flow<Int> = emptyFlow()
     override fun getRumbleEvents(): Flow<RumbleEvent> = emptyFlow()
 
-    override fun disableTouchEvents() {}
+    override fun disableTouchEvents() {
+        // Match libretro: keep raw View touches from competing with Compose pads /
+        // TouchScreenPointerOverlay. Stylus is forwarded via IRetroGameView.onTouchEvent.
+        val sink = View.OnTouchListener { _, _ -> true }
+        container.setOnTouchListener(sink)
+        surfaceView.setOnTouchListener(sink)
+    }
+
     override fun refreshAspectRatio() {}
+
+    /**
+     * Lays out [surfaceView] inside [container] to the normalized viewport rect that
+     * MobileGameScreen derives from aspect fit + screen-position bias. Eden has no
+     * GPU-viewport API, so the Surface size itself is the letterbox.
+     */
+    private fun applyViewportLayout(viewport: RectF?) {
+        val apply =
+            Runnable {
+                val parentW = container.width
+                val parentH = container.height
+                if (parentW <= 0 || parentH <= 0) return@Runnable
+
+                val lp =
+                    (surfaceView.layoutParams as? FrameLayout.LayoutParams)
+                        ?: FrameLayout.LayoutParams(0, 0)
+
+                val frame = viewportPixelFrame(viewport, parentW, parentH)
+
+                if (lp.width == frame.width &&
+                    lp.height == frame.height &&
+                    lp.leftMargin == frame.left &&
+                    lp.topMargin == frame.top
+                ) {
+                    // Layout already correct; surfaceChanged may not re-fire.
+                    startEmulationIfReady()
+                    return@Runnable
+                }
+
+                lp.width = frame.width
+                lp.height = frame.height
+                lp.leftMargin = frame.left
+                lp.topMargin = frame.top
+                lp.rightMargin = 0
+                lp.bottomMargin = 0
+                surfaceView.layoutParams = lp
+            }
+        if (container.isInLayout) {
+            container.post(apply)
+        } else {
+            apply.run()
+        }
+    }
+
+    private fun viewportPixelFrame(
+        viewport: RectF?,
+        parentW: Int,
+        parentH: Int,
+    ): ViewportFrame {
+        if (viewport == null) {
+            return ViewportFrame(parentW, parentH, 0, 0)
+        }
+        // Derive size from width()/height() so independent edge rounding cannot change aspect.
+        val left = (viewport.left * parentW).toInt()
+        val top = (viewport.top * parentH).toInt()
+        val width = (viewport.width() * parentW).toInt().coerceAtLeast(1)
+        val height = (viewport.height() * parentH).toInt().coerceAtLeast(1)
+        return ViewportFrame(width, height, left, top)
+    }
+
+    private fun isSurfaceLaidOutToViewport(): Boolean {
+        val vp = viewport ?: return false
+        val parentW = container.width
+        val parentH = container.height
+        if (parentW <= 0 || parentH <= 0) return false
+        val expected = viewportPixelFrame(vp, parentW, parentH)
+        return surfaceView.width == expected.width &&
+            surfaceView.height == expected.height &&
+            surfaceView.left == expected.left &&
+            surfaceView.top == expected.top
+    }
+
+    private data class ViewportFrame(val width: Int, val height: Int, val left: Int, val top: Int)
 
     // --- BackendSession Normalized Input ---
 
@@ -297,7 +413,7 @@ class SwitchBackendSession(
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
         if (!isEmulating) {
             startEmulationIfReady()
-        } else {
+        } else if (width > 1 && height > 1) {
             EdenBridge.onSurfaceChanged(holder.surface)
         }
     }
@@ -326,6 +442,10 @@ class SwitchBackendSession(
 
     private fun startEmulationIfReady() {
         if (!isSurfaceCreated || isEmulating) return
+        // Wait until the SurfaceView has been laid out to the Compose viewport. Starting
+        // against the pre-letterbox size makes Eden lock a stretched swapchain until the
+        // next surface recreation (e.g. orientation change).
+        if (!isSurfaceLaidOutToViewport()) return
 
         if (!EdenBridge.areKeysPresent(activity)) {
             Timber.w("Switch keys missing when attempting to start emulation")

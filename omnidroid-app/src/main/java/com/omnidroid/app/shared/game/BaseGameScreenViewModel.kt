@@ -380,6 +380,7 @@ class BaseGameScreenViewModel(
             activeSession = session
 
             retroGameView.retroGameView = session
+            session.disableTouchEvents()
 
             lifecycle.lifecycle.addObserver(object : DefaultLifecycleObserver {
 
