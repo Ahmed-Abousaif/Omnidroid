@@ -217,7 +217,7 @@ object EdenBridge {
         val hookLibPath = if (File(nativeLibDir, "libhook_impl.so").exists()) {
             nativeLibDir.absolutePath + "/"
         } else {
-            val coreDir = File(context.filesDir, "cores/2.6.0")
+            val coreDir = File(context.filesDir, "cores/2.6.5")
             if (File(coreDir, "libhook_impl.so").exists()) {
                 coreDir.absolutePath + "/"
             } else {

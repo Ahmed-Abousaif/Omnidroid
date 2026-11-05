@@ -6,6 +6,13 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ## Completed
 
+### v2.6.5
+
+- Removed the library rotation lock button; the app now rotates automatically and supports full flipping
+- Added in-app update checker: Play flexible updates for the Play build, and GitHub Releases download/install for the free build (_u/ClearWolverine7_)
+- Reordered Settings for clearer mobile and TV/controller use: Library-first with maintenance tools, Emulation vs Advanced split, and Controls grouped for on-screen, rumble, and gamepads
+- Fixed Wii U (Cemu) controls dropping under heavy 3D load by shipping Cemu libretro v0.1.1 with thread-safe input and non-blocking Vulkan present
+
 ### v2.6.0
 
 - Added Nintendo Switch emulation support via Eden with native Vulkan acceleration, docked/handheld modes, resolution scaling, in-game asynchronous shaders toggle, touch/gamepad controls, and prod.keys & optional system firmware import
@@ -131,5 +138,3 @@ Community requests, feature milestones, and bug reports from the community, orga
 ---
 
 ## Known issues
-
-- Immersive mode (dynamic background coloring based on game visuals) not working on some devices ([#8](https://github.com/Ahmed-Abousaif/Omnidroid/issues/8)) (_u/-BMX-_)

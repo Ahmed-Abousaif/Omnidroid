@@ -54,11 +54,11 @@ android {
 
 
 
-        versionCode = 263
+        versionCode = 265
 
 
 
-        versionName = "2.6.0" // Keep in sync with OmnidroidCores when you cut version tags
+        versionName = "2.6.5" // Keep in sync with OmnidroidCores when you cut version tags
 
 
 
@@ -338,6 +338,22 @@ android {
 
 
 
+            // TODO: set to your GitHub owner/repo for in-app update checks (GitHub Releases).
+
+
+
+            buildConfigField("String", "GITHUB_OWNER", "\"Ahmed-Abousaif\"")
+
+
+
+            buildConfigField("String", "GITHUB_REPO", "\"Omnidroid\"")
+
+
+
+            buildConfigField("boolean", "GITHUB_UPDATES", "true")
+
+
+
         }
 
 
@@ -351,6 +367,18 @@ android {
 
 
             dimension = "opensource"
+
+
+
+            buildConfigField("String", "GITHUB_OWNER", "\"\"")
+
+
+
+            buildConfigField("String", "GITHUB_REPO", "\"\"")
+
+
+
+            buildConfigField("boolean", "GITHUB_UPDATES", "false")
 
 
 
@@ -944,7 +972,7 @@ androidComponents {
 
 
 
-        val baseVersionCode = 263
+        val baseVersionCode = 265
 
 
 
@@ -1064,6 +1092,18 @@ dependencies {
 
 
     "playImplementation"(project(":omnidroid-app-ext-play"))
+
+
+
+    "playImplementation"(deps.libs.play.appUpdate)
+
+
+
+    "playImplementation"(deps.libs.play.appUpdateKtx)
+
+
+
+    "playImplementation"(deps.libs.play.coroutine)
 
 
 
@@ -1324,6 +1364,10 @@ dependencies {
 
 
     ksp(deps.libs.hilt.workCompiler)
+
+
+
+    testImplementation("junit:junit:4.13.2")
 
 
 
