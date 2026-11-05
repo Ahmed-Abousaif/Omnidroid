@@ -1889,7 +1889,6 @@ data class GameSystem(
                             supportedOnlyArchitectures = setOf("arm64-v8a"),
                             allowFrameCatchUp = false,
                             forceStandardAudioBuffer = true,
-                            nonBlockingVulkanPresent = true,
                         ),
                     ),
                     uniqueExtensions = listOf(),
@@ -2343,9 +2342,6 @@ data class GameSystem(
                             skipDuplicateFrames = false,
                             allowFrameCatchUp = false,
                             forceStandardAudioBuffer = true,
-                            // Keep present non-blocking so input polling cadence
-                            // does not collapse under heavy Wii U 3D scenes.
-                            nonBlockingVulkanPresent = true,
                         ),
                     ),
                     uniqueExtensions = listOf("wud", "wux", "wua", "rpx"),

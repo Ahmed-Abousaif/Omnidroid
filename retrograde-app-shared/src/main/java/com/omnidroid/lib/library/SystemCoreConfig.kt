@@ -19,7 +19,10 @@ data class SystemCoreConfig(
     val skipDuplicateFrames: Boolean = true,
     val allowFrameCatchUp: Boolean = true,
     val forceStandardAudioBuffer: Boolean = false,
-    val nonBlockingVulkanPresent: Boolean = false,
+    // When a core actually runs on Vulkan, prefer MAILBOX present so FIFO
+    // vsync waits cannot stall the run/input thread under heavy GPU load.
+    // No-op for OpenGL sessions.
+    val nonBlockingVulkanPresent: Boolean = true,
     val supportedOnlyArchitectures: Set<String>? = null,
     val supportsMicrophone: Boolean = false,
 ) : Serializable
