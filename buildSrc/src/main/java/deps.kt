@@ -130,6 +130,8 @@ object deps {
             const val reviewKtx = "com.google.android.play:review-ktx:2.0.2"
             const val featureDelivery = "com.google.android.play:feature-delivery:2.1.0"
             const val featureDeliveryKtx = "com.google.android.play:feature-delivery-ktx:2.1.0"
+            const val appUpdate = "com.google.android.play:app-update:2.1.0"
+            const val appUpdateKtx = "com.google.android.play:app-update-ktx:2.1.0"
             const val playServices = "com.google.android.gms:play-services-auth:${versions.gms}"
             const val coroutine = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2"
         }
