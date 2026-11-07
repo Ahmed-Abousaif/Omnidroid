@@ -16,9 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -200,116 +198,81 @@ fun UiScalePreviewScreen(
                         .background(Color.Black.copy(alpha = 0.12f)),
             )
 
-            // 3. Central scale slider panel
-            Surface(
+            // 3. Central scale slider (sitting directly in the mock library screen)
+            Column(
                 modifier =
                     Modifier
                         .align(Alignment.Center)
                         .padding(horizontal = 24.dp)
-                        .widthIn(min = 280.dp, max = 400.dp),
-                shape = RoundedCornerShape(22.dp),
-                color = chromeColors.panel,
-                border = BorderStroke(1.dp, chromeColors.panelBorder),
-                shadowElevation = 12.dp,
+                        .widthIn(min = 280.dp, max = 380.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Column(
-                    modifier = Modifier.padding(vertical = 20.dp, horizontal = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                Text(
+                    text = stringResource(R.string.ui_scale_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = chromeColors.content,
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "${UiScaleHelper.percentageForStep(currentStep)}%",
+                    style =
+                        MaterialTheme.typography.headlineLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = (-0.5).sp,
+                        ),
+                    color = LibraryNeonGreen,
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        text = stringResource(R.string.ui_scale_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = chromeColors.content,
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text = "${UiScaleHelper.percentageForStep(currentStep)}%",
-                        style =
-                            MaterialTheme.typography.headlineLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = (-0.5).sp,
-                            ),
-                        color = LibraryNeonGreen,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text =
-                            when (currentStep) {
-                                0 -> stringResource(R.string.ui_scale_default)
-                                UiScaleHelper.TOTAL_INCREMENTS -> stringResource(R.string.ui_scale_maximum)
-                                else -> stringResource(R.string.ui_scale_step_info, UiScaleHelper.percentageForStep(currentStep))
-                            },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = chromeColors.muted,
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
+                    FloatingChromeButton(
+                        onClick = { if (currentStep > 0) currentStep-- },
                     ) {
-                        FloatingChromeButton(
-                            onClick = { if (currentStep > 0) currentStep-- },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Remove,
-                                contentDescription = stringResource(R.string.ui_scale_default),
-                                tint = if (currentStep > 0) chromeColors.content else chromeColors.muted.copy(alpha = 0.35f),
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
-                        Slider(
-                            value = currentStep.toFloat(),
-                            onValueChange = { currentStep = it.roundToInt() },
-                            valueRange = 0f..UiScaleHelper.TOTAL_INCREMENTS.toFloat(),
-                            steps = UiScaleHelper.TOTAL_INCREMENTS - 1,
-                            modifier =
-                                Modifier
-                                    .weight(1f)
-                                    .padding(horizontal = 8.dp),
-                            colors =
-                                SliderDefaults.colors(
-                                    thumbColor = LibraryNeonGreen,
-                                    activeTrackColor = LibraryNeonGreen,
-                                    inactiveTrackColor = chromeColors.muted.copy(alpha = 0.3f),
-                                ),
+                        Icon(
+                            imageVector = Icons.Filled.Remove,
+                            contentDescription = stringResource(R.string.ui_scale_default),
+                            tint = if (currentStep > 0) chromeColors.content else chromeColors.muted.copy(alpha = 0.35f),
+                            modifier = Modifier.size(18.dp),
                         )
-                        FloatingChromeButton(
-                            onClick = { if (currentStep < UiScaleHelper.TOTAL_INCREMENTS) currentStep++ },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Add,
-                                contentDescription = stringResource(R.string.ui_scale_maximum),
-                                tint =
-                                    if (currentStep < UiScaleHelper.TOTAL_INCREMENTS) {
-                                        chromeColors.content
-                                    } else {
-                                        chromeColors.muted.copy(alpha = 0.35f)
-                                    },
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                    Slider(
+                        value = currentStep.toFloat(),
+                        onValueChange = { currentStep = it.roundToInt() },
+                        valueRange = 0f..UiScaleHelper.TOTAL_INCREMENTS.toFloat(),
+                        steps = UiScaleHelper.TOTAL_INCREMENTS - 1,
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .padding(horizontal = 8.dp),
+                        colors =
+                            SliderDefaults.colors(
+                                thumbColor = LibraryNeonGreen,
+                                activeTrackColor = LibraryNeonGreen,
+                                inactiveTrackColor = chromeColors.muted.copy(alpha = 0.3f),
+                            ),
+                    )
+                    FloatingChromeButton(
+                        onClick = { if (currentStep < UiScaleHelper.TOTAL_INCREMENTS) currentStep++ },
                     ) {
-                        Text(
-                            text = "100%",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = chromeColors.muted,
-                        )
-                        Text(
-                            text = "125%",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = chromeColors.muted,
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = stringResource(R.string.ui_scale_maximum),
+                            tint =
+                                if (currentStep < UiScaleHelper.TOTAL_INCREMENTS) {
+                                    chromeColors.content
+                                } else {
+                                    chromeColors.muted.copy(alpha = 0.35f)
+                                },
+                            modifier = Modifier.size(18.dp),
                         )
                     }
                 }
             }
 
-            // 4. Save and Cancel buttons at the bottom
+            // 4. Save and Cancel buttons at the bottom (rounded shape, not circle rounds)
             val bottomPadding =
                 if (portrait) {
                     adaptiveSpec.consoleBarHeight + 20.dp
@@ -327,7 +290,7 @@ fun UiScalePreviewScreen(
             ) {
                 Surface(
                     onClick = onDismiss,
-                    shape = CircleShape,
+                    shape = RoundedCornerShape(12.dp),
                     color = chromeColors.panel,
                     border = BorderStroke(1.dp, chromeColors.panelBorder),
                     modifier =
@@ -349,7 +312,7 @@ fun UiScalePreviewScreen(
                         preferences.edit { putInt(prefKey, currentStep) }
                         onDismiss()
                     },
-                    shape = CircleShape,
+                    shape = RoundedCornerShape(12.dp),
                     color = LibraryNeonGreen,
                     modifier =
                         Modifier
