@@ -108,6 +108,8 @@ fun UiScalePreviewScreen(
             remember(screenWidth, screenHeight, currentScale) {
                 calculateAdaptiveLayoutSpec(screenWidth, screenHeight, currentScale)
             }
+        val libraryTopPadding =
+            if (portrait) adaptiveSpec.topBarPortraitHeight else adaptiveSpec.topBarRowHeight
 
         CompositionLocalProvider(
             LocalAdaptiveLayout provides adaptiveSpec,
@@ -115,7 +117,12 @@ fun UiScalePreviewScreen(
             // 1. Mock library background with controls at their natural positions
             Box(modifier = Modifier.fillMaxSize()) {
                 if (portrait) {
-                    Column(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(top = libraryTopPadding),
+                    ) {
                         // Empty games area in the middle with View toggle at the bottom
                         Box(
                             modifier =
@@ -148,6 +155,7 @@ fun UiScalePreviewScreen(
                         modifier =
                             Modifier
                                 .fillMaxSize()
+                                .padding(top = libraryTopPadding)
                                 .hugDisplayCutout(WindowInsetsSides.Horizontal),
                     ) {
                         LibrarySidebar(
