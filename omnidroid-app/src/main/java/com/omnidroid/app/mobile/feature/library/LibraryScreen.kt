@@ -353,7 +353,7 @@ fun LibraryScreen(
 }
 
 @Composable
-private fun LibrarySidebar(
+internal fun LibrarySidebar(
     modifier: Modifier = Modifier,
     filter: LibraryFilter,
     systems: List<MetaSystemID>,
@@ -388,7 +388,7 @@ private fun LibrarySidebar(
         )
         Spacer(modifier = Modifier.height(4.dp))
         HorizontalDivider(
-            modifier = Modifier.width(if (adaptiveSpec.isCompact) 20.dp else 28.dp),
+            modifier = Modifier.width((if (adaptiveSpec.isCompact) 20.dp else 28.dp) * adaptiveSpec.uiScale),
             color = chromeColors.divider,
         )
         val scrollState = rememberScrollState()
@@ -494,10 +494,11 @@ private fun SidebarIconButton(
 @Composable
 private fun BoxScope.StartupBadge(visible: Boolean) {
     if (!visible) return
+    val scale = LocalAdaptiveLayout.current.uiScale
     Icon(
         imageVector = Icons.Filled.Star,
         contentDescription = null,
-        modifier = Modifier.align(Alignment.TopEnd).size(14.dp).padding(1.dp),
+        modifier = Modifier.align(Alignment.TopEnd).size(14.dp * scale).padding(1.dp),
         tint = LibraryNeonGreen,
     )
 }
@@ -571,7 +572,7 @@ private fun SidebarSystemLogoButton(
 }
 
 @Composable
-private fun PortraitConsoleBar(
+internal fun PortraitConsoleBar(
     filter: LibraryFilter,
     systems: List<MetaSystemID>,
     selectedGameCount: Int?,
@@ -624,7 +625,7 @@ private fun PortraitConsoleBar(
                 Modifier
                     .padding(horizontal = 2.dp)
                     .width(1.dp)
-                    .height(28.dp)
+                    .height(28.dp * adaptiveSpec.uiScale)
                     .background(chromeColors.divider),
         )
         LazyRow(
@@ -1186,12 +1187,14 @@ private fun LibraryViewBar(
     onDensityChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val adaptiveSpec = LocalAdaptiveLayout.current
+    val barHeight = 36.dp * adaptiveSpec.uiScale
     if (portrait) {
         Row(
             modifier =
                 modifier
                     .fillMaxWidth()
-                    .height(36.dp)
+                    .height(barHeight)
                     .padding(start = 8.dp, end = 8.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -1216,7 +1219,7 @@ private fun LibraryViewBar(
             modifier =
                 modifier
                     .fillMaxWidth()
-                    .height(36.dp)
+                    .height(barHeight)
                     .padding(bottom = 6.dp),
         ) {
             LibraryLayoutToggle(
@@ -1281,18 +1284,19 @@ private fun Modifier.libraryPinchZoom(
 private const val PinchStepScale = 1.25f
 
 @Composable
-private fun LibraryLayoutToggle(
+internal fun LibraryLayoutToggle(
     layout: LibraryLayout,
     onLayoutChange: (LibraryLayout) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val scale = LocalAdaptiveLayout.current.uiScale
     Row(
         modifier =
             modifier
-                .height(28.dp)
+                .height(28.dp * scale)
                 .background(chromeColors.panel, CircleShape)
                 .border(BorderStroke(1.dp, chromeColors.panelBorder), CircleShape)
-                .padding(2.dp),
+                .padding(2.dp * scale),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         LayoutToggleIcon(
@@ -1300,18 +1304,24 @@ private fun LibraryLayoutToggle(
             icon = Icons.Outlined.ViewCarousel,
             contentDescription = stringResource(R.string.library_view_console),
             onClick = { onLayoutChange(LibraryLayout.CONSOLE) },
+            boxSize = 24.dp * scale,
+            iconSize = 16.dp * scale,
         )
         LayoutToggleIcon(
             selected = layout == LibraryLayout.GRID,
             icon = Icons.Filled.GridView,
             contentDescription = stringResource(R.string.library_view_grid),
             onClick = { onLayoutChange(LibraryLayout.GRID) },
+            boxSize = 24.dp * scale,
+            iconSize = 16.dp * scale,
         )
         LayoutToggleIcon(
             selected = layout == LibraryLayout.LIST,
             icon = Icons.AutoMirrored.Outlined.ViewList,
             contentDescription = stringResource(R.string.library_view_list),
             onClick = { onLayoutChange(LibraryLayout.LIST) },
+            boxSize = 24.dp * scale,
+            iconSize = 16.dp * scale,
         )
     }
 }

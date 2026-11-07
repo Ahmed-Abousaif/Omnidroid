@@ -23,6 +23,7 @@ data class AdaptiveLayoutSpec(
     val topBarPortraitHeight: Dp,
     val listThumbHeight: Dp,
     val gridSpacing: Dp,
+    val uiScale: Float = 1.0f,
 )
 
 // Pre-allocated static singletons to ensure zero heap allocations during layout calculation.
@@ -105,21 +106,40 @@ private val StandardSpec = AdaptiveLayoutSpec(
  * Ultra-fast layout calculator using primitive float comparisons and early-exit branching.
  * Zero object allocation and zero garbage collection overhead.
  */
-fun calculateAdaptiveLayoutSpec(width: Dp, height: Dp): AdaptiveLayoutSpec {
+fun calculateAdaptiveLayoutSpec(
+    width: Dp,
+    height: Dp,
+    uiScale: Float = 1.0f,
+): AdaptiveLayoutSpec {
     val w = width.value
     val h = height.value
 
-    if (w <= 0f || h <= 0f) return StandardSpec
-    if (w < 380f || h < 320f) return UltraCompactSpec
-
-    val aspectRatio = w / h
-    val isSquare = aspectRatio >= 0.85f && aspectRatio <= 1.18f
-
-    return if (isSquare) {
-        if (w < 640f || h < 400f) SquareCompactSpec else SquareStandardSpec
-    } else {
-        if (w < 540f || h < 400f) CompactSpec else StandardSpec
+    val base = when {
+        w <= 0f || h <= 0f -> StandardSpec
+        w < 380f || h < 320f -> UltraCompactSpec
+        else -> {
+            val aspectRatio = w / h
+            val isSquare = aspectRatio >= 0.85f && aspectRatio <= 1.18f
+            if (isSquare) {
+                if (w < 640f || h < 400f) SquareCompactSpec else SquareStandardSpec
+            } else {
+                if (w < 540f || h < 400f) CompactSpec else StandardSpec
+            }
+        }
     }
+
+    if (uiScale == 1.0f) return base
+
+    return base.copy(
+        sidebarWidth = base.sidebarWidth * uiScale,
+        sidebarButtonSize = base.sidebarButtonSize * uiScale,
+        sidebarIconSize = base.sidebarIconSize * uiScale,
+        consoleBarHeight = base.consoleBarHeight * uiScale,
+        searchWidth = base.searchWidth * uiScale,
+        topBarRowHeight = base.topBarRowHeight * uiScale,
+        topBarPortraitHeight = base.topBarPortraitHeight * uiScale,
+        uiScale = uiScale,
+    )
 }
 
 /**

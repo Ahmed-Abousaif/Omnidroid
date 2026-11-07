@@ -435,7 +435,7 @@ private fun SettingsContentPane(
                 LibraryMaintenanceSettings(navController = navController)
             }
         SettingsSection.DISPLAY ->
-            OmnidroidSettingsPage(modifier = modifier) { DisplaySettings() }
+            OmnidroidSettingsPage(modifier = modifier) { DisplaySettings(navController = navController) }
         SettingsSection.CONTROLS ->
             OmnidroidSettingsPage(modifier = modifier) {
                 ControllerSettings(navController = navController)
@@ -997,10 +997,17 @@ private fun ControlsGamepadsGroup(navController: NavController) {
 }
 
 @Composable
-private fun DisplaySettings() {
+private fun DisplaySettings(navController: NavController) {
     val hdMode = booleanPreferenceState(R.string.pref_key_hd_mode, false)
     val immersiveMode = booleanPreferenceState(R.string.pref_key_enable_immersive_mode, false)
     val hdModeAllowed = rememberHdModeAllowed()
+    val uiScaleStep =
+        intPreferenceState(
+            key = stringResource(id = R.string.pref_key_button_ui_scale_step),
+            default = 0,
+        )
+    val scalePercentage =
+        com.omnidroid.app.mobile.feature.settings.uiscale.UiScaleHelper.percentageForStep(uiScaleStep.value)
 
     LaunchedEffect(hdModeAllowed) {
         if (!hdModeAllowed && hdMode.value) {
@@ -1018,6 +1025,19 @@ private fun DisplaySettings() {
                 ),
             title = { Text(text = stringResource(id = R.string.settings_title_app_theme)) },
             items = stringListResource(R.array.pref_key_app_theme_display_names),
+        )
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_button_ui_scale)) },
+            subtitle = {
+                Text(
+                    text =
+                        stringResource(
+                            id = R.string.settings_description_button_ui_scale,
+                            scalePercentage,
+                        ),
+                )
+            },
+            onClick = { navController.navigateToRoute(MainRoute.SETTINGS_UI_SCALE) },
         )
         OmnidroidSettingsSwitch(
             state = immersiveMode,

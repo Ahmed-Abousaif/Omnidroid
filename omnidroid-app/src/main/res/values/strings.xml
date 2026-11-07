@@ -190,6 +190,15 @@
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_theme_light">Light</string>
 
+    <string name="pref_key_button_ui_scale_step" translatable="false">pref_key_button_ui_scale_step</string>
+    <string name="settings_title_button_ui_scale">Button UI scale</string>
+    <string name="settings_description_button_ui_scale">Scale library buttons and controls (%1$d%%)</string>
+    <string name="ui_scale_title">Button UI Scale</string>
+    <string name="ui_scale_default">Default (100%)</string>
+    <string name="ui_scale_maximum">Maximum (+25%)</string>
+    <string name="ui_scale_step_info">Scale %1$d%%</string>
+    <string name="save">Save</string>
+
     <string name="settings_title_gamepad_settings">Gamepads &amp; keyboards</string>
     <string name="settings_description_gamepad_settings">Configure connected gamepads and keyboards</string>
 

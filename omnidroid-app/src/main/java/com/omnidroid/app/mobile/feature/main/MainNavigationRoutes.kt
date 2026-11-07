@@ -127,6 +127,12 @@ enum class MainRoute(
         parent = SETTINGS,
         showBottomNavigation = false,
     ),
+    SETTINGS_UI_SCALE(
+        route = "settings/uiscale",
+        titleId = R.string.settings_title_button_ui_scale,
+        parent = SETTINGS,
+        showBottomNavigation = false,
+    ),
     PROFILE(
         route = "profile",
         titleId = R.string.title_profile,

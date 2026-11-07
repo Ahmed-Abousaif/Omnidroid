@@ -510,7 +510,20 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
             }
 
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-            val adaptiveSpec = remember(maxWidth, maxHeight) { calculateAdaptiveLayoutSpec(maxWidth, maxHeight) }
+            val uiScaleStep =
+                com.omnidroid.app.utils.settings.rememberSafePreferenceIntSettingState(
+                    key = stringResource(id = R.string.pref_key_button_ui_scale_step),
+                    defaultValue = 0,
+                    preferences = sharedPreferences,
+                )
+            val uiScale =
+                remember(uiScaleStep.value) {
+                    com.omnidroid.app.mobile.feature.settings.uiscale.UiScaleHelper.scaleForStep(uiScaleStep.value)
+                }
+            val adaptiveSpec =
+                remember(maxWidth, maxHeight, uiScale) {
+                    calculateAdaptiveLayoutSpec(maxWidth, maxHeight, uiScale)
+                }
             val portrait = maxHeight > maxWidth
             val portraitHome = portrait && currentRoute == MainRoute.HOME
             val portraitColumnWidth = maxWidth
@@ -781,6 +794,12 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 ),
                         )
                     }
+                    composable(MainRoute.SETTINGS_UI_SCALE) {
+                        com.omnidroid.app.mobile.feature.settings.uiscale.UiScalePreviewScreen(
+                            availableConsoles = libraryState.sidebarSystems,
+                            onDismiss = { navController.popBackStack() },
+                        )
+                    }
                     composable(MainRoute.PROFILE) {
                         ProfileScreen(
                             modifier =
@@ -899,42 +918,44 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
                 label = "topBarCompactProgress",
             )
-            LibraryTopBar(
-                modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(),
-                operationInProgress =
-                    libraryState.operationInProgress || mainUIState.operationInProgress,
-                syncProgress = libraryState.syncProgress,
-                gamepadConnected = gamepadConnected,
-                onRandomPressed = {
-                    scope.launch { libraryViewModel.randomGame()?.let(openGameDetails) }
-                },
-                sort = libraryState.sort,
-                onSortChange = { libraryViewModel.setSort(it) },
-                onCastPressed = {
-                    castDisplayManager.refresh()
-                    showCastPicker.value = true
-                },
-                onSettingsPressed = { navController.navigateToRoute(MainRoute.SETTINGS) },
-                onProfilePressed = { navController.navigateToRoute(MainRoute.PROFILE) },
-                overlayTitleId =
-                    currentRoute.takeIf {
-                        it != MainRoute.HOME && it != MainRoute.GAME_DETAILS
-                    }?.titleId,
-                onBackPressed = {
-                    navController.popBackStack()
-                },
-                compactProgress = compactProgress,
-                searchQuery = libraryState.searchQuery,
-                onSearchQueryChange = { libraryViewModel.changeQueryString(it) },
-                onClearSearch = { libraryViewModel.clearSearchQuery() },
-                casting = castState.isCasting,
-                consoleTitleId =
-                    (libraryState.filter as? LibraryFilter.System)?.metaSystemID?.titleResId,
-                consoleGameCount = libraryState.selectedSystemGameCount,
-                portrait = portrait,
-                portraitColumnWidth = portraitColumnWidth,
-                detailsMode = currentRoute == MainRoute.GAME_DETAILS,
-            )
+            if (currentRoute != MainRoute.SETTINGS_UI_SCALE) {
+                LibraryTopBar(
+                    modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(),
+                    operationInProgress =
+                        libraryState.operationInProgress || mainUIState.operationInProgress,
+                    syncProgress = libraryState.syncProgress,
+                    gamepadConnected = gamepadConnected,
+                    onRandomPressed = {
+                        scope.launch { libraryViewModel.randomGame()?.let(openGameDetails) }
+                    },
+                    sort = libraryState.sort,
+                    onSortChange = { libraryViewModel.setSort(it) },
+                    onCastPressed = {
+                        castDisplayManager.refresh()
+                        showCastPicker.value = true
+                    },
+                    onSettingsPressed = { navController.navigateToRoute(MainRoute.SETTINGS) },
+                    onProfilePressed = { navController.navigateToRoute(MainRoute.PROFILE) },
+                    overlayTitleId =
+                        currentRoute.takeIf {
+                            it != MainRoute.HOME && it != MainRoute.GAME_DETAILS && it != MainRoute.SETTINGS_UI_SCALE
+                        }?.titleId,
+                    onBackPressed = {
+                        navController.popBackStack()
+                    },
+                    compactProgress = compactProgress,
+                    searchQuery = libraryState.searchQuery,
+                    onSearchQueryChange = { libraryViewModel.changeQueryString(it) },
+                    onClearSearch = { libraryViewModel.clearSearchQuery() },
+                    casting = castState.isCasting,
+                    consoleTitleId =
+                        (libraryState.filter as? LibraryFilter.System)?.metaSystemID?.titleResId,
+                    consoleGameCount = libraryState.selectedSystemGameCount,
+                    portrait = portrait,
+                    portraitColumnWidth = portraitColumnWidth,
+                    detailsMode = currentRoute == MainRoute.GAME_DETAILS,
+                )
+            }
 
             AppUpdateOverlay(
                 state = updateState,

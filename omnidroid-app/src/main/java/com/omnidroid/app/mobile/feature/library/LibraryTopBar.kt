@@ -419,13 +419,13 @@ fun LibraryTopBar(
                             Spacer(modifier = Modifier.width(10.dp))
                             LibraryUtilityButtons(
                                 casting = casting,
-                                iconSize = 18.dp,
+                                iconSize = 18.dp * adaptiveSpec.uiScale,
                                 onRandomPressed = onRandomPressed,
                                 onCastPressed = onCastPressed,
                                 onSettingsPressed = onSettingsPressed,
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            ProfileChromeButton(onClick = onProfilePressed, iconSize = 18.dp)
+                            ProfileChromeButton(onClick = onProfilePressed, iconSize = 18.dp * adaptiveSpec.uiScale)
                         }
                     }
                 }
@@ -510,11 +510,11 @@ private fun PortraitHomeTopBar(
                         .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                ProfileChromeButton(onClick = onProfilePressed, iconSize = 16.dp)
+                ProfileChromeButton(onClick = onProfilePressed, iconSize = 16.dp * adaptiveSpec.uiScale)
                 Spacer(modifier = Modifier.width(6.dp))
                 LibraryUtilityButtons(
                     casting = casting,
-                    iconSize = 16.dp,
+                    iconSize = 16.dp * adaptiveSpec.uiScale,
                     onRandomPressed = onRandomPressed,
                     onCastPressed = onCastPressed,
                     onSettingsPressed = onSettingsPressed,
@@ -673,7 +673,7 @@ private fun ProfileChromeButton(
             painter = painterResource(R.drawable.ic_profile_robot),
             contentDescription = stringResource(R.string.title_profile),
             tint = LibraryNeonGreen,
-            modifier = Modifier.size(iconSize + 2.dp),
+            modifier = Modifier.size(iconSize + 2.dp * LocalAdaptiveLayout.current.uiScale),
         )
     }
 }
@@ -689,10 +689,11 @@ private fun LibrarySortButton(
     sort: LibrarySort,
     menu: SortMenuState,
 ) {
+    val scale = LocalAdaptiveLayout.current.uiScale
     Box(
         modifier =
             Modifier
-                .size(chromeButtonSize() - 6.dp)
+                .size(chromeButtonSize() - 6.dp * scale)
                 .onGloballyPositioned { menu.anchor = it.boundsInRoot() }
                 .controllerFocusGlow(CircleShape)
                 .clip(CircleShape)
@@ -703,7 +704,7 @@ private fun LibrarySortButton(
             imageVector = Icons.AutoMirrored.Filled.Sort,
             contentDescription = stringResource(R.string.library_sort),
             tint = if (sort != LibrarySort.TITLE) LibraryNeonGreen else chromeColors.muted,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(16.dp * scale),
         )
     }
 }
@@ -860,6 +861,8 @@ private fun LibrarySearchField(
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val focusManager = LocalFocusManager.current
+    val adaptiveSpec = LocalAdaptiveLayout.current
+    val scale = adaptiveSpec.uiScale
     var focused by remember { mutableStateOf(false) }
     val active = focused || query.isNotEmpty()
     val height = chromeButtonSize()
@@ -892,13 +895,13 @@ private fun LibrarySearchField(
                 Modifier
                     .fillMaxWidth()
                     .height(height)
-                    .padding(start = 10.dp, end = if (trailing != null) 3.dp else 6.dp),
+                    .padding(start = 10.dp * scale, end = if (trailing != null) 3.dp * scale else 6.dp * scale),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = Icons.Filled.Search,
                 contentDescription = stringResource(R.string.title_search),
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(16.dp * scale),
                 tint = chromeColors.muted,
             )
             BasicTextField(
@@ -926,7 +929,7 @@ private fun LibrarySearchField(
                 textStyle =
                     TextStyle(
                         color = chromeColors.content,
-                        fontSize = 13.sp,
+                        fontSize = (13 * scale).sp,
                     ),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
@@ -936,7 +939,7 @@ private fun LibrarySearchField(
                             Text(
                                 text = stringResource(R.string.title_search),
                                 color = chromeColors.faint,
-                                fontSize = 13.sp,
+                                fontSize = (13 * scale).sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
@@ -952,16 +955,16 @@ private fun LibrarySearchField(
                     tint = chromeColors.muted,
                     modifier =
                         Modifier
-                            .size(22.dp)
+                            .size(22.dp * scale)
                             .clickable(onClick = onClear)
-                            .padding(3.dp),
+                            .padding(3.dp * scale),
                 )
             }
             if (trailing != null) {
                 Box(
                     modifier =
                         Modifier
-                            .padding(horizontal = 4.dp)
+                            .padding(horizontal = 4.dp * scale)
                             .width(1.dp)
                             .height(height / 2)
                             .background(chromeColors.divider),
@@ -1035,7 +1038,11 @@ private fun SpinningRescanIcon(
 }
 
 @Composable
-private fun chromeButtonSize(): Dp = if (LocalAdaptiveLayout.current.isCompact) 32.dp else 36.dp
+private fun chromeButtonSize(): Dp {
+    val spec = LocalAdaptiveLayout.current
+    val base = if (spec.isCompact) 32.dp else 36.dp
+    return base * spec.uiScale
+}
 
 /** Borderless top bar icon button; it only shows a fill while pressed. */
 @Composable
