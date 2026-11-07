@@ -291,6 +291,7 @@ class GameViewModelRetroGameView(
             skipDuplicateFrames = systemCoreConfig.skipDuplicateFrames
             allowFrameCatchUp = systemCoreConfig.allowFrameCatchUp
             nonBlockingVulkanPresent = systemCoreConfig.nonBlockingVulkanPresent
+            asyncVulkanPresentation = systemCoreConfig.asyncVulkanPresentation
             enableMicrophone = requestMicrophone
             immersiveMode = buildImmersiveModeConfiguration(enableImmersiveMode)
         }

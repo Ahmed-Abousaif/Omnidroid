@@ -23,6 +23,9 @@ data class SystemCoreConfig(
     // vsync waits cannot stall the run/input thread under heavy GPU load.
     // No-op for OpenGL sessions.
     val nonBlockingVulkanPresent: Boolean = true,
+    // Decouples swapchain acquire/submit/present to a dedicated worker thread,
+    // allowing CPU emulation (retro_run) to overlap fully with GPU presentation.
+    val asyncVulkanPresentation: Boolean = true,
     val supportedOnlyArchitectures: Set<String>? = null,
     val supportsMicrophone: Boolean = false,
 ) : Serializable

@@ -220,6 +220,7 @@ class VulkanRetroView(
             )
             data.rumbleEventsEnabled.let { LibretroDroid.setRumbleEnabled(it) }
             LibretroDroid.setNonBlockingVulkanPresent(data.nonBlockingVulkanPresent)
+            LibretroDroid.setAsyncVulkanPresentation(data.asyncVulkanPresentation)
             LibretroDroid.setViewportAlignment(data.viewportAlignment.value)
         } catch (e: RetroException) {
             Timber.e(e, "RetroException in VulkanRetroView onCreate (code=${e.errorCode})")
