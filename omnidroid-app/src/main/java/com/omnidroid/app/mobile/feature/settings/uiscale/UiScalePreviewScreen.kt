@@ -192,12 +192,12 @@ fun UiScalePreviewScreen(
                 )
             }
 
-            // 2. Slightly dark scrim over the entire mock library screen
+            // 2. Very subtle dark scrim over the entire mock library screen
             Box(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.50f)),
+                        .background(Color.Black.copy(alpha = 0.12f)),
             )
 
             // 3. Central scale slider panel
