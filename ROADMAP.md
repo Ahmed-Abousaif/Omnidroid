@@ -10,7 +10,16 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 - Added Wii U (Cemu) GamePad and Side-by-Side screen support with seamless instant view switching and on-screen toggle button
 - Fixed GamePad (DRC) scan buffer rendering and added software keyboard (swkbd) input confirmation and keyboard callback support
-- Enhanced Vulkan renderer for smoother frame pacing, reduced thermal throttling, and stutter-free shader execution on mobile GPUs
+- Added button UI scaling for the library interface in Settings > Display, featuring a live mock library preview that scales the console, library, and favorites buttons, the view mode toggle, search bar, and top utility buttons up to 25% larger across 5 discrete increments
+- **Overhauled Vulkan Rendering Pipeline**:
+  - **Asynchronous Presentation**: Decoupled presentation to a background worker thread, running CPU emulation and GPU presents in parallel for higher sustained FPS in heavy 3D titles (PS2, GameCube/Wii, Wii U, 3DS, PSP)
+  - **Eliminated VSYNC Stalls**: Removed presentation lock contention, preventing background GPU worker threads (Dolphin Video, PS2 MTGS, Cemu Latte) from freezing while waiting on Android VSYNC
+  - **Massive Gains for ARM Mali & Immortalis**: Drastically boosts performance on MediaTek Dimensity, Google Tensor, and Exynos devices by eliminating Mali's 30 FPS VSYNC lock, bypassing costly on-chip tile clears, and unlocking native ARM in-tile blending
+  - **Hardware-Accelerated Core Features**: Enabled native GPU blending, queries, and texture extensions (`dualSrcBlend`, `logicOp`, `geometryShader`, `wideLines`, BC/ASTC compression), unlocking Dolphin TEV blending & bounding boxes, PPSSPP wide lines, and PS2 alpha effects
+  - **Cooler Gaming & Battery Savings**: Suppressed duplicate frame draws on 30 FPS games running on 60Hz/120Hz screens, cutting up to 50% wasted GPU workloads and thermal throttling across all 3D consoles
+  - **Mobile GPU Bandwidth Optimizations**: Added dynamic rendering with tile memory bypass and Qualcomm UBWC texture decompression for lower power draw on Adreno and Mali SoCs
+  - **Stutter-Free Push Descriptors**: Switched to native Vulkan push descriptors, eliminating CPU memory allocations and micro-stutters during frequent render target and resolution switching
+  - **VRR & LTPO Display Matching**: Dynamically syncs variable refresh rate screens (Samsung, Pixel, OnePlus) directly to native game refresh rates (50Hz PAL, 60Hz NTSC, 30Hz)
 
 ### v2.6.5
 
