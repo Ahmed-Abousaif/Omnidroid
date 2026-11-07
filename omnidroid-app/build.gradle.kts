@@ -54,11 +54,11 @@ android {
 
 
 
-        versionCode = 265
+        versionCode = 270
 
 
 
-        versionName = "2.6.5" // Keep in sync with OmnidroidCores when you cut version tags
+        versionName = "2.7.0" // Keep in sync with OmnidroidCores when you cut version tags
 
 
 
@@ -972,7 +972,7 @@ androidComponents {
 
 
 
-        val baseVersionCode = 265
+        val baseVersionCode = 270
 
 
 

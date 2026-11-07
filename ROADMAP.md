@@ -6,6 +6,12 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ## Completed
 
+### v2.7.0
+
+- Added Wii U (Cemu) GamePad and Side-by-Side screen support with seamless instant view switching and on-screen toggle button
+- Fixed GamePad (DRC) scan buffer rendering and added software keyboard (swkbd) input confirmation and keyboard callback support
+- Enhanced Vulkan renderer for smoother frame pacing, reduced thermal throttling, and stutter-free shader execution on mobile GPUs
+
 ### v2.6.5
 
 - Removed the library rotation lock button; the app now rotates automatically and supports full flipping

@@ -81,7 +81,7 @@ class GithubCoreDownloader(
 
     companion object {
         // Keep in sync with omnidroid-app versionName / OmnidroidCores git tags.
-        const val CORES_VERSION = "2.6.5"
+        const val CORES_VERSION = "2.7.0"
         val BASE_URI = Uri.parse("https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/")
     }
 }
