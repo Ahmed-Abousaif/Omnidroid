@@ -30,6 +30,8 @@ import com.omnidroid.app.shared.main.GameLaunchTaskHandler
 import com.omnidroid.app.shared.rumble.RumbleManager
 import com.omnidroid.app.shared.settings.ControllerConfigsManager
 import com.omnidroid.app.tv.channel.ChannelHandler
+import com.omnidroid.app.update.AppUpdater
+import com.omnidroid.app.update.UpdaterProvider
 import com.omnidroid.ext.feature.core.CoreUpdaterImpl
 import com.omnidroid.ext.feature.review.ReviewManager
 import com.omnidroid.ext.feature.savesync.SaveSyncManagerImpl
@@ -271,6 +273,13 @@ object OmnidroidApplicationModule {
         retrofit: Retrofit,
         sliceInstaller: MetadataSliceInstaller,
     ): CoreUpdater = CoreUpdaterImpl(directoriesManager, retrofit, sliceInstaller)
+
+    @Provides
+    @Singleton
+    fun appUpdater(
+        @ApplicationContext context: Context,
+        okHttpClient: OkHttpClient,
+    ): AppUpdater = UpdaterProvider.create(context, okHttpClient)
 
     @Provides
     @Singleton

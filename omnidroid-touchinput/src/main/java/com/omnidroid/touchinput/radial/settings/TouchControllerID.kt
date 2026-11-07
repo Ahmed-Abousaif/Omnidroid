@@ -55,6 +55,7 @@ import com.omnidroid.touchinput.radial.layouts.WSPortraitRight
 import com.omnidroid.touchinput.radial.layouts.GameCubeLeft
 import com.omnidroid.touchinput.radial.layouts.GameCubeRight
 import com.omnidroid.touchinput.radial.layouts.WiiClassicLeft
+import com.omnidroid.touchinput.radial.layouts.WiiUGamepadLeft
 import com.omnidroid.touchinput.radial.layouts.WiiClassicRight
 import com.omnidroid.touchinput.radial.layouts.WiiRemoteLeft
 import com.omnidroid.touchinput.radial.layouts.WiiRemoteRight
@@ -294,7 +295,13 @@ enum class TouchControllerID {
                         { modifier, settings -> DreamcastRight(modifier, settings) },
                     )
 
-                WII_U_GAMEPAD, WII_U_PRO, SWITCH_PRO ->
+                WII_U_GAMEPAD ->
+                    Config(
+                        { modifier, settings -> WiiUGamepadLeft(modifier, settings) },
+                        { modifier, settings -> WiiClassicRight(modifier, settings) },
+                    )
+
+                WII_U_PRO, SWITCH_PRO ->
                     Config(
                         { modifier, settings -> WiiClassicLeft(modifier, settings) },
                         { modifier, settings -> WiiClassicRight(modifier, settings) },

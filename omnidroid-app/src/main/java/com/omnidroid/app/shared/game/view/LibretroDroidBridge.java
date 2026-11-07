@@ -83,6 +83,14 @@ public final class LibretroDroidBridge {
         LibretroDroid.onTrimMemory(level);
     }
 
+    public static void registerWorkerThread(int threadId) {
+        LibretroDroid.registerWorkerThread(threadId);
+    }
+
+    public static void unregisterWorkerThread(int threadId) {
+        LibretroDroid.unregisterWorkerThread(threadId);
+    }
+
     public static void loadGameFromVirtualFiles(List<VirtualFile> virtualFiles) {
         if (virtualFiles == null) return;
         List<DetachedVirtualFile> detached = new ArrayList<>();

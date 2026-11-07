@@ -127,6 +127,12 @@ interface GameDao {
     @Query("SELECT count(*) count, systemId systemId FROM games GROUP BY systemId")
     fun selectSystemsWithCount(): Flow<List<SystemCount>>
 
+    @Query("SELECT * FROM games WHERE systemId IN (:systemIds)")
+    suspend fun selectBySystemIds(systemIds: List<String>): List<Game>
+
+    @Query("DELETE FROM games WHERE systemId IN (:systemIds)")
+    suspend fun deleteBySystemIds(systemIds: List<String>): Int
+
     @Insert
     fun insert(games: List<Game>): List<Long>
 

@@ -36,6 +36,9 @@ interface SliceDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(slice: InstalledSlice)
 
+    @Query("DELETE FROM installed_slices WHERE sliceId = :sliceId")
+    suspend fun delete(sliceId: String)
+
     @Query(
         """
         SELECT * FROM verified_manifests
@@ -50,4 +53,7 @@ interface SliceDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertVerified(manifest: VerifiedManifest)
+
+    @Query("DELETE FROM verified_manifests WHERE coreName = :coreName")
+    suspend fun deleteVerified(coreName: String)
 }

@@ -1,5 +1,6 @@
 package com.omnidroid.app.utils.android.settings
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import com.alorma.compose.settings.storage.base.SettingValueState
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
@@ -155,9 +161,35 @@ fun OmnidroidSettingsSlider(
             supportingColor = defaultColors.supportingTextColor.copy(alpha = 0.3f),
         )
     val colors = if (enabled) defaultColors else disabledColors
+    val min = valueRange.start.roundToInt()
+    val max = valueRange.endInclusive.roundToInt()
+    val stepSize =
+        if (steps > 0) {
+            ((max - min).toFloat() / (steps + 1)).coerceAtLeast(1f).roundToInt().coerceAtLeast(1)
+        } else {
+            1
+        }
 
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .focusable(enabled)
+                .controllerFocusGlow(RoundedCornerShape(8.dp))
+                .onPreviewKeyEvent { event ->
+                    if (!enabled || event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                    when (event.key) {
+                        Key.DirectionLeft -> {
+                            state.value = (state.value - stepSize).coerceIn(min, max)
+                            true
+                        }
+                        Key.DirectionRight -> {
+                            state.value = (state.value + stepSize).coerceIn(min, max)
+                            true
+                        }
+                        else -> false
+                    }
+                },
     ) {
         ListItem(
             headlineContent = title,

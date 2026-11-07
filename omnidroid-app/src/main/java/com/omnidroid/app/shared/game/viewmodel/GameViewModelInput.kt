@@ -74,6 +74,17 @@ class GameViewModelInput(
         return controllerConfigsState
     }
 
+    fun refreshControllers() {
+        scope.launch {
+            try {
+                val controllers = controllerConfigsManager.getControllerConfigs(system.id, systemCoreConfig)
+                controllerConfigsState.value = controllers
+            } catch (e: Exception) {
+                Timber.e(e)
+            }
+        }
+    }
+
     private fun sendStickMotions(
         event: MotionEvent,
         port: Int,

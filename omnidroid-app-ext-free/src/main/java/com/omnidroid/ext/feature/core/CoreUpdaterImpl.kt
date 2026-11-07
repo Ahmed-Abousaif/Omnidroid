@@ -62,6 +62,23 @@ class CoreUpdaterImpl(
         sliceInstaller.ensureSlices(context, coreIDs)
     }
 
+    override suspend fun uninstallCores(
+        context: Context,
+        coreIDs: List<CoreID>,
+    ) {
+        coreIDs.distinct().forEach { coreID ->
+            if (CoreLibraryLocator.findBundled(context, coreID) != null) return@forEach
+            CoreLibraryLocator.findDownloaded(context, coreID)?.let { file ->
+                runCatching { file.delete() }
+            }
+            // Also clear versioned cores directory copies if present under files/cores.
+            directoriesManager.getCoresDirectory()
+                .walkTopDown()
+                .filter { it.isFile && it.name == coreID.libretroFileName }
+                .forEach { runCatching { it.delete() } }
+        }
+    }
+
     private suspend fun retrieveFile(
         context: Context,
         coreID: CoreID,

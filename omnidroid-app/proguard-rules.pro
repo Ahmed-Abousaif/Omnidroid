@@ -67,6 +67,11 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
+## App update (GitHub release JSON models + Play In-App Updates)
+-keep class com.omnidroid.app.update.GitHubReleaseDto { *; }
+-keep class com.omnidroid.app.update.GitHubAssetDto { *; }
+-dontwarn com.google.android.play.core.**
+
 ## LibretroDroid JNI Interface (strictly scoped to C++ FindClass/GetMethodID/GetFieldID)
 -keep class com.omnidroid.libretrodroid.Variable { <fields>; }
 -keep class com.omnidroid.libretrodroid.Controller { <fields>; }

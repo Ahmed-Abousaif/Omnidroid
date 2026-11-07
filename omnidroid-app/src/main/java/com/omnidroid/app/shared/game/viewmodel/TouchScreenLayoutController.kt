@@ -22,12 +22,13 @@ class TouchScreenLayoutController(
         return when (coreId) {
             CoreID.MELONDS_DS -> toggleMelonDsDs(orientation)
             CoreID.CITRA, CoreID.AZAHAR -> toggleCitra(orientation)
+            CoreID.CEMU -> toggleCemu()
             else -> emptyList()
         }
     }
 
     fun supportsToggle(): Boolean =
-        coreId == CoreID.MELONDS_DS || coreId == CoreID.CITRA || coreId == CoreID.AZAHAR
+        coreId == CoreID.MELONDS_DS || coreId == CoreID.CITRA || coreId == CoreID.AZAHAR || coreId == CoreID.CEMU
 
     fun getAspectRatio(orientation: TouchControllerSettingsManager.Orientation): Float {
         val isLandscape = orientation == TouchControllerSettingsManager.Orientation.LANDSCAPE
@@ -90,9 +91,9 @@ class TouchScreenLayoutController(
                 if (isWidescreen) 16f / 9f else 4f / 3f
             }
             CoreID.CEMU -> {
-                val key = CoreVariablesManager.computeSharedPreferenceKey("cemu_screen_view", systemId.dbname)
+                val key = CoreVariablesManager.computeSharedPreferenceKey(CEMU_VIEW_KEY, systemId.dbname)
                 val view = sharedPreferences.getString(key, null)
-                if (view == "Side by Side") 32f / 9f else 16f / 9f
+                if (view == "Side by Side" || view == "side_by_side") 32f / 9f else 16f / 9f
             }
             CoreID.MEDNAFEN_WSWAN -> {
                 val key = CoreVariablesManager.computeSharedPreferenceKey("wswan_rotate_display", systemId.dbname)
@@ -237,7 +238,21 @@ class TouchScreenLayoutController(
         }
     }
 
+    private fun toggleCemu(): List<CoreVariable> {
+        val key = CoreVariablesManager.computeSharedPreferenceKey(CEMU_VIEW_KEY, systemId.dbname)
+        val current = sharedPreferences.getString(key, "tv")
+        val next = when (current) {
+            "tv" -> "pad"
+            "pad" -> "side_by_side"
+            "side_by_side" -> "tv"
+            else -> "tv"
+        }
+        sharedPreferences.edit { putString(key, next) }
+        return listOf(CoreVariable(CEMU_VIEW_KEY, next))
+    }
+
     companion object {
+        const val CEMU_VIEW_KEY = "cemu_screen_view"
         const val MELONDSDS_LAYOUT_KEY = "melonds_screen_layout1"
         const val MELONDSDS_DUAL_PORTRAIT = "top-bottom"
         const val MELONDSDS_DUAL_LANDSCAPE = "left-right"

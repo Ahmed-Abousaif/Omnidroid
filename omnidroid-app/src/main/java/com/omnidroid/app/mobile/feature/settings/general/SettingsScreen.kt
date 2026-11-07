@@ -3,6 +3,7 @@ package com.omnidroid.app.mobile.feature.settings.general
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -19,24 +20,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CloudSync
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Monitor
-import androidx.compose.material.icons.outlined.SportsEsports
-import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -44,10 +34,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -58,7 +50,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -66,7 +57,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import androidx.navigation.NavController
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.omnidroid.R
+import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.app.mobile.feature.library.LibraryStartupStore
 import com.omnidroid.app.mobile.feature.library.StartupDestinationPickerDialog
 import com.omnidroid.app.mobile.feature.library.startupDestinationLabel
@@ -77,12 +74,14 @@ import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
 import com.omnidroid.app.mobile.shared.compose.ui.chromeMutedContentColor
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
-import com.omnidroid.app.mobile.shared.compose.ui.homeChromeCardColor
 import com.omnidroid.app.mobile.shared.compose.ui.hugDisplayCutout
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
-import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
+import com.omnidroid.app.shared.covers.CoverPreloadWorker
 import com.omnidroid.app.shared.library.LibraryIndexScheduler
+import com.omnidroid.app.shared.library.LibraryPeriodicScanScheduler
 import com.omnidroid.app.shared.settings.rememberHdModeAllowed
+import com.omnidroid.app.tv.shared.TVHelper
+import com.omnidroid.app.update.AppUpdater
 import com.omnidroid.app.utils.android.settings.OmnidroidCardSettingsGroup
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsList
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
@@ -92,24 +91,29 @@ import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
 import com.omnidroid.app.utils.android.settings.booleanPreferenceState
 import com.omnidroid.app.utils.android.settings.indexPreferenceState
 import com.omnidroid.app.utils.android.settings.intPreferenceState
-import com.omnidroid.app.utils.android.settings.stringPreferenceState
 import com.omnidroid.app.utils.android.stringListResource
 import com.omnidroid.lib.library.MetaSystemID
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 
 private val SettingsSidebarWidth = 220.dp
-private val SettingsCardHeight = 96.dp
-private val SettingsCardShape = RoundedCornerShape(8.dp)
 
 private enum class SettingsSection(
     @StringRes val titleId: Int,
 ) {
-    GENERAL(R.string.settings_category_general),
     LIBRARY(R.string.settings_category_library),
     DISPLAY(R.string.settings_category_display),
-    CONTROLLERS(R.string.settings_category_controllers),
+    CONTROLS(R.string.settings_category_controllers),
     SAVES(R.string.settings_category_saves),
-    ADVANCED(R.string.settings_title_advanced_settings),
+    EMULATION(R.string.settings_category_emulation),
+    ADVANCED(R.string.settings_category_advanced),
     ABOUT(R.string.settings_category_about),
 }
 
@@ -135,7 +139,9 @@ fun SettingsScreen(
             .collectAsState(false)
             .value
 
-    var section by remember { mutableStateOf(SettingsSection.GENERAL) }
+    val cacheState by viewModel.cacheState.collectAsState()
+
+    var section by remember { mutableStateOf(SettingsSection.LIBRARY) }
     var pendingContentFocus by remember { mutableStateOf(true) }
     val contentFocusRequester = remember { FocusRequester() }
     val sidebarFocusRequesters =
@@ -172,8 +178,6 @@ fun SettingsScreen(
         val isLandscape = maxWidth > maxHeight
 
         if (isLandscape) {
-            // Same as the library rail: in landscape the sidebar runs under the camera cutout,
-            // so inset the row instead of the sidebar, which has no room to absorb it.
             Row(
                 modifier =
                     Modifier
@@ -207,16 +211,13 @@ fun SettingsScreen(
                     SettingsContentPane(
                         section = section,
                         state = state,
+                        cacheState = cacheState,
                         scanInProgress = scanInProgress,
                         indexingInProgress = indexingInProgress,
                         viewModel = viewModel,
                         navController = navController,
                         availableConsoles = availableConsoles,
                         modifier = paneModifier,
-                        onSelectSection = {
-                            section = it
-                            pendingContentFocus = true
-                        },
                     )
                 }
             }
@@ -249,16 +250,13 @@ fun SettingsScreen(
                     SettingsContentPane(
                         section = section,
                         state = state,
+                        cacheState = cacheState,
                         scanInProgress = scanInProgress,
                         indexingInProgress = indexingInProgress,
                         viewModel = viewModel,
                         navController = navController,
                         availableConsoles = availableConsoles,
                         modifier = paneModifier,
-                        onSelectSection = {
-                            section = it
-                            pendingContentFocus = true
-                        },
                     )
                 }
             }
@@ -416,20 +414,15 @@ private fun SettingsSidebar(
 private fun SettingsContentPane(
     section: SettingsSection,
     state: SettingsViewModel.State,
+    cacheState: SettingsViewModel.CacheState?,
     scanInProgress: Boolean,
     indexingInProgress: Boolean,
     viewModel: SettingsViewModel,
     navController: NavController,
     availableConsoles: List<MetaSystemID>,
     modifier: Modifier = Modifier,
-    onSelectSection: (SettingsSection) -> Unit,
 ) {
     when (section) {
-        SettingsSection.GENERAL ->
-            GeneralHub(
-                modifier = modifier,
-                onSelectSection = onSelectSection,
-            )
         SettingsSection.LIBRARY ->
             OmnidroidSettingsPage(modifier = modifier) {
                 RomsSettings(
@@ -439,10 +432,11 @@ private fun SettingsContentPane(
                     scanInProgress = scanInProgress,
                 )
                 StartupScreenSettings(availableConsoles = availableConsoles)
+                LibraryMaintenanceSettings(navController = navController)
             }
         SettingsSection.DISPLAY ->
             OmnidroidSettingsPage(modifier = modifier) { DisplaySettings() }
-        SettingsSection.CONTROLLERS ->
+        SettingsSection.CONTROLS ->
             OmnidroidSettingsPage(modifier = modifier) {
                 ControllerSettings(navController = navController)
             }
@@ -453,11 +447,18 @@ private fun SettingsContentPane(
                     navController = navController,
                 )
             }
-        SettingsSection.ADVANCED ->
+        SettingsSection.EMULATION ->
             OmnidroidSettingsPage(modifier = modifier) {
-                AdvancedLinks(
+                EmulationSettings(
                     indexingInProgress = indexingInProgress,
                     navController = navController,
+                )
+            }
+        SettingsSection.ADVANCED ->
+            OmnidroidSettingsPage(modifier = modifier) {
+                AdvancedSettings(
+                    cacheState = cacheState,
+                    viewModel = viewModel,
                 )
             }
         SettingsSection.ABOUT ->
@@ -468,111 +469,7 @@ private fun SettingsContentPane(
 }
 
 @Composable
-private fun GeneralHub(
-    modifier: Modifier = Modifier,
-    onSelectSection: (SettingsSection) -> Unit,
-) {
-    BoxWithConstraints(modifier = modifier) {
-        val columns = if (maxWidth < 480.dp) GridCells.Fixed(1) else GridCells.Fixed(2)
-        LazyVerticalGrid(
-            columns = columns,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item {
-                SettingsHubCard(
-                    title = stringResource(R.string.settings_category_library),
-                    icon = Icons.Outlined.Folder,
-                    onClick = { onSelectSection(SettingsSection.LIBRARY) },
-                )
-            }
-            item {
-                SettingsHubCard(
-                    title = stringResource(R.string.settings_category_display),
-                    icon = Icons.Outlined.Monitor,
-                    onClick = { onSelectSection(SettingsSection.DISPLAY) },
-                )
-            }
-            item {
-                SettingsHubCard(
-                    title = stringResource(R.string.settings_category_controllers),
-                    icon = Icons.Outlined.SportsEsports,
-                    onClick = { onSelectSection(SettingsSection.CONTROLLERS) },
-                )
-            }
-            item {
-                SettingsHubCard(
-                    title = stringResource(R.string.settings_category_saves),
-                    icon = Icons.Outlined.CloudSync,
-                    onClick = { onSelectSection(SettingsSection.SAVES) },
-                )
-            }
-            item {
-                SettingsHubCard(
-                    title = stringResource(R.string.settings_title_advanced_settings),
-                    icon = Icons.Outlined.Tune,
-                    onClick = { onSelectSection(SettingsSection.ADVANCED) },
-                )
-            }
-            item {
-                SettingsHubCard(
-                    title = stringResource(R.string.settings_category_about),
-                    icon = Icons.Outlined.Info,
-                    onClick = { onSelectSection(SettingsSection.ABOUT) },
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SettingsHubCard(
-    title: String,
-    icon: ImageVector,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        onClick = onClick,
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .height(SettingsCardHeight)
-                .controllerFocusGlow(SettingsCardShape),
-        shape = SettingsCardShape,
-        color = homeChromeCardColor,
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
-    ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = chromeContentColor,
-                modifier = Modifier.size(28.dp),
-            )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = chromeContentColor,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(start = 16.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun AdvancedLinks(
+private fun EmulationSettings(
     indexingInProgress: Boolean,
     navController: NavController,
 ) {
@@ -606,14 +503,82 @@ private fun AdvancedLinks(
             },
             onClick = { navController.navigateToRoute(MainRoute.SETTINGS_DEVICE_PROFILE) },
         )
+    }
+}
+
+@Composable
+private fun AdvancedSettings(
+    cacheState: SettingsViewModel.CacheState?,
+    viewModel: SettingsViewModel,
+) {
+    val factoryResetDialogState = remember { mutableStateOf(false) }
+
+    if (cacheState != null) {
+        OmnidroidCardSettingsGroup(
+            title = { Text(text = stringResource(id = R.string.settings_section_performance)) },
+        ) {
+            OmnidroidSettingsSwitch(
+                state = booleanPreferenceState(R.string.pref_key_low_latency_audio, false),
+                title = { Text(text = stringResource(id = R.string.settings_title_low_latency_audio)) },
+                subtitle = { Text(text = stringResource(id = R.string.settings_description_low_latency_audio)) },
+            )
+            OmnidroidSettingsList(
+                title = { Text(text = stringResource(R.string.settings_title_maximum_cache_usage)) },
+                items = cacheState.displayNames,
+                state =
+                    indexPreferenceState(
+                        R.string.pref_key_max_cache_size,
+                        cacheState.default,
+                        cacheState.values,
+                    ),
+            )
+            OmnidroidSettingsSwitch(
+                state = booleanPreferenceState(R.string.pref_key_allow_direct_game_load, true),
+                title = { Text(text = stringResource(id = R.string.settings_title_direct_game_load)) },
+                subtitle = { Text(text = stringResource(id = R.string.settings_description_direct_game_load)) },
+            )
+        }
+    }
+
+    OmnidroidCardSettingsGroup {
         OmnidroidSettingsMenuLink(
-            title = { Text(text = stringResource(id = R.string.settings_title_advanced_settings)) },
-            subtitle = {
-                Text(text = stringResource(id = R.string.settings_description_advanced_settings))
-            },
-            onClick = { navController.navigateToRoute(MainRoute.SETTINGS_ADVANCED) },
+            title = { Text(text = stringResource(id = R.string.settings_title_reset_settings)) },
+            subtitle = { Text(text = stringResource(id = R.string.settings_description_reset_settings)) },
+            onClick = { factoryResetDialogState.value = true },
         )
     }
+
+    if (factoryResetDialogState.value) {
+        FactoryResetDialog(factoryResetDialogState, viewModel)
+    }
+}
+
+@Composable
+private fun FactoryResetDialog(
+    factoryResetDialogState: MutableState<Boolean>,
+    viewModel: SettingsViewModel,
+) {
+    val onDismiss = { factoryResetDialogState.value = false }
+    AlertDialog(
+        title = { Text(stringResource(id = R.string.reset_settings_warning_message_title)) },
+        text = { Text(stringResource(id = R.string.reset_settings_warning_message_description)) },
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    viewModel.resetAllSettings()
+                    factoryResetDialogState.value = false
+                },
+            ) {
+                Text(text = stringResource(id = R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(id = R.string.cancel))
+            }
+        },
+    )
 }
 
 @Composable
@@ -636,6 +601,8 @@ private fun AboutSettings() {
             },
         )
     }
+
+    UpdateSettings()
 
     OmnidroidCardSettingsGroup(
         title = { Text(text = stringResource(id = R.string.settings_section_privacy)) },
@@ -692,14 +659,46 @@ private fun AboutSettings() {
             },
             onClick = { openExternalUrl(context, context.getString(R.string.url_developer_github)) },
         )
+    }
+}
+
+@Composable
+private fun UpdateSettings() {
+    val appUpdater = rememberAppUpdater()
+    val scope = rememberCoroutineScope()
+
+    OmnidroidCardSettingsGroup(
+        title = { Text(text = stringResource(id = R.string.settings_section_updates)) },
+    ) {
         OmnidroidSettingsMenuLink(
-            title = { Text(text = stringResource(id = R.string.settings_title_developer_github)) },
+            title = { Text(text = stringResource(id = R.string.settings_title_check_for_updates)) },
             subtitle = {
-                Text(text = stringResource(id = R.string.settings_description_developer_github))
+                Text(text = stringResource(id = R.string.settings_description_check_for_updates))
             },
-            onClick = { openExternalUrl(context, context.getString(R.string.url_developer_github)) },
+            onClick = {
+                scope.launch {
+                    runCatching { appUpdater.checkForUpdate(force = true) }
+                }
+            },
         )
     }
+}
+
+@Composable
+private fun rememberAppUpdater(): AppUpdater {
+    val context = LocalContext.current
+    return remember(context) {
+        EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            AppUpdaterEntryPoint::class.java,
+        ).appUpdater()
+    }
+}
+
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface AppUpdaterEntryPoint {
+    fun appUpdater(): AppUpdater
 }
 
 private fun openExternalUrl(
@@ -744,6 +743,105 @@ private fun StartupScreenSettings(availableConsoles: List<MetaSystemID>) {
 }
 
 @Composable
+private fun LibraryMaintenanceSettings(navController: NavController) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val clearMissingDialogState = remember { mutableStateOf(false) }
+    val periodicScan = booleanPreferenceState(R.string.pref_key_periodic_library_scan, false)
+
+    OmnidroidCardSettingsGroup(
+        title = { Text(text = stringResource(id = R.string.settings_section_maintenance)) },
+    ) {
+        OmnidroidSettingsSwitch(
+            state = periodicScan,
+            title = { Text(text = stringResource(id = R.string.settings_title_periodic_library_scan)) },
+            subtitle = { Text(text = stringResource(id = R.string.settings_description_periodic_library_scan)) },
+        )
+        LaunchedEffect(periodicScan.value) {
+            LibraryPeriodicScanScheduler.syncWithPreference(context)
+        }
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_unrecognized_files)) },
+            subtitle = { Text(text = stringResource(id = R.string.settings_description_unrecognized_files)) },
+            onClick = { navController.navigateToRoute(MainRoute.SETTINGS_UNRECOGNIZED) },
+        )
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_precache_covers)) },
+            subtitle = { Text(text = stringResource(id = R.string.settings_description_precache_covers)) },
+            onClick = {
+                val workRequest =
+                    OneTimeWorkRequestBuilder<CoverPreloadWorker>()
+                        .setConstraints(
+                            Constraints.Builder()
+                                .setRequiredNetworkType(NetworkType.CONNECTED)
+                                .build(),
+                        )
+                        .build()
+                WorkManager.getInstance(context.applicationContext)
+                    .enqueueUniqueWork("cover_preload", ExistingWorkPolicy.KEEP, workRequest)
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.settings_precache_covers_started),
+                    Toast.LENGTH_SHORT,
+                ).show()
+            },
+        )
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_clear_missing_games)) },
+            subtitle = { Text(text = stringResource(id = R.string.settings_description_clear_missing_games)) },
+            onClick = { clearMissingDialogState.value = true },
+        )
+    }
+
+    if (clearMissingDialogState.value) {
+        AlertDialog(
+            title = { Text(stringResource(id = R.string.settings_title_clear_missing_games)) },
+            text = { Text(stringResource(id = R.string.settings_description_clear_missing_games)) },
+            onDismissRequest = { clearMissingDialogState.value = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        clearMissingDialogState.value = false
+                        scope.launch {
+                            val removed =
+                                withContext(Dispatchers.IO) {
+                                    val db =
+                                        (context.applicationContext as OmnidroidApplication)
+                                            .retrogradeDb
+                                    val missing = db.gameDao().selectUnavailable()
+                                    missing.forEach { game ->
+                                        game.customCoverPath?.let { path ->
+                                            runCatching { File(path.substringBefore('?')).delete() }
+                                        }
+                                    }
+                                    if (missing.isNotEmpty()) {
+                                        db.gameDao().delete(missing)
+                                    }
+                                    missing.size
+                                }
+                            val message =
+                                if (removed == 0) {
+                                    context.getString(R.string.settings_clear_missing_games_none)
+                                } else {
+                                    context.getString(R.string.settings_clear_missing_games_done, removed)
+                                }
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                ) {
+                    Text(text = stringResource(id = R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { clearMissingDialogState.value = false }) {
+                    Text(text = stringResource(id = R.string.cancel))
+                }
+            },
+        )
+    }
+}
+
+@Composable
 private fun SavesSettings(
     isSaveSyncSupported: Boolean,
     navController: NavController,
@@ -755,26 +853,18 @@ private fun SavesSettings(
             subtitle = { Text(text = stringResource(id = R.string.settings_description_enable_autosave)) },
         )
         OmnidroidSettingsMenuLink(
-            title = {
-                Text(
-                    text = stringResource(
-                        id = if (isSaveSyncSupported) {
-                            R.string.settings_title_save_sync
-                        } else {
-                            R.string.settings_title_saves_backup
-                        },
-                    ),
-                )
-            },
+            title = { Text(text = stringResource(id = R.string.settings_title_saves_backup)) },
             subtitle = {
                 Text(
-                    text = stringResource(
-                        id = if (isSaveSyncSupported) {
-                            R.string.settings_description_save_sync
-                        } else {
-                            R.string.settings_description_saves_backup
-                        },
-                    ),
+                    text =
+                        stringResource(
+                            id =
+                                if (isSaveSyncSupported) {
+                                    R.string.settings_description_save_sync
+                                } else {
+                                    R.string.settings_description_saves_backup
+                                },
+                        ),
                 )
             },
             onClick = { navController.navigateToRoute(MainRoute.SETTINGS_SAVE_SYNC) },
@@ -784,7 +874,31 @@ private fun SavesSettings(
 
 @Composable
 private fun ControllerSettings(navController: NavController) {
-    OmnidroidCardSettingsGroup {
+    val isTv = TVHelper.isTV(LocalContext.current)
+    if (isTv) {
+        ControlsRumbleGroup()
+        ControlsGamepadsGroup(navController = navController)
+        ControlsOnScreenGroup(showTvHint = true)
+    } else {
+        ControlsOnScreenGroup(showTvHint = false)
+        ControlsRumbleGroup()
+        ControlsGamepadsGroup(navController = navController)
+    }
+}
+
+@Composable
+private fun ControlsOnScreenGroup(showTvHint: Boolean) {
+    OmnidroidCardSettingsGroup(
+        title = { Text(text = stringResource(id = R.string.settings_section_on_screen)) },
+    ) {
+        if (showTvHint) {
+            Text(
+                text = stringResource(id = R.string.settings_description_on_screen_tv),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+            )
+        }
         OmnidroidSettingsList(
             state =
                 indexPreferenceState(
@@ -797,13 +911,43 @@ private fun ControllerSettings(navController: NavController) {
             },
             items = stringListResource(R.array.pref_key_haptic_feedback_mode_display_names),
         )
-        OmnidroidSettingsMenuLink(
-            title = { Text(text = stringResource(id = R.string.settings_title_gamepad_settings)) },
-            subtitle = {
-                Text(text = stringResource(id = R.string.settings_description_gamepad_settings))
+        OmnidroidSettingsSlider(
+            state =
+                intPreferenceState(
+                    key = stringResource(id = R.string.pref_key_virtual_pad_opacity),
+                    default = 100,
+                ),
+            steps = 100,
+            valueRange = 0f..100f,
+            enabled = true,
+            title = { Text(text = stringResource(R.string.settings_title_virtual_pad_opacity)) },
+            subtitle = { Text(text = stringResource(R.string.settings_description_virtual_pad_opacity)) },
+            valueText = { value ->
+                Text(
+                    text = value.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                )
             },
-            onClick = { navController.navigateToRoute(MainRoute.SETTINGS_INPUT_DEVICES) },
         )
+        OmnidroidSettingsSlider(
+            state =
+                intPreferenceState(
+                    key = stringResource(id = R.string.pref_key_tilt_sensitivity_index),
+                    default = 6,
+                ),
+            steps = 10,
+            valueRange = 0f..10f,
+            enabled = true,
+            title = { Text(text = stringResource(R.string.settings_title_tilt_sensitivity)) },
+        )
+    }
+}
+
+@Composable
+private fun ControlsRumbleGroup() {
+    OmnidroidCardSettingsGroup(
+        title = { Text(text = stringResource(id = R.string.settings_section_rumble)) },
+    ) {
         val rumbleEnabled = booleanPreferenceState(R.string.pref_key_enable_rumble, false)
         OmnidroidSettingsSwitch(
             state = rumbleEnabled,
@@ -834,34 +978,20 @@ private fun ControllerSettings(navController: NavController) {
                 )
             },
         )
-        OmnidroidSettingsSlider(
-            state =
-                intPreferenceState(
-                    key = stringResource(id = R.string.pref_key_tilt_sensitivity_index),
-                    default = 6,
-                ),
-            steps = 10,
-            valueRange = 0f..10f,
-            enabled = true,
-            title = { Text(text = stringResource(R.string.settings_title_tilt_sensitivity)) },
-        )
-        OmnidroidSettingsSlider(
-            state =
-                intPreferenceState(
-                    key = stringResource(id = R.string.pref_key_virtual_pad_opacity),
-                    default = 100,
-                ),
-            steps = 100,
-            valueRange = 0f..100f,
-            enabled = true,
-            title = { Text(text = stringResource(R.string.settings_title_virtual_pad_opacity)) },
-            subtitle = { Text(text = stringResource(R.string.settings_description_virtual_pad_opacity)) },
-            valueText = { value ->
-                Text(
-                    text = value.toString(),
-                    style = MaterialTheme.typography.titleMedium,
-                )
+    }
+}
+
+@Composable
+private fun ControlsGamepadsGroup(navController: NavController) {
+    OmnidroidCardSettingsGroup(
+        title = { Text(text = stringResource(id = R.string.settings_section_gamepads)) },
+    ) {
+        OmnidroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.settings_title_gamepad_settings)) },
+            subtitle = {
+                Text(text = stringResource(id = R.string.settings_description_gamepad_settings))
             },
+            onClick = { navController.navigateToRoute(MainRoute.SETTINGS_INPUT_DEVICES) },
         )
     }
 }
@@ -961,7 +1091,9 @@ private fun RomsSettings(
             }.getOrNull() ?: emptyDirectory
         }
 
-    OmnidroidCardSettingsGroup {
+    OmnidroidCardSettingsGroup(
+        title = { Text(text = stringResource(id = R.string.settings_section_folder)) },
+    ) {
         OmnidroidSettingsMenuLink(
             title = { Text(text = stringResource(id = R.string.directory)) },
             subtitle = { Text(text = currentDirectoryName) },

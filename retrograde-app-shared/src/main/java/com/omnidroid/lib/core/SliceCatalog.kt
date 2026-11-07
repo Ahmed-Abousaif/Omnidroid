@@ -102,6 +102,9 @@ interface MetadataSliceInstaller {
         coreIDs: List<CoreID>,
         force: Boolean = false,
     ): Set<String>
+
+    /** Removes installed slice rows and their metadata games for the given slice ids. */
+    suspend fun removeSlices(sliceIds: Collection<String>)
 }
 
 fun interface SliceInstallListener {

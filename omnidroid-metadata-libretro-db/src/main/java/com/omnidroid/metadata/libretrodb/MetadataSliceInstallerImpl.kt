@@ -29,6 +29,46 @@ class MetadataSliceInstallerImpl(
 ) : MetadataSliceInstaller {
     private val mutex = Mutex()
 
+    override suspend fun removeSlices(sliceIds: Collection<String>) {
+        val distinct = sliceIds.distinct().filter { it.isNotBlank() }
+        if (distinct.isEmpty()) return
+        withContext(Dispatchers.IO) {
+            mutex.withLock {
+                val dao = database.sliceDao()
+                val db = database.openHelper.writableDatabase
+                distinct.forEach { sliceId ->
+                    val slice = SliceCatalog.byId(sliceId)
+                    val systems =
+                        slice?.systems
+                            ?: dao.find(sliceId)?.systems?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }
+                            ?: emptyList()
+                    db.beginTransaction()
+                    try {
+                        if (systems.isNotEmpty()) {
+                            val placeholders = systems.joinToString(",") { "?" }
+                            db.execSQL(
+                                "DELETE FROM games WHERE system IN ($placeholders)",
+                                systems.toTypedArray(),
+                            )
+                        }
+                        db.execSQL("DELETE FROM installed_slices WHERE sliceId = ?", arrayOf(sliceId))
+                        db.setTransactionSuccessful()
+                    } finally {
+                        db.endTransaction()
+                    }
+                }
+                // Drop verified manifests for cores that no longer have any installed slices.
+                val remainingSourceCores =
+                    dao.all().map { it.sourceCore }.toSet()
+                SliceCatalog.slices
+                    .flatMap { it.cores }
+                    .distinct()
+                    .filter { it !in remainingSourceCores }
+                    .forEach { coreName -> dao.deleteVerified(coreName) }
+            }
+        }
+    }
+
     override suspend fun ensureSlices(
         context: Context,
         coreIDs: List<CoreID>,

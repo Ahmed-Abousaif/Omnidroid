@@ -1,7 +1,6 @@
 package com.omnidroid.app.mobile.feature.library
 
 import android.content.Context
-import android.content.pm.ActivityInfo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -61,7 +60,6 @@ class LibraryViewModel(
         val syncProgress: SyncProgress? = null,
         val zoomDensity: Int = 0,
         val layout: LibraryLayout = LibraryLayout.CONSOLE,
-        val portrait: Boolean = false,
         val sort: LibrarySort = LibrarySort.TITLE,
         val selectedSystemGameCount: Int? = null,
         val startupFilter: LibraryFilter = LibraryFilter.All,
@@ -78,7 +76,6 @@ class LibraryViewModel(
     private data class LibraryPresentation(
         val zoomDensity: Int,
         val layout: LibraryLayout,
-        val portrait: Boolean,
         val sort: LibrarySort,
     )
 
@@ -89,12 +86,11 @@ class LibraryViewModel(
     private val scanRequested = MutableStateFlow(false)
     private val zoomDensityFlow = MutableStateFlow(readZoomDensity())
     private val layoutFlow = MutableStateFlow(readLayout())
-    private val portraitFlow = MutableStateFlow(readPortrait())
     private val sortFlow = MutableStateFlow(readSort())
     private val syncProgressFlow = SyncProgressTracker.progress
     private val presentationFlow =
-        combine(zoomDensityFlow, layoutFlow, portraitFlow, sortFlow) { zoom, layout, portrait, sort ->
-            LibraryPresentation(zoom, layout, portrait, sort)
+        combine(zoomDensityFlow, layoutFlow, sortFlow) { zoom, layout, sort ->
+            LibraryPresentation(zoom, layout, sort)
         }
     private val libraryOperationInProgress =
         PendingOperationsMonitor(appContext).anyLibraryOperationInProgress()
@@ -140,7 +136,6 @@ class LibraryViewModel(
                 syncProgress = if (chrome.operationInProgress) chrome.syncProgress else null,
                 zoomDensity = chrome.presentation.zoomDensity,
                 layout = chrome.presentation.layout,
-                portrait = chrome.presentation.portrait,
                 sort = chrome.presentation.sort,
                 selectedSystemGameCount = selectedCount,
                 startupFilter = chrome.startupFilter,
@@ -151,7 +146,6 @@ class LibraryViewModel(
             UiState(
                 zoomDensity = zoomDensityFlow.value,
                 layout = layoutFlow.value,
-                portrait = portraitFlow.value,
                 sort = sortFlow.value,
                 filter = filterFlow.value,
                 startupFilter = startupStore.get(),
@@ -229,11 +223,6 @@ class LibraryViewModel(
         preferences.edit().putString(LAYOUT_KEY, layout.name).apply()
     }
 
-    fun setPortrait(enabled: Boolean) {
-        portraitFlow.value = enabled
-        preferences.edit().putBoolean(PORTRAIT_KEY, enabled).apply()
-    }
-
     private fun readZoomDensity(): Int {
         return preferences.getInt(ZOOM_DENSITY_KEY, 0).coerceIn(0, MAX_ZOOM_DENSITY)
     }
@@ -245,8 +234,6 @@ class LibraryViewModel(
             else -> LibraryLayout.CONSOLE
         }
     }
-
-    private fun readPortrait(): Boolean = preferences.getBoolean(PORTRAIT_KEY, false)
 
     fun setSort(sort: LibrarySort) {
         sortFlow.value = sort
@@ -381,21 +368,7 @@ class LibraryViewModel(
         private const val ZOOM_DENSITY_KEY = "pref_library_zoom_density"
         private const val LAYOUT_KEY = "pref_library_layout"
         private const val SORT_KEY = "pref_library_sort"
-        const val PORTRAIT_KEY = "pref_library_portrait"
         const val MAX_ZOOM_DENSITY = 2
-
-        fun readSavedPortrait(context: Context): Boolean {
-            return SharedPreferencesHelper.getSharedPreferences(context)
-                .getBoolean(PORTRAIT_KEY, false)
-        }
-
-        fun orientationFor(portrait: Boolean): Int {
-            return if (portrait) {
-                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            } else {
-                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-            }
-        }
     }
 }
 

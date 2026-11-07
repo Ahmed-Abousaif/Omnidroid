@@ -3,6 +3,7 @@ package com.omnidroid.app.mobile.feature.main
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
@@ -64,6 +65,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.fredporciuncula.flow.preferences.FlowSharedPreferences
+import com.omnidroid.BuildConfig
 import com.omnidroid.R
 import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.app.mobile.feature.addconsole.AddConsoleScreen
@@ -81,8 +83,6 @@ import com.omnidroid.app.mobile.feature.library.LibraryStartupStore
 import com.omnidroid.app.mobile.feature.library.RegisteredSystemsStore
 import com.omnidroid.app.mobile.feature.profile.ProfileScreen
 import com.omnidroid.app.mobile.feature.profile.ProfileViewModel
-import com.omnidroid.app.mobile.feature.settings.advanced.AdvancedSettingsScreen
-import com.omnidroid.app.mobile.feature.settings.advanced.AdvancedSettingsViewModel
 import com.omnidroid.app.mobile.feature.settings.bios.BiosScreen
 import com.omnidroid.app.mobile.feature.settings.bios.BiosSettingsViewModel
 import com.omnidroid.app.mobile.feature.settings.coreselection.CoresSelectionScreen
@@ -99,8 +99,6 @@ import com.omnidroid.app.mobile.feature.settings.inputdevices.InputDevicesSettin
 import com.omnidroid.app.mobile.feature.settings.inputdevices.InputDevicesSettingsViewModel
 import com.omnidroid.app.mobile.feature.settings.savesync.SaveSyncSettingsScreen
 import com.omnidroid.app.mobile.feature.settings.savesync.SaveSyncSettingsViewModel
-import com.omnidroid.app.mobile.feature.settings.slices.GameDatabasesScreen
-import com.omnidroid.app.mobile.feature.settings.slices.GameDatabasesViewModel
 import com.omnidroid.app.mobile.feature.settings.unrecognized.UnrecognizedFilesScreen
 import com.omnidroid.app.mobile.feature.settings.unrecognized.UnrecognizedFilesViewModel
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
@@ -127,6 +125,8 @@ import com.omnidroid.app.shared.main.GameLaunchTaskHandler
 import com.omnidroid.app.shared.settings.SettingsInteractor
 import com.omnidroid.app.tv.channel.ChannelUpdateWork
 import com.omnidroid.app.tv.shared.TVHelper
+import com.omnidroid.app.update.AppUpdateOverlay
+import com.omnidroid.app.update.AppUpdater
 import com.omnidroid.common.coroutines.safeLaunch
 import com.omnidroid.ext.feature.review.ReviewManager
 import com.omnidroid.lib.android.RetrogradeComponentActivity
@@ -204,6 +204,9 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
     @Inject
     lateinit var castDisplayManager: CastDisplayManager
 
+    @Inject
+    lateinit var appUpdater: AppUpdater
+
     private val reviewManager = ReviewManager()
     private val controllerBridge = ControllerInputBridge()
     private var notificationPermissionCallback: ((Boolean) -> Unit)? = null
@@ -213,6 +216,9 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
             notificationPermissionCallback = null
         }
 
+    private val appUpdateLauncher =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { }
+
     private val mainViewModel: MainViewModel by viewModels {
         MainViewModel.Factory(applicationContext, saveSyncManager)
     }
@@ -221,7 +227,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        requestedOrientation = LibraryViewModel.orientationFor(LibraryViewModel.readSavedPortrait(this))
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
         enableEdgeToEdge(
             SystemBarStyle.dark(Color.TRANSPARENT),
             SystemBarStyle.dark(Color.TRANSPARENT),
@@ -232,6 +238,10 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
         OmnidroidApplication.scope(this).safeLaunch {
             reviewManager.initialize(applicationContext)
+        }
+
+        OmnidroidApplication.scope(this).safeLaunch {
+            runCatching { appUpdater.checkForUpdate(force = false) }
         }
 
         setContent {
@@ -353,12 +363,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     }
                 watcher.start()
                 onDispose { watcher.stop() }
-            }
-            LaunchedEffect(libraryState.portrait) {
-                val orientation = LibraryViewModel.orientationFor(libraryState.portrait)
-                if (requestedOrientation != orientation) {
-                    requestedOrientation = orientation
-                }
             }
             val gamepadConnected =
                 inputDeviceManager.getGamePadsObservable()
@@ -507,7 +511,8 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             val adaptiveSpec = remember(maxWidth, maxHeight) { calculateAdaptiveLayoutSpec(maxWidth, maxHeight) }
-            val portraitHome = libraryState.portrait && currentRoute == MainRoute.HOME
+            val portrait = maxHeight > maxWidth
+            val portraitHome = portrait && currentRoute == MainRoute.HOME
             val portraitColumnWidth = maxWidth
             val libraryTopPadding =
                 if (portraitHome) adaptiveSpec.topBarPortraitHeight else adaptiveSpec.topBarRowHeight
@@ -516,6 +521,8 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 LocalControllerNavigation provides controllerNav,
                 LocalAdaptiveLayout provides adaptiveSpec,
             ) {
+            val updateState by appUpdater.state.collectAsState()
+
             Scaffold(
                 containerColor = homeChromeColor,
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -626,6 +633,8 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                             registeredSystemsStore,
                                             coreUpdater,
                                             coresSelection,
+                                            libretroDb,
+                                            sliceInstaller,
                                         ),
                                 ),
                         )
@@ -653,42 +662,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 ),
                             navController = navController,
                             availableConsoles = libraryState.sidebarSystems,
-                        )
-                    }
-                    composable(MainRoute.SETTINGS_ADVANCED) {
-                        AdvancedSettingsScreen(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(padding)
-                                    .padding(top = standardTopPadding),
-                            viewModel =
-                                viewModel(
-                                    factory =
-                                        AdvancedSettingsViewModel.Factory(
-                                            applicationContext,
-                                            settingsInteractor,
-                                        ),
-                                ),
-                            navController = navController,
-                        )
-                    }
-                    composable(MainRoute.SETTINGS_GAME_DATABASES) {
-                        GameDatabasesScreen(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(padding)
-                                    .padding(top = standardTopPadding),
-                            viewModel =
-                                viewModel(
-                                    factory =
-                                        GameDatabasesViewModel.Factory(
-                                            applicationContext,
-                                            libretroDb,
-                                            sliceInstaller,
-                                        ),
-                                ),
                         )
                     }
                     composable(MainRoute.SETTINGS_UNRECOGNIZED) {
@@ -827,7 +800,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         )
                     }
                 }
-                }
             }
 
             MainGameContextActions(
@@ -959,10 +931,30 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 consoleTitleId =
                     (libraryState.filter as? LibraryFilter.System)?.metaSystemID?.titleResId,
                 consoleGameCount = libraryState.selectedSystemGameCount,
-                portrait = libraryState.portrait,
+                portrait = portrait,
                 portraitColumnWidth = portraitColumnWidth,
                 detailsMode = currentRoute == MainRoute.GAME_DETAILS,
             )
+
+            AppUpdateOverlay(
+                state = updateState,
+                supportsGitHubOptions = appUpdater.supportsGitHubOptions,
+                onUpdate = {
+                    appUpdater.startUpdate(this@MainActivity, appUpdateLauncher)
+                },
+                onLater = { appUpdater.dismissAvailable() },
+                onSkip = { appUpdater.skipCurrentVersion() },
+                onRestart = {
+                    if (BuildConfig.GITHUB_UPDATES) {
+                        appUpdater.onUnknownSourcesReturned(this@MainActivity)
+                    } else {
+                        appUpdater.completeFlexibleUpdate()
+                    }
+                },
+                onDismissError = { appUpdater.dismissAvailable() },
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+            }
             }
             }
         }
@@ -981,11 +973,12 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
     override fun onResume() {
         super.onResume()
-        requestedOrientation = LibraryViewModel.orientationFor(LibraryViewModel.readSavedPortrait(this))
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
         hideSystemBars()
         castDisplayManager.refresh()
         castDisplayManager.attachHost(this)
         GamePlatformSession.reportLibrary(this)
+        appUpdater.onHostResumed(this)
     }
 
     override fun onDestroy() {

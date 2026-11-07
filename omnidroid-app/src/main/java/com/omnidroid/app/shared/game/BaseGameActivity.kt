@@ -129,9 +129,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        // Library portrait/landscape is MainActivity only. Games keep sensor rotation
-
-        // so in-game screen layouts can still switch between portrait and landscape.
+        // Keep sensor rotation including reverse orientations so in-game layouts can adapt.
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
 

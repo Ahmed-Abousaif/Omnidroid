@@ -14,6 +14,15 @@ interface CoreUpdater {
         coreIDs: List<CoreID>,
     )
 
+    /**
+     * Deletes downloaded core binaries for [coreIDs]. Bundled (APK-packaged) natives are never
+     * removed. Callers must ensure the core is not still required by another installed console.
+     */
+    suspend fun uninstallCores(
+        context: Context,
+        coreIDs: List<CoreID>,
+    )
+
     interface CoreManagerApi {
         @GET
         @Streaming

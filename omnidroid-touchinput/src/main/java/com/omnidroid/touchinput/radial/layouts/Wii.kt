@@ -17,6 +17,7 @@ import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonMenuPlaceho
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonR1
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonR2
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonSelect
+import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonScreenLayout
 import com.omnidroid.touchinput.radial.layouts.shared.SecondaryButtonStart
 import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
 import com.omnidroid.touchinput.radial.ui.OmnidroidButtonForeground
@@ -24,6 +25,32 @@ import gg.padkit.PadKitScope
 import gg.padkit.ids.Id
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
+
+@Composable
+fun PadKitScope.WiiUGamepadLeft(
+    modifier: Modifier = Modifier,
+    settings: TouchControllerSettingsManager.Settings,
+) {
+    BaseLayoutLeft(
+        settings = settings,
+        modifier = modifier,
+        primaryDial = {
+            OmnidroidControlCross(
+                id = Id.DiscreteDirection(ComposeTouchLayouts.MOTION_SOURCE_DPAD),
+                allowDiagonals = settings.allowDiagonals,
+                dpadStyle = settings.dpadStyle,
+            )
+        },
+        secondaryDials = {
+            SecondaryButtonL1()
+            SecondaryButtonL2()
+            SecondaryButtonSelect(position = 2)
+            SecondaryButtonMenuPlaceholder(settings)
+            SecondaryAnalogLeft()
+            SecondaryButtonScreenLayout(positionDegrees = -120f)
+        },
+    )
+}
 
 @Composable
 fun PadKitScope.WiiClassicLeft(

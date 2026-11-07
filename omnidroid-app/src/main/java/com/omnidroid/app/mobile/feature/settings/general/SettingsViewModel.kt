@@ -1,16 +1,18 @@
 package com.omnidroid.app.mobile.feature.settings.general
 
 import android.content.Context
+import android.text.format.Formatter
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.fredporciuncula.flow.preferences.FlowSharedPreferences
-import com.omnidroid.R
 import com.omnidroid.app.shared.library.PendingOperationsMonitor
 import com.omnidroid.app.shared.settings.SettingsInteractor
 import com.omnidroid.lib.savesync.SaveSyncManager
+import com.omnidroid.lib.storage.cache.CacheCleaner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -37,6 +39,12 @@ class SettingsViewModel(
         }
     }
 
+    data class CacheState(
+        val default: String,
+        val values: List<String>,
+        val displayNames: List<String>,
+    )
+
     data class State(
         val currentDirectory: String = "",
         val isSaveSyncSupported: Boolean = false,
@@ -53,7 +61,23 @@ class SettingsViewModel(
             .stateIn(viewModelScope, SharingStarted.Lazily, "")
             .map { State(it, saveSyncManager.isSupported()) }
 
+    val cacheState =
+        flow {
+            val supportedCacheValues = CacheCleaner.getSupportedCacheLimits()
+            emit(
+                CacheState(
+                    default = CacheCleaner.getDefaultCacheLimit().toString(),
+                    values = supportedCacheValues.map { it.toString() },
+                    displayNames = supportedCacheValues.map { Formatter.formatShortFileSize(context, it) },
+                ),
+            )
+        }.stateIn(viewModelScope, SharingStarted.Lazily, null)
+
     fun changeLocalStorageFolder() {
         settingsInteractor.changeLocalStorageFolder()
+    }
+
+    fun resetAllSettings() {
+        settingsInteractor.resetAllSettings()
     }
 }

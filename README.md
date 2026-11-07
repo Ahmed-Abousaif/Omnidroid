@@ -304,12 +304,42 @@ Omnidroid/
    # Build debug APK (Play flavor)
    ./gradlew assemblePlayDebug
 
-   # Build release APK (Free flavor)
+   # Build release APK (Free / GitHub flavor)
    ./gradlew assembleFreeRelease
+
+   # Play Store App Bundle (dynamic feature delivery)
+   ./gradlew bundlePlayDynamicRelease
 
    # Run code analysis & checkstyle
    ./gradlew checkstyle
    ```
+
+### App updates (Play vs GitHub)
+
+Omnidroid ships two distribution flavors on the existing `opensource` dimension:
+
+| Flavor | Distribution | Update mechanism |
+| :----- | :----------- | :--------------- |
+| **`play`** | Google Play | [Play In-App Updates](https://developer.android.com/guide/playcore/in-app-updates) (flexible) via `app-update-ktx` |
+| **`free`** | GitHub Releases | Checks `GET /repos/{owner}/{repo}/releases/latest`, downloads the `.apk` asset, installs with `PackageInstaller` |
+
+Build examples:
+
+```bash
+./gradlew assembleFreeBundleRelease   # GitHub APK (self-update enabled)
+./gradlew bundlePlayDynamicRelease    # Play App Bundle (Play updates only)
+```
+
+**GitHub release publishing checklist**
+
+1. Tag the release like `v1.2.3` (leading `v` is stripped for comparison against `versionName`).
+2. Attach **one signed APK** asset (`.apk`). Optionally attach a matching `*.sha256` asset (or put a 64-char hex SHA-256 in the release body) for integrity verification.
+3. Do **not** mark the release as draft or prerelease if you want the in-app checker to see it.
+4. Sign the APK with the **same key** as the installed build. Users cannot update across different signing keys without uninstalling.
+
+**Configure the GitHub repo** used by the free flavor in `omnidroid-app/build.gradle.kts` (`GITHUB_OWNER` / `GITHUB_REPO` BuildConfig fields — currently `TODO_OWNER` / `TODO_REPO`).
+
+**Play App Signing note:** Play-distributed and GitHub-distributed builds use different signing keys (Play App Signing vs your upload/release keystore). Users cannot switch between Play and GitHub sources without uninstalling and reinstalling.
 
 ### Modern Toolchain Baseline
 

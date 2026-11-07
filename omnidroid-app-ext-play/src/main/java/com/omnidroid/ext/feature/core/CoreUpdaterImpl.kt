@@ -91,6 +91,22 @@ class CoreUpdaterImpl(
         log("downloadCores has terminated")
     }
 
+    override suspend fun uninstallCores(
+        context: Context,
+        coreIDs: List<CoreID>,
+    ) {
+        coreIDs.distinct().forEach { coreID ->
+            if (CoreLibraryLocator.findBundled(context, coreID) != null) return@forEach
+            CoreLibraryLocator.findDownloaded(context, coreID)?.let { file ->
+                runCatching { file.delete() }
+            }
+            directoriesManager.getCoresDirectory()
+                .walkTopDown()
+                .filter { it.isFile && it.name == coreID.libretroFileName }
+                .forEach { runCatching { it.delete() } }
+        }
+    }
+
     private suspend fun installCores(
         installManager: SplitInstallManager,
         coreIDs: List<CoreID>,

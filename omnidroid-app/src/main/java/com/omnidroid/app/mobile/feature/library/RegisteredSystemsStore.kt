@@ -36,6 +36,15 @@ class RegisteredSystemsStore(context: Context) {
         preferences.edit().putStringSet(KEY, updated).apply()
     }
 
+    fun unregister(metaSystemID: MetaSystemID) {
+        val updated =
+            preferences.getStringSet(KEY, emptySet())
+                ?.toMutableSet()
+                ?: mutableSetOf()
+        if (!updated.remove(metaSystemID.name)) return
+        preferences.edit().putStringSet(KEY, updated).apply()
+    }
+
     companion object {
         private const val KEY = "pref_registered_meta_systems"
     }

@@ -512,6 +512,8 @@ class BaseGameScreenViewModel(
 
         retroGameView.refreshCoreVariables()
 
+        inputs.refreshControllers()
+
     }
 
     fun isTouchControllerVisible(): Flow<Boolean> {

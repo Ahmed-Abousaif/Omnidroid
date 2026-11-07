@@ -64,7 +64,6 @@ import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.ScreenRotation
 import androidx.compose.material.icons.outlined.ViewCarousel
 import androidx.compose.material.icons.outlined.ZoomIn
 import androidx.compose.material.icons.outlined.ZoomOut
@@ -233,12 +232,13 @@ fun LibraryScreen(
     val consoleSelection =
         rememberConsoleSelection(listOf(state.filter, state.searchQuery, state.continueGame?.id, state.sort))
 
-    Box(
+    BoxWithConstraints(
         modifier =
             modifier
                 .fillMaxSize()
                 .homeChromeBackground(),
     ) {
+        val portrait = maxHeight > maxWidth
         if (state.layout == LibraryLayout.CONSOLE) {
             ConsoleBackdrop(
                 game = backdropGame,
@@ -248,7 +248,7 @@ fun LibraryScreen(
                         .bleedTop(backdropTopBleed),
             )
         }
-        if (state.portrait) {
+        if (portrait) {
             Column(
                 modifier =
                     Modifier
@@ -275,7 +275,6 @@ fun LibraryScreen(
                     onSync = { viewModel.syncLibrary(it) },
                     onZoomDensityChange = { viewModel.setZoomDensity(it) },
                     onLayoutChange = { viewModel.setLayout(it) },
-                    onPortraitChange = { viewModel.setPortrait(it) },
                     onBackdropGameChange = { backdropGame = it },
                     consoleSelection = consoleSelection,
                     requestInitialFocus = controllerConnected,
@@ -324,7 +323,6 @@ fun LibraryScreen(
                     onSync = { viewModel.syncLibrary(it) },
                     onZoomDensityChange = { viewModel.setZoomDensity(it) },
                     onLayoutChange = { viewModel.setLayout(it) },
-                    onPortraitChange = { viewModel.setPortrait(it) },
                     onBackdropGameChange = { backdropGame = it },
                     consoleSelection = consoleSelection,
                     requestInitialFocus = controllerConnected,
@@ -685,7 +683,6 @@ private fun LibraryGames(
     onSync: (Context) -> Unit,
     onZoomDensityChange: (Int) -> Unit,
     onLayoutChange: (LibraryLayout) -> Unit,
-    onPortraitChange: (Boolean) -> Unit,
     onBackdropGameChange: (Game?) -> Unit,
     consoleSelection: MutableIntState,
     requestInitialFocus: Boolean = false,
@@ -956,7 +953,6 @@ private fun LibraryGames(
                 portrait = portrait,
                 showZoom = showZoomBar && state.layout == LibraryLayout.GRID,
                 onLayoutChange = onLayoutChange,
-                onPortraitChange = onPortraitChange,
                 onDensityChange = onZoomDensityChange,
                 modifier = Modifier,
             )
@@ -1187,7 +1183,6 @@ private fun LibraryViewBar(
     portrait: Boolean,
     showZoom: Boolean,
     onLayoutChange: (LibraryLayout) -> Unit,
-    onPortraitChange: (Boolean) -> Unit,
     onDensityChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -1211,11 +1206,9 @@ private fun LibraryViewBar(
             } else {
                 Spacer(modifier = Modifier.weight(1f))
             }
-            LibraryViewModeButtons(
+            LibraryLayoutToggle(
                 layout = layout,
-                portrait = portrait,
                 onLayoutChange = onLayoutChange,
-                onPortraitChange = onPortraitChange,
             )
         }
     } else {
@@ -1226,11 +1219,9 @@ private fun LibraryViewBar(
                     .height(36.dp)
                     .padding(bottom = 6.dp),
         ) {
-            LibraryViewModeButtons(
+            LibraryLayoutToggle(
                 layout = layout,
-                portrait = portrait,
                 onLayoutChange = onLayoutChange,
-                onPortraitChange = onPortraitChange,
                 modifier =
                     Modifier
                         .align(Alignment.CenterEnd)
@@ -1290,55 +1281,14 @@ private fun Modifier.libraryPinchZoom(
 private const val PinchStepScale = 1.25f
 
 @Composable
-private fun LibraryViewModeButtons(
-    layout: LibraryLayout,
-    portrait: Boolean,
-    onLayoutChange: (LibraryLayout) -> Unit,
-    onPortraitChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        LibraryLayoutToggle(
-            layout = layout,
-            onLayoutChange = onLayoutChange,
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Box(
-            modifier =
-                Modifier
-                    .size(28.dp)
-                    .background(chromeColors.panel, CircleShape)
-                    .border(
-                        BorderStroke(1.dp, if (portrait) LibraryNeonGreen else chromeColors.panelBorder),
-                        CircleShape,
-                    ),
-        ) {
-            LayoutToggleIcon(
-                selected = portrait,
-                icon = Icons.Outlined.ScreenRotation,
-                boxSize = 28.dp,
-                iconSize = 18.dp,
-                contentDescription =
-                    stringResource(
-                        if (portrait) R.string.library_view_landscape else R.string.library_view_portrait,
-                    ),
-                onClick = { onPortraitChange(!portrait) },
-            )
-        }
-    }
-}
-
-@Composable
 private fun LibraryLayoutToggle(
     layout: LibraryLayout,
     onLayoutChange: (LibraryLayout) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier =
-            Modifier
+            modifier
                 .height(28.dp)
                 .background(chromeColors.panel, CircleShape)
                 .border(BorderStroke(1.dp, chromeColors.panelBorder), CircleShape)

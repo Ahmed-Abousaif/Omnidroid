@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- GitHub Releases self-update only (play flavor must not declare this). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <application>
+        <receiver
+            android:name="com.omnidroid.app.update.AppUpdateInstallReceiver"
+            android:exported="false" />
+    </application>
+</manifest>

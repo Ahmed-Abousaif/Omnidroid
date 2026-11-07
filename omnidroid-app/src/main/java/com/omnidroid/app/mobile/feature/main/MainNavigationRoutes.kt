@@ -85,22 +85,10 @@ enum class MainRoute(
         titleId = R.string.title_settings,
         showBottomNavigation = false,
     ),
-    SETTINGS_ADVANCED(
-        route = "settings/advanced",
-        titleId = R.string.settings_title_advanced_settings,
-        parent = SETTINGS,
-        showBottomNavigation = false,
-    ),
-    SETTINGS_GAME_DATABASES(
-        route = "settings/databases",
-        titleId = R.string.settings_title_game_databases,
-        parent = SETTINGS_ADVANCED,
-        showBottomNavigation = false,
-    ),
     SETTINGS_UNRECOGNIZED(
         route = "settings/unrecognized",
         titleId = R.string.settings_title_unrecognized_files,
-        parent = SETTINGS_ADVANCED,
+        parent = SETTINGS,
         showBottomNavigation = false,
     ),
     SETTINGS_BIOS(
@@ -129,7 +117,7 @@ enum class MainRoute(
     ),
     SETTINGS_SAVE_SYNC(
         route = "settings/savesync",
-        titleId = R.string.settings_title_save_sync,
+        titleId = R.string.settings_title_saves_backup,
         parent = SETTINGS,
         showBottomNavigation = false,
     ),
