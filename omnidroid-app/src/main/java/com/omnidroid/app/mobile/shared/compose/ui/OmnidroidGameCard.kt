@@ -51,7 +51,7 @@ enum class GameCardInfoStyle {
 
 private val CardCorner = RoundedCornerShape(4.dp)
 private val ContinueButtonCorner = RoundedCornerShape(4.dp)
-private val CaptionFooterHeight = 52.dp
+internal val LibraryCardCaptionHeight = 52.dp
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
@@ -65,6 +65,7 @@ fun OmnidroidGameCard(
     infoStyle: GameCardInfoStyle = GameCardInfoStyle.OVERLAY,
     fillCard: Boolean = false,
     cornerRadius: androidx.compose.ui.unit.Dp = 4.dp,
+    decodeWidth: androidx.compose.ui.unit.Dp = 160.dp,
     onClick: () -> Unit = { },
     onLongClick: () -> Unit = { },
 ) {
@@ -76,6 +77,7 @@ fun OmnidroidGameCard(
             game = game,
             continueAction = continueAction,
             cornerRadius = cornerRadius,
+            decodeWidth = decodeWidth,
             onClick = onClick,
             onLongClick = onLongClick,
         )
@@ -105,6 +107,7 @@ fun OmnidroidGameCard(
                         .then(coverModifier),
                 game = game,
                 aspectRatio = if (fillCard) null else LibraryGameCardAspectRatio,
+                decodeWidth = decodeWidth,
             )
             CoverForeground(
                 game = game,
@@ -125,13 +128,14 @@ private fun CaptionBelowGameCard(
     game: Game,
     continueAction: Boolean,
     cornerRadius: androidx.compose.ui.unit.Dp = 4.dp,
+    decodeWidth: androidx.compose.ui.unit.Dp,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
     val cardShape = RoundedCornerShape(cornerRadius)
     val availabilityAlpha = if (game.isAvailable) 1f else 0.45f
     BoxWithConstraints(modifier = modifier) {
-        val coverHeight = (maxHeight - CaptionFooterHeight).coerceAtLeast(48.dp)
+        val coverHeight = (maxHeight - LibraryCardCaptionHeight).coerceAtLeast(48.dp)
         val coverWidth = coverHeight * LibraryGameCardAspectRatio
         Surface(
             modifier =
@@ -159,6 +163,7 @@ private fun CaptionBelowGameCard(
                             .then(coverModifier),
                     game = game,
                     aspectRatio = null,
+                    decodeWidth = decodeWidth,
                 )
                 Box(
                     modifier =

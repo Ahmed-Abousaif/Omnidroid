@@ -9,18 +9,15 @@ import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,7 +32,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,14 +44,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Cast
 import androidx.compose.material.icons.filled.CastConnected
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material.icons.outlined.Casino
@@ -65,13 +59,12 @@ import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
@@ -89,7 +82,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.TransformOrigin
@@ -114,40 +106,30 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.omnidroid.R
+import com.omnidroid.app.mobile.shared.compose.ui.AppTopBar
+import com.omnidroid.app.mobile.shared.compose.ui.FloatingChromeButton
+import com.omnidroid.app.mobile.shared.compose.ui.chromeButtonSize
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
-import com.omnidroid.app.mobile.shared.compose.ui.SystemStatusIndicators
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
-import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
-import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
-import com.omnidroid.app.mobile.shared.compose.ui.hugDisplayCutout
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.lib.core.SyncProgress
 import kotlin.math.roundToInt
 
-val LibraryTopBarRowHeight = 40.dp
-val LibraryTopBarPortraitHeight = 82.dp
-private val LibrarySearchCollapsedWidth = 200.dp
-
-@Composable
-private fun topBarShadowColor(): Color = homeChromeColor
-
+/** Keeps app chrome stable across navigation, with optional library controls. */
 @Composable
 fun LibraryTopBar(
-    modifier: Modifier = Modifier,
-    operationInProgress: Boolean,
-    syncProgress: SyncProgress? = null,
     gamepadConnected: Boolean,
     onRandomPressed: () -> Unit,
     onCastPressed: () -> Unit,
     onSettingsPressed: () -> Unit,
+    modifier: Modifier = Modifier,
+    bottomPadding: Dp = 0.dp,
+    syncProgress: SyncProgress? = null,
     onProfilePressed: () -> Unit = {},
     sort: LibrarySort = LibrarySort.TITLE,
     onSortChange: (LibrarySort) -> Unit = {},
-    overlayTitleId: Int? = null,
-    onBackPressed: () -> Unit = {},
-    compactProgress: Float = 0f,
     searchQuery: String = "",
     onSearchQueryChange: (String) -> Unit = {},
     onClearSearch: () -> Unit = {},
@@ -155,13 +137,10 @@ fun LibraryTopBar(
     consoleTitleId: Int? = null,
     consoleGameCount: Int? = null,
     portrait: Boolean = false,
-    portraitColumnWidth: Dp = Dp.Unspecified,
-    detailsMode: Boolean = false,
+    showLibraryControls: Boolean = true,
+    onBackPressed: (() -> Unit)? = null,
 ) {
-    val adaptiveSpec = LocalAdaptiveLayout.current
-    val overlayMode = overlayTitleId != null
-    val compact = if (overlayMode) 0f else compactProgress.coerceIn(0f, 1f)
-    val showBack = !overlayMode && if (portrait) detailsMode else compact > 0.5f
+    val spec = LocalAdaptiveLayout.current
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val controllerNav = LocalControllerNavigation.current
@@ -169,435 +148,156 @@ fun LibraryTopBar(
     var searchFocused by remember { mutableStateOf(false) }
     val searchExpanded = searchFocused || searchQuery.isNotEmpty()
     val sortMenu = remember { SortMenuState() }
-    var displayedConsoleTitleId by remember { mutableStateOf<Int?>(null) }
-    var displayedConsoleGameCount by remember { mutableStateOf<Int?>(null) }
-    if (consoleTitleId != null) {
-        displayedConsoleTitleId = consoleTitleId
-        displayedConsoleGameCount = consoleGameCount
-    }
-    val dismissSearchOnOutsideTap =
-        searchFocused && searchQuery.isEmpty() && !overlayMode && !showBack
-
-    LaunchedEffect(showBack, overlayMode) {
-        if (showBack || overlayMode) sortMenu.open = false
+    val dismissSearch = {
+        searchFocused = false
+        controllerNav?.searchArmed?.value = false
+        controllerNav?.textInputActive = false
+        keyboardController?.hide()
+        focusManager.clearFocus()
     }
 
-    LaunchedEffect(showBack) {
-        if (showBack) {
-            searchFocused = false
-            controllerNav?.searchArmed?.value = false
-            controllerNav?.textInputActive = false
-            focusManager.clearFocus()
+    LaunchedEffect(showLibraryControls) {
+        if (!showLibraryControls) {
+            sortMenu.open = false
+            dismissSearch()
         }
     }
-
-    LaunchedEffect(searchArmed) {
-        if (searchArmed) {
+    LaunchedEffect(searchArmed, showLibraryControls) {
+        if (searchArmed && showLibraryControls) {
             runCatching { controllerNav?.searchFocusRequester?.requestFocus() }
             keyboardController?.show()
         }
     }
-
+    DisposableEffect(controllerNav) {
+        onDispose {
+            dismissSearch()
+            controllerNav?.dismissSearch = {}
+        }
+    }
     SideEffect {
         controllerNav?.dismissSearch = {
-            controllerNav.searchArmed.value = false
-            controllerNav.textInputActive = false
-            searchFocused = false
-            keyboardController?.hide()
-            focusManager.clearFocus()
+            dismissSearch()
             controllerNav.contentFocusRequester?.let { runCatching { it.requestFocus() } }
         }
     }
 
-    CompositionLocalProvider(LocalContentColor provides chromeContentColor) {
-        if (portrait && !overlayMode && showBack) {
-            PortraitDetailsTopBar(
-                modifier = modifier,
-                gamepadConnected = gamepadConnected,
-                operationInProgress = operationInProgress,
-                syncProgress = syncProgress,
-                onBackPressed = onBackPressed,
-            )
-        } else if (portrait && !overlayMode && !showBack) {
-            PortraitHomeTopBar(
-                modifier = modifier,
-                columnWidth = portraitColumnWidth,
-                operationInProgress = operationInProgress,
-                syncProgress = syncProgress,
-                gamepadConnected = gamepadConnected,
-                searchQuery = searchQuery,
-                dismissSearchOnOutsideTap = dismissSearchOnOutsideTap,
+    val searchField: @Composable (Modifier) -> Unit = { searchModifier ->
+        LibrarySearchField(
+            query = searchQuery,
+            onQueryChange = onSearchQueryChange,
+            onClear = {
+                onClearSearch()
+                dismissSearch()
+            },
+            onFocusChange = { focused ->
+                searchFocused = focused
+                controllerNav?.textInputActive = focused
+                if (!focused) controllerNav?.searchArmed?.value = false
+            },
+            onActivate = { controllerNav?.searchArmed?.value = true },
+            focusRequester = controllerNav?.searchFocusRequester,
+            canFocus = !gamepadConnected || searchArmed,
+            trailing = { LibrarySortButton(sort = sort, menu = sortMenu) },
+            modifier = searchModifier,
+        )
+    }
+    val actions: @Composable () -> Unit = {
+        val iconSize = (if (portrait) 16.dp else 18.dp) * spec.uiScale
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (portrait) {
+                ProfileChromeButton(onClick = onProfilePressed, iconSize = iconSize)
+                Spacer(modifier = Modifier.width(6.dp))
+            }
+            LibraryUtilityButtons(
+                casting = casting,
+                iconSize = iconSize,
                 onRandomPressed = onRandomPressed,
                 onCastPressed = onCastPressed,
                 onSettingsPressed = onSettingsPressed,
-                onProfilePressed = onProfilePressed,
-                sort = sort,
-                sortMenu = sortMenu,
-                onSearchQueryChange = onSearchQueryChange,
-                onClearSearch = {
-                    onClearSearch()
-                    searchFocused = false
-                    controllerNav?.searchArmed?.value = false
-                    controllerNav?.textInputActive = false
-                    focusManager.clearFocus()
-                },
-                onSearchFocusChange = { focused ->
-                    searchFocused = focused
-                    controllerNav?.textInputActive = focused
-                    if (!focused && controllerNav?.searchArmed?.value == true) {
-                        controllerNav.searchArmed.value = false
-                    }
-                },
-                onSearchActivate = { controllerNav?.searchArmed?.value = true },
-                searchFocusRequester = controllerNav?.searchFocusRequester,
-                searchCanFocus = !gamepadConnected || searchArmed,
-                casting = casting,
-                onDismissSearch = { focusManager.clearFocus() },
             )
-        } else Box(
-            modifier =
-                modifier
-                    .fillMaxWidth()
-                    .then(if (dismissSearchOnOutsideTap) Modifier.fillMaxSize() else Modifier),
-        ) {
-            val sidebarInset = (adaptiveSpec.sidebarWidth - adaptiveSpec.sidebarButtonSize) / 2
-            val backStart = if (overlayMode) 0.dp else sidebarInset
-            if (dismissSearchOnOutsideTap) {
-                Box(
-                    modifier =
-                        Modifier
-                            .matchParentSize()
-                            .pointerInput(Unit) {
-                                detectTapGestures { focusManager.clearFocus() }
-                            },
-                )
-            }
-            // The backdrop runs edge to edge, under the cutout; only the bar contents are inset.
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(adaptiveSpec.topBarRowHeight)
-                        .align(Alignment.TopStart)
-                        .background(
-                            Brush.verticalGradient(
-                                0f to topBarShadowColor(),
-                                1f to Color.Transparent,
-                            ),
-                        ),
-            )
-            // Full-bleed bar: the cutout is top-centre in portrait and moves to a side edge in
-            // landscape, where the bar runs into it at one end.
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.TopStart)
-                        .then(
-                            if (portrait) Modifier else Modifier.hugDisplayCutout(WindowInsetsSides.Horizontal),
-                        ),
-            ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .height(adaptiveSpec.topBarRowHeight)
-                                .padding(start = if (overlayMode) 8.dp else 0.dp, end = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        when {
-                        overlayMode -> {
-                            OverlayTitle(titleId = overlayTitleId!!, onBackPressed = onBackPressed)
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                        showBack -> {
-                            Spacer(modifier = Modifier.width(backStart))
-                            FloatingChromeButton(onClick = onBackPressed) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = stringResource(R.string.back),
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            }
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                        else -> {
-                            Spacer(modifier = Modifier.width(sidebarInset))
-                            BoxWithConstraints(
-                                modifier = Modifier.weight(1f),
-                                contentAlignment = Alignment.CenterStart,
-                            ) {
-                                val targetWidth =
-                                    if (searchExpanded) {
-                                        maxWidth
-                                    } else {
-                                        adaptiveSpec.searchWidth.coerceAtMost(maxWidth)
-                                    }
-                                val searchWidth by animateDpAsState(
-                                    targetValue = targetWidth,
-                                    animationSpec =
-                                        tween(
-                                            durationMillis = 240,
-                                            easing = FastOutSlowInEasing,
-                                        ),
-                                    label = "librarySearchWidth",
-                                )
-                                val showConsoleTitle = !searchExpanded && consoleTitleId != null
-                                val consoleTitle = displayedConsoleTitleId
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().clipToBounds(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    LibrarySearchField(
-                                        query = searchQuery,
-                                        onQueryChange = onSearchQueryChange,
-                                        onClear = {
-                                            onClearSearch()
-                                            searchFocused = false
-                                            controllerNav?.searchArmed?.value = false
-                                            controllerNav?.textInputActive = false
-                                            focusManager.clearFocus()
-                                        },
-                                        onFocusChange = { focused ->
-                                            searchFocused = focused
-                                            controllerNav?.textInputActive = focused
-                                            if (!focused && controllerNav?.searchArmed?.value == true) {
-                                                controllerNav.searchArmed.value = false
-                                            }
-                                        },
-                                        onActivate = {
-                                            controllerNav?.searchArmed?.value = true
-                                        },
-                                        focusRequester = controllerNav?.searchFocusRequester,
-                                        // Controller D-pad skips search unless Y armed it.
-                                        canFocus = !gamepadConnected || searchArmed,
-                                        trailing = { LibrarySortButton(sort = sort, menu = sortMenu) },
-                                        modifier = Modifier.width(searchWidth),
-                                    )
-                                    AnimatedVisibility(
-                                        visible = showConsoleTitle,
-                                        enter =
-                                            fadeIn(animationSpec = tween(180)) +
-                                                expandHorizontally(expandFrom = Alignment.Start),
-                                        exit =
-                                            fadeOut(animationSpec = tween(180)) +
-                                                shrinkHorizontally(shrinkTowards = Alignment.Start),
-                                    ) {
-                                        if (consoleTitle != null) {
-                                            val titleText =
-                                                if (displayedConsoleGameCount != null) {
-                                                    "${stringResource(consoleTitle)} (${displayedConsoleGameCount})"
-                                                } else {
-                                                    stringResource(consoleTitle)
-                                                }
-                                            Text(
-                                                text = titleText,
-                                                style =
-                                                    MaterialTheme.typography.titleMedium.copy(
-                                                        fontWeight = FontWeight.SemiBold,
-                                                    ),
-                                                color = chromeColors.content,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                                modifier = Modifier.padding(start = 14.dp),
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                        }
-                    }
-                    SystemStatusIndicators(gamepadConnected = gamepadConnected)
-                    AnimatedVisibility(
-                        visible = !overlayMode && compact < 0.5f,
-                        enter = fadeIn() + expandHorizontally(expandFrom = Alignment.End),
-                        exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.End),
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Spacer(modifier = Modifier.width(10.dp))
-                            LibraryUtilityButtons(
-                                casting = casting,
-                                iconSize = 18.dp * adaptiveSpec.uiScale,
-                                onRandomPressed = onRandomPressed,
-                                onCastPressed = onCastPressed,
-                                onSettingsPressed = onSettingsPressed,
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            ProfileChromeButton(onClick = onProfilePressed, iconSize = 18.dp * adaptiveSpec.uiScale)
-                        }
-                    }
-                }
-
-                AnimatedVisibility(
-                    visible = syncProgress != null,
-                    enter = fadeIn(animationSpec = tween(180)) + expandVertically(animationSpec = tween(180)),
-                    exit = fadeOut(animationSpec = tween(180)) + shrinkVertically(animationSpec = tween(180)),
-                ) {
-                    SyncProgressBar(
-                        syncProgress = syncProgress,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
+            if (!portrait) {
+                Spacer(modifier = Modifier.width(8.dp))
+                ProfileChromeButton(onClick = onProfilePressed, iconSize = iconSize)
             }
         }
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        if (showLibraryControls && searchFocused && searchQuery.isEmpty()) {
+            Box(
+                modifier =
+                    Modifier.matchParentSize().pointerInput(Unit) {
+                        detectTapGestures { dismissSearch() }
+                    },
+            )
+        }
+        AppTopBar(
+            gamepadConnected = gamepadConnected,
+            portrait = portrait,
+            bottomPadding = bottomPadding,
+            syncProgress = syncProgress,
+            onBackPressed = onBackPressed,
+            controlsVisible = showLibraryControls,
+            leadingContent = {
+                if (portrait) {
+                    actions()
+                } else {
+                    LibrarySearchRow(
+                        expanded = searchExpanded,
+                        consoleTitleId = consoleTitleId,
+                        consoleGameCount = consoleGameCount,
+                        searchField = searchField,
+                    )
+                }
+            },
+            trailingContent = if (portrait) null else actions,
+            bottomContent = if (portrait) ({ searchField(Modifier.fillMaxWidth()) }) else null,
+        )
         LibrarySortMenu(menu = sortMenu, sort = sort, onSortChange = onSortChange)
     }
 }
 
 @Composable
-private fun PortraitHomeTopBar(
-    modifier: Modifier,
-    columnWidth: Dp,
-    operationInProgress: Boolean,
-    syncProgress: SyncProgress? = null,
-    gamepadConnected: Boolean,
-    searchQuery: String,
-    dismissSearchOnOutsideTap: Boolean,
-    onRandomPressed: () -> Unit,
-    onCastPressed: () -> Unit,
-    onSettingsPressed: () -> Unit,
-    onProfilePressed: () -> Unit,
-    sort: LibrarySort,
-    sortMenu: SortMenuState,
-    onSearchQueryChange: (String) -> Unit,
-    onClearSearch: () -> Unit,
-    onSearchFocusChange: (Boolean) -> Unit,
-    onSearchActivate: () -> Unit,
-    searchFocusRequester: FocusRequester?,
-    searchCanFocus: Boolean,
-    casting: Boolean,
-    onDismissSearch: () -> Unit,
+private fun LibrarySearchRow(
+    expanded: Boolean,
+    consoleTitleId: Int?,
+    consoleGameCount: Int?,
+    searchField: @Composable (Modifier) -> Unit,
 ) {
-    val widthModifier =
-        if (columnWidth != Dp.Unspecified) Modifier.width(columnWidth) else Modifier.fillMaxWidth()
-    Box(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .then(if (dismissSearchOnOutsideTap) Modifier.fillMaxSize() else Modifier),
-    ) {
-        if (dismissSearchOnOutsideTap) {
-            Box(
-                modifier =
-                    Modifier
-                        .matchParentSize()
-                        .pointerInput(Unit) {
-                            detectTapGestures { onDismissSearch() }
-                        },
-            )
-        }
-        val adaptiveSpec = LocalAdaptiveLayout.current
-        Column(
-            modifier =
-                widthModifier
-                    .height(adaptiveSpec.topBarPortraitHeight)
-                    .align(Alignment.TopCenter)
-                    .background(
-                        Brush.verticalGradient(
-                            0f to topBarShadowColor(),
-                            1f to Color.Transparent,
-                        ),
-                    ),
-        ) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(adaptiveSpec.topBarRowHeight)
-                        .padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                ProfileChromeButton(onClick = onProfilePressed, iconSize = 16.dp * adaptiveSpec.uiScale)
-                Spacer(modifier = Modifier.width(6.dp))
-                LibraryUtilityButtons(
-                    casting = casting,
-                    iconSize = 16.dp * adaptiveSpec.uiScale,
-                    onRandomPressed = onRandomPressed,
-                    onCastPressed = onCastPressed,
-                    onSettingsPressed = onSettingsPressed,
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                SystemStatusIndicators(gamepadConnected = gamepadConnected)
-            }
-            Spacer(modifier = Modifier.height(2.dp))
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(adaptiveSpec.topBarRowHeight)
-                        .padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                LibrarySearchField(
-                    query = searchQuery,
-                    onQueryChange = onSearchQueryChange,
-                    onClear = onClearSearch,
-                    onFocusChange = onSearchFocusChange,
-                    onActivate = onSearchActivate,
-                    focusRequester = searchFocusRequester,
-                    canFocus = searchCanFocus,
-                    trailing = { LibrarySortButton(sort = sort, menu = sortMenu) },
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
-        AnimatedVisibility(
-            visible = syncProgress != null,
-            enter = fadeIn(animationSpec = tween(180)) + expandVertically(animationSpec = tween(180)),
-            exit = fadeOut(animationSpec = tween(180)) + shrinkVertically(animationSpec = tween(180)),
-            modifier =
-                widthModifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = adaptiveSpec.topBarPortraitHeight),
-        ) {
-            SyncProgressBar(
-                syncProgress = syncProgress,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
+    val spec = LocalAdaptiveLayout.current
+    // Keep the last label available while its exit animation finishes.
+    var displayedTitleId by remember { mutableStateOf<Int?>(null) }
+    var displayedGameCount by remember { mutableStateOf<Int?>(null) }
+    if (consoleTitleId != null) {
+        displayedTitleId = consoleTitleId
+        displayedGameCount = consoleGameCount
     }
-}
-
-@Composable
-private fun PortraitDetailsTopBar(
-    modifier: Modifier,
-    gamepadConnected: Boolean,
-    operationInProgress: Boolean,
-    syncProgress: SyncProgress? = null,
-    onBackPressed: () -> Unit,
-) {
-    val adaptiveSpec = LocalAdaptiveLayout.current
-    Column(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(adaptiveSpec.topBarRowHeight)
-                    .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            FloatingChromeButton(onClick = onBackPressed) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.back),
-                    modifier = Modifier.size(16.dp),
-                )
+    val startPadding = ((spec.sidebarWidth - spec.sidebarButtonSize) / 2 - 8.dp).coerceAtLeast(0.dp)
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(start = startPadding, end = 10.dp)) {
+        val searchWidth by animateDpAsState(
+            targetValue = if (expanded) maxWidth else spec.searchWidth.coerceAtMost(maxWidth),
+            animationSpec = tween(240, easing = FastOutSlowInEasing),
+            label = "librarySearchWidth",
+        )
+        Row(modifier = Modifier.fillMaxWidth().clipToBounds(), verticalAlignment = Alignment.CenterVertically) {
+            searchField(Modifier.width(searchWidth))
+            AnimatedVisibility(
+                visible = !expanded && consoleTitleId != null,
+                enter = fadeIn(tween(180)) + expandHorizontally(expandFrom = Alignment.Start),
+                exit = fadeOut(tween(180)) + shrinkHorizontally(shrinkTowards = Alignment.Start),
+            ) {
+                displayedTitleId?.let { titleId ->
+                    val title = stringResource(titleId)
+                    Text(
+                        text = displayedGameCount?.let { "$title ($it)" } ?: title,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = chromeColors.content,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(start = 14.dp),
+                    )
+                }
             }
-            Spacer(modifier = Modifier.weight(1f))
-            SystemStatusIndicators(gamepadConnected = gamepadConnected)
-        }
-        AnimatedVisibility(
-            visible = syncProgress != null,
-            enter = fadeIn(animationSpec = tween(180)) + expandVertically(animationSpec = tween(180)),
-            exit = fadeOut(animationSpec = tween(180)) + shrinkVertically(animationSpec = tween(180)),
-        ) {
-            SyncProgressBar(
-                syncProgress = syncProgress,
-                modifier = Modifier.fillMaxWidth(),
-            )
         }
     }
 }
@@ -849,7 +549,7 @@ private fun LibrarySort.icon(): ImageVector =
     }
 
 @Composable
-private fun LibrarySearchField(
+internal fun LibrarySearchField(
     query: String,
     onQueryChange: (String) -> Unit,
     onClear: () -> Unit,
@@ -976,28 +676,6 @@ private fun LibrarySearchField(
 }
 
 @Composable
-private fun OverlayTitle(
-    titleId: Int,
-    onBackPressed: () -> Unit,
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        FloatingChromeButton(onClick = onBackPressed) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.back),
-                modifier = Modifier.size(18.dp),
-            )
-        }
-        Text(
-            text = stringResource(titleId),
-            style = MaterialTheme.typography.titleMedium,
-            color = chromeColors.content,
-            modifier = Modifier.padding(start = 12.dp),
-        )
-    }
-}
-
-@Composable
 fun RescanIcon(
     spinning: Boolean,
     modifier: Modifier = Modifier,
@@ -1035,158 +713,5 @@ private fun SpinningRescanIcon(
         contentDescription = contentDescription,
         modifier = modifier.graphicsLayer { rotationZ = rotation },
     )
-}
-
-@Composable
-private fun chromeButtonSize(): Dp {
-    val spec = LocalAdaptiveLayout.current
-    val base = if (spec.isCompact) 32.dp else 36.dp
-    return base * spec.uiScale
-}
-
-/** Borderless top bar icon button; it only shows a fill while pressed. */
-@Composable
-fun FloatingChromeButton(
-    onClick: () -> Unit,
-    content: @Composable () -> Unit,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val pressed by interactionSource.collectIsPressedAsState()
-    val background by animateColorAsState(
-        targetValue = if (pressed) chromeColors.pressed else Color.Transparent,
-        animationSpec = tween(120),
-        label = "chromeButtonPressed",
-    )
-    Box(
-        modifier =
-            Modifier
-                .size(chromeButtonSize())
-                .controllerFocusGlow(CircleShape)
-                .clip(CircleShape)
-                .background(background)
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    role = Role.Button,
-                    onClick = onClick,
-                ),
-        contentAlignment = Alignment.Center,
-    ) {
-        content()
-    }
-}
-
-@Composable
-fun SyncProgressBar(
-    syncProgress: SyncProgress?,
-    modifier: Modifier = Modifier,
-) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulseTransition")
-    val dotAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 1.0f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(800, easing = LinearEasing),
-                repeatMode = RepeatMode.Reverse,
-            ),
-        label = "pulseAlpha",
-    )
-
-    val displayText =
-        syncProgress?.stepText?.ifBlank { null }
-            ?: stringResource(R.string.library_scanning)
-    val hasCount = (syncProgress?.current ?: 0) > 0 && (syncProgress?.total ?: 0) > 0
-    val targetProgress =
-        if (hasCount) {
-            (syncProgress!!.current.toFloat() / syncProgress.total.toFloat()).coerceIn(0f, 1f)
-        } else {
-            0f
-        }
-    val animatedProgress by animateFloatAsState(
-        targetValue = targetProgress,
-        animationSpec = tween(300, easing = FastOutSlowInEasing),
-        label = "syncProgressAnimation",
-    )
-
-    Surface(
-        modifier = modifier,
-        color = chromeColors.progressBar,
-        border = BorderStroke(0.5.dp, chromeColors.progressBarBorder),
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(20.dp)
-                        .padding(horizontal = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Row(
-                    modifier = Modifier.weight(1f, fill = false),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(LibraryNeonGreen.copy(alpha = dotAlpha)),
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = displayText,
-                        style =
-                            MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                                letterSpacing = 0.2.sp,
-                            ),
-                        color = chromeColors.content.copy(alpha = 0.92f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-
-                if (hasCount) {
-                    Text(
-                        text = "${syncProgress!!.current} of ${syncProgress.total}",
-                        style =
-                            MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 10.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                letterSpacing = 0.3.sp,
-                            ),
-                        color = LibraryNeonGreen,
-                        maxLines = 1,
-                        modifier = Modifier.padding(start = 8.dp),
-                    )
-                }
-            }
-
-            if (syncProgress != null && !syncProgress.isIndeterminate && hasCount) {
-                LinearProgressIndicator(
-                    progress = { animatedProgress },
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(2.dp),
-                    color = LibraryNeonGreen,
-                    trackColor = Color(0x3338EF7D),
-                )
-            } else {
-                LinearProgressIndicator(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(2.dp),
-                    color = LibraryNeonGreen,
-                    trackColor = Color(0x3338EF7D),
-                )
-            }
-        }
-    }
 }
 

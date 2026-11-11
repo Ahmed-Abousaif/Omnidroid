@@ -4,11 +4,12 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
 import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.omnidroid.app.shared.library.LibraryIndexScheduler
 import com.omnidroid.app.shared.library.PendingOperationsMonitor
 import com.omnidroid.app.shared.settings.StorageFrameworkPickerLauncher
-import com.omnidroid.common.paging.buildFlowPaging
 import com.omnidroid.lib.core.SyncProgress
 import com.omnidroid.lib.core.SyncProgressTracker
 import com.omnidroid.lib.library.GameSystem
@@ -156,10 +157,10 @@ class LibraryViewModel(
     val games: Flow<PagingData<Game>> =
         combine(filterFlow, searchQueryFlow, sortFlow) { filter, query, sort -> Triple(filter, query.trim(), sort) }
             .flatMapLatest { (filter, query, sort) ->
-                buildFlowPaging(PAGE_SIZE, viewModelScope) {
+                Pager(LibraryPaging.config()) {
                     gamesPagingSource(filter, query, sort)
-                }
-            }
+                }.flow
+            }.cachedIn(viewModelScope)
 
     init {
         // Leave the startup view if the user changes it while already looking at it.
@@ -364,7 +365,6 @@ class LibraryViewModel(
     private fun LibraryFilter.System.systemIds() = metaSystemID.systemIDs.map { it.dbname }
 
     companion object {
-        private const val PAGE_SIZE = 20
         private const val ZOOM_DENSITY_KEY = "pref_library_zoom_density"
         private const val LAYOUT_KEY = "pref_library_layout"
         private const val SORT_KEY = "pref_library_sort"

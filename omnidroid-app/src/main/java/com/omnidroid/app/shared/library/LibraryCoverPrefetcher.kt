@@ -1,34 +1,33 @@
 package com.omnidroid.app.shared.library
 
 import android.content.Context
-import androidx.paging.compose.LazyPagingItems
 import com.omnidroid.app.shared.covers.CoverUtils
 import com.omnidroid.lib.library.db.entity.Game
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
+import timber.log.Timber
 
-/** Prefetch processed grid covers for the next ~2 rows ahead of the visible window. */
+/** Sequential, cancellable cover processing for the active viewport's small lookahead. */
 object LibraryCoverPrefetcher {
-    fun prefetchAhead(
+    suspend fun prefetch(
         context: Context,
-        scope: CoroutineScope,
-        games: LazyPagingItems<Game>,
-        firstVisible: Int,
-        visibleCount: Int,
-        columnsOrRows: Int,
-    ) {
-        val ahead = (columnsOrRows * 2).coerceAtLeast(4)
-        val start = (firstVisible + visibleCount).coerceAtLeast(0)
-        val end = (start + ahead).coerceAtMost(games.itemCount)
-        if (start >= end) return
+        games: List<Game>,
+    ) = withContext(Dispatchers.IO) {
+        if (games.isEmpty()) return@withContext
         val store = CoverUtils.coverCache(context)
-        scope.launch(Dispatchers.IO) {
-            for (index in start until end) {
-                val game = games.peek(index) ?: continue
-                val url = game.coverFrontUrl ?: continue
-                if (CoverUtils.isAllowedRemoteCoverUrl(url)) {
+        for (game in games) {
+            ensureActive()
+            val url = game.coverFrontUrl ?: continue
+            if (game.customCoverPath == null && CoverUtils.isAllowedRemoteCoverUrl(url)) {
+                try {
                     store.ensureGrid(game.id, url)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (failure: Exception) {
+                    // Prefetch is optional: a failed cache write must not take down the screen.
+                    Timber.w(failure, "Unable to prefetch library cover for game %s", game.id)
                 }
             }
         }

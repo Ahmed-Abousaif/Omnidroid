@@ -44,6 +44,7 @@ import com.omnidroid.R
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.metadata.libretrodb.CoverSearchResult
 import com.omnidroid.metadata.libretrodb.CoverSearcher
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 
 @Composable
@@ -59,7 +60,7 @@ fun CoverSearchDialog(
     var isLoading by remember { mutableStateOf(true) }
     var selectedCandidate by remember { mutableStateOf<CoverSearchResult?>(null) }
 
-    LaunchedEffect(query) {
+    LaunchedEffect(game.id, query) {
         val trimmed = query.trim()
         if (trimmed.length < 2) {
             results = emptyList()
@@ -68,8 +69,15 @@ fun CoverSearchDialog(
         }
         isLoading = true
         delay(350)
-        results = coverSearcher.search(game.systemId, trimmed)
-        isLoading = false
+        try {
+            results = coverSearcher.search(game.systemId, trimmed)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            results = emptyList()
+        } finally {
+            isLoading = false
+        }
     }
 
     AlertDialog(

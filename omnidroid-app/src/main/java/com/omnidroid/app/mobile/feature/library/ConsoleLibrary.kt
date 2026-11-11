@@ -45,7 +45,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.SportsEsports
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -56,6 +59,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -113,19 +117,25 @@ import androidx.compose.ui.unit.min
 import androidx.paging.compose.LazyPagingItems
 import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
+import com.omnidroid.app.OmnidroidApplication
+import com.omnidroid.app.mobile.feature.gamedetails.PlayTimeStore
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.lib.library.GameSystem
+import com.omnidroid.lib.library.db.dao.GamePlayStats
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.library.metaSystemID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -309,7 +319,8 @@ internal fun ConsoleLibrary(
         items.gameAt(state.selectedIndex)?.let(onPlayGame)
     }
 
-    Box(
+    val adaptiveSpec = LocalAdaptiveLayout.current
+    BoxWithConstraints(
         modifier =
             modifier
                 .fillMaxSize()
@@ -321,6 +332,11 @@ internal fun ConsoleLibrary(
                 .onKeyEvent { event -> handleCarouselKey(event, state, scope, playSelected) }
                 .focusable(),
     ) {
+        val carouselRatio = if (maxHeight > 0.dp) maxWidth / maxHeight else 1f
+        val isSmallSquarish =
+            (adaptiveSpec.isCompact || maxHeight <= 500.dp) &&
+                (adaptiveSpec.isSquare || carouselRatio <= 1.45f)
+
         if (portrait) {
             ConsolePortraitCarousel(
                 state = state,
@@ -334,6 +350,22 @@ internal fun ConsoleLibrary(
                 onGameLongClick = onGameLongClick,
                 onFavoriteToggle = onFavoriteToggle,
                 onPlay = playSelected,
+                showButtons = true,
+            )
+        } else if (isSmallSquarish) {
+            ConsolePortraitCarousel(
+                state = state,
+                items = items,
+                selectedIndex = selectedIndex,
+                pulse = pulse,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+                showControllerGlyph = showControllerGlyph,
+                onCardClick = onCardClick,
+                onGameLongClick = onGameLongClick,
+                onFavoriteToggle = onFavoriteToggle,
+                onPlay = playSelected,
+                showButtons = false,
             )
         } else {
             ConsoleLandscapeCarousel(
@@ -411,7 +443,7 @@ private class LandscapeMetrics(maxWidth: Dp, maxHeight: Dp) {
     val smallHeight = bigHeight * 0.55f
     val smallWidth = smallHeight * LibraryGameCardAspectRatio
     val top = ((maxHeight - bigHeight) / 2).coerceAtLeast(0.dp)
-    val anchorX = edge + smallWidth + gap
+    val anchorX = edge + smallWidth + gap - (if (maxHeight < 280.dp) 16.dp else 24.dp)
     val infoX = anchorX + bigWidth + gap * 1.5f
     val infoWidth = (maxWidth - infoX - edge).coerceAtLeast(0.dp)
     val infoHeight = (bigHeight - smallHeight - gap).coerceAtLeast(0.dp)
@@ -463,7 +495,7 @@ private fun ConsoleLandscapeCarousel(
                             },
                             pulse = pulse,
                             sharedModifier =
-                                game?.let {
+                                game?.takeUnless { items.isFeatured(index) }?.let {
                                     consoleCoverSharedBounds(sharedTransitionScope, animatedVisibilityScope, it, LandscapeCardCorner)
                                 } ?: Modifier,
                             onClick = { game?.let { onCardClick(index, it) } },
@@ -661,13 +693,32 @@ private fun LandscapeInfoPanel(
             active = true,
             modifier = Modifier.weight(1f, fill = false),
         )
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.labelMedium,
-            color = chromeColors.muted,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (subtitle.isNotBlank()) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = chromeColors.muted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                Text(
+                    text = "-",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = chromeColors.muted,
+                )
+            }
+            ConsoleGameStats(
+                game = game,
+                tint = chromeColors.muted,
+                hasShadow = false,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            )
+        }
         Spacer(modifier = Modifier.height(if (compact) 6.dp else 10.dp))
         ConsoleActions(
             label = stringResource(if (continueAction) R.string.continue_playing else R.string.library_console_start),
@@ -680,10 +731,11 @@ private fun LandscapeInfoPanel(
     }
 }
 
-private class PortraitMetrics(maxWidth: Dp, maxHeight: Dp) {
-    val buttonGap = 20.dp
-    val buttonArea = 40.dp + buttonGap
-    val cardWidth = min(maxWidth * 0.68f, (maxHeight - 32.dp - buttonArea) * LibraryGameCardAspectRatio).coerceAtLeast(80.dp)
+private class PortraitMetrics(maxWidth: Dp, maxHeight: Dp, showButtons: Boolean = true) {
+    val buttonGap = if (showButtons) 20.dp else 0.dp
+    val buttonArea = if (showButtons) 40.dp + buttonGap else 0.dp
+    val verticalPadding = if (showButtons) 32.dp else 24.dp
+    val cardWidth = min(maxWidth * 0.68f, (maxHeight - verticalPadding - buttonArea) * LibraryGameCardAspectRatio).coerceAtLeast(80.dp)
     val cardHeight = cardWidth / LibraryGameCardAspectRatio
     val top = ((maxHeight - cardHeight - buttonArea) / 2).coerceAtLeast(0.dp)
     val step = cardWidth * 0.74f
@@ -703,12 +755,13 @@ private fun ConsolePortraitCarousel(
     onGameLongClick: (Game) -> Unit,
     onFavoriteToggle: (Game, Boolean) -> Unit,
     onPlay: () -> Unit,
+    showButtons: Boolean = true,
 ) {
     val scope = rememberCoroutineScope()
     // Glow sits outside sharedBounds, so hide it while the cover flies to/from details.
     val coverTransitioning = sharedTransitionScope.isTransitionActive
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val metrics = remember(maxWidth, maxHeight) { PortraitMetrics(maxWidth, maxHeight) }
+        val metrics = remember(maxWidth, maxHeight, showButtons) { PortraitMetrics(maxWidth, maxHeight, showButtons) }
         val first = (selectedIndex - 3).coerceAtLeast(0)
         val last = (selectedIndex + 3).coerceAtMost(items.count - 1)
         val stepPx = with(LocalDensity.current) { metrics.step.toPx() }
@@ -730,7 +783,7 @@ private fun ConsolePortraitCarousel(
                             },
                             pulse = pulse,
                             sharedModifier =
-                                game?.let {
+                                game?.takeUnless { items.isFeatured(index) }?.let {
                                     consoleCoverSharedBounds(sharedTransitionScope, animatedVisibilityScope, it, PortraitCardCorner)
                                 } ?: Modifier,
                             onClick = { game?.let { onCardClick(index, it) } },
@@ -738,18 +791,20 @@ private fun ConsolePortraitCarousel(
                         )
                     }
                 }
-                ConsoleActions(
-                    label =
-                        stringResource(
-                            if (items.isFeatured(selectedIndex)) R.string.continue_playing else R.string.library_console_start,
-                        ),
-                    showControllerGlyph = showControllerGlyph,
-                    modifier = Modifier.graphicsLayer { alpha = state.settledAmount() },
-                    game = items.gameAt(selectedIndex),
-                    onPlay = onPlay,
-                    onFavoriteToggle = onFavoriteToggle,
-                    onSettings = { items.gameAt(state.selectedIndex)?.let(onGameLongClick) },
-                )
+                if (showButtons) {
+                    ConsoleActions(
+                        label =
+                            stringResource(
+                                if (items.isFeatured(selectedIndex)) R.string.continue_playing else R.string.library_console_start,
+                            ),
+                        showControllerGlyph = showControllerGlyph,
+                        modifier = Modifier.graphicsLayer { alpha = state.settledAmount() },
+                        game = items.gameAt(selectedIndex),
+                        onPlay = onPlay,
+                        onFavoriteToggle = onFavoriteToggle,
+                        onSettings = { items.gameAt(state.selectedIndex)?.let(onGameLongClick) },
+                    )
+                }
             },
         ) { measurables, constraints ->
             val p = state.position
@@ -761,8 +816,15 @@ private fun ConsolePortraitCarousel(
             val far = cardW * 0.34f
             val camera = 10f * density
             val cards =
-                measurables.dropLast(1).map { it.measure(Constraints.fixed(cardW, cardH)) }
-            val button = measurables.last().measure(Constraints(maxWidth = constraints.maxWidth))
+                (if (showButtons) measurables.dropLast(1) else measurables).map {
+                    it.measure(Constraints.fixed(cardW, cardH))
+                }
+            val button =
+                if (showButtons) {
+                    measurables.last().measure(Constraints(maxWidth = constraints.maxWidth))
+                } else {
+                    null
+                }
             layout(constraints.maxWidth, constraints.maxHeight) {
                 cards.forEachIndexed { offset, placeable ->
                     val distance = first + offset - p
@@ -780,7 +842,7 @@ private fun ConsolePortraitCarousel(
                         alpha = (2.6f - magnitude).coerceIn(0f, 1f)
                     }
                 }
-                button.place(
+                button?.place(
                     (constraints.maxWidth - button.width) / 2,
                     top + cardH + metrics.buttonGap.roundToPx(),
                 )
@@ -847,15 +909,17 @@ private fun ConsolePortraitCard(
                 ConsoleRotatingTitle(
                     text = game.displayName.uppercase(),
                     style =
-                        MaterialTheme.typography.titleMedium.copy(
+                        MaterialTheme.typography.titleSmall.copy(
                             fontWeight = FontWeight.ExtraBold,
                             shadow = Shadow(color = Color.Black, offset = Offset(0f, 2f), blurRadius = 8f),
                         ),
-                    maxLines = 2,
+                    maxLines = 1,
                     active = centered,
                     // Overlay sits on a dark gradient over the cover, so stay light in both themes.
                     color = Color.White,
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+                ConsolePortraitGameStats(game = game)
             }
         }
         Box(
@@ -867,6 +931,111 @@ private fun ConsolePortraitCard(
         )
     }
 }
+
+@Composable
+private fun ConsoleGameStats(
+    game: Game,
+    tint: Color,
+    modifier: Modifier = Modifier,
+    hasShadow: Boolean = false,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(10.dp),
+) {
+    val context = LocalContext.current
+    val db = remember(context) { (context.applicationContext as? OmnidroidApplication)?.retrogradeDb }
+    val playTimeStore = remember(context) { PlayTimeStore(context) }
+    val initialPlayTime = remember(game.id) { playTimeStore.get(game.id) }
+    val stats by remember(game.id, db) {
+        db?.gameSessionDao()?.observeStatsForGame(game.id)
+            ?: flowOf(GamePlayStats(totalDurationMs = initialPlayTime))
+    }.collectAsState(initial = GamePlayStats(totalDurationMs = initialPlayTime))
+
+    val totalPlayTimeMs = maxOf(stats.totalDurationMs, initialPlayTime)
+    val sessionCount = maxOf(stats.sessionCount, if (totalPlayTimeMs > 0L) 1 else 0)
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = horizontalArrangement,
+    ) {
+        ConsoleStatItem(
+            icon = Icons.Outlined.SportsEsports,
+            text = "$sessionCount",
+            tint = tint,
+            hasShadow = hasShadow,
+        )
+        ConsoleStatItem(
+            icon = Icons.Outlined.Timer,
+            text = formatPlayTime(totalPlayTimeMs),
+            tint = tint,
+            hasShadow = hasShadow,
+        )
+        ConsoleStatItem(
+            icon = Icons.Outlined.EmojiEvents,
+            text = "0/0",
+            tint = tint,
+            hasShadow = hasShadow,
+        )
+    }
+}
+
+@Composable
+private fun ConsolePortraitGameStats(
+    game: Game,
+    modifier: Modifier = Modifier,
+) {
+    ConsoleGameStats(
+        game = game,
+        tint = Color.White.copy(alpha = 0.72f),
+        hasShadow = true,
+        modifier = modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun ConsoleStatItem(
+    icon: ImageVector,
+    text: String,
+    tint: Color,
+    modifier: Modifier = Modifier,
+    hasShadow: Boolean = false,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(13.dp),
+        )
+        Text(
+            text = text,
+            style =
+                MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Medium,
+                    shadow = if (hasShadow) Shadow(color = Color.Black, offset = Offset(0f, 1f), blurRadius = 4f) else null,
+                ),
+            color = tint,
+            maxLines = 1,
+            softWrap = false,
+        )
+    }
+}
+
+private fun formatPlayTime(playTimeMs: Long): String {
+    if (playTimeMs <= 0L) return "0m"
+    val hours = TimeUnit.MILLISECONDS.toHours(playTimeMs)
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(playTimeMs) % 60
+    return when {
+        hours > 0 && minutes > 0 -> "${hours}h ${minutes}m"
+        hours > 0 -> "${hours}h"
+        minutes > 0 -> "${minutes}m"
+        else -> "< 1m"
+    }
+}
+
 
 @Composable
 private fun ConsoleSystemBanner(

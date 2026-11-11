@@ -2,15 +2,11 @@ package com.omnidroid.app.mobile.feature.library
 
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.EnterExitState
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -36,7 +32,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,16 +40,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -62,7 +52,6 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.ViewCarousel
 import androidx.compose.material.icons.outlined.ZoomIn
@@ -80,13 +69,12 @@ import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import com.omnidroid.app.shared.library.LibraryCoverPrefetcher
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -95,7 +83,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -109,24 +96,18 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.GameCardInfoStyle
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidEmptyView
-import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameCard
-import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
@@ -138,8 +119,6 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
-import com.omnidroid.app.mobile.shared.controller.reportControllerGame
-import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.MetaSystemID
 import com.omnidroid.lib.library.db.entity.Game
@@ -231,6 +210,9 @@ fun LibraryScreen(
     var backdropGame by remember { mutableStateOf<Game?>(null) }
     val consoleSelection =
         rememberConsoleSelection(listOf(state.filter, state.searchQuery, state.continueGame?.id, state.sort))
+    val pagedScrollState = key(state.filter, state.searchQuery, state.sort) {
+        rememberLibraryPagedScrollState()
+    }
 
     BoxWithConstraints(
         modifier =
@@ -277,6 +259,7 @@ fun LibraryScreen(
                     onLayoutChange = { viewModel.setLayout(it) },
                     onBackdropGameChange = { backdropGame = it },
                     consoleSelection = consoleSelection,
+                    pagedScrollState = pagedScrollState,
                     requestInitialFocus = controllerConnected,
                     showZoomBar = !controllerConnected,
                     portrait = true,
@@ -325,6 +308,7 @@ fun LibraryScreen(
                     onLayoutChange = { viewModel.setLayout(it) },
                     onBackdropGameChange = { backdropGame = it },
                     consoleSelection = consoleSelection,
+                    pagedScrollState = pagedScrollState,
                     requestInitialFocus = controllerConnected,
                     showZoomBar = !controllerConnected,
                     portrait = false,
@@ -686,6 +670,7 @@ private fun LibraryGames(
     onLayoutChange: (LibraryLayout) -> Unit,
     onBackdropGameChange: (Game?) -> Unit,
     consoleSelection: MutableIntState,
+    pagedScrollState: LibraryPagedScrollState,
     requestInitialFocus: Boolean = false,
     showZoomBar: Boolean = true,
     portrait: Boolean = false,
@@ -710,33 +695,10 @@ private fun LibraryGames(
         isEmpty &&
             state.searchQuery.isBlank() &&
             state.filter !is LibraryFilter.Favorites
-    val infoStyle =
-        if (portrait) {
-            if (state.zoomDensity >= 2) GameCardInfoStyle.MINIMAL else GameCardInfoStyle.OVERLAY
-        } else {
-            when (state.zoomDensity) {
-                0 -> GameCardInfoStyle.BELOW
-                1 -> GameCardInfoStyle.OVERLAY
-                else -> GameCardInfoStyle.MINIMAL
-            }
-        }
     val showViewBar = games.itemCount > 0 || showContinue || portrait
     val pinchScale = remember { mutableFloatStateOf(1f) }
     val currentZoomDensity by rememberUpdatedState(state.zoomDensity)
     val currentOnZoomDensityChange by rememberUpdatedState(onZoomDensityChange)
-
-    val prefetchScope = rememberCoroutineScope()
-    LaunchedEffect(games.itemCount, state.layout, state.zoomDensity) {
-        if (games.itemCount <= 0) return@LaunchedEffect
-        LibraryCoverPrefetcher.prefetchAhead(
-            context = context,
-            scope = prefetchScope,
-            games = games,
-            firstVisible = 0,
-            visibleCount = 30,
-            columnsOrRows = 5,
-        )
-    }
 
     Column(modifier = modifier.fillMaxSize()) {
         Box(
@@ -771,7 +733,7 @@ private fun LibraryGames(
                     OmnidroidEmptyView(modifier = Modifier)
                 }
                 else -> {
-                    BoxWithConstraints(
+                    Box(
                         modifier =
                             Modifier
                                 .fillMaxSize()
@@ -780,169 +742,42 @@ private fun LibraryGames(
                                     scaleY = pinchScale.floatValue
                                 },
                     ) {
-                    val featured = continueGame.takeIf { showContinue }
-                    if (state.layout == LibraryLayout.CONSOLE) {
-                        ConsoleLibrary(
-                            modifier = Modifier.fillMaxSize(),
-                            sharedTransitionScope = sharedTransitionScope,
-                            animatedVisibilityScope = animatedVisibilityScope,
-                            games = games,
-                            featured = featured,
-                            selection = consoleSelection,
-                            portrait = portrait,
-                            showControllerGlyph = requestInitialFocus,
-                            focusRequester = firstItemRequester,
-                            onOpenGame = onGameClick,
-                            onPlayGame = onContinueClick,
-                            onGameLongClick = onGameLongClick,
-                            onFavoriteToggle = onFavoriteToggle,
-                            onBackdropGameChange = onBackdropGameChange,
-                        )
-                    } else if (state.layout == LibraryLayout.LIST) {
-                        LazyColumn(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .focusGroup(),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            if (featured != null) {
-                                item(key = "continue-${featured.id}") {
-                                    LibraryGameRow(
-                                        sharedTransitionScope = sharedTransitionScope,
-                                        animatedVisibilityScope = animatedVisibilityScope,
-                                        game = featured,
-                                        modifier = Modifier.focusRequester(firstItemRequester),
-                                        continueAction = true,
-                                        onClick = { onContinueClick(featured) },
-                                        onLongClick = { onGameLongClick(featured) },
-                                    )
-                                }
-                            }
-                            items(
-                                count = games.itemCount,
-                                key = { index -> games.peek(index)?.id ?: index },
-                            ) { index ->
-                                val game = games[index] ?: return@items
-                                LibraryGameRow(
+                        val featured = continueGame.takeIf { showContinue }
+                        if (state.layout == LibraryLayout.CONSOLE) {
+                            ConsoleLibrary(
+                                modifier = Modifier.fillMaxSize(),
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                games = games,
+                                featured = featured,
+                                selection = consoleSelection,
+                                portrait = portrait,
+                                showControllerGlyph = requestInitialFocus,
+                                focusRequester = firstItemRequester,
+                                onOpenGame = onGameClick,
+                                onPlayGame = onContinueClick,
+                                onGameLongClick = onGameLongClick,
+                                onFavoriteToggle = onFavoriteToggle,
+                                onBackdropGameChange = onBackdropGameChange,
+                            )
+                        } else {
+                            key(state.filter, state.searchQuery, state.sort) {
+                                LibraryPagedContent(
+                                    games = games,
+                                    featured = featured,
+                                    layout = state.layout,
+                                    zoomDensity = state.zoomDensity,
+                                    portrait = portrait,
                                     sharedTransitionScope = sharedTransitionScope,
                                     animatedVisibilityScope = animatedVisibilityScope,
-                                    game = game,
-                                    modifier =
-                                        if (!showContinue && index == 0) {
-                                            Modifier.focusRequester(firstItemRequester)
-                                        } else {
-                                            Modifier
-                                        },
-                                    continueAction = false,
-                                    onClick = { onGameClick(game) },
-                                    onLongClick = { onGameLongClick(game) },
+                                    firstItemRequester = firstItemRequester,
+                                    onGameClick = onGameClick,
+                                    onContinueClick = onContinueClick,
+                                    onGameLongClick = onGameLongClick,
+                                    scrollState = pagedScrollState,
                                 )
                             }
                         }
-                    } else if (portrait) {
-                        val adaptiveSpec = LocalAdaptiveLayout.current
-                        val columns = libraryPortraitColumns(state.zoomDensity, maxWidth, adaptiveSpec.isSquare)
-                        LazyVerticalGrid(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .focusGroup(),
-                            columns = GridCells.Fixed(columns),
-                            contentPadding = PaddingValues(horizontal = adaptiveSpec.gridSpacing, vertical = adaptiveSpec.gridSpacing),
-                            horizontalArrangement = Arrangement.spacedBy(adaptiveSpec.gridSpacing),
-                            verticalArrangement = Arrangement.spacedBy(adaptiveSpec.gridSpacing),
-                        ) {
-                            if (featured != null) {
-                                item(key = "continue-${featured.id}") {
-                                    LibraryGameCardItem(
-                                        sharedTransitionScope = sharedTransitionScope,
-                                        animatedVisibilityScope = animatedVisibilityScope,
-                                        game = featured,
-                                        modifier = Modifier.focusRequester(firstItemRequester),
-                                        continueAction = true,
-                                        infoStyle = infoStyle,
-                                        matchHeight = false,
-                                        onClick = { onContinueClick(featured) },
-                                        onLongClick = { onGameLongClick(featured) },
-                                    )
-                                }
-                            }
-                            items(
-                                count = games.itemCount,
-                                key = { index -> games.peek(index)?.id ?: index },
-                            ) { index ->
-                                val game = games[index] ?: return@items
-                                LibraryGameCardItem(
-                                    sharedTransitionScope = sharedTransitionScope,
-                                    animatedVisibilityScope = animatedVisibilityScope,
-                                    game = game,
-                                    modifier =
-                                        if (!showContinue && index == 0) {
-                                             Modifier.focusRequester(firstItemRequester)
-                                        } else {
-                                            Modifier
-                                        },
-                                    continueAction = false,
-                                    infoStyle = infoStyle,
-                                    matchHeight = false,
-                                    onClick = { onGameClick(game) },
-                                    onLongClick = { onGameLongClick(game) },
-                                )
-                            }
-                        }
-                    } else {
-                        val adaptiveSpec = LocalAdaptiveLayout.current
-                        val rows = libraryGridRows(state.zoomDensity, maxHeight, adaptiveSpec.isSquare)
-                        LazyHorizontalGrid(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .focusGroup(),
-                            rows = GridCells.Fixed(rows),
-                            contentPadding = PaddingValues(horizontal = adaptiveSpec.gridSpacing + 4.dp, vertical = adaptiveSpec.gridSpacing),
-                            horizontalArrangement = Arrangement.spacedBy(adaptiveSpec.gridSpacing),
-                            verticalArrangement = Arrangement.spacedBy(adaptiveSpec.gridSpacing),
-                        ) {
-                            if (featured != null) {
-                                item(key = "continue-${featured.id}") {
-                                    LibraryGameCardItem(
-                                        sharedTransitionScope = sharedTransitionScope,
-                                        animatedVisibilityScope = animatedVisibilityScope,
-                                        game = featured,
-                                        modifier = Modifier.focusRequester(firstItemRequester),
-                                        continueAction = true,
-                                        infoStyle = infoStyle,
-                                        onClick = { onContinueClick(featured) },
-                                        onLongClick = { onGameLongClick(featured) },
-                                    )
-                                }
-                            }
-
-                            items(
-                                count = games.itemCount,
-                                key = { index -> games.peek(index)?.id ?: index },
-                            ) { index ->
-                                val game = games[index] ?: return@items
-                                LibraryGameCardItem(
-                                    sharedTransitionScope = sharedTransitionScope,
-                                    animatedVisibilityScope = animatedVisibilityScope,
-                                    game = game,
-                                    modifier =
-                                        if (!showContinue && index == 0) {
-                                            Modifier.focusRequester(firstItemRequester)
-                                        } else {
-                                            Modifier
-                                        },
-                                    continueAction = false,
-                                    infoStyle = infoStyle,
-                                    onClick = { onGameClick(game) },
-                                    onLongClick = { onGameLongClick(game) },
-                                )
-                            }
-                        }
-                    }
                     }
                 }
             }
@@ -957,222 +792,6 @@ private fun LibraryGames(
                 onDensityChange = onZoomDensityChange,
                 modifier = Modifier,
             )
-        }
-    }
-}
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-@Composable
-private fun LibraryGameCardItem(
-    sharedTransitionScope: SharedTransitionScope,
-    animatedVisibilityScope: AnimatedVisibilityScope,
-    game: Game,
-    modifier: Modifier = Modifier,
-    continueAction: Boolean,
-    infoStyle: GameCardInfoStyle,
-    matchHeight: Boolean = true,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-) {
-    val sizeModifier =
-        if (matchHeight) {
-            Modifier
-                .fillMaxHeight()
-                .then(
-                    if (infoStyle == GameCardInfoStyle.BELOW) {
-                        Modifier
-                    } else {
-                        Modifier.aspectRatio(LibraryGameCardAspectRatio, matchHeightConstraintsFirst = true)
-                    },
-                )
-        } else {
-            Modifier.fillMaxWidth()
-        }
-    val cornerAnim by animatedVisibilityScope.transition.animateDp(
-        label = "coverCorner-${game.id}",
-        transitionSpec = { tween(durationMillis = 400, easing = FastOutSlowInEasing) },
-    ) { targetState ->
-        if (targetState == EnterExitState.Visible) 4.dp else 16.dp
-    }
-    val coverSharedModifier =
-        with(sharedTransitionScope) {
-            Modifier.sharedBounds(
-                sharedContentState = rememberSharedContentState(key = "game-cover-${game.id}"),
-                animatedVisibilityScope = animatedVisibilityScope,
-                enter = EnterTransition.None,
-                exit = ExitTransition.None,
-                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                boundsTransform = { _, _ ->
-                    tween(durationMillis = 400, easing = FastOutSlowInEasing)
-                },
-                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(cornerAnim)),
-            )
-        }
-    OmnidroidGameCard(
-        modifier = modifier.then(sizeModifier),
-        coverModifier = coverSharedModifier,
-        game = game,
-        continueAction = continueAction,
-        infoStyle = infoStyle,
-        fillCard = matchHeight,
-        cornerRadius = cornerAnim,
-        onClick = onClick,
-        onLongClick = onLongClick,
-    )
-}
-
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalFoundationApi::class)
-@Composable
-private fun LibraryGameRow(
-    sharedTransitionScope: SharedTransitionScope,
-    animatedVisibilityScope: AnimatedVisibilityScope,
-    game: Game,
-    modifier: Modifier = Modifier,
-    continueAction: Boolean,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-) {
-    val context = LocalContext.current
-    val subtitle =
-        remember(game.id, game.systemId, game.developer, game.title, game.customName) {
-            GameUtils.getGameSubtitle(context, game)
-        }
-    val rowCorner = 10.dp
-    val coverInset = 4.dp
-    val shape = RoundedCornerShape(rowCorner)
-    val cornerAnim by animatedVisibilityScope.transition.animateDp(
-        label = "coverCorner-${game.id}",
-        transitionSpec = { tween(durationMillis = 400, easing = FastOutSlowInEasing) },
-    ) { targetState ->
-        if (targetState == EnterExitState.Visible) (rowCorner - coverInset).coerceAtLeast(0.dp) else 16.dp
-    }
-    val coverSharedModifier =
-        with(sharedTransitionScope) {
-            Modifier.sharedBounds(
-                sharedContentState = rememberSharedContentState(key = "game-cover-${game.id}"),
-                animatedVisibilityScope = animatedVisibilityScope,
-                enter = EnterTransition.None,
-                exit = ExitTransition.None,
-                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                boundsTransform = { _, _ ->
-                    tween(durationMillis = 400, easing = FastOutSlowInEasing)
-                },
-                clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(cornerAnim)),
-            )
-        }
-    val adaptiveSpec = LocalAdaptiveLayout.current
-    val thumbHeight = adaptiveSpec.listThumbHeight
-    val thumbWidth = thumbHeight * LibraryGameCardAspectRatio
-    val availabilityAlpha = if (game.isAvailable) 1f else 0.45f
-    Surface(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .alpha(availabilityAlpha)
-                .controllerFocusGlow(shape)
-                .reportControllerGame(game)
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick,
-                ),
-        shape = shape,
-        color = chromeColors.listRow,
-        shadowElevation = 4.dp,
-        tonalElevation = 0.dp,
-        border = BorderStroke(1.dp, chromeColors.listRowBorder),
-    ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(thumbHeight + coverInset * 2)
-                    .padding(end = coverInset),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            OmnidroidGameImage(
-                modifier =
-                    Modifier
-                        .padding(start = coverInset)
-                        .size(thumbWidth, thumbHeight)
-                        .clip(RoundedCornerShape(cornerAnim))
-                        .then(coverSharedModifier),
-                game = game,
-                aspectRatio = null,
-            )
-            Column(
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .padding(horizontal = 12.dp),
-            ) {
-                Text(
-                    text = game.displayName,
-                    style =
-                        MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                        ),
-                    color = chromeColors.content,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = chromeColors.muted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 2.dp),
-                )
-            }
-            // Trailing markers match the cover's height so the row inset frames them on every side.
-            val trailingShape = RoundedCornerShape(rowCorner - coverInset)
-            when {
-                continueAction -> {
-                    Row(
-                        modifier =
-                            Modifier
-                                .height(thumbHeight)
-                                .clip(trailingShape)
-                                .background(LibraryNeonGreen)
-                                .padding(start = 12.dp, end = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.PlayArrow,
-                            contentDescription = null,
-                            modifier = Modifier.size(22.dp),
-                            tint = Color.White,
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = stringResource(R.string.continue_playing),
-                            style =
-                                MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                ),
-                            color = Color.White,
-                            maxLines = 1,
-                        )
-                    }
-                }
-                game.isFavorite -> {
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(thumbHeight)
-                                .clip(trailingShape)
-                                .background(LibraryNeonGreen.copy(alpha = 0.16f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Favorite,
-                            contentDescription = stringResource(R.string.favorites),
-                            modifier = Modifier.size(24.dp),
-                            tint = LibraryNeonGreen,
-                        )
-                    }
-                }
-            }
         }
     }
 }
