@@ -8,9 +8,15 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ### v2.7.0
 
-- Added Wii U (Cemu) GamePad and Side-by-Side screen support with seamless instant view switching and on-screen toggle button
-- Fixed GamePad (DRC) scan buffer rendering and added software keyboard (swkbd) input confirmation and keyboard callback support
+- Updated Nintendo Switch emulation to include Eden's latest fixes and improvements
+- Added more save slots per game and an Autosave option in the Load State menu, where save states are supported
+- Redesigned Wii U (Cemu) dual view in landscape with the TV above a centered GamePad at half the width and height; the on-screen button toggles directly between TV and dual view, with touch mapped to the displayed GamePad
+- Fixed duplicated TV/GamePad output by preserving separate screen images, and added automatic phone keyboard support for in-game text entry, editing, and Done confirmation
 - Added button UI scaling for the library interface in Settings > Display, featuring a live mock library preview that scales the console, library, and favorites buttons, the view mode toggle, search bar, and top utility buttons up to 25% larger across 5 discrete increments
+- Added clearer save/load errors and options to retry or quit without saving if a save fails
+- Fixed Library crashing (tested 100,000 games) by Rebuilding Grid/List with bounded paging and correctly sized covers; fixed paging-key collisions and Continue-cover layout loops
+- Redesigned the profile with divider-based sections, a compact landscape rail, a denser console grid, and day-grouped session history with game-detail shortcuts
+- Standardized Settings and both side menus with reusable components and nested navigation; removed duplicate code, simplified Appearance actions, and matched dark-mode menu backgrounds
 - **Overhauled Vulkan Rendering Pipeline**:
   - **Asynchronous Presentation**: Decoupled presentation to a background worker thread, running CPU emulation and GPU presents in parallel for higher sustained FPS in heavy 3D titles (PS2, GameCube/Wii, Wii U, 3DS, PSP)
   - **Eliminated VSYNC Stalls**: Removed presentation lock contention, preventing background GPU worker threads (Dolphin Video, PS2 MTGS, Cemu Latte) from freezing while waiting on Android VSYNC

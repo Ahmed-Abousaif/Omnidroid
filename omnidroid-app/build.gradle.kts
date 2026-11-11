@@ -47,6 +47,9 @@ plugins {
 
 
 android {
+    sourceSets.getByName("main").java.srcDir(
+        rootProject.file("omnidroid-cores/omnidroid_core_switch/src/main/sdl/java"),
+    )
 
 
 
@@ -1587,17 +1590,6 @@ tasks.register("verifyConsoleBackendRatchet") {
 
             ),
 
-            RatchetAllowlistEntry(
-
-                "omnidroid-app/src/main/java/com/omnidroid/app/mobile/feature/settings/slices/GameDatabasesScreen.kt",
-
-                Regex("""when \(sliceId\)"""),
-
-                1,
-
-                "Static database slice UI titles in GameDatabasesScreen"
-
-            ),
 
             RatchetAllowlistEntry(
 
@@ -1787,3 +1779,13 @@ tasks.register("verifyConsoleBackendRatchet") {
 
 }
 
+
+// Device capacity tests run only against the debug instrumentation target.
+android.defaultConfig.testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+dependencies {
+    androidTestImplementation(platform(deps.libs.androidx.compose.composeBom))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+}

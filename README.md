@@ -77,7 +77,7 @@ If Omnidroid helps you play, you can fuel continued development here:
 - 🚀 **Frontend & File Manager Integration:** Exported launcher activity for external frontends (Daijishō, Pegasus, Beacon) and direct "Open With" file manager launching for ROMs and archives without requiring a prior library scan.
 - 📚 **Console Carousel & Library Sorting:** Dedicated console views with a portrait cover carousel, landscape details pane, flexible sorting (name, console, recently played, favorites), and random game selection.
 - 🔄 **Saves Backup & Lemuroid Migration:** Multi-tier save and state migration from Lemuroid (automatic 1-tap direct migration, uncompressed folder import via SAF, and lenient ZIP backup import), plus multi-provider cloud sync (**Google Drive**, **Dropbox**, **OneDrive**) with full conflict resolution.
-- 🏆 **Gamification & Profile System:** Earn XP from play sessions, maintain daily streaks, level up, and unlock collection badges (Collector → Enthusiast → Historian → Omnidroid Master).
+- 🏆 **Gamification & Profile System:** Earn XP from play sessions, maintain daily streaks, level up, and unlock collection badges (Collector → Enthusiast → Historian → Omnidroid Master). Browse day-grouped sessions with game-detail shortcuts and a compact console grid in separate tabs, with a dedicated profile rail in landscape.
 - 📺 **Android TV & Big-Screen Integration:** Full Android TV Leanback launcher support with dynamic home screen preview channels for recently played games, plus wireless and HDMI casting.
 - 🔋 **Battery-Aware HD Mode:** Intelligently disables heavy HD enhancements when battery drops below 15% to conserve power.
 - 🛡️ **Lightweight & 16KB Page-Aligned:** Universal release APK is under 8.5 MB (~27% smaller than baseline) and fully aligned for Android 15+ 16KB memory page sizes.
@@ -168,10 +168,11 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 
 - **Console Carousel & Details View:** Portrait mode offers an interactive cover flow carousel, while landscape mode features a side-by-side view with cover art, release metadata, and instant play actions.
 - **Library Sorting & Random Play:** Sort by title, console, recently played, or favorites, plus a random game button for spontaneous gaming.
-- **Dual Layout Engines:** Switch seamlessly between **Grid View** (with dynamic zoom slider based on screen height) and a compact **List View**.
+- **Three Library Views:** Choose the Console carousel, zoomable Grid, or compact List in portrait and landscape. Grid and List share a renderer with bounded paging and covers decoded at their displayed size for efficient browsing of large libraries.
 - **Landscape Navigation:** Dedicated sidebar for quick navigation between All Games, Favorites, and specific consoles, showing uncropped covers and titles.
 - **Startup Screen Selector:** Choose what Omnidroid opens to on launch (All Games, Favorites, or a favorite console).
 - **Light & Dark Mode:** Theme preference under Display settings applies instantly across library chrome, settings, profile, dialogs, and game menus (in-game view and gamepad screens remain dark).
+- **Consistent Side Menus:** The in-game menu and library Game settings share panel styling, transitions, nested pages, and controller navigation. Cover and name actions are grouped under Appearance.
 - **Home Screen Launcher:** Set Omnidroid as your Android device's default launcher for a dedicated console feel.
 - **System Telemetry:** Live on-screen battery percentage, Wi-Fi/mobile network status, and connected gamepads right on the top bar.
 </details>
@@ -246,6 +247,9 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 <summary><b>💾 Saves, Backup & Lemuroid Migration</b></summary>
 <br>
 
+- **More Save Slots:** Need more than four? Choose **Save to new slot** in the Save State menu, where supported.
+- **Load Your Autosave:** Choose **Autosave** in the Load State menu to return to your saved position.
+- **Clear Save Errors:** If saving fails when quitting, you can retry, keep playing, or quit without saving.
 - **Seamless Lemuroid Migration:** 100% format compatibility with Lemuroid and RetroArch saves (`.srm` raw SRAM and `.state` Libretro serialized states).
 - **1-Tap Direct Detection:** Automatically detects existing Lemuroid saves in `/sdcard/Android/data/com.swordfish.lemuroid/files/` when accessible, prompting a 1-tap migration with live file counts.
 - **Storage Access Framework (SAF) Folder Import:** Select any uncompressed folder on your device, SD card, or USB drive via the system document tree picker.
@@ -275,6 +279,18 @@ Omnidroid/
 ├── retrograde-app-shared/       # Shared UI components and emulation lifecycle utilities
 └── retrograde-util/             # File system, archive, and platform utility routines
 ```
+
+### Library Screen
+
+The [Library Screen Technical Guide](docs/LIBRARY_SCREEN_TECHNICAL_GUIDE.md) covers Console, Grid, and List rendering, state, paging, controller behavior, and regression-test commands.
+
+### Settings & Side-Menu Components
+
+Settings uses feature-owned sections, shared row components, typed preference bindings, and one navigation host for nested pages. The in-game and library side menus share a panel shell and composable pages, sections, and actions while retaining their own game/session behavior.
+
+- [Settings technical guide](docs/SETTINGS_TECHNICAL_GUIDE.md): file map, navigation and preference ownership, component APIs, and how to add sections or deeper pages.
+- [Side menus technical guide](docs/SIDE_MENUS_TECHNICAL_GUIDE.md): shared shell and page APIs, host actions, controller focus, lifecycle, and extension examples.
+- [Save states reference guide](docs/SAVE_STATES_TECHNICAL_GUIDE.md): save slots, autosave, error recovery, core support settings, and checks for future changes.
 
 ### Development Setup
 
