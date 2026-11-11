@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 /**
  * ViewModel for the User Profile screen.
@@ -30,10 +29,11 @@ class ProfileViewModel(
     private val achievementsStore: ConsoleAchievementsStore,
     private val retrogradeDb: RetrogradeDatabase,
 ) : ViewModel() {
-
     data class RecentSessionItem(
         val session: GameSession,
         val gameTitle: String,
+        val coverArt: String? = null,
+        val systemId: String = "",
     )
 
     data class UiState(
@@ -53,6 +53,7 @@ class ProfileViewModel(
         val totalConsoles: Int = MetaSystemID.values().size,
         val milestoneBadge: ConsoleAchievementsStore.MilestoneBadge? = null,
         val recentSessions: List<RecentSessionItem> = emptyList(),
+        val sessionsLoading: Boolean = true,
     )
 
     private val _uiState = MutableStateFlow(UiState())
@@ -115,18 +116,20 @@ class ProfileViewModel(
             }
             .launchIn(viewModelScope)
 
-        // Observe recent sessions with resolved game titles
-        retrogradeDb.gameSessionDao().observeRecent(50)
+        // A join avoids one additional database lookup per session and observes game edits too.
+        retrogradeDb.gameSessionDao().observeRecentWithGames(50)
             .onEach { sessions ->
-                val items = sessions.map { session ->
-                    val game = retrogradeDb.gameDao().selectById(session.gameId)
-                    RecentSessionItem(
-                        session = session,
-                        gameTitle = game?.displayName ?: "Game #${session.gameId}",
-                    )
-                }
+                val items =
+                    sessions.map { item ->
+                        RecentSessionItem(
+                            session = item.session,
+                            gameTitle = item.gameTitle,
+                            coverArt = item.coverArt,
+                            systemId = item.systemId,
+                        )
+                    }
                 _uiState.update { current ->
-                    current.copy(recentSessions = items)
+                    current.copy(recentSessions = items, sessionsLoading = false)
                 }
             }
             .launchIn(viewModelScope)

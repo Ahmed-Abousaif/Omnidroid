@@ -1,1524 +1,506 @@
 package com.omnidroid.app.mobile.feature.profile
 
 import android.content.Intent
-import android.content.res.Configuration
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Badge
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.EmojiEvents
-import androidx.compose.material.icons.outlined.ExpandLess
-import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.Gamepad
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.HourglassEmpty
-import androidx.compose.material.icons.outlined.LocalFireDepartment
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.PhotoCamera
-import androidx.compose.material.icons.outlined.PhotoLibrary
-import androidx.compose.material.icons.outlined.Stars
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
+import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import coil.compose.AsyncImage
 import com.omnidroid.R
+import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
 import com.omnidroid.app.mobile.shared.compose.ui.chromeMutedContentColor
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
+import com.omnidroid.lib.library.GameSystem
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Date
-import java.util.Locale
-import java.util.concurrent.TimeUnit
-
-private val PanelShape = RoundedCornerShape(14.dp)
-private val FireColor = Color(0xFFFF6D00)
-private val DangerColor = Color(0xFFFF5252)
+import java.util.TimeZone
 
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel,
+    onGameClick: (Int) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-
-    var showEditTagDialog by remember { mutableStateOf(false) }
-    var showPhotoOptionsDialog by remember { mutableStateOf(false) }
-
-    val photoPickerLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.GetContent(),
-        ) { uri: Uri? ->
+    var showEditTag by rememberSaveable { mutableStateOf(false) }
+    var showPhotoOptions by rememberSaveable { mutableStateOf(false) }
+    val photoPicker =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
             uri?.let {
                 runCatching {
-                    context.contentResolver.takePersistableUriPermission(
-                        it,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION,
-                    )
+                    context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
                 viewModel.updateProfilePicUri(it.toString())
             }
         }
 
-    BoxWithConstraints(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .homeChromeBackground(),
-    ) {
-        val isLandscape = maxWidth > maxHeight
-        val isLargeLandscape = isLandscape && (maxWidth >= 840.dp || maxHeight >= 500.dp)
-        val isTabletPortrait = !isLandscape && maxWidth >= 600.dp
-        val isLargeScreen = isLargeLandscape || isTabletPortrait
-
-        if (isLandscape) {
-            // ─────────────────────────────────────────────────────────────────
-            // Landscape Layout:
-            // Left Column — Fixed (No Scroll): Profile Header + Level Card
-            // Right Column — Scrollable: Streaks + Achievements + Recent Sessions
-            // ─────────────────────────────────────────────────────────────────
-            val rightScrollState = rememberScrollState()
-
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(
-                            horizontal = if (isLargeScreen) 24.dp else 16.dp,
-                            vertical = if (isLargeScreen) 14.dp else 10.dp,
-                        ),
-                horizontalArrangement = Arrangement.spacedBy(if (isLargeScreen) 20.dp else 16.dp),
-            ) {
-                // Left Column (Scrolls if needed on short screens, natural height, never stretches)
-                val leftScrollState = rememberScrollState()
-                Column(
-                    modifier =
-                        Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .verticalScroll(leftScrollState),
-                    verticalArrangement = Arrangement.spacedBy(if (isLargeScreen) 16.dp else 10.dp),
-                ) {
-                    ProfileHeaderSection(
-                        tag = state.tag,
-                        profilePicUri = state.profilePicUri,
-                        milestoneBadge = state.milestoneBadge,
-                        compact = !isLargeScreen,
-                        isLargeScreen = isLargeScreen,
-                        onAvatarClick = { showPhotoOptionsDialog = true },
-                        onEditTagClick = { showEditTagDialog = true },
-                    )
-
-                    ProfileLevelCard(
-                        level = state.level,
-                        xpProgress = state.xpProgress,
-                        xpCurrent = state.xpCurrent,
-                        xpForNext = state.xpForNext,
-                        xpToNext = state.xpToNext,
-                        totalPlayTimeMs = state.totalPlayTimeMs,
-                        compact = !isLargeScreen,
-                        isLargeScreen = isLargeScreen,
-                    )
-                }
-
-                // Right Column (Scrolls alone)
-                Column(
-                    modifier =
-                        Modifier
-                            .weight(if (isLargeScreen) 1.85f else 2f)
-                            .fillMaxHeight()
-                            .verticalScroll(rightScrollState),
-                    verticalArrangement = Arrangement.spacedBy(if (isLargeScreen) 16.dp else 12.dp),
-                ) {
-                    ProfileStreakCard(
-                        currentStreak = state.currentStreak,
-                        bestStreak = state.bestStreak,
-                        streakMultiplier = state.streakMultiplier,
-                        isLargeScreen = isLargeScreen,
-                    )
-
-                    ProfileAchievementsCard(
-                        achievements = state.achievements,
-                        unlockedConsoles = state.unlockedConsoles,
-                        totalConsoles = state.totalConsoles,
-                        isLandscape = isLandscape,
-                        isLargeScreen = isLargeScreen,
-                    )
-
-                    ProfileRecentSessionsCard(
-                        recentSessions = state.recentSessions,
-                        isLargeScreen = isLargeScreen,
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-            }
-        } else if (isTabletPortrait) {
-            // ─────────────────────────────────────────────────────────────────
-            // Tablet Portrait Layout: 2-column scrollable dashboard
-            // ─────────────────────────────────────────────────────────────────
-            val tabletPortraitScrollState = rememberScrollState()
-
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .verticalScroll(tabletPortraitScrollState)
-                        .padding(horizontal = 24.dp, vertical = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    ProfileHeaderSection(
-                        tag = state.tag,
-                        profilePicUri = state.profilePicUri,
-                        milestoneBadge = state.milestoneBadge,
-                        compact = false,
-                        isLargeScreen = true,
-                        onAvatarClick = { showPhotoOptionsDialog = true },
-                        onEditTagClick = { showEditTagDialog = true },
-                    )
-
-                    ProfileLevelCard(
-                        level = state.level,
-                        xpProgress = state.xpProgress,
-                        xpCurrent = state.xpCurrent,
-                        xpForNext = state.xpForNext,
-                        xpToNext = state.xpToNext,
-                        totalPlayTimeMs = state.totalPlayTimeMs,
-                        compact = false,
-                        isLargeScreen = true,
-                    )
-
-                    ProfileStreakCard(
-                        currentStreak = state.currentStreak,
-                        bestStreak = state.bestStreak,
-                        streakMultiplier = state.streakMultiplier,
-                        isLargeScreen = true,
-                    )
-                }
-
-                Column(
-                    modifier = Modifier.weight(1.2f),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    ProfileAchievementsCard(
-                        achievements = state.achievements,
-                        unlockedConsoles = state.unlockedConsoles,
-                        totalConsoles = state.totalConsoles,
-                        isLandscape = isLandscape,
-                        isLargeScreen = true,
-                    )
-
-                    ProfileRecentSessionsCard(
-                        recentSessions = state.recentSessions,
-                        isLargeScreen = true,
-                    )
-                }
-            }
-        } else {
-            // ─────────────────────────────────────────────────────────────────
-            // Phone Portrait Layout: Single scrollable vertical list
-            // ─────────────────────────────────────────────────────────────────
-            val portraitScrollState = rememberScrollState()
-
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .verticalScroll(portraitScrollState)
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                ProfileHeaderSection(
-                    tag = state.tag,
-                    profilePicUri = state.profilePicUri,
-                    milestoneBadge = state.milestoneBadge,
-                    compact = false,
-                    isLargeScreen = false,
-                    onAvatarClick = { showPhotoOptionsDialog = true },
-                    onEditTagClick = { showEditTagDialog = true },
-                )
-
-                ProfileLevelCard(
-                    level = state.level,
-                    xpProgress = state.xpProgress,
-                    xpCurrent = state.xpCurrent,
-                    xpForNext = state.xpForNext,
-                    xpToNext = state.xpToNext,
-                    totalPlayTimeMs = state.totalPlayTimeMs,
-                    compact = false,
-                    isLargeScreen = false,
-                )
-
-                ProfileStreakCard(
-                    currentStreak = state.currentStreak,
-                    bestStreak = state.bestStreak,
-                    streakMultiplier = state.streakMultiplier,
-                    isLargeScreen = false,
-                )
-
-                ProfileAchievementsCard(
-                    achievements = state.achievements,
-                    unlockedConsoles = state.unlockedConsoles,
-                    totalConsoles = state.totalConsoles,
-                    isLandscape = isLandscape,
-                    isLargeScreen = false,
-                )
-
-                ProfileRecentSessionsCard(
-                    recentSessions = state.recentSessions,
-                    isLargeScreen = false,
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-        }
-
-        // ─────────────────────────────────────────────────────────────────────
-        // Redesigned Premium Dialogs
-        // ─────────────────────────────────────────────────────────────────────
-        if (showEditTagDialog) {
-            EditTagDialog(
-                currentTag = state.tag,
-                onDismiss = { showEditTagDialog = false },
-                onConfirm = { newTag ->
-                    viewModel.updateTag(newTag)
-                    showEditTagDialog = false
-                },
-            )
-        }
-
-        if (showPhotoOptionsDialog) {
-            PhotoOptionsDialog(
-                hasCustomPhoto = state.profilePicUri != null,
-                currentPhotoUri = state.profilePicUri,
-                onDismiss = { showPhotoOptionsDialog = false },
-                onChangePhoto = {
-                    showPhotoOptionsDialog = false
-                    photoPickerLauncher.launch("image/*")
-                },
-                onRemovePhoto = {
-                    showPhotoOptionsDialog = false
-                    viewModel.removeProfilePic()
-                },
-            )
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Header Section
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun ProfileHeaderSection(
-    modifier: Modifier = Modifier,
-    tag: String,
-    profilePicUri: String?,
-    milestoneBadge: ConsoleAchievementsStore.MilestoneBadge?,
-    compact: Boolean,
-    isLargeScreen: Boolean = false,
-    onAvatarClick: () -> Unit,
-    onEditTagClick: () -> Unit,
-) {
-    Card(
-        shape = PanelShape,
-        colors = CardDefaults.cardColors(containerColor = chromeColors.panel),
-        border = BorderStroke(1.dp, chromeColors.panelBorder),
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(if (isLargeScreen) 20.dp else if (compact) 12.dp else 18.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            val avatarSize = if (isLargeScreen) 136.dp else if (compact) 96.dp else 120.dp
-
-            // Avatar with edit badge
-            Box(
-                contentAlignment = Alignment.BottomEnd,
-                modifier = Modifier.size(avatarSize),
-            ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .size(avatarSize)
-                            .clip(CircleShape)
-                            .border(
-                                width = if (isLargeScreen) 2.5.dp else 2.dp,
-                                brush =
-                                    Brush.linearGradient(
-                                        listOf(LibraryNeonGreen, LibraryNeonGreen.copy(alpha = 0.4f)),
-                                    ),
-                                shape = CircleShape,
-                            )
-                            .background(chromeColors.listRow)
-                            .clickable(onClick = onAvatarClick),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (profilePicUri != null) {
-                        AsyncImage(
-                            model = profilePicUri,
-                            contentDescription = stringResource(R.string.title_profile),
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    } else {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_profile_robot),
-                            contentDescription = stringResource(R.string.title_profile),
-                            tint = LibraryNeonGreen,
-                            modifier = Modifier.size(if (isLargeScreen) 74.dp else if (compact) 52.dp else 68.dp),
-                        )
-                    }
-                }
-
-                // Camera icon overlay badge
-                Box(
-                    modifier =
-                        Modifier
-                            .size(if (isLargeScreen) 34.dp else if (compact) 26.dp else 30.dp)
-                            .clip(CircleShape)
-                            .background(LibraryNeonGreen)
-                            .clickable(onClick = onAvatarClick),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        Icons.Outlined.PhotoCamera,
-                        contentDescription = stringResource(R.string.profile_change_picture),
-                        tint = Color.Black,
-                        modifier = Modifier.size(if (isLargeScreen) 18.dp else if (compact) 14.dp else 16.dp),
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(if (isLargeScreen) 8.dp else if (compact) 4.dp else 6.dp))
-
-            // Gamer Tag with inline edit pencil
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable(onClick = onEditTagClick)
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
-            ) {
-                Text(
-                    text = tag,
-                    color = chromeContentColor,
-                    fontSize = if (isLargeScreen) 23.sp else if (compact) 17.sp else 21.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Icon(
-                    Icons.Outlined.Edit,
-                    contentDescription = stringResource(R.string.profile_change_tag),
-                    tint = LibraryNeonGreen,
-                    modifier = Modifier.size(if (isLargeScreen) 18.dp else if (compact) 15.dp else 17.dp),
-                )
-            }
-
-            // Milestone rank (if earned)
-            if (milestoneBadge != null) {
-                Spacer(modifier = Modifier.height(if (isLargeScreen) 6.dp else if (compact) 2.dp else 4.dp))
-                val badgeText =
-                    when (milestoneBadge) {
-                        ConsoleAchievementsStore.MilestoneBadge.COLLECTOR -> stringResource(R.string.profile_badge_collector)
-                        ConsoleAchievementsStore.MilestoneBadge.ENTHUSIAST -> stringResource(R.string.profile_badge_enthusiast)
-                        ConsoleAchievementsStore.MilestoneBadge.HISTORIAN -> stringResource(R.string.profile_badge_historian)
-                        ConsoleAchievementsStore.MilestoneBadge.OMNIDROID_MASTER -> stringResource(R.string.profile_badge_master)
-                    }
-                val isMaster = milestoneBadge == ConsoleAchievementsStore.MilestoneBadge.OMNIDROID_MASTER
-                val rankColor = if (isMaster) LibraryNeonGreen else chromeMutedContentColor
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    Icon(
-                        Icons.Outlined.EmojiEvents,
-                        contentDescription = null,
-                        tint = rankColor,
-                        modifier = Modifier.size(if (isLargeScreen) 14.dp else if (compact) 12.dp else 13.dp),
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = badgeText,
-                        color = rankColor,
-                        fontSize = if (isLargeScreen) 13.sp else if (compact) 11.sp else 12.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                }
-            }
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Level & XP Card
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun ProfileLevelCard(
-    modifier: Modifier = Modifier,
-    level: Int,
-    xpProgress: Float,
-    xpCurrent: Long,
-    xpForNext: Long,
-    xpToNext: Long,
-    totalPlayTimeMs: Long,
-    compact: Boolean,
-    isLargeScreen: Boolean = false,
-) {
-    val animatedProgress by animateFloatAsState(
-        targetValue = xpProgress,
-        animationSpec = tween(durationMillis = 800),
-        label = "xp_progress",
+    ProfileContent(
+        state = state,
+        modifier = modifier,
+        onEditTag = { showEditTag = true },
+        onEditPhoto = { showPhotoOptions = true },
+        onGameClick = onGameClick,
     )
 
-    Card(
-        shape = PanelShape,
-        colors = CardDefaults.cardColors(containerColor = chromeColors.panel),
-        border = BorderStroke(1.dp, chromeColors.panelBorder),
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(if (isLargeScreen) 18.dp else if (compact) 12.dp else 16.dp),
-        ) {
-            // Level header row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Outlined.Stars,
-                        contentDescription = null,
-                        tint = LibraryNeonGreen,
-                        modifier = Modifier.size(if (isLargeScreen) 24.dp else if (compact) 18.dp else 22.dp),
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = stringResource(R.string.profile_level, level),
-                        color = chromeContentColor,
-                        fontSize = if (isLargeScreen) 20.sp else if (compact) 15.sp else 18.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-
-                Text(
-                    text = stringResource(R.string.profile_xp_to_next, xpToNext),
-                    color = chromeMutedContentColor,
-                    fontSize = if (isLargeScreen) 13.sp else if (compact) 11.sp else 12.sp,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(if (isLargeScreen) 10.dp else if (compact) 6.dp else 10.dp))
-
-            // Animated Progress bar
-            LinearProgressIndicator(
-                progress = { animatedProgress },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(if (isLargeScreen) 9.dp else if (compact) 6.dp else 8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                color = LibraryNeonGreen,
-                trackColor = chromeColors.pressed,
-            )
-
-            Spacer(modifier = Modifier.height(if (isLargeScreen) 6.dp else if (compact) 4.dp else 6.dp))
-
-            // XP numbers
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = stringResource(
-                        R.string.profile_xp_progress,
-                        String.format(Locale.US, "%,d", xpCurrent),
-                        String.format(Locale.US, "%,d", xpForNext),
-                    ),
-                    color = chromeMutedContentColor,
-                    fontSize = if (isLargeScreen) 13.sp else if (compact) 10.sp else 12.sp,
-                )
-                Text(
-                    text = "${(xpProgress * 100).toInt()}%",
-                    color = LibraryNeonGreen,
-                    fontSize = if (isLargeScreen) 13.sp else if (compact) 10.sp else 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(if (isLargeScreen) 12.dp else if (compact) 6.dp else 14.dp))
-            Divider(color = chromeColors.panelBorder, thickness = 1.dp)
-            Spacer(modifier = Modifier.height(if (isLargeScreen) 10.dp else if (compact) 6.dp else 12.dp))
-
-            // Stats row: Playtime + Total XP
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                ProfileStatColumn(
-                    icon = Icons.Outlined.HourglassEmpty,
-                    title = stringResource(R.string.profile_total_playtime),
-                    value = formatPlayTime(totalPlayTimeMs),
-                    compact = compact,
-                    isLargeScreen = isLargeScreen,
-                )
-                ProfileStatColumn(
-                    icon = Icons.Outlined.EmojiEvents,
-                    title = "Total XP",
-                    value = String.format(Locale.US, "%,d", xpCurrent),
-                    compact = compact,
-                    isLargeScreen = isLargeScreen,
-                )
-            }
-        }
+    if (showEditTag) {
+        EditProfileTagDialog(
+            currentTag = state.tag,
+            onDismiss = { showEditTag = false },
+            onConfirm = {
+                viewModel.updateTag(it)
+                showEditTag = false
+            },
+        )
     }
-}
-
-@Composable
-private fun ProfileStatColumn(
-    icon: ImageVector,
-    title: String,
-    value: String,
-    compact: Boolean = false,
-    isLargeScreen: Boolean = false,
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = LibraryNeonGreen,
-                modifier = Modifier.size(if (isLargeScreen) 18.dp else if (compact) 13.dp else 16.dp),
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = title,
-                color = chromeMutedContentColor,
-                fontSize = if (isLargeScreen) 13.sp else if (compact) 10.sp else 12.sp,
-            )
-        }
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = value,
-            color = chromeContentColor,
-            fontSize = if (isLargeScreen) 18.sp else if (compact) 13.sp else 16.sp,
-            fontWeight = FontWeight.Bold,
+    if (showPhotoOptions) {
+        ProfilePhotoDialog(
+            hasCustomPhoto = state.profilePicUri != null,
+            onDismiss = { showPhotoOptions = false },
+            onChoosePhoto = {
+                showPhotoOptions = false
+                photoPicker.launch(arrayOf("image/*"))
+            },
+            onRemovePhoto = {
+                viewModel.removeProfilePic()
+                showPhotoOptions = false
+            },
         )
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Play Streak Card
-// ─────────────────────────────────────────────────────────────────────────────
-
+/** A shared content grid uses the full height beside a compact profile rail on wide screens. */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ProfileStreakCard(
-    currentStreak: Int,
-    bestStreak: Int,
-    streakMultiplier: Double,
-    isLargeScreen: Boolean = false,
-) {
-    Card(
-        shape = PanelShape,
-        colors = CardDefaults.cardColors(containerColor = chromeColors.panel),
-        border = BorderStroke(1.dp, chromeColors.panelBorder),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(if (isLargeScreen) 20.dp else 16.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Outlined.LocalFireDepartment,
-                        contentDescription = null,
-                        tint = FireColor,
-                        modifier = Modifier.size(if (isLargeScreen) 26.dp else 22.dp),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.profile_streak_current),
-                        color = chromeContentColor,
-                        fontSize = if (isLargeScreen) 17.sp else 15.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-
-                Text(
-                    text = stringResource(R.string.profile_streak_multiplier, streakMultiplier),
-                    color = if (streakMultiplier > 1.0) FireColor else chromeMutedContentColor,
-                    fontSize = if (isLargeScreen) 15.sp else 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(if (isLargeScreen) 14.dp else 12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom,
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.profile_streak_days, currentStreak),
-                        color = chromeContentColor,
-                        fontSize = if (isLargeScreen) 26.sp else 22.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                    Text(
-                        text = "${stringResource(R.string.profile_streak_best)}: ${stringResource(R.string.profile_streak_days, bestStreak)}",
-                        color = chromeMutedContentColor,
-                        fontSize = if (isLargeScreen) 13.sp else 11.sp,
-                    )
-                }
-
-                // 7-day streak progress visual dots
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(if (isLargeScreen) 8.dp else 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    for (day in 1..7) {
-                        val active = day <= currentStreak
-                        val isMaxBonus = day == 7
-                        Box(
-                            modifier =
-                                Modifier
-                                    .size(
-                                        if (isLargeScreen) {
-                                            if (isMaxBonus) 16.dp else 12.dp
-                                        } else {
-                                            if (isMaxBonus) 14.dp else 10.dp
-                                        },
-                                    )
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (active) {
-                                            if (isMaxBonus) LibraryNeonGreen else FireColor
-                                        } else {
-                                            chromeColors.divider
-                                        },
-                                    ),
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Console Achievements Card
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun ProfileAchievementsCard(
-    achievements: List<ConsoleAchievement>,
-    unlockedConsoles: Int,
-    totalConsoles: Int,
-    isLandscape: Boolean = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE,
-    isLargeScreen: Boolean = false,
-) {
-    Card(
-        shape = PanelShape,
-        colors = CardDefaults.cardColors(containerColor = chromeColors.panel),
-        border = BorderStroke(1.dp, chromeColors.panelBorder),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(if (isLargeScreen) 20.dp else 16.dp),
-        ) {
-            // Card Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Outlined.Gamepad,
-                        contentDescription = null,
-                        tint = LibraryNeonGreen,
-                        modifier = Modifier.size(if (isLargeScreen) 24.dp else 20.dp),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.profile_achievements),
-                        color = chromeContentColor,
-                        fontSize = if (isLargeScreen) 17.sp else 15.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-
-                Text(
-                    text = stringResource(R.string.profile_consoles_unlocked, unlockedConsoles, totalConsoles),
-                    color = chromeMutedContentColor,
-                    fontSize = if (isLargeScreen) 14.sp else 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(if (isLargeScreen) 14.dp else 12.dp))
-
-            val spacing = if (isLargeScreen) 10.dp else 8.dp
-            val columns = if (isLandscape) 5 else 4
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(spacing),
-            ) {
-                achievements.chunked(columns).forEach { rowAchievements ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(spacing),
-                    ) {
-                        rowAchievements.forEach { achievement ->
-                            ConsoleAchievementItem(
-                                achievement = achievement,
-                                modifier = Modifier.weight(1f),
-                                isLargeScreen = isLargeScreen,
-                            )
-                        }
-                        val emptySlots = columns - rowAchievements.size
-                        repeat(emptySlots) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ConsoleAchievementItem(
-    achievement: ConsoleAchievement,
+internal fun ProfileContent(
+    state: ProfileViewModel.UiState,
+    onEditTag: () -> Unit,
+    onEditPhoto: () -> Unit,
+    onGameClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    isLargeScreen: Boolean = false,
 ) {
-    val unlocked = achievement.unlocked
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = if (unlocked) chromeColors.panelSelected else chromeColors.listRow,
-        border =
-            BorderStroke(
-                1.dp,
-                if (unlocked) LibraryNeonGreen.copy(alpha = 0.45f) else chromeColors.panelBorder.copy(alpha = 0.55f),
-            ),
-        modifier = modifier.aspectRatio(1f),
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 4.dp, vertical = if (isLargeScreen) 8.dp else 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-            ) {
-                Icon(
-                    painter = painterResource(achievement.imageResId),
-                    contentDescription = stringResource(achievement.nameResId),
-                    tint = if (unlocked) chromeContentColor else chromeColors.faint,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth(0.62f)
-                            .aspectRatio(1f),
-                )
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    val listState = rememberLazyGridState()
+    val scope = rememberCoroutineScope()
+    val configuration = LocalConfiguration.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val now by produceState(System.currentTimeMillis(), lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                value = System.currentTimeMillis()
+                delay(60_000L)
+            }
+        }
+    }
+    val timeZone = TimeZone.getDefault()
+    val sessionDays =
+        remember(state.recentSessions, configuration, now, timeZone.id) {
+            groupProfileSessions(state.recentSessions, now, timeZone)
+        }
+    val dateFormat = remember(configuration, timeZone.id) { DateFormat.getDateInstance(DateFormat.FULL) }
 
-                if (!unlocked) {
-                    Surface(
-                        shape = CircleShape,
-                        color = Color(0xEE000000),
-                        border = BorderStroke(1.dp, chromeColors.panelBorder),
-                        modifier = Modifier.fillMaxWidth(0.34f).aspectRatio(1f),
+    BoxWithConstraints(modifier.fillMaxSize().homeChromeBackground(), contentAlignment = Alignment.TopCenter) {
+        val showProfileRail = maxWidth > maxHeight && maxWidth >= 640.dp
+        val horizontalPadding =
+            if (showProfileRail) {
+                20.dp
+            } else if (maxWidth >= 600.dp) {
+                32.dp
+            } else {
+                20.dp
+            }
+        Row(Modifier.widthIn(max = 1200.dp).fillMaxSize()) {
+            if (showProfileRail) {
+                Column(
+                    Modifier.width(240.dp).fillMaxHeight().verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    ProfileIdentity(state, onEditTag, onEditPhoto, compact = true)
+                    ProfileProgress(state)
+                    ProfilePlaytime(state.totalPlayTimeMs)
+                    ProfileDivider()
+                    ProfileStreak(state)
+                }
+                VerticalDivider(color = chromeColors.divider)
+            }
+            LazyVerticalGrid(
+                columns =
+                    if (selectedTab == 1) {
+                        GridCells.Adaptive(104.dp * configuration.fontScale)
+                    } else {
+                        GridCells.Fixed(1)
+                    },
+                state = listState,
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                contentPadding = PaddingValues(horizontal = horizontalPadding, vertical = 8.dp),
+            ) {
+                if (!showProfileRail) {
+                    item(key = "overview", span = { GridItemSpan(maxLineSpan) }, contentType = "overview") {
+                        ProfileOverview(state, onEditTag, onEditPhoto)
+                    }
+                    item(key = "streak", span = { GridItemSpan(maxLineSpan) }, contentType = "streak") {
+                        ProfileStreak(state, Modifier.padding(vertical = 16.dp))
+                        ProfileDivider()
+                    }
+                }
+                stickyHeader(key = "tabs", contentType = "tabs") {
+                    SecondaryTabRow(
+                        selectedTabIndex = selectedTab,
+                        containerColor = homeChromeColor,
+                        contentColor = LibraryNeonGreen,
+                        divider = { ProfileDivider() },
                     ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize(),
-                        ) {
-                            Icon(
-                                Icons.Outlined.Lock,
-                                contentDescription = "Locked",
-                                tint = Color(0xFFF5F5F5),
-                                modifier = Modifier.fillMaxSize(0.55f),
+                        listOf(R.string.profile_sessions_tab, R.string.profile_consoles_tab).forEachIndexed {
+                                index,
+                                label,
+                            ->
+                            Tab(
+                                selected = selectedTab == index,
+                                onClick = {
+                                    selectedTab = index
+                                    val tabIndex = if (showProfileRail) 0 else 2
+                                    if (listState.firstVisibleItemIndex > tabIndex) {
+                                        scope.launch { listState.scrollToItem(tabIndex) }
+                                    }
+                                },
+                                selectedContentColor = chromeContentColor,
+                                unselectedContentColor = chromeMutedContentColor,
+                                text = { Text(stringResource(label), fontWeight = FontWeight.SemiBold) },
                             )
                         }
                     }
                 }
-            }
-
-            Text(
-                text = stringResource(achievement.nameResId),
-                color = if (unlocked) chromeContentColor else chromeColors.faint,
-                fontSize = if (isLargeScreen) 10.sp else 9.sp,
-                fontWeight = if (unlocked) FontWeight.Bold else FontWeight.Normal,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Recent Sessions Card
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun ProfileRecentSessionsCard(
-    recentSessions: List<ProfileViewModel.RecentSessionItem>,
-    isLargeScreen: Boolean = false,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val initialLimit = 5
-    val hasMore = recentSessions.size > initialLimit
-    val displayedSessions = if (expanded || !hasMore) recentSessions else recentSessions.take(initialLimit)
-
-    Card(
-        shape = PanelShape,
-        colors = CardDefaults.cardColors(containerColor = chromeColors.panel),
-        border = BorderStroke(1.dp, chromeColors.panelBorder),
-        modifier = Modifier.fillMaxWidth().animateContentSize(),
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(if (isLargeScreen) 20.dp else 16.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Outlined.History,
-                        contentDescription = null,
-                        tint = LibraryNeonGreen,
-                        modifier = Modifier.size(if (isLargeScreen) 22.dp else 18.dp),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.profile_recent_sessions),
-                        color = chromeContentColor,
-                        fontSize = if (isLargeScreen) 17.sp else 15.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-
-                if (recentSessions.isNotEmpty()) {
-                    Text(
-                        text = "${recentSessions.size} total",
-                        color = chromeMutedContentColor,
-                        fontSize = if (isLargeScreen) 13.sp else 11.sp,
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(if (isLargeScreen) 14.dp else 10.dp))
-
-            if (recentSessions.isEmpty()) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 18.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(R.string.profile_no_sessions),
-                        color = chromeMutedContentColor,
-                        fontSize = if (isLargeScreen) 14.sp else 12.sp,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            } else {
-                displayedSessions.forEachIndexed { index, item ->
-                    if (index > 0) {
-                        Divider(
-                            color = chromeColors.panelBorder,
-                            thickness = 0.5.dp,
-                            modifier = Modifier.padding(vertical = if (isLargeScreen) 8.dp else 6.dp),
-                        )
-                    }
-                    RecentSessionRow(item = item, isLargeScreen = isLargeScreen)
-                }
-
-                if (hasMore) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Divider(color = chromeColors.panelBorder, thickness = 0.5.dp)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable { expanded = !expanded }
-                                .padding(vertical = 8.dp, horizontal = 4.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
+                if (selectedTab == 0) {
+                    item(
+                        key = "sessions_heading",
+                        span = { GridItemSpan(maxLineSpan) },
+                        contentType = "section_heading",
                     ) {
-                        Text(
-                            text =
-                                if (expanded) {
-                                    stringResource(R.string.profile_show_less)
-                                } else {
-                                    stringResource(R.string.profile_view_all, recentSessions.size)
-                                },
-                            color = LibraryNeonGreen,
-                            fontSize = if (isLargeScreen) 14.sp else 12.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector =
-                                if (expanded) {
-                                    Icons.Outlined.ExpandLess
-                                } else {
-                                    Icons.Outlined.ExpandMore
-                                },
-                            contentDescription = null,
-                            tint = LibraryNeonGreen,
-                            modifier = Modifier.size(if (isLargeScreen) 18.dp else 16.dp),
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RecentSessionRow(
-    item: ProfileViewModel.RecentSessionItem,
-    isLargeScreen: Boolean = false,
-) {
-    val session = item.session
-    val durationMin = maxOf(1L, session.durationMs / 60_000L)
-    val dateText = DateFormat.getDateInstance(DateFormat.SHORT).format(Date(session.playedAt))
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = item.gameTitle,
-                color = chromeContentColor,
-                fontSize = if (isLargeScreen) 15.sp else 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = "$durationMin min • $dateText",
-                color = chromeMutedContentColor,
-                fontSize = if (isLargeScreen) 12.sp else 11.sp,
-            )
-        }
-
-        Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = LibraryNeonGreen.copy(alpha = 0.12f),
-            border = BorderStroke(1.dp, LibraryNeonGreen.copy(alpha = 0.3f)),
-        ) {
-            Text(
-                text = stringResource(R.string.profile_session_xp, session.xpEarned),
-                color = LibraryNeonGreen,
-                fontSize = if (isLargeScreen) 12.sp else 11.sp,
-                fontWeight = FontWeight.Bold,
-                modifier =
-                    Modifier.padding(
-                        horizontal = if (isLargeScreen) 9.dp else 7.dp,
-                        vertical = if (isLargeScreen) 4.dp else 3.dp,
-                    ),
-            )
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Redesigned Custom Dialogs
-// ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun EditTagDialog(
-    currentTag: String,
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit,
-) {
-    var tagText by remember { mutableStateOf(currentTag) }
-    val focusManager = LocalFocusManager.current
-
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = chromeColors.menu,
-            border = BorderStroke(1.dp, chromeColors.panelBorder),
-            shadowElevation = 16.dp,
-            modifier =
-                Modifier
-                    .fillMaxWidth(0.92f)
-                    .padding(16.dp),
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(22.dp),
-            ) {
-                // Header
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(LibraryNeonGreen.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            Icons.Outlined.Badge,
-                            contentDescription = null,
-                            tint = LibraryNeonGreen,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.profile_change_tag),
-                            color = chromeContentColor,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            text = "Choose your display tag across Omnidroid",
-                            color = chromeMutedContentColor,
-                            fontSize = 12.sp,
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(28.dp),
-                    ) {
-                        Icon(
-                            Icons.Filled.Close,
-                            contentDescription = stringResource(android.R.string.cancel),
-                            tint = chromeMutedContentColor,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Input Field
-                OutlinedTextField(
-                    value = tagText,
-                    onValueChange = {
-                        if (it.length <= UserProfileStore.MAX_TAG_LENGTH) {
-                            tagText = it
+                        if (showProfileRail) {
+                            if (state.recentSessions.isNotEmpty()) {
+                                Text(
+                                    pluralStringResource(
+                                        R.plurals.profile_latest_sessions,
+                                        state.recentSessions.size,
+                                        state.recentSessions.size,
+                                    ),
+                                    modifier = Modifier.padding(top = 8.dp),
+                                    color = chromeMutedContentColor,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                        } else {
+                            ProfileSectionHeading(
+                                title = stringResource(R.string.profile_recent_sessions),
+                                subtitle =
+                                    if (state.recentSessions.isEmpty()) {
+                                        null
+                                    } else {
+                                        pluralStringResource(
+                                            R.plurals.profile_latest_sessions,
+                                            state.recentSessions.size,
+                                            state.recentSessions.size,
+                                        )
+                                    },
+                            )
                         }
-                    },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.profile_tag_hint),
-                            color = chromeColors.faint,
-                        )
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    trailingIcon = {
-                        if (tagText.isNotEmpty()) {
-                            IconButton(onClick = { tagText = "" }) {
-                                Icon(
-                                    Icons.Filled.Close,
-                                    contentDescription = "Clear",
-                                    tint = chromeMutedContentColor,
-                                    modifier = Modifier.size(16.dp),
+                    }
+                    if (state.sessionsLoading) {
+                        item(key = "sessions_loading", span = { GridItemSpan(maxLineSpan) }, contentType = "loading") {
+                            LinearProgressIndicator(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                                color = LibraryNeonGreen,
+                                trackColor = chromeColors.divider,
+                            )
+                        }
+                    } else if (sessionDays.isEmpty()) {
+                        item(key = "sessions_empty", span = { GridItemSpan(maxLineSpan) }, contentType = "empty") {
+                            Column(Modifier.fillMaxWidth().padding(vertical = 24.dp)) {
+                                Text(
+                                    stringResource(R.string.profile_no_activity),
+                                    color = chromeContentColor,
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                                Text(
+                                    stringResource(R.string.profile_no_sessions),
+                                    modifier = Modifier.padding(top = 8.dp),
+                                    color = chromeMutedContentColor,
+                                    style = MaterialTheme.typography.bodyMedium,
                                 )
                             }
                         }
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions =
-                        KeyboardActions(
-                            onDone = {
-                                focusManager.clearFocus()
-                                if (tagText.isNotBlank()) onConfirm(tagText.trim())
-                            },
-                        ),
-                    colors =
-                        OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = chromeColors.listRow,
-                            unfocusedContainerColor = chromeColors.listRow,
-                            focusedBorderColor = LibraryNeonGreen,
-                            unfocusedBorderColor = chromeColors.divider,
-                            cursorColor = LibraryNeonGreen,
-                            focusedTextColor = chromeContentColor,
-                            unfocusedTextColor = chromeContentColor,
-                        ),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // Character Counter
-                Text(
-                    text = "${tagText.length} / ${UserProfileStore.MAX_TAG_LENGTH}",
-                    color = if (tagText.length >= UserProfileStore.MAX_TAG_LENGTH) FireColor else chromeMutedContentColor,
-                    fontSize = 11.sp,
-                    modifier = Modifier.align(Alignment.End),
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Action Buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TextButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.padding(end = 8.dp),
-                    ) {
-                        Text(
-                            stringResource(android.R.string.cancel),
-                            color = chromeMutedContentColor,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
-
-                    Button(
-                        onClick = { if (tagText.isNotBlank()) onConfirm(tagText.trim()) },
-                        enabled = tagText.isNotBlank(),
-                        shape = RoundedCornerShape(10.dp),
-                        colors =
-                            ButtonDefaults.buttonColors(
-                                containerColor = LibraryNeonGreen,
-                                contentColor = Color.Black,
-                                disabledContainerColor = chromeColors.pressed,
-                                disabledContentColor = chromeColors.faint,
-                            ),
-                    ) {
-                        Text("Save Tag", fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PhotoOptionsDialog(
-    hasCustomPhoto: Boolean,
-    currentPhotoUri: String?,
-    onDismiss: () -> Unit,
-    onChangePhoto: () -> Unit,
-    onRemovePhoto: () -> Unit,
-) {
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = chromeColors.menu,
-            border = BorderStroke(1.dp, chromeColors.panelBorder),
-            shadowElevation = 16.dp,
-            modifier =
-                Modifier
-                    .fillMaxWidth(0.92f)
-                    .padding(16.dp),
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(22.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                // Header with close button
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(LibraryNeonGreen.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            Icons.Outlined.PhotoCamera,
-                            contentDescription = null,
-                            tint = LibraryNeonGreen,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.profile_change_picture),
-                            color = chromeContentColor,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            text = "Customize your profile avatar",
-                            color = chromeMutedContentColor,
-                            fontSize = 12.sp,
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.size(28.dp),
-                    ) {
-                        Icon(
-                            Icons.Filled.Close,
-                            contentDescription = stringResource(android.R.string.cancel),
-                            tint = chromeMutedContentColor,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Avatar Preview
-                Box(
-                    modifier =
-                        Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .border(
-                                width = 2.dp,
-                                brush =
-                                    Brush.linearGradient(
-                                        listOf(LibraryNeonGreen, LibraryNeonGreen.copy(alpha = 0.4f)),
-                                    ),
-                                shape = CircleShape,
-                            )
-                            .background(chromeColors.listRow),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (currentPhotoUri != null) {
-                        AsyncImage(
-                            model = currentPhotoUri,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
                     } else {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_profile_robot),
-                            contentDescription = null,
-                            tint = LibraryNeonGreen,
-                            modifier = Modifier.size(44.dp),
-                        )
+                        sessionDays.forEach { day ->
+                            item(
+                                key = "day_${day.startedAt}",
+                                span = { GridItemSpan(maxLineSpan) },
+                                contentType = "day_heading",
+                            ) {
+                                val dayLabel =
+                                    when (day.relativeDay) {
+                                        0 -> stringResource(R.string.profile_today)
+                                        -1 -> stringResource(R.string.profile_yesterday)
+                                        else -> dateFormat.format(Date(day.startedAt))
+                                    }
+                                Text(
+                                    dayLabel,
+                                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp).semantics { heading() },
+                                    color = chromeMutedContentColor,
+                                    style = MaterialTheme.typography.labelLarge,
+                                )
+                            }
+                            items(
+                                day.sessions,
+                                key = { "session_${it.session.id}" },
+                                contentType = { "session" },
+                            ) { item ->
+                                ProfileSessionRow(item, onClick = { onGameClick(item.session.gameId) })
+                                ProfileDivider()
+                            }
+                        }
                     }
-                }
-
-                Spacer(modifier = Modifier.height(22.dp))
-
-                // Main Action: Choose from gallery
-                Button(
-                    onClick = onChangePhoto,
-                    shape = RoundedCornerShape(12.dp),
-                    colors =
-                        ButtonDefaults.buttonColors(
-                            containerColor = LibraryNeonGreen,
-                            contentColor = Color.Black,
-                        ),
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                ) {
-                    Icon(
-                        Icons.Outlined.PhotoLibrary,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Choose from Gallery",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                    )
-                }
-
-                // Secondary Action: Revert to default robot avatar
-                if (hasCustomPhoto) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedButton(
-                        onClick = onRemovePhoto,
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, DangerColor.copy(alpha = 0.4f)),
-                        colors =
-                            ButtonDefaults.outlinedButtonColors(
-                                containerColor = DangerColor.copy(alpha = 0.08f),
-                                contentColor = DangerColor,
-                            ),
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .height(44.dp),
+                } else {
+                    item(
+                        key = "consoles_heading",
+                        span = { GridItemSpan(maxLineSpan) },
+                        contentType = "section_heading",
                     ) {
-                        Icon(
-                            Icons.Outlined.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
+                        ProfileSectionHeading(
+                            title = stringResource(R.string.profile_achievements),
+                            subtitle =
+                                stringResource(
+                                    R.string.profile_consoles_unlocked,
+                                    state.unlockedConsoles,
+                                    state.totalConsoles,
+                                ),
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.profile_remove_picture),
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp,
-                        )
+                        if (!showProfileRail) {
+                            Text(
+                                stringResource(R.string.profile_console_help),
+                                modifier = Modifier.padding(bottom = 12.dp),
+                                color = chromeMutedContentColor,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
                     }
+                    items(
+                        state.achievements,
+                        key = { it.metaSystemID.name },
+                        contentType = { "console" },
+                    ) { achievement ->
+                        ProfileConsoleTile(achievement)
+                    }
+                }
+                item(key = "bottom_space", span = { GridItemSpan(maxLineSpan) }, contentType = "spacer") {
+                    Spacer(Modifier.height(12.dp))
                 }
             }
         }
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Format helper
-// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun ProfileSectionHeading(
+    title: String,
+    subtitle: String?,
+) {
+    Column(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 8.dp)) {
+        Text(
+            title,
+            color = chromeContentColor,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.semantics { heading() },
+        )
+        if (subtitle != null) {
+            Text(
+                subtitle,
+                modifier = Modifier.padding(top = 4.dp),
+                color = chromeMutedContentColor,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
 
 @Composable
-private fun formatPlayTime(playTimeMs: Long): String {
-    if (playTimeMs <= 0L) return "0m"
-    val hours = TimeUnit.MILLISECONDS.toHours(playTimeMs)
-    val minutes = TimeUnit.MILLISECONDS.toMinutes(playTimeMs) % 60
-    return when {
-        hours > 0 -> "${hours}h ${minutes}m"
-        minutes > 0 -> "${minutes}m"
-        else -> "< 1m"
+private fun ProfileConsoleTile(achievement: ConsoleAchievement) {
+    val status = stringResource(if (achievement.unlocked) R.string.profile_unlocked else R.string.profile_locked)
+    Column(
+        modifier =
+            Modifier.fillMaxWidth().heightIn(min = 92.dp).padding(horizontal = 4.dp, vertical = 8.dp)
+                .semantics(mergeDescendants = true) { stateDescription = status },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(
+            painterResource(achievement.imageResId),
+            contentDescription = null,
+            tint = if (achievement.unlocked) chromeContentColor else chromeMutedContentColor,
+            modifier = Modifier.size(28.dp),
+        )
+        Text(
+            stringResource(achievement.nameResId),
+            color = chromeContentColor,
+            style = MaterialTheme.typography.bodySmall,
+            minLines = 2,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (achievement.unlocked) {
+                Icon(
+                    Icons.Outlined.Check,
+                    contentDescription = null,
+                    tint = LibraryNeonGreen,
+                    modifier = Modifier.size(12.dp),
+                )
+            }
+            Text(status, color = chromeMutedContentColor, style = MaterialTheme.typography.labelSmall)
+        }
+        ProfileDivider()
     }
+}
+
+@Composable
+private fun ProfileSessionRow(
+    item: ProfileViewModel.RecentSessionItem,
+    onClick: () -> Unit,
+) {
+    val configuration = LocalConfiguration.current
+    val timeZoneId = TimeZone.getDefault().id
+    val timeFormat = remember(configuration, timeZoneId) { DateFormat.getTimeInstance(DateFormat.SHORT) }
+    val system = remember(item.systemId) { runCatching { GameSystem.findById(item.systemId) }.getOrNull() }
+    val subtitle =
+        listOfNotNull(
+            system?.let { stringResource(it.shortTitleResId) },
+            timeFormat.format(Date(item.session.playedAt)),
+        ).joinToString(" · ")
+    Row(
+        Modifier.fillMaxWidth().clickable(
+            role = Role.Button,
+            onClickLabel = stringResource(R.string.profile_open_game),
+            onClick = onClick,
+        ).padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AsyncImage(
+            model = item.coverArt,
+            contentDescription = null,
+            placeholder = painterResource(R.drawable.ic_profile_robot),
+            error = painterResource(R.drawable.ic_profile_robot),
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.width(32.dp).height(42.dp),
+        )
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                item.gameTitle,
+                color = chromeContentColor,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(subtitle, color = chromeMutedContentColor, style = MaterialTheme.typography.bodySmall)
+        }
+        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                profileDuration(item.session.durationMs),
+                color = chromeContentColor,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                stringResource(R.string.profile_session_xp, item.session.xpEarned),
+                color = chromeMutedContentColor,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun profileDuration(durationMs: Long): String {
+    val minutes = durationMs.coerceAtLeast(0L) / 60_000L
+    return when {
+        durationMs <= 0L -> stringResource(R.string.profile_minutes, 0)
+        minutes == 0L -> stringResource(R.string.profile_under_minute)
+        minutes < 60L -> stringResource(R.string.profile_minutes, minutes)
+        else -> stringResource(R.string.profile_hours_minutes, minutes / 60L, minutes % 60L)
+    }
+}
+
+@Composable
+internal fun ProfileDivider() {
+    HorizontalDivider(color = chromeColors.divider)
 }

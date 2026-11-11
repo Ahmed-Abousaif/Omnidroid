@@ -1,0 +1,26 @@
+<resources>
+    <string name="profile_sessions_tab">Sessions</string>
+    <string name="profile_consoles_tab">Consoles</string>
+    <string name="profile_today">Today</string>
+    <string name="profile_yesterday">Yesterday</string>
+    <string name="profile_no_activity">No sessions yet</string>
+    <string name="profile_console_help">Add a console or scan its games to unlock it in your collection.</string>
+    <string name="profile_unlocked">Unlocked</string>
+    <string name="profile_locked">Not unlocked yet</string>
+    <string name="profile_xp_bonus">Streak XP bonus</string>
+    <string name="profile_best_streak_days">Best: %d days</string>
+    <string name="profile_save_tag">Save tag</string>
+    <string name="profile_choose_photo">Choose a photo</string>
+    <string name="profile_open_game">View game details</string>
+    <string name="profile_minutes">%d min</string>
+    <string name="profile_hours_minutes">%1$d h %2$d min</string>
+    <string name="profile_under_minute">&lt; 1 min</string>
+    <plurals name="profile_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <plurals name="profile_latest_sessions">
+        <item quantity="one">Latest %d session</item>
+        <item quantity="other">Latest %d sessions</item>
+    </plurals>
+</resources>
