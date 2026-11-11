@@ -25,5 +25,11 @@ jobs:
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+    - name: Set up Eden Native Build
+      uses: ./.github/actions/setup-eden
+    - name: Test Core Updater
+      run: python3 -m unittest discover -s omnidroid-cores -p 'test_*.py'
+    - name: Build Pinned Eden Libraries
+      run: python3 omnidroid-cores/update_cores.py --cores switch --eden-ref pinned --eden-jobs 2
     - name: Run ktlint tests
       run: ./gradlew assembleDebug ktlintCheck

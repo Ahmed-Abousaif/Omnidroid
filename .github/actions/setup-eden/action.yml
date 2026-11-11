@@ -1,0 +1,29 @@
+name: Set up Eden Android toolchain
+description: Install the NDK and CMake versions required by the selected Eden commit
+runs:
+  using: composite
+  steps:
+    - uses: android-actions/setup-android@v3
+    - name: Cache Eden dependencies
+      uses: actions/cache@v4
+      with:
+        path: modules/switch/upstream/eden/.cache/cpm
+        key: eden-cpm-${{ runner.os }}-${{ hashFiles('modules/switch/upstream/eden/cpmfile.json') }}
+        restore-keys: eden-cpm-${{ runner.os }}-
+    - name: Install host shader compiler
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y glslang-tools
+    - name: Install Eden NDK and CMake
+      shell: bash
+      run: |
+        mapfile -t PACKAGES < <(python3 - <<'PY'
+        import pathlib, re
+        gradle = pathlib.Path('modules/switch/upstream/eden/src/android/app/build.gradle.kts').read_text()
+        print('ndk;' + re.search(r'ndkVersion\s*=\s*"([^"]+)"', gradle).group(1))
+        print('cmake;' + re.search(r'cmake\s*\{\s*version\s*=\s*"([^"]+)"', gradle).group(1))
+        PY
+        )
+        test "${#PACKAGES[@]}" -eq 2
+        sdkmanager --install "${PACKAGES[@]}"

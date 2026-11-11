@@ -8,7 +8,7 @@ on:
 
 jobs:
   check-upstream:
-    name: Check Upstream Eden Releases
+    name: Build Latest Upstream Eden Commit
     runs-on: ubuntu-latest
 
     steps:
@@ -40,6 +40,24 @@ jobs:
             echo "updated=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Set up Eden Native Build
+        if: steps.check_update.outputs.updated == 'true'
+        uses: ./.github/actions/setup-eden
+
+      - name: Build Eden Native Libraries
+        if: steps.check_update.outputs.updated == 'true'
+        run: python omnidroid-cores/update_cores.py --cores switch --eden-ref pinned --eden-jobs 2
+
+      - name: Upload Built Eden Libraries
+        if: steps.check_update.outputs.updated == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eden-native
+          path: |
+            omnidroid-cores/omnidroid_core_switch/src/main/jniLibs/arm64-v8a/*.so
+            omnidroid-cores/omnidroid_core_switch/src/main/sdl/
+            omnidroid-cores/omnidroid_core_switch/src/main/eden-build.json
+
       - name: Verify Kotlin Build
         if: steps.check_update.outputs.updated == 'true'
         run: |
@@ -52,6 +70,6 @@ jobs:
             echo "Eden submodule updated to commit \`${{ steps.check_update.outputs.new_pin }}\`." >> $GITHUB_STEP_SUMMARY
           else
             echo "### Upstream Eden is up to date ✅" >> $GITHUB_STEP_SUMMARY
-            echo "No new release tags detected." >> $GITHUB_STEP_SUMMARY
+            echo "No new commits on master." >> $GITHUB_STEP_SUMMARY
           fi
 

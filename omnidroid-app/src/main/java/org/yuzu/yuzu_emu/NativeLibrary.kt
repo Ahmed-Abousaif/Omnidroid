@@ -2,6 +2,7 @@ package org.yuzu.yuzu_emu
 
 import android.view.Surface
 import androidx.annotation.Keep
+import org.libsdl.app.SDL
 import org.yuzu.yuzu_emu.utils.FileUtil
 import timber.log.Timber
 
@@ -30,6 +31,8 @@ object NativeLibrary {
                     Timber.i("Loading libyuzu-android.so via System.loadLibrary")
                     System.loadLibrary("yuzu-android")
                 }
+                SDL.setupJNI()
+                initJvm()
                 isLoaded = true
                 Timber.i("libyuzu-android.so loaded successfully")
             } catch (e: Throwable) {
@@ -148,6 +151,8 @@ object NativeLibrary {
     }
 
     // --- Native methods implemented by libyuzu-android.so ---
+
+    external fun initJvm()
 
     external fun initializeGpuDriver(
         hookLibDir: String?,

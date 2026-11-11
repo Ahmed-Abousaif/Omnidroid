@@ -93,4 +93,5 @@
 ## Eden / Switch Emulation JNI Interface (scoped to C++ FindClass/GetMethodID/GetFieldID)
 -keep class org.yuzu.yuzu_emu.** { *; }
 -keep interface org.yuzu.yuzu_emu.** { *; }
+-keep class org.libsdl.app.** { *; }
 -keep class kotlin.Pair { *; }

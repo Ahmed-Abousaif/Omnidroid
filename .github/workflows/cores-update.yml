@@ -14,10 +14,10 @@ on:
         description: 'Comma-separated ABIs (empty for all 4 ABIs)'
         required: false
         default: ''
-      eden_version:
-        description: 'Eden Switch core release version'
+      eden_ref:
+        description: 'Eden source branch, tag, or SHA (master follows the latest commit)'
         required: false
-        default: '0.2.1'
+        default: 'master'
       cemu_tag:
         description: 'Cemu core GitHub release tag'
         required: false
@@ -61,26 +61,50 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Resolve Eden Source Commit
+        if: inputs.cores == '' || contains(inputs.cores, 'switch')
+        env:
+          EDEN_REF: ${{ inputs.eden_ref || 'master' }}
+        run: python omnidroid-cores/build_eden.py --update-only --ref "$EDEN_REF"
+
+      - name: Test Core Updater
+        run: python -m unittest discover -s omnidroid-cores -p 'test_*.py'
+
+      - name: Set up Eden Native Build
+        if: inputs.cores == '' || contains(inputs.cores, 'switch')
+        uses: ./.github/actions/setup-eden
+
       - name: Run Omnidroid Core Updater
+        env:
+          CORES: ${{ inputs.cores }}
+          ABIS: ${{ inputs.abis }}
+          CEMU_TAG: ${{ inputs.cemu_tag }}
+          SKIP_BUILDBOT: ${{ inputs.skip_buildbot }}
         run: |
-          ARGS="--jobs 8"
-          if [ -n "${{ inputs.cores }}" ]; then
-            ARGS="$ARGS --cores ${{ inputs.cores }}"
+          ARGS=(--jobs 8 --eden-ref pinned --eden-jobs 2)
+          if [ -n "$CORES" ]; then
+            ARGS+=(--cores "$CORES")
           fi
-          if [ -n "${{ inputs.abis }}" ]; then
-            ARGS="$ARGS --abis ${{ inputs.abis }}"
+          if [ -n "$ABIS" ]; then
+            ARGS+=(--abis "$ABIS")
           fi
-          if [ -n "${{ inputs.eden_version }}" ]; then
-            ARGS="$ARGS --eden-version ${{ inputs.eden_version }}"
+          if [ -n "$CEMU_TAG" ]; then
+            ARGS+=(--cemu-tag "$CEMU_TAG")
           fi
-          if [ -n "${{ inputs.cemu_tag }}" ]; then
-            ARGS="$ARGS --cemu-tag ${{ inputs.cemu_tag }}"
+          if [ "$SKIP_BUILDBOT" = "true" ]; then
+            ARGS+=(--skip-buildbot)
           fi
-          if [ "${{ inputs.skip_buildbot }}" = "true" ]; then
-            ARGS="$ARGS --skip-buildbot"
-          fi
-          echo "Running: python omnidroid-cores/update_cores.py $ARGS"
-          python omnidroid-cores/update_cores.py $ARGS
+          python omnidroid-cores/update_cores.py "${ARGS[@]}"
+
+      - name: Upload Built Eden Libraries
+        if: inputs.cores == '' || contains(inputs.cores, 'switch')
+        uses: actions/upload-artifact@v4
+        with:
+          name: eden-native
+          path: |
+            omnidroid-cores/omnidroid_core_switch/src/main/jniLibs/arm64-v8a/*.so
+            omnidroid-cores/omnidroid_core_switch/src/main/sdl/
+            omnidroid-cores/omnidroid_core_switch/src/main/eden-build.json
 
       - name: Verify Core Health & ABI Consistency
         run: |
@@ -123,7 +147,7 @@ jobs:
 
             ### Summary of Updates:
             - **Libretro Cores**: Refreshed from nightly Libretro buildbot.
-            - **Switch Core (Eden)**: Synced from Eden release APK.
+            - **Switch Core (Eden)**: Built from the latest `master` commit; the resolved source commit is pinned in this repository. Native libraries and SDL Java sources are available in the `eden-native` workflow artifact.
             - **Wii U Core (Cemu)**: Synced from `Ahmed-Abousaif/cemu-libretro-android` releases.
             - **Multi-ABI Compatibility**: Verified 0-byte dummy fallback `.so` libraries for Google Play App Bundle compliance.
             - **Database Slices**: Re-generated with `:libretro-db-builder:run`.
