@@ -4,66 +4,72 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
-import com.omnidroid.app.utils.android.settings.OmnidroidCardSettingsGroup
-import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
-import com.omnidroid.app.utils.android.settings.OmnidroidSettingsPage
-import kotlinx.coroutines.yield
+import com.omnidroid.R
+import com.omnidroid.app.mobile.shared.compose.sidemenu.MenuAction
+import com.omnidroid.app.mobile.shared.compose.sidemenu.MenuSection
+import com.omnidroid.app.mobile.shared.compose.sidemenu.SideMenuPage
 
 @Composable
 fun GameMenuStatesScreen(
     viewModel: GameMenuStatesViewModel,
     onStateClicked: (Int) -> Unit,
+    onAutoSaveClicked: () -> Unit = {},
+    onNewStateClicked: () -> Unit = {},
 ) {
-    val state = viewModel.uiStates.collectAsState(initial = GameMenuStatesViewModel.State())
-    val firstItemRequester = remember { FocusRequester() }
-    val controllerNav = LocalControllerNavigation.current
-
-    DisposableEffect(firstItemRequester) {
-        controllerNav?.contentFocusRequester = firstItemRequester
-        onDispose {
-            if (controllerNav?.contentFocusRequester == firstItemRequester) {
-                controllerNav?.contentFocusRequester = null
+    val state = viewModel.uiStates.collectAsState()
+    SideMenuPage("game-slots") {
+        MenuSection("error", visible = state.value.loadFailed) {
+            MenuAction(
+                "retry",
+                titleRes = R.string.game_menu_states_retry,
+                subtitle = { Text(stringResource(R.string.game_menu_states_load_failed)) },
+                onClick = viewModel::retry,
+            )
+        }
+        state.value.autoSave?.let { autoSave ->
+            MenuSection("autosave") {
+                MenuAction(
+                    "autosave",
+                    titleRes = R.string.game_menu_autosave,
+                    subtitle = { Text(autoSave.description) },
+                    enabled = autoSave.enabled,
+                    onClick = onAutoSaveClicked,
+                )
             }
         }
-    }
-
-    LaunchedEffect(Unit) {
-        yield()
-        runCatching { firstItemRequester.requestFocus() }
-    }
-
-    OmnidroidSettingsPage {
-        OmnidroidCardSettingsGroup {
-            state.value.entries.forEachIndexed { index, entry ->
-                OmnidroidSettingsMenuLink(
-                    modifier = if (index == 0) Modifier.focusRequester(firstItemRequester) else Modifier,
-                    title = { Text(text = entry.title) },
-                    subtitle = { Text(text = entry.description) },
+        MenuSection("slots", visible = state.value.entries.isNotEmpty()) {
+            state.value.entries.forEach { entry ->
+                MenuAction(
+                    id = "slot-${entry.slot}",
+                    title = { Text(entry.title) },
+                    subtitle = { Text(entry.description) },
                     enabled = entry.enabled,
                     icon = {
-                        if (entry.preview != null) {
+                        entry.preview?.let {
                             Image(
                                 modifier = Modifier.size(48.dp),
-                                bitmap = entry.preview.asImageBitmap(),
+                                bitmap = it.asImageBitmap(),
                                 contentScale = ContentScale.Crop,
                                 contentDescription = null,
                             )
                         }
                     },
-                    onClick = { onStateClicked(index) },
-                )
+                ) { onStateClicked(entry.slot) }
             }
+        }
+        MenuSection("new-slot", visible = state.value.canAddSlot) {
+            MenuAction(
+                "new-slot",
+                titleRes = R.string.game_menu_save_new,
+                subtitle = { Text(stringResource(R.string.game_menu_save_new_description)) },
+                onClick = onNewStateClicked,
+            )
         }
     }
 }

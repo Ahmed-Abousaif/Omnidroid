@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="game_menu_autosave">Autosave</string>
+    <string name="game_menu_save_new">Save to new slot</string>
+    <string name="game_menu_save_new_description">Create an additional save state for this game</string>
+    <string name="game_menu_states_retry">Retry</string>
+    <string name="game_menu_states_load_failed">Could not read save states</string>
+    <string name="game_toast_save_state_failed">Could not save state. Please try again.</string>
+    <string name="game_toast_save_state_saved">State saved</string>
+    <string name="game_toast_autosave_load_failed">Could not load autosave. The existing autosave will be kept for this session.</string>
+    <string name="game_toast_autosave_incompatible">This autosave is incompatible with the current core version. It will be kept for this session.</string>
+    <string name="game_toast_quick_save_missing">No quick save in this session</string>
+    <string name="game_save_failed_title">Could not save game</string>
+    <string name="game_save_failed_message">Your latest progress could not be fully saved. Retry, keep playing, or quit without saving.</string>
+    <string name="game_quit_without_saving">Quit without saving</string>
+</resources>

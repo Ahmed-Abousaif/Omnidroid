@@ -36,7 +36,7 @@ class SavesManager(private val directoriesManager: DirectoriesManager) {
                         }
                     }
                 }
-            result.getOrNull()
+            result.getOrThrow()
         }
     }
 
@@ -54,7 +54,7 @@ class SavesManager(private val directoriesManager: DirectoriesManager) {
                     val saveFile = getSaveFile(getSaveRAMFileName(game))
                     saveFile.writeBytesAtomic(data)
                 }
-            result.getOrNull()
+            result.getOrThrow()
         }
     }
 
