@@ -1,0 +1,4 @@
+<resources>
+    <string name="game_keyboard_title">Enter text</string>
+    <string name="game_keyboard_done">Done</string>
+</resources>

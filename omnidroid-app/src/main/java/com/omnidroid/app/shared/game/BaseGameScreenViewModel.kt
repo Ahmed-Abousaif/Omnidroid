@@ -264,9 +264,11 @@ class BaseGameScreenViewModel(
 
         loadingState.value = true
 
-        block()
-
-        loadingState.value = false
+        try {
+            block()
+        } finally {
+            loadingState.value = false
+        }
 
     }
 
@@ -438,6 +440,8 @@ class BaseGameScreenViewModel(
 
         viewModelScope.launch {
 
+            gameData.autoSaveLoadError?.let { saves.onAutoSaveLoadFailed(it) }
+
             gameData.quickSaveData?.let {
 
                 saves.restoreAutoSaveAsync(it)
@@ -505,6 +509,8 @@ class BaseGameScreenViewModel(
         return touchControls.getGameAspectRatio()
 
     }
+
+    fun getTouchScreenRegion() = touchControls.getTouchScreenRegion()
 
     fun refreshSettings() {
 
@@ -574,6 +580,16 @@ class BaseGameScreenViewModel(
 
         }
 
+    }
+
+    suspend fun saveNewSlot() {
+        if (loadingState.value) return
+        withLoading { saves.saveNewSlot() }
+    }
+
+    suspend fun loadAutoSave() {
+        if (loadingState.value) return
+        withLoading { saves.loadAutoSave() }
     }
 
     fun saveQuickSave() {
@@ -652,9 +668,12 @@ class BaseGameScreenViewModel(
 
                 }
 
-                val snapshot = saves.captureSaveSnapshot(true) ?: return@launch
+                val snapshot = saves.captureSaveSnapshot(true)
 
-                saves.writeSaveSnapshot(snapshot)
+                if (!saves.writeSaveSnapshot(snapshot, notifyFailure = false)) {
+                    sideEffects.requestSaveFailureOnQuit()
+                    return@withLoading
+                }
 
                 sideEffects.requestSuccessfulFinish()
 
@@ -676,6 +695,10 @@ class BaseGameScreenViewModel(
 
         }
 
+    }
+
+    fun requestFinishWithoutSaving() {
+        if (!loadingState.value) sideEffects.requestSuccessfulFinish()
     }
 
     fun handleVirtualInputEvent(events: List<InputEvent>) {

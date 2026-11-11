@@ -9,7 +9,7 @@ import com.omnidroid.lib.library.SystemID
 import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
 
 /**
- * Toggles DS/3DS screen layout using the same SharedPreferences keys as the in-game Settings list.
+ * Toggles handheld/Wii U screen layouts using the in-game Settings preference keys.
  */
 class TouchScreenLayoutController(
     private val sharedPreferences: SharedPreferences,
@@ -22,7 +22,7 @@ class TouchScreenLayoutController(
         return when (coreId) {
             CoreID.MELONDS_DS -> toggleMelonDsDs(orientation)
             CoreID.CITRA, CoreID.AZAHAR -> toggleCitra(orientation)
-            CoreID.CEMU -> toggleCemu()
+            CoreID.CEMU -> toggleCemu(orientation)
             else -> emptyList()
         }
     }
@@ -93,7 +93,7 @@ class TouchScreenLayoutController(
             CoreID.CEMU -> {
                 val key = CoreVariablesManager.computeSharedPreferenceKey(CEMU_VIEW_KEY, systemId.dbname)
                 val view = sharedPreferences.getString(key, null)
-                if (view == "Side by Side" || view == "side_by_side") 32f / 9f else 16f / 9f
+                CemuScreenLayout.aspectRatio(view, isLandscape)
             }
             CoreID.MEDNAFEN_WSWAN -> {
                 val key = CoreVariablesManager.computeSharedPreferenceKey("wswan_rotate_display", systemId.dbname)
@@ -190,6 +190,7 @@ class TouchScreenLayoutController(
         return when (coreId) {
             CoreID.MELONDS_DS -> onOrientationChangedMelonDsDs(orientation)
             CoreID.CITRA, CoreID.AZAHAR -> onOrientationChangedCitra(orientation)
+            CoreID.CEMU -> updateCemuOrientation(orientation)
             else -> emptyList()
         }
     }
@@ -238,21 +239,33 @@ class TouchScreenLayoutController(
         }
     }
 
-    private fun toggleCemu(): List<CoreVariable> {
+    fun getTouchScreenRegion(orientation: TouchControllerSettingsManager.Orientation): TouchScreenRegion? {
+        if (coreId != CoreID.CEMU) return TouchScreenRegion.FULL
+        val key = CoreVariablesManager.computeSharedPreferenceKey(CEMU_VIEW_KEY, systemId.dbname)
+        return CemuScreenLayout.touchRegion(
+            sharedPreferences.getString(key, "tv"),
+            orientation == TouchControllerSettingsManager.Orientation.LANDSCAPE,
+        )
+    }
+
+    private fun updateCemuOrientation(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
+        val layout = CemuScreenLayout.nativeLayout(orientation == TouchControllerSettingsManager.Orientation.LANDSCAPE)
+        val key = CoreVariablesManager.computeSharedPreferenceKey(CEMU_LAYOUT_KEY, systemId.dbname)
+        sharedPreferences.edit { putString(key, layout) }
+        return listOf(CoreVariable(CEMU_LAYOUT_KEY, layout))
+    }
+
+    private fun toggleCemu(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
         val key = CoreVariablesManager.computeSharedPreferenceKey(CEMU_VIEW_KEY, systemId.dbname)
         val current = sharedPreferences.getString(key, "tv")
-        val next = when (current) {
-            "tv" -> "pad"
-            "pad" -> "side_by_side"
-            "side_by_side" -> "tv"
-            else -> "tv"
-        }
+        val next = CemuScreenLayout.nextView(current)
         sharedPreferences.edit { putString(key, next) }
-        return listOf(CoreVariable(CEMU_VIEW_KEY, next))
+        return updateCemuOrientation(orientation) + CoreVariable(CEMU_VIEW_KEY, next)
     }
 
     companion object {
         const val CEMU_VIEW_KEY = "cemu_screen_view"
+        const val CEMU_LAYOUT_KEY = "cemu_dual_screen_layout"
         const val MELONDSDS_LAYOUT_KEY = "melonds_screen_layout1"
         const val MELONDSDS_DUAL_PORTRAIT = "top-bottom"
         const val MELONDSDS_DUAL_LANDSCAPE = "left-right"

@@ -40,6 +40,7 @@ import com.omnidroid.lib.saves.SavesManager
 import com.omnidroid.lib.saves.StatesManager
 import com.omnidroid.lib.storage.DirectoriesManager
 import com.omnidroid.lib.storage.RomFiles
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import timber.log.Timber
@@ -113,20 +114,23 @@ class GameLoader(
                         savesManager.getSaveRAM(game, systemCoreConfig)
                     }.getOrElse { throw GameLoaderException(GameLoaderError.Saves) }
 
-                val quickSaveData =
+                val quickSaveResult =
                     runCatching {
-                        val shouldDiscardSave =
+                        if (systemCoreConfig.statesSupported && loadSave &&
                             !savesCoherencyEngine.shouldDiscardAutoSaveState(
                                 game,
                                 systemCoreConfig.coreID,
                             )
-
-                        if (systemCoreConfig.statesSupported && loadSave && shouldDiscardSave) {
+                        ) {
                             statesManager.getAutoSave(game, systemCoreConfig.coreID)
                         } else {
                             null
                         }
-                    }.getOrElse { throw GameLoaderException(GameLoaderError.Saves) }
+                    }
+                quickSaveResult.exceptionOrNull()?.let {
+                    if (it is CancellationException) throw it
+                    Timber.e(it, "Cannot read autosave; continuing without restoring it")
+                }
 
                 val coreVariables =
                     coreVariablesManager.getOptionsForCore(system.id, systemCoreConfig)
@@ -141,11 +145,12 @@ class GameLoader(
                             game,
                             coreLibrary,
                             gameFiles,
-                            quickSaveData,
+                            quickSaveResult.getOrNull(),
                             saveRAMData,
                             coreVariables,
                             systemDirectory,
                             savesDirectory,
+                            autoSaveLoadError = quickSaveResult.exceptionOrNull() as? Exception,
                         ),
                     ),
                 )
@@ -196,5 +201,6 @@ class GameLoader(
         val coreVariables: Array<CoreVariable>,
         val systemDirectory: File,
         val savesDirectory: File,
+        val autoSaveLoadError: Exception? = null,
     )
 }

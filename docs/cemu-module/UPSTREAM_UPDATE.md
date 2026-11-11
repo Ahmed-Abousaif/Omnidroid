@@ -10,7 +10,7 @@ This document describes how to monitor, update, and build the upstream [cemu-lib
 - **Canonical Remote**: `https://github.com/Ahmed-Abousaif/cemu-libretro-android.git`
 - **Default Branch**: `main`
 - **Upstream Cemu Base**: Based on [SSimco/Cemu (`android-port`)](https://github.com/SSimco/Cemu.git) with libretro core integration.
-- **Patch Directory**: `modules/cemu/patches/` (currently 0 local patches; all dependencies patched cleanly in upstream repo).
+- **Patch Directory**: `modules/cemu/patches/` (pending scanout snapshot, phone-keyboard, and stacked landscape/touch fixes; see its README for application and regression-test instructions).
 - **Dynamic Feature Module**: `:omnidroid_core_cemu` (`omnidroid-cores/omnidroid_core_cemu/`)
 - **Native Target**: Produces `libcemu_libretro_android.so` for `arm64-v8a`.
 

@@ -548,6 +548,8 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
                     is GameViewModelSideEffects.UiEffect.SuccessfulFinish -> performSuccessfulActivityFinish()
 
+                    is GameViewModelSideEffects.UiEffect.SaveFailedOnQuit -> displaySaveFailureDialog()
+
                     is GameViewModelSideEffects.UiEffect.FailureFinish -> performErrorFinish(it.message)
 
                     is GameViewModelSideEffects.UiEffect.SaveQuickSave -> performSaveQuickSave()
@@ -560,6 +562,19 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
             }
 
+    }
+
+    private fun displaySaveFailureDialog() {
+        if (isFinishing || isDestroyed) return
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.game_save_failed_title)
+            .setMessage(R.string.game_save_failed_message)
+            .setPositiveButton(R.string.game_menu_states_retry) { _, _ -> baseGameScreenViewModel.requestFinish() }
+            .setNegativeButton(R.string.cancel, null)
+            .setNeutralButton(R.string.game_quit_without_saving) { _, _ ->
+                baseGameScreenViewModel.requestFinishWithoutSaving()
+            }
+            .show()
     }
 
     private fun performSaveQuickSave() {
@@ -800,6 +815,14 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
                 }
 
+            }
+
+            if (data?.getBooleanExtra(GameMenuContract.RESULT_SAVE_NEW, false) == true) {
+                lifecycleScope.launch { baseGameScreenViewModel.saveNewSlot() }
+            }
+
+            if (data?.getBooleanExtra(GameMenuContract.RESULT_LOAD_AUTOSAVE, false) == true) {
+                lifecycleScope.launch { baseGameScreenViewModel.loadAutoSave() }
             }
 
             if (data?.getBooleanExtra(GameMenuContract.RESULT_QUIT, false) == true) {

@@ -1,0 +1,404 @@
+diff --git a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
+@@ -27,6 +27,7 @@
+ #include "Cafe/TitleList/GameInfo.h"
+ #include "libretro/LibretroVulkan.h"
+ #include "libretro/Environment.h"
++#include "libretro/ScreenLayout.h"
+ 
+ #include "Cafe/HW/Latte/Core/LatteTiming.h" // vsync control
+ 
+@@ -3581,14 +3582,16 @@
+ 		return true;
+ 
+ 	const uint32 tvHeight = m_libretroTVScanout.height > 0 ? m_libretroTVScanout.height : 720;
++	const bool stacked = Libretro::IsDualScreenStacked();
++	const auto dualLayout = Libretro::ComputeDualScreenLayout(tvHeight, stacked);
+ 
+ 	uint32 outWidth = 1280;
+ 	uint32 outHeight = 720;
+ 
+ 	if (mode == Libretro::ScreenViewMode::SideBySide)
+ 	{
+-		outHeight = tvHeight;
+-		outWidth = outHeight * 32 / 9;
++		outHeight = dualLayout.height;
++		outWidth = dualLayout.width;
+ 	}
+ 	else if (mode == Libretro::ScreenViewMode::Pad)
+ 	{
+@@ -3622,7 +3625,7 @@
+ 	dstRange.layerCount = 1;
+ 	barrier_image<IMAGE_READ | TRANSFER_READ, TRANSFER_WRITE>(output.image, dstRange, output.layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+ 
+-	auto blitSingle = [&](const LibretroOutputImage& source, int dstX0, int dstX1) {
++	auto blitSingle = [&](const LibretroOutputImage& source, const Libretro::ScreenRect& destination) {
+ 		if (source.image == VK_NULL_HANDLE) return;
+ 		VkImageBlit region{};
+ 		region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+@@ -3634,8 +3637,8 @@
+ 		region.dstSubresource.mipLevel = 0;
+ 		region.dstSubresource.baseArrayLayer = 0;
+ 		region.dstSubresource.layerCount = 1;
+-		region.dstOffsets[0] = {dstX0, 0, 0};
+-		region.dstOffsets[1] = {dstX1, (int)outHeight, 1};
++		region.dstOffsets[0] = {(int)destination.x, (int)destination.y, 0};
++		region.dstOffsets[1] = {(int)(destination.x + destination.width), (int)(destination.y + destination.height), 1};
+ 
+ 		vkCmdBlitImage(
+ 			m_state.currentCommandBuffer,
+@@ -3651,7 +3654,7 @@
+ 	// Missing screens must stay black, including after a display-mode change.
+ 	const bool missingTV = m_libretroTVScanout.image == VK_NULL_HANDLE;
+ 	const bool missingPad = m_libretroPadScanout.image == VK_NULL_HANDLE;
+-	if ((mode == Libretro::ScreenViewMode::SideBySide && (missingTV || missingPad)) ||
++	if ((mode == Libretro::ScreenViewMode::SideBySide && (stacked || missingTV || missingPad)) ||
+ 		(mode == Libretro::ScreenViewMode::Pad && missingPad) ||
+ 		(mode == Libretro::ScreenViewMode::TV && missingTV))
+ 	{
+@@ -3662,17 +3665,16 @@
+ 
+ 	if (mode == Libretro::ScreenViewMode::SideBySide)
+ 	{
+-		int midX = (int)(outWidth / 2);
+-		blitSingle(m_libretroTVScanout, 0, midX);
+-		blitSingle(m_libretroPadScanout, midX, (int)outWidth);
++		blitSingle(m_libretroTVScanout, dualLayout.tv);
++		blitSingle(m_libretroPadScanout, dualLayout.pad);
+ 	}
+ 	else if (mode == Libretro::ScreenViewMode::Pad)
+ 	{
+-		blitSingle(m_libretroPadScanout, 0, (int)outWidth);
++		blitSingle(m_libretroPadScanout, {0, 0, outWidth, outHeight});
+ 	}
+ 	else // TV
+ 	{
+-		blitSingle(m_libretroTVScanout, 0, (int)outWidth);
++		blitSingle(m_libretroTVScanout, {0, 0, outWidth, outHeight});
+ 	}
+ 
+ 	barrier_image<TRANSFER_WRITE, IMAGE_READ>(output.image, dstRange, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+diff --git a/src/libretro/Environment.cpp b/src/libretro/Environment.cpp
+--- a/src/libretro/Environment.cpp
++++ b/src/libretro/Environment.cpp
+@@ -1,4 +1,6 @@
+ #include "Environment.h"
++#include "ScreenLayout.h"
++#include <atomic>
+ #include "Cafe/OS/libs/swkbd/swkbd.h"
+ #include <cstdarg>
+ #include <cstdio>
+@@ -16,8 +18,8 @@
+ 	{
+ 		static retro_environment_t environ_cb = nullptr;
+ 		static retro_log_printf_t log_cb = nullptr;
+-		#include <atomic>
+ 		static std::atomic<ScreenViewMode> s_screenViewMode{ScreenViewMode::TV};
++		static std::atomic<bool> s_dualScreenStacked{true};
+ 	} // namespace
+ 
+ 	ScreenViewMode GetScreenViewMode()
+@@ -25,24 +27,22 @@
+ 		return s_screenViewMode;
+ 	}
+ 
+-	void SetScreenViewMode(ScreenViewMode mode)
+-	{
+-		if (s_screenViewMode == mode)
+-			return;
+-
+-		s_screenViewMode = mode;
+-		LogInfo("Screen view mode changed to: %s",
+-			mode == ScreenViewMode::Pad ? "pad" :
+-			mode == ScreenViewMode::SideBySide ? "side_by_side" : "tv");
+-
++	bool IsDualScreenStacked()
++	{
++		return s_dualScreenStacked;
++	}
++
++	static void UpdateScreenGeometry(ScreenViewMode mode)
++	{
+ 		struct retro_game_geometry geom{};
+-		geom.max_width = 3840;
+-		geom.max_height = 1080;
++		geom.max_width = 7680;
++		geom.max_height = 3240;
+ 		if (mode == ScreenViewMode::SideBySide)
+ 		{
+-			geom.base_width = 2560;
+-			geom.base_height = 720;
+-			geom.aspect_ratio = 32.0f / 9.0f;
++			const auto layout = ComputeDualScreenLayout(720, IsDualScreenStacked());
++			geom.base_width = layout.width;
++			geom.base_height = layout.height;
++			geom.aspect_ratio = (float)layout.width / layout.height;
+ 		}
+ 		else
+ 		{
+@@ -51,6 +51,15 @@
+ 			geom.aspect_ratio = 16.0f / 9.0f;
+ 		}
+ 		EnvCb(RETRO_ENVIRONMENT_SET_GEOMETRY, &geom);
++	}
++
++	void SetScreenViewMode(ScreenViewMode mode)
++	{
++		if (s_screenViewMode == mode) return;
++		s_screenViewMode = mode;
++		LogInfo("Screen view mode changed to: %s", mode == ScreenViewMode::Pad ? "pad" :
++			mode == ScreenViewMode::SideBySide ? "dual" : "tv");
++		UpdateScreenGeometry(mode);
+ 	}
+ 
+ 	bool EnvCb(unsigned cmd, void* data)
+@@ -191,10 +200,21 @@
+ 				{
+ 					{"tv", "TV View"},
+ 					{"pad", "GamePad View"},
++					{"side_by_side", "Dual View"},
++					{nullptr, nullptr},
++				},
++				"tv"
++			},
++			{
++				"cemu_dual_screen_layout",
++				"Dual Screen Layout",
++				"The frontend selects the layout for the current orientation.",
++				{
++					{"stacked", "TV above half-size GamePad"},
+ 					{"side_by_side", "Side by Side"},
+ 					{nullptr, nullptr},
+ 				},
+-				"tv"
++				"stacked"
+ 			},
+ 			{
+ 				"cemu_audio_volume",
+@@ -226,6 +246,7 @@
+ 			static const struct retro_variable legacy_vars[] = {
+ 				{"cemu_cpu_mode", "CPU Mode; recompiler_multi|recompiler_dual|recompiler_single|interpreter"},
+ 				{"cemu_screen_view", "Screen View; tv|pad|side_by_side"},
++				{"cemu_dual_screen_layout", "Dual Screen Layout; stacked|side_by_side"},
+ 				{"cemu_audio_volume", "Volume; 100|80|60|40|20|0"},
+ 				{nullptr, nullptr}
+ 			};
+@@ -251,6 +272,14 @@
+ 				cfg.cpu_mode = CPUMode::SinglecoreInterpreter;
+ 		}
+ 
++		var.key = "cemu_dual_screen_layout";
++		if (EnvCb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
++		{
++			const bool stacked = std::string_view(var.value) != "side_by_side";
++			if (s_dualScreenStacked.exchange(stacked) != stacked && GetScreenViewMode() == ScreenViewMode::SideBySide)
++				UpdateScreenGeometry(GetScreenViewMode());
++		}
++
+ 		var.key = "cemu_screen_view";
+ 		if (EnvCb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+ 		{
+diff --git a/src/libretro/Environment.h b/src/libretro/Environment.h
+--- a/src/libretro/Environment.h
++++ b/src/libretro/Environment.h
+@@ -34,6 +34,7 @@
+ 
+ 	ScreenViewMode GetScreenViewMode();
+ 	void SetScreenViewMode(ScreenViewMode mode);
++	bool IsDualScreenStacked();
+ 
+ 	void InitCoreOptions();
+ 	void UpdateCoreOptions();
+diff --git a/src/libretro/LibretroInput.cpp b/src/libretro/LibretroInput.cpp
+--- a/src/libretro/LibretroInput.cpp
++++ b/src/libretro/LibretroInput.cpp
+@@ -2,6 +2,7 @@
+ #include "LibretroKeyboard.h"
+ #include "Cafe/OS/libs/swkbd/swkbd.h"
+ #include "Environment.h"
++#include "ScreenLayout.h"
+ #include "input/InputManager.h"
+ #include "Common/precompiled.h"
+ #include <vector>
+@@ -113,21 +114,13 @@
+ 				ScreenViewMode screenMode = GetScreenViewMode();
+ 				if (screenMode == ScreenViewMode::SideBySide)
+ 				{
+-					// Side-by-Side: Left half [0.0..0.5] is TV, Right half [0.5..1.0] is GamePad
+-					if (norm_x >= 0.5f)
+-					{
+-						float pad_x = (norm_x - 0.5f) * 2.0f;
+-						touch_pos = glm::vec2(std::clamp(pad_x, 0.0f, 1.0f), std::clamp(norm_y, 0.0f, 1.0f));
+-						touch_active = true;
+-					}
+-					else
+-					{
+-						touch_active = false;
+-					}
+-				}
+-				else
+-				{
+-					// Pad view or TV view fallback: map full viewport
++					float pad_x = 0.0f, pad_y = 0.0f;
++					const auto layout = ComputeDualScreenLayout(720, IsDualScreenStacked());
++					touch_active = MapGamePadTouch(layout, norm_x, norm_y, pad_x, pad_y);
++					if (touch_active) touch_pos = glm::vec2(pad_x, pad_y);
++				}
++				else if (screenMode == ScreenViewMode::Pad)
++				{
+ 					touch_pos = glm::vec2(std::clamp(norm_x, 0.0f, 1.0f), std::clamp(norm_y, 0.0f, 1.0f));
+ 					touch_active = true;
+ 				}
+diff --git a/src/libretro/Main.cpp b/src/libretro/Main.cpp
+--- a/src/libretro/Main.cpp
++++ b/src/libretro/Main.cpp
+@@ -53,8 +53,8 @@
+ 	memset(info, 0, sizeof(*info));
+ 	info->geometry.base_width = DEFAULT_WIDTH;
+ 	info->geometry.base_height = DEFAULT_HEIGHT;
+-	info->geometry.max_width = 3840;
+-	info->geometry.max_height = 1080;
++	info->geometry.max_width = 7680;
++	info->geometry.max_height = 3240;
+ 	info->geometry.aspect_ratio = 16.0f / 9.0f;
+ 
+ 	info->timing.fps = DEFAULT_FPS;
+diff --git a/src/libretro/ScreenLayout.h b/src/libretro/ScreenLayout.h
+new file mode 100644
+--- /dev/null
++++ b/src/libretro/ScreenLayout.h
+@@ -0,0 +1,45 @@
++#pragma once
++
++#include <cstdint>
++
++namespace Libretro
++{
++	struct ScreenRect
++	{
++		uint32_t x, y, width, height;
++	};
++
++	struct DualScreenLayout
++	{
++		uint32_t width, height;
++		ScreenRect tv, pad;
++	};
++
++	// Landscape: full-size TV on top, centered DRC at half width AND height below.
++	// Portrait retains the existing equal-size side-by-side composition.
++	inline DualScreenLayout ComputeDualScreenLayout(uint32_t tvHeight, bool stacked)
++	{
++		const uint32_t width = tvHeight * 16 / 9;
++		if (stacked)
++		{
++			const uint32_t padWidth = width / 2;
++			const uint32_t padHeight = tvHeight / 2;
++			return {width, tvHeight + padHeight,
++				{0, 0, width, tvHeight}, {(width - padWidth) / 2, tvHeight, padWidth, padHeight}};
++		}
++		return {width * 2, tvHeight, {0, 0, width, tvHeight}, {width, 0, width, tvHeight}};
++	}
++
++	inline bool MapGamePadTouch(const DualScreenLayout& layout, float x, float y, float& padX, float& padY)
++	{
++		const float imageX = x * layout.width;
++		const float imageY = y * layout.height;
++		const auto& pad = layout.pad;
++		if (!pad.width || !pad.height || imageX < pad.x || imageY < pad.y ||
++			imageX > pad.x + pad.width || imageY > pad.y + pad.height)
++			return false;
++		padX = (imageX - pad.x) / pad.width;
++		padY = (imageY - pad.y) / pad.height;
++		return true;
++	}
++}
+diff --git a/tests/libretro/test_scanout.py b/tests/libretro/test_scanout.py
+--- a/tests/libretro/test_scanout.py
++++ b/tests/libretro/test_scanout.py
+@@ -23,6 +23,7 @@
+ #include <iostream>
+ #include <map>
+ #include <vector>
++#include "libretro/ScreenLayout.h"
+ using uint32 = uint32_t;
+ struct Pixels { int width, height; std::vector<int> data; };
+ std::map<VkImage, Pixels> images;
+@@ -80,6 +81,8 @@
+ namespace Libretro {
+     enum class ScreenViewMode { TV, Pad, SideBySide };
+     ScreenViewMode mode = ScreenViewMode::SideBySide;
++    bool stacked = false;
++    bool IsDualScreenStacked() { return stacked; }
+     ScreenViewMode GetScreenViewMode() { return mode; }
+     struct Interface {
+         void* handle = nullptr;
+@@ -170,6 +173,20 @@
+     VulkanRenderer c;
+     Libretro::mode = Libretro::ScreenViewMode::Pad;
+     scan(c, larger, false, 123); expect(0, 0);
++    // Landscape: TV fills the top two thirds; half-width/height DRC is centered below.
++    Libretro::mode = Libretro::ScreenViewMode::SideBySide;
++    Libretro::stacked = true;
++    scan(a, larger, false, 333);
++    const auto& stacked = images.at(Libretro::presented);
++    assert(stacked.width == 32 && stacked.height == 27);
++    for (int y = 0; y < stacked.height; ++y)
++        for (int x = 0; x < stacked.width; ++x) {
++            int expected = y < 18 ? 333 : (x >= 8 && x < 24 ? 111 : 0);
++            assert(stacked.data.at(y * stacked.width + x) == expected);
++        }
++    // Rotating back rewrites the entire output with the original horizontal layout.
++    Libretro::stacked = false;
++    scan(a, larger, false, 444); expect(444, 111);
+     std::cout << "PASS: shared textures, both orders, mode changes, missing DRC, release, resize\n";
+ }
+ """
+@@ -187,10 +204,10 @@
+         executable = work / ("scanout.exe" if os.name == "nt" else "scanout")
+         source.write_text(PRELUDE + production[start:end] + TESTS, encoding="utf-8")
+         if Path(compiler).stem.lower() in ("cl", "clang-cl"):
+-            command = [compiler, "/nologo", "/std:c++20", "/EHsc", f"/I{include}",
++            command = [compiler, "/nologo", "/std:c++20", "/EHsc", f"/I{include}", f"/I{ROOT / 'src'}",
+                        str(source), f"/Fe:{executable}"]
+         else:
+-            command = [compiler, "-std=c++20", "-I", str(include), str(source),
++            command = [compiler, "-std=c++20", "-I", str(include), "-I", str(ROOT / 'src'), str(source),
+                        "-o", str(executable)]
+         subprocess.run(command, cwd=work, check=True)
+         subprocess.run([str(executable)], check=True)
+diff --git a/tests/libretro/screen_layout_test.cpp b/tests/libretro/screen_layout_test.cpp
+new file mode 100644
+--- /dev/null
++++ b/tests/libretro/screen_layout_test.cpp
+@@ -0,0 +1,29 @@
++#include "../../src/libretro/ScreenLayout.h"
++#include <cassert>
++#include <cmath>
++#include <iostream>
++
++int main()
++{
++	const auto stacked = Libretro::ComputeDualScreenLayout(720, true);
++	assert(stacked.width == 1280 && stacked.height == 1080);
++	assert(stacked.tv.x == 0 && stacked.tv.y == 0 && stacked.tv.width == 1280 && stacked.tv.height == 720);
++	assert(stacked.pad.x == 320 && stacked.pad.y == 720 && stacked.pad.width == 640 && stacked.pad.height == 360);
++	float x = -1, y = -1;
++	assert(Libretro::MapGamePadTouch(stacked, .5f, 5.f / 6.f, x, y));
++	assert(std::abs(x - .5f) < .0001f && std::abs(y - .5f) < .0001f);
++	assert(Libretro::MapGamePadTouch(stacked, .25f, 2.f / 3.f, x, y));
++	assert(std::abs(x) < .0001f && std::abs(y) < .0001f);
++	assert(Libretro::MapGamePadTouch(stacked, .75f, 1.f, x, y));
++	assert(std::abs(x - 1.f) < .0001f && std::abs(y - 1.f) < .0001f);
++	assert(!Libretro::MapGamePadTouch(stacked, .5f, .3f, x, y)); // TV
++	assert(!Libretro::MapGamePadTouch(stacked, .2f, .8f, x, y)); // left margin
++	assert(!Libretro::MapGamePadTouch(stacked, .8f, .8f, x, y)); // right margin
++	assert(!Libretro::MapGamePadTouch(stacked, .5f, 1.1f, x, y)); // outside image
++	const auto portrait = Libretro::ComputeDualScreenLayout(720, false);
++	assert(portrait.width == 2560 && portrait.height == 720);
++	assert(Libretro::MapGamePadTouch(portrait, .75f, .5f, x, y));
++	assert(std::abs(x - .5f) < .0001f && std::abs(y - .5f) < .0001f);
++	assert(!Libretro::MapGamePadTouch(portrait, .25f, .5f, x, y));
++	std::cout << "PASS: stacked dimensions, centered half-size DRC, touch corners/center, rejected TV/margins, portrait\n";
++}

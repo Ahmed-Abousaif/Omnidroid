@@ -1,0 +1,499 @@
+diff --git a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
+index e189802c..4191c9b0 100644
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
+@@ -3436,6 +3436,8 @@ void VulkanRenderer::DestroyLibretroOutputImage(LibretroOutputImage& output)
+ void VulkanRenderer::DestroyLibretroOutputs()
+ {
+ 	m_libretroPendingIndex = -1;
++	DestroyLibretroOutputImage(m_libretroTVScanout);
++	DestroyLibretroOutputImage(m_libretroPadScanout);
+ 	for (auto& output : m_libretroOutputs)
+ 	{
+ 		DestroyLibretroOutputImage(output);
+@@ -3459,6 +3461,11 @@ bool VulkanRenderer::EnsureLibretroOutput(uint32 index, uint32 width, uint32 hei
+ 		if (vkCreateSemaphore(m_logicalDevice, &semInfo, nullptr, &output.semaphore) != VK_SUCCESS)
+ 			return false;
+ 	}
++	return EnsureLibretroImage(output, width, height);
++}
++
++bool VulkanRenderer::EnsureLibretroImage(LibretroOutputImage& output, uint32 width, uint32 height)
++{
+ 	if (output.image != VK_NULL_HANDLE && output.width == width && output.height == height)
+ 		return output.view != VK_NULL_HANDLE;
+ 
+@@ -3474,7 +3481,7 @@ bool VulkanRenderer::EnsureLibretroOutput(uint32 index, uint32 width, uint32 hei
+ 	imageInfo.arrayLayers = 1;
+ 	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+ 	imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+-	imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
++	imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+ 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+ 	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+ 	if (vkCreateImage(m_logicalDevice, &imageInfo, nullptr, &output.image) != VK_SUCCESS)
+@@ -3523,51 +3530,75 @@ bool VulkanRenderer::BlitLibretroOutput(LatteTextureViewVk* texViewVk, bool isPa
+ 	if (srcWidth <= 0 || srcHeight <= 0)
+ 		return false;
+ 
+-	// Cache latest texture info for seamless instant switching
+-	if (!isPad)
+-	{
+-		m_lastTVTexture.texture = baseImageTex;
+-		m_lastTVTexture.layer = (uint32)texViewVk->firstSlice;
+-		m_lastTVTexture.width = srcWidth;
+-		m_lastTVTexture.height = srcHeight;
+-	}
+-	else
++	draw_endRenderPass();
++
++	// Snapshot at scan-buffer copy time, before the game can reuse this render
++	// target for the other screen. Keeping a LatteTextureVk pointer is insufficient
++	// even when TV and DRC use different sizes or are submitted in reverse order.
++	auto& scanout = isPad ? m_libretroPadScanout : m_libretroTVScanout;
++	if (scanout.image != VK_NULL_HANDLE &&
++		(scanout.width != (uint32)srcWidth || scanout.height != (uint32)srcHeight))
+ 	{
+-		m_lastPadTexture.texture = baseImageTex;
+-		m_lastPadTexture.layer = (uint32)texViewVk->firstSlice;
+-		m_lastPadTexture.width = srcWidth;
+-		m_lastPadTexture.height = srcHeight;
++		// Unlike frontend output slots, scanouts have no frontend sync-index wait.
++		// Finish all uses before replacing an image after a resolution change.
++		Flush(true);
+ 	}
++	if (!EnsureLibretroImage(scanout, (uint32)srcWidth, (uint32)srcHeight))
++		return false;
+ 
+-	Libretro::ScreenViewMode mode = Libretro::GetScreenViewMode();
+-
+-	// In TV mode, if Pad arrives and we already have TV, skip redundant blit
+-	if (mode == Libretro::ScreenViewMode::TV && isPad && m_lastTVTexture.texture)
++	VkImageSubresourceRange scanoutRange{};
++	scanoutRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
++	scanoutRange.levelCount = 1;
++	scanoutRange.layerCount = 1;
++	barrier_image<TRANSFER_READ, TRANSFER_WRITE>(scanout.image, scanoutRange, scanout.layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
++
++	VkImageSubresourceLayers sourceLayers{};
++	sourceLayers.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
++	sourceLayers.baseArrayLayer = (uint32)texViewVk->firstSlice;
++	sourceLayers.layerCount = 1;
++	VkImageSubresourceRange sourceRange = scanoutRange;
++	sourceRange.baseArrayLayer = sourceLayers.baseArrayLayer;
++	const VkImageLayout oldSourceLayout = baseImageTex->GetImageLayout(sourceRange);
++	baseImageTex->GetImageObj()->flagForCurrentCommandBuffer();
++	barrier_image<IMAGE_READ | IMAGE_WRITE | TRANSFER_WRITE, TRANSFER_READ>(baseImageTex, sourceLayers, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
++
++	VkImageBlit scanoutCopy{};
++	scanoutCopy.srcSubresource = sourceLayers;
++	scanoutCopy.srcOffsets[1] = {srcWidth, srcHeight, 1};
++	scanoutCopy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
++	scanoutCopy.dstSubresource.layerCount = 1;
++	scanoutCopy.dstOffsets[1] = {srcWidth, srcHeight, 1};
++	vkCmdBlitImage(m_state.currentCommandBuffer,
++		baseImageTex->GetImageObj()->m_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
++		scanout.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &scanoutCopy, VK_FILTER_NEAREST);
++	barrier_image<TRANSFER_READ, IMAGE_READ | IMAGE_WRITE>(baseImageTex, sourceLayers, oldSourceLayout);
++	barrier_image<TRANSFER_WRITE, TRANSFER_READ>(scanout.image, scanoutRange, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
++	scanout.layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
++
++	const Libretro::ScreenViewMode mode = Libretro::GetScreenViewMode();
++	// Still capture DRC while displaying TV, so switching views uses saved pixels.
++	if (mode == Libretro::ScreenViewMode::TV && isPad && m_libretroTVScanout.image != VK_NULL_HANDLE)
+ 		return true;
+ 
+-	draw_endRenderPass();
+-
+-	static uint32 s_lastTVHeight = 720;
+-	if (m_lastTVTexture.height > 0)
+-		s_lastTVHeight = (uint32)m_lastTVTexture.height;
++	const uint32 tvHeight = m_libretroTVScanout.height > 0 ? m_libretroTVScanout.height : 720;
+ 
+ 	uint32 outWidth = 1280;
+ 	uint32 outHeight = 720;
+ 
+ 	if (mode == Libretro::ScreenViewMode::SideBySide)
+ 	{
+-		outHeight = (s_lastTVHeight > 0) ? s_lastTVHeight : 720;
++		outHeight = tvHeight;
+ 		outWidth = outHeight * 32 / 9;
+ 	}
+ 	else if (mode == Libretro::ScreenViewMode::Pad)
+ 	{
+-		outHeight = (s_lastTVHeight > 0) ? s_lastTVHeight : 720;
++		outHeight = tvHeight;
+ 		outWidth = outHeight * 16 / 9;
+ 	}
+ 	else // TV
+ 	{
+-		outWidth = (m_lastTVTexture.width > 0) ? (uint32)m_lastTVTexture.width : 1280;
+-		outHeight = (m_lastTVTexture.height > 0) ? (uint32)m_lastTVTexture.height : 720;
++		outWidth = m_libretroTVScanout.width > 0 ? m_libretroTVScanout.width : 1280;
++		outHeight = tvHeight;
+ 	}
+ 
+ 	uint32 index = 0;
+@@ -3589,90 +3620,59 @@ bool VulkanRenderer::BlitLibretroOutput(LatteTextureViewVk* texViewVk, bool isPa
+ 	dstRange.levelCount = 1;
+ 	dstRange.baseArrayLayer = 0;
+ 	dstRange.layerCount = 1;
+-	barrier_image<TRANSFER_READ, TRANSFER_WRITE>(output.image, dstRange, output.layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+-
+-	auto blitSingle = [&](LatteTextureVk* tex, uint32 layer, int w, int h, int dstX0, int dstX1, int dstY0, int dstY1) {
+-		if (!tex || !tex->GetImageObj()) return;
+-		tex->GetImageObj()->flagForCurrentCommandBuffer();
+-
+-		VkImageSubresourceLayers layers{};
+-		layers.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+-		layers.mipLevel = 0;
+-		layers.baseArrayLayer = layer;
+-		layers.layerCount = 1;
+-
+-		VkImageSubresourceRange srcRange{};
+-		srcRange.aspectMask = layers.aspectMask;
+-		srcRange.baseMipLevel = 0;
+-		srcRange.levelCount = 1;
+-		srcRange.baseArrayLayer = layer;
+-		srcRange.layerCount = 1;
+-		const VkImageLayout oldLayout = tex->GetImageLayout(srcRange);
+-		barrier_image<IMAGE_READ | IMAGE_WRITE | TRANSFER_WRITE, TRANSFER_READ>(tex, layers, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
++	barrier_image<IMAGE_READ | TRANSFER_READ, TRANSFER_WRITE>(output.image, dstRange, output.layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+ 
++	auto blitSingle = [&](const LibretroOutputImage& source, int dstX0, int dstX1) {
++		if (source.image == VK_NULL_HANDLE) return;
+ 		VkImageBlit region{};
+-		region.srcSubresource = layers;
++		region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
++		region.srcSubresource.layerCount = 1;
+ 		region.srcOffsets[0] = {0, 0, 0};
+-		region.srcOffsets[1] = {w, h, 1};
++		region.srcOffsets[1] = {(int)source.width, (int)source.height, 1};
+ 
+ 		region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+ 		region.dstSubresource.mipLevel = 0;
+ 		region.dstSubresource.baseArrayLayer = 0;
+ 		region.dstSubresource.layerCount = 1;
+-		region.dstOffsets[0] = {dstX0, dstY0, 0};
+-		region.dstOffsets[1] = {dstX1, dstY1, 1};
++		region.dstOffsets[0] = {dstX0, 0, 0};
++		region.dstOffsets[1] = {dstX1, (int)outHeight, 1};
+ 
+ 		vkCmdBlitImage(
+ 			m_state.currentCommandBuffer,
+-			tex->GetImageObj()->m_image,
++			source.image,
+ 			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+ 			output.image,
+ 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+ 			1,
+ 			&region,
+ 			VK_FILTER_LINEAR);
+-
+-		barrier_image<TRANSFER_READ, IMAGE_READ | IMAGE_WRITE>(tex, layers, oldLayout);
+ 	};
+ 
+-	if (mode == Libretro::ScreenViewMode::SideBySide)
++	// Missing screens must stay black, including after a display-mode change.
++	const bool missingTV = m_libretroTVScanout.image == VK_NULL_HANDLE;
++	const bool missingPad = m_libretroPadScanout.image == VK_NULL_HANDLE;
++	if ((mode == Libretro::ScreenViewMode::SideBySide && (missingTV || missingPad)) ||
++		(mode == Libretro::ScreenViewMode::Pad && missingPad) ||
++		(mode == Libretro::ScreenViewMode::TV && missingTV))
+ 	{
+-		if (!m_lastTVTexture.texture || !m_lastPadTexture.texture)
+-		{
+-			VkClearColorValue black{};
+-			vkCmdClearColorImage(m_state.currentCommandBuffer, output.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &black, 1, &dstRange);
+-		}
++		VkClearColorValue black{};
++		vkCmdClearColorImage(m_state.currentCommandBuffer, output.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &black, 1, &dstRange);
++		barrier_image<TRANSFER_WRITE, TRANSFER_WRITE>(output.image, dstRange, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
++	}
+ 
++	if (mode == Libretro::ScreenViewMode::SideBySide)
++	{
+ 		int midX = (int)(outWidth / 2);
+-		// Left: TV
+-		if (!isPad)
+-			blitSingle(baseImageTex, (uint32)texViewVk->firstSlice, srcWidth, srcHeight, 0, midX, 0, (int)outHeight);
+-		else if (m_lastTVTexture.texture)
+-			blitSingle(m_lastTVTexture.texture, m_lastTVTexture.layer, m_lastTVTexture.width, m_lastTVTexture.height, 0, midX, 0, (int)outHeight);
+-
+-		// Right: GamePad
+-		if (isPad)
+-			blitSingle(baseImageTex, (uint32)texViewVk->firstSlice, srcWidth, srcHeight, midX, (int)outWidth, 0, (int)outHeight);
+-		else if (m_lastPadTexture.texture)
+-			blitSingle(m_lastPadTexture.texture, m_lastPadTexture.layer, m_lastPadTexture.width, m_lastPadTexture.height, midX, (int)outWidth, 0, (int)outHeight);
++		blitSingle(m_libretroTVScanout, 0, midX);
++		blitSingle(m_libretroPadScanout, midX, (int)outWidth);
+ 	}
+ 	else if (mode == Libretro::ScreenViewMode::Pad)
+ 	{
+-		if (isPad)
+-			blitSingle(baseImageTex, (uint32)texViewVk->firstSlice, srcWidth, srcHeight, 0, (int)outWidth, 0, (int)outHeight);
+-		else if (m_lastPadTexture.texture)
+-			blitSingle(m_lastPadTexture.texture, m_lastPadTexture.layer, m_lastPadTexture.width, m_lastPadTexture.height, 0, (int)outWidth, 0, (int)outHeight);
+-		else
+-			blitSingle(baseImageTex, (uint32)texViewVk->firstSlice, srcWidth, srcHeight, 0, (int)outWidth, 0, (int)outHeight);
++		blitSingle(m_libretroPadScanout, 0, (int)outWidth);
+ 	}
+ 	else // TV
+ 	{
+-		if (!isPad)
+-			blitSingle(baseImageTex, (uint32)texViewVk->firstSlice, srcWidth, srcHeight, 0, (int)outWidth, 0, (int)outHeight);
+-		else if (m_lastTVTexture.texture)
+-			blitSingle(m_lastTVTexture.texture, m_lastTVTexture.layer, m_lastTVTexture.width, m_lastTVTexture.height, 0, (int)outWidth, 0, (int)outHeight);
+-		else
+-			blitSingle(baseImageTex, (uint32)texViewVk->firstSlice, srcWidth, srcHeight, 0, (int)outWidth, 0, (int)outHeight);
++		blitSingle(m_libretroTVScanout, 0, (int)outWidth);
+ 	}
+ 
+ 	barrier_image<TRANSFER_WRITE, IMAGE_READ>(output.image, dstRange, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+diff --git a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h
+index ce57efa0..e06f51cf 100644
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h
+@@ -679,17 +679,12 @@ private:
+ 	int m_libretroPendingIndex = -1;
+ 	void DestroyLibretroOutputImage(LibretroOutputImage& output);
+ 	void DestroyLibretroOutputs();
++	bool EnsureLibretroImage(LibretroOutputImage& output, uint32 width, uint32 height);
+ 	bool EnsureLibretroOutput(uint32 index, uint32 width, uint32 height);
+ 	bool BlitLibretroOutput(LatteTextureViewVk* texView, bool isPad);
+-	struct CachedLibretroTexture
+-	{
+-		LatteTextureVk* texture = nullptr;
+-		uint32 layer = 0;
+-		int width = 0;
+-		int height = 0;
+-	};
+-	CachedLibretroTexture m_lastTVTexture{};
+-	CachedLibretroTexture m_lastPadTexture{};
++	// Own the scanout pixels: games may render TV and DRC using the same texture.
++	LibretroOutputImage m_libretroTVScanout{};
++	LibretroOutputImage m_libretroPadScanout{};
+ 
+ 	// if VK_EXT_external_memory_host is supported we can (optionally) import all of the Wii U memory into a Vulkan memory object
+ 	// this allows us to skip any vertex/uniform caching logic and let the GPU directly read the memory from main RAM
+diff --git a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanSurfaceCopy.cpp b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanSurfaceCopy.cpp
+index 4ffd0487..e3e42012 100644
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanSurfaceCopy.cpp
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanSurfaceCopy.cpp
+@@ -825,11 +825,6 @@ void VulkanRenderer::surfaceCopy_copySurfaceWithFormatConversion(LatteTexture* s
+ // it is guaranteed that the texture is not in use and all associated resources (descriptor sets, framebuffers) can be destroyed safely
+ void VulkanRenderer::surfaceCopy_notifyTextureRelease(LatteTextureVk* hostTexture)
+ {
+-	if (m_lastTVTexture.texture == hostTexture)
+-		m_lastTVTexture.texture = nullptr;
+-	if (m_lastPadTexture.texture == hostTexture)
+-		m_lastPadTexture.texture = nullptr;
+-
+ 	for (auto& itr : m_copySurfacePipelineCache)
+ 	{
+ 		auto& pipelineInfo = itr.second;
+diff --git a/tests/libretro/test_scanout.py b/tests/libretro/test_scanout.py
+new file mode 100644
+--- /dev/null
++++ b/tests/libretro/test_scanout.py
+@@ -0,0 +1,200 @@
++"""Run the production compositor with CPU-backed Vulkan blits (no GPU required).
++
++Run from a compiler environment: python tests/libretro/test_scanout.py
++Uses cl on Windows or $CXX / c++ elsewhere. Vulkan synchronization and driver
++behavior still need on-device validation; these tests cover pixel ownership.
++"""
++
++import os
++from pathlib import Path
++import subprocess
++import tempfile
++
++
++ROOT = Path(__file__).resolve().parents[2]
++SOURCE = ROOT / "src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp"
++
++PRELUDE = r"""
++#define VK_NO_PROTOTYPES
++#include <vulkan/vulkan.h>
++#include <algorithm>
++#include <cassert>
++#include <cstdint>
++#include <iostream>
++#include <map>
++#include <vector>
++using uint32 = uint32_t;
++struct Pixels { int width, height; std::vector<int> data; };
++std::map<VkImage, Pixels> images;
++uintptr_t nextImage = 1;
++VkImage allocate(int width, int height) {
++    auto image = reinterpret_cast<VkImage>(nextImage++);
++    images[image] = {width, height, std::vector<int>(width * height, -1)};
++    return image;
++}
++void VKAPI_CALL vkCmdBlitImage(VkCommandBuffer, VkImage src, VkImageLayout,
++    VkImage dst, VkImageLayout, uint32 count, const VkImageBlit* regions, VkFilter) {
++    auto& from = images.at(src);
++    auto& to = images.at(dst);
++    for (uint32 i = 0; i < count; ++i) {
++        const auto& r = regions[i];
++        assert(r.srcSubresource.baseArrayLayer == 0);
++        for (int y = r.dstOffsets[0].y; y < r.dstOffsets[1].y; ++y)
++            for (int x = r.dstOffsets[0].x; x < r.dstOffsets[1].x; ++x) {
++                int sx = (x - r.dstOffsets[0].x) * r.srcOffsets[1].x /
++                    (r.dstOffsets[1].x - r.dstOffsets[0].x);
++                int sy = (y - r.dstOffsets[0].y) * r.srcOffsets[1].y /
++                    (r.dstOffsets[1].y - r.dstOffsets[0].y);
++                to.data.at(y * to.width + x) = from.data.at(sy * from.width + sx);
++            }
++    }
++}
++void VKAPI_CALL vkCmdClearColorImage(VkCommandBuffer, VkImage image,
++    VkImageLayout, const VkClearColorValue*, uint32, const VkImageSubresourceRange*) {
++    auto& pixels = images.at(image).data;
++    std::fill(pixels.begin(), pixels.end(), 0);
++}
++struct ImageObject {
++    VkImage m_image;
++    void flagForCurrentCommandBuffer() {}
++};
++struct LatteTextureVk {
++    ImageObject object;
++    VkImageLayout layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
++    LatteTextureVk(int w = 16, int h = 9) : object{allocate(w, h)} {}
++    ImageObject* GetImageObj() { return &object; }
++    void GetEffectiveSize(int& w, int& h, int) {
++        w = images.at(object.m_image).width; h = images.at(object.m_image).height;
++    }
++    VkImageLayout GetImageLayout(const VkImageSubresourceRange&) { return layout; }
++    void paint(int color) {
++        auto& pixels = images.at(object.m_image).data;
++        std::fill(pixels.begin(), pixels.end(), color);
++    }
++};
++struct LatteTextureViewVk {
++    LatteTextureVk* texture;
++    int firstSlice = 0;
++    LatteTextureVk* GetBaseImage() { return texture; }
++};
++namespace Libretro {
++    enum class ScreenViewMode { TV, Pad, SideBySide };
++    ScreenViewMode mode = ScreenViewMode::SideBySide;
++    ScreenViewMode GetScreenViewMode() { return mode; }
++    struct Interface {
++        void* handle = nullptr;
++        uint32 (*get_sync_index)(void*) = nullptr;
++        void (*wait_sync_index)(void*) = nullptr;
++    } interfaceInstance;
++    Interface* vulkan_iface = &interfaceInstance;
++    VkImage presented{};
++    void SetVulkanImage(VkImageView, VkImage image, VkFormat, uint32, uint32,
++        VkImageLayout, VkSemaphore) { presented = image; }
++}
++struct VulkanRenderer {
++    enum { TRANSFER_READ = 1, TRANSFER_WRITE = 2, IMAGE_READ = 4, IMAGE_WRITE = 8 };
++    struct { VkCommandBuffer currentCommandBuffer = reinterpret_cast<VkCommandBuffer>(1); } m_state;
++    struct LibretroOutputImage {
++        VkImage image{}; VkImageView view{}; VkSemaphore semaphore{};
++        VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
++        uint32 width = 0, height = 0;
++    };
++    static constexpr uint32 kLibretroOutputImages = 3;
++    LibretroOutputImage m_libretroOutputs[kLibretroOutputImages];
++    LibretroOutputImage m_libretroTVScanout, m_libretroPadScanout;
++    int m_libretroPendingIndex = -1, waits = 0;
++    void draw_endRenderPass() {}
++    void Flush(bool wait) { assert(wait); ++waits; }
++    bool EnsureLibretroImage(LibretroOutputImage& output, uint32 w, uint32 h) {
++        if (output.image && output.width == w && output.height == h) return true;
++        if (output.image) images.erase(output.image);
++        output.image = allocate(w, h); output.width = w; output.height = h;
++        output.layout = VK_IMAGE_LAYOUT_UNDEFINED;
++        return true;
++    }
++    bool EnsureLibretroOutput(uint32 index, uint32 w, uint32 h) {
++        return EnsureLibretroImage(m_libretroOutputs[index], w, h);
++    }
++    template<uint32, uint32>
++    void barrier_image(VkImage, VkImageSubresourceRange&, VkImageLayout, VkImageLayout) {}
++    template<uint32, uint32>
++    void barrier_image(LatteTextureVk* texture, VkImageSubresourceLayers&, VkImageLayout layout) {
++        texture->layout = layout;
++    }
++    bool BlitLibretroOutput(LatteTextureViewVk*, bool);
++};
++void expect(int left, int right) {
++    const auto& p = images.at(Libretro::presented);
++    for (int y = 0; y < p.height; ++y)
++        for (int x = 0; x < p.width; ++x)
++            assert(p.data.at(y * p.width + x) == (x < p.width / 2 ? left : right));
++}
++void scan(VulkanRenderer& renderer, LatteTextureVk& texture, bool pad, int color) {
++    texture.paint(color);
++    LatteTextureViewVk view{&texture};
++    assert(renderer.BlitLibretroOutput(&view, pad));
++    assert(texture.layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
++}
++"""
++
++TESTS = r"""
++int main() {
++    // Shared source, TV first. Repainting it must not change the saved TV pixels.
++    VulkanRenderer a; LatteTextureVk reused;
++    scan(a, reused, false, 11); expect(11, 0);
++    scan(a, reused, true, 22); expect(11, 22);
++    scan(a, reused, false, 33); expect(33, 22);
++    // The opposite submission order and repeated GamePad updates.
++    VulkanRenderer b;
++    scan(b, reused, true, 44); expect(0, 44);
++    scan(b, reused, false, 55); expect(55, 44);
++    scan(b, reused, true, 66); expect(55, 66);
++    // Capture while TV-only; switch before DRC submits another frame.
++    Libretro::mode = Libretro::ScreenViewMode::TV;
++    scan(a, reused, true, 77);
++    Libretro::mode = Libretro::ScreenViewMode::Pad;
++    scan(a, reused, false, 88); expect(77, 77);
++    Libretro::mode = Libretro::ScreenViewMode::SideBySide;
++    scan(a, reused, false, 99); expect(99, 77);
++    // Destroying the game's texture must not discard captured pixels.
++    images.erase(reused.object.m_image);
++    LatteTextureVk differentSize(8, 4);
++    scan(a, differentSize, true, 111); expect(99, 111);
++    assert(a.waits == 1);
++    // Resizing TV safely replaces its snapshot and adjusts composition size.
++    LatteTextureVk larger(32, 18);
++    scan(a, larger, false, 222); expect(222, 111);
++    assert(a.waits == 2);
++    assert(images.at(Libretro::presented).width == 64);
++    // An absent GamePad must be blank, never a fallback copy of the TV.
++    VulkanRenderer c;
++    Libretro::mode = Libretro::ScreenViewMode::Pad;
++    scan(c, larger, false, 123); expect(0, 0);
++    std::cout << "PASS: shared textures, both orders, mode changes, missing DRC, release, resize\n";
++}
++"""
++
++
++def main():
++    production = SOURCE.read_text(encoding="utf-8")
++    start = production.index("bool VulkanRenderer::BlitLibretroOutput(")
++    end = production.index("\nvoid VulkanRenderer::DrawBackbufferQuad(", start)
++    compiler = os.environ.get("CXX", "cl" if os.name == "nt" else "c++")
++    include = ROOT / "dependencies/Vulkan-Headers/include"
++    with tempfile.TemporaryDirectory(prefix="cemu-scanout-") as directory:
++        work = Path(directory)
++        source = work / "scanout.cpp"
++        executable = work / ("scanout.exe" if os.name == "nt" else "scanout")
++        source.write_text(PRELUDE + production[start:end] + TESTS, encoding="utf-8")
++        if Path(compiler).stem.lower() in ("cl", "clang-cl"):
++            command = [compiler, "/nologo", "/std:c++20", "/EHsc", f"/I{include}",
++                       str(source), f"/Fe:{executable}"]
++        else:
++            command = [compiler, "-std=c++20", "-I", str(include), str(source),
++                       "-o", str(executable)]
++        subprocess.run(command, cwd=work, check=True)
++        subprocess.run([str(executable)], check=True)
++
++
++if __name__ == "__main__":
++    main()

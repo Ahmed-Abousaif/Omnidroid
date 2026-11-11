@@ -47,6 +47,7 @@ class VulkanRetroView(
     private val isEmulationReady = AtomicBoolean(false)
     private val isGameLoaded = AtomicBoolean(false)
     private var isInitializationFailed = false
+    private val softwareKeyboard = NativeSoftwareKeyboard(this)
 
     override var audioEnabled: Boolean = true
         set(value) {
@@ -107,6 +108,7 @@ class VulkanRetroView(
     }
 
     override fun onDetachedFromWindow() {
+        softwareKeyboard.stop()
         super.onDetachedFromWindow()
         runCatching { context.unregisterComponentCallbacks(this) }
     }
@@ -234,18 +236,21 @@ class VulkanRetroView(
     }
 
     override fun onResume(owner: LifecycleOwner) {
+        if (!isInitializationFailed) softwareKeyboard.start()
         if (isGameLoaded.get()) {
             emulationThread?.resumeEmulation()
         }
     }
 
     override fun onPause(owner: LifecycleOwner) {
+        softwareKeyboard.stop()
         if (isGameLoaded.get()) {
             emulationThread?.pauseEmulation()
         }
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
+        softwareKeyboard.stop()
         runCatching { context.unregisterComponentCallbacks(this) }
         if (!stopEmulationThread()) {
             Timber.e("VulkanRetroView: skipping LibretroDroid.destroy because the emulation thread is still running")
@@ -265,12 +270,13 @@ class VulkanRetroView(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.actionMasked == MotionEvent.ACTION_DOWN && softwareKeyboard.reopenIfRequested()) return true
         val position = when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
                 normalizeTouchCoordinates(event.x, event.y)
             }
 
-            MotionEvent.ACTION_UP -> {
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 TOUCH_EVENT_OUTSIDE
             }
 
@@ -418,12 +424,16 @@ class VulkanRetroView(
 
         fun pauseEmulation() {
             isPaused.set(true)
-            runCatching { LibretroDroid.pause() }
+            postAction {
+                runCatching { LibretroDroid.pause() }
+            }
         }
 
         fun resumeEmulation() {
-            isPaused.set(false)
-            runCatching { LibretroDroid.resume() }
+            postAction {
+                runCatching { LibretroDroid.resume() }
+                isPaused.set(false)
+            }
         }
 
         fun onSurfaceChanged(width: Int, height: Int) {
@@ -434,6 +444,7 @@ class VulkanRetroView(
 
         fun postAction(action: () -> Unit) {
             pendingActions.add(action)
+            interrupt()
         }
 
         override fun run() {

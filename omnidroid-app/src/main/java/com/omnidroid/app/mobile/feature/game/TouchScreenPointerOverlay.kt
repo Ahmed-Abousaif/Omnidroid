@@ -47,59 +47,68 @@ fun TouchScreenPointerOverlay(
                 .fillMaxSize()
                 .then(
                     if (enabled) {
-                        Modifier.pointerInput(Unit) {
-                            awaitPointerEventScope {
-                                var stylusPointerId: PointerId? = null
+                        Modifier.pointerInput(touchScreenBoundsInRoot) {
+                            var stylusPointerId: PointerId? = null
+                            try {
+                                awaitPointerEventScope {
+                                    while (true) {
+                                        val event = awaitPointerEvent()
+                                        val view = currentRetroView.value ?: continue
+                                        val retroBounds = currentRetroBounds.value ?: continue
+                                        val touchBounds = currentTouchBounds.value ?: continue
 
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    val view = currentRetroView.value ?: continue
-                                    val retroBounds = currentRetroBounds.value ?: continue
-                                    val touchBounds = currentTouchBounds.value ?: continue
-
-                                    event.changes.forEach { change ->
-                                        // Local to this overlay, which is positioned on the viewport.
-                                        val rootPosition =
-                                            Offset(
-                                                touchBounds.left + change.position.x,
-                                                touchBounds.top + change.position.y,
-                                            )
-
-                                        when {
-                                            stylusPointerId == null &&
-                                                change.pressed &&
-                                                !change.previousPressed -> {
-                                                stylusPointerId = change.id
-                                                // Do not consume: PadKit is a sibling, not a parent,
-                                                // and consuming is unnecessary for viewport-only hits.
-                                                forwardTouch(
-                                                    retroView = view,
-                                                    retroViewBoundsInRoot = retroBounds,
-                                                    rootPosition = rootPosition,
-                                                    action = MotionEvent.ACTION_DOWN,
+                                        event.changes.forEach { change ->
+                                            // Local to this overlay, which is positioned on the viewport.
+                                            val rootPosition =
+                                                Offset(
+                                                    touchBounds.left + change.position.x,
+                                                    touchBounds.top + change.position.y,
                                                 )
-                                            }
 
-                                            change.id == stylusPointerId && change.pressed -> {
-                                                forwardTouch(
-                                                    retroView = view,
-                                                    retroViewBoundsInRoot = retroBounds,
-                                                    rootPosition = rootPosition,
-                                                    action = MotionEvent.ACTION_MOVE,
-                                                )
-                                            }
+                                            when {
+                                                stylusPointerId == null &&
+                                                    change.pressed &&
+                                                    !change.previousPressed -> {
+                                                    stylusPointerId = change.id
+                                                    // Do not consume: PadKit is a sibling, not a parent,
+                                                    // and consuming is unnecessary for viewport-only hits.
+                                                    forwardTouch(
+                                                        retroView = view,
+                                                        retroViewBoundsInRoot = retroBounds,
+                                                        rootPosition = rootPosition,
+                                                        action = MotionEvent.ACTION_DOWN,
+                                                    )
+                                                }
 
-                                            change.id == stylusPointerId && !change.pressed -> {
-                                                forwardTouch(
-                                                    retroView = view,
-                                                    retroViewBoundsInRoot = retroBounds,
-                                                    rootPosition = rootPosition,
-                                                    action = MotionEvent.ACTION_UP,
-                                                )
-                                                stylusPointerId = null
+                                                change.id == stylusPointerId && change.pressed -> {
+                                                    forwardTouch(
+                                                        retroView = view,
+                                                        retroViewBoundsInRoot = retroBounds,
+                                                        rootPosition = rootPosition,
+                                                        action = MotionEvent.ACTION_MOVE,
+                                                    )
+                                                }
+
+                                                change.id == stylusPointerId && !change.pressed -> {
+                                                    forwardTouch(
+                                                        retroView = view,
+                                                        retroViewBoundsInRoot = retroBounds,
+                                                        rootPosition = rootPosition,
+                                                        action = MotionEvent.ACTION_UP,
+                                                    )
+                                                    stylusPointerId = null
+                                                }
                                             }
                                         }
                                     }
+                                }
+                            } finally {
+                                // Layout changes and hiding the GamePad cancel this coroutine.
+                                // Release the emulated pen even when no ACTION_UP arrives.
+                                val view = currentRetroView.value
+                                val bounds = currentRetroBounds.value
+                                if (stylusPointerId != null && view != null && bounds != null) {
+                                    forwardTouch(view, bounds, Offset.Zero, MotionEvent.ACTION_UP)
                                 }
                             }
                         }

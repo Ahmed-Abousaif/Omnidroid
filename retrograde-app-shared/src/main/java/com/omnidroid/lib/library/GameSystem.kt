@@ -1888,7 +1888,7 @@ data class GameSystem(
                             skipDuplicateFrames = false,
                             supportedOnlyArchitectures = setOf("arm64-v8a"),
                             allowFrameCatchUp = false,
-                            forceStandardAudioBuffer = true,
+                            forceStandardAudioBuffer = false,
                         ),
                     ),
                     uniqueExtensions = listOf(),
@@ -1929,6 +1929,7 @@ data class GameSystem(
                                 listOf(
                                     CoreVariable("dolphin_renderer", "Hardware"),
                                     CoreVariable("dolphin_graphics_api", "OpenGL"),
+                                    CoreVariable("dolphin_call_back_audio_method", "0"),
                                     CoreVariable("dolphin_fastmem", "disabled"),
                                     CoreVariable("dolphin_main_cpu_thread", "disabled"),
                                     CoreVariable("dolphin_efb_to_texture", "enabled"),
@@ -1980,7 +1981,7 @@ data class GameSystem(
                                 ),
                             skipDuplicateFrames = false,
                             allowFrameCatchUp = false,
-                            forceStandardAudioBuffer = true,
+                            forceStandardAudioBuffer = false,
                         ),
                     ),
                     uniqueExtensions = listOf("gcm", "tgc"),
@@ -2014,6 +2015,7 @@ data class GameSystem(
                                 listOf(
                                     CoreVariable("dolphin_renderer", "Hardware"),
                                     CoreVariable("dolphin_graphics_api", "OpenGL"),
+                                    CoreVariable("dolphin_call_back_audio_method", "0"),
                                     CoreVariable("dolphin_fastmem", "disabled"),
                                     CoreVariable("dolphin_main_cpu_thread", "disabled"),
                                     CoreVariable("dolphin_efb_to_texture", "enabled"),
@@ -2090,7 +2092,7 @@ data class GameSystem(
                                 ),
                             skipDuplicateFrames = false,
                             allowFrameCatchUp = false,
-                            forceStandardAudioBuffer = true,
+                            forceStandardAudioBuffer = false,
                         ),
                     ),
                     uniqueExtensions = listOf("wbfs", "wad"),
@@ -2254,6 +2256,7 @@ data class GameSystem(
                                     CoreVariable("cemu_graphics_api", "Vulkan"),
                                     CoreVariable("cemu_cpu_mode", "recompiler_multi"),
                                     CoreVariable("cemu_screen_view", "tv"),
+                                    CoreVariable("cemu_dual_screen_layout", "stacked"),
                                     CoreVariable("cemu_audio_volume", "100"),
                                 ),
                             exposedSettings =
@@ -2346,6 +2349,7 @@ data class GameSystem(
                     ),
                     uniqueExtensions = listOf("wud", "wux", "wua", "rpx"),
                     supportedExtensions = listOf("wud", "wux", "wua", "iso", "rpx", "elf"),
+                    hasTouchScreen = true,
                     hasMultiDiskSupport = false,
                 ),
                 GameSystem(

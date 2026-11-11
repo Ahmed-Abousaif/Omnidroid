@@ -79,6 +79,8 @@ import kotlin.math.roundToInt
 import com.omnidroid.app.shared.game.BaseGameScreenViewModel
 import com.omnidroid.app.shared.game.viewmodel.GameViewModelTouchControls.Companion.MENU_LOADING_ANIMATION_MILLIS
 import com.omnidroid.lib.controller.ControllerConfig
+import com.omnidroid.lib.library.CoreID
+import com.omnidroid.app.shared.game.viewmodel.TouchScreenRegion
 import com.omnidroid.touchinput.R
 import com.omnidroid.touchinput.radial.OmnidroidPadTheme
 import com.omnidroid.touchinput.radial.LocalOmnidroidPadTheme
@@ -161,6 +163,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
         val gameAspectRatioState =
             viewModel.getGameAspectRatio().collectAsState(viewModel.system.aspectRatio)
+        val touchRegionState = viewModel.getTouchScreenRegion().collectAsState(TouchScreenRegion.FULL)
 
         LaunchedEffect(fullPos, viewPos) {
             val gameView = viewModel.retroGameView.retroGameViewFlow()
@@ -319,20 +322,32 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             isLandscape &&
                 (currentControllerConfig?.allowTouchOverlay ?: true) &&
                 isVisible
-        if (viewModel.hasTouchScreen && viewPos != null && !padsCoverViewport) {
+        // Cemu gets a capture surface only over the visible GamePad. This leaves
+        // the TV, black margins, and surrounding PadKit controls out of its hit area.
+        val isCemu = viewModel.systemCoreConfig.coreID == CoreID.CEMU
+        val region = touchRegionState.value
+        val touchBounds = if (viewPos != null && region != null) {
+            Rect(
+                viewPos.left + viewPos.width * region.left,
+                viewPos.top + viewPos.height * region.top,
+                viewPos.left + viewPos.width * region.right,
+                viewPos.top + viewPos.height * region.bottom,
+            )
+        } else null
+        if (viewModel.hasTouchScreen && touchBounds != null && (isCemu || !padsCoverViewport)) {
             TouchScreenPointerOverlay(
                 enabled = true,
                 retroView = retroViewState.value,
                 retroViewBoundsInRoot = fullPos,
-                touchScreenBoundsInRoot = viewPos,
+                touchScreenBoundsInRoot = touchBounds,
                 modifier =
                     Modifier
                         .offset {
-                            IntOffset(viewPos.left.roundToInt(), viewPos.top.roundToInt())
+                            IntOffset(touchBounds.left.roundToInt(), touchBounds.top.roundToInt())
                         }
                         .size(
-                            width = with(density) { viewPos.width.toDp() },
-                            height = with(density) { viewPos.height.toDp() },
+                            width = with(density) { touchBounds.width.toDp() },
+                            height = with(density) { touchBounds.height.toDp() },
                         ),
             )
         }

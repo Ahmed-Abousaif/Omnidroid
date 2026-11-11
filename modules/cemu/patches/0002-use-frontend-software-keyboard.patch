@@ -1,0 +1,247 @@
+diff --git a/src/Cafe/OS/libs/swkbd/swkbd.cpp b/src/Cafe/OS/libs/swkbd/swkbd.cpp
+index 1c1da71b..8bf384e0 100644
+--- a/src/Cafe/OS/libs/swkbd/swkbd.cpp
++++ b/src/Cafe/OS/libs/swkbd/swkbd.cpp
+@@ -583,6 +583,31 @@ void swkbd_inputStringChanged()
+ 	}
+ }
+ 
++std::u16string swkbd::getInputText()
++{
++	std::u16string text;
++	if (!swkbdInternalState) return text;
++	for (sint32 i = 0; i < swkbdInternalState->formStringLength; ++i)
++		text.push_back((char16_t)swkbdInternalState->formStringBuffer[i]);
++	return text;
++}
++
++void swkbd::setInputText(const std::u16string& text)
++{
++	if (!hasKeyboardInputHook()) return;
++	sint32 limit = swkbdInternalState->maxTextLength;
++	if (swkbdInternalState->keyboardOnlyMode)
++		limit = swkbdInternalState->keyboardArg.receiverArg.stringBufSize - 1;
++	limit = std::clamp(limit, 0, SWKBD_FORM_STRING_MAX_LENGTH - 1);
++	size_t length = std::min(text.size(), (size_t)limit);
++	if (length && text[length - 1] >= 0xd800 && text[length - 1] <= 0xdbff) --length;
++	for (size_t i = 0; i < length; ++i)
++		swkbdInternalState->formStringBuffer[i] = text[i];
++	swkbdInternalState->formStringLength = (sint32)length;
++	swkbdInternalState->formStringBuffer[length] = L'\0';
++	swkbd_inputStringChanged();
++}
++
+ void swkbd::keyInput(uint32 keyCode)
+ {
+ 	if (keyCode == BACKSPACE_KEYCODE || keyCode == BACKWARDS_DELETE_KEYCODE)
+diff --git a/src/Cafe/OS/libs/swkbd/swkbd.h b/src/Cafe/OS/libs/swkbd/swkbd.h
+index dbba3640..b27d8457 100644
+--- a/src/Cafe/OS/libs/swkbd/swkbd.h
++++ b/src/Cafe/OS/libs/swkbd/swkbd.h
+@@ -1,5 +1,7 @@
+ #pragma once
+ 
++#include <string>
++
+ #include "Cafe/OS/RPL/COSModule.h"
+ 
+ namespace swkbd
+@@ -21,6 +23,8 @@ namespace swkbd
+ 	void render(bool mainWindow);
+ 	bool hasKeyboardInputHook();
+ 	void keyInput(uint32 keyCode);
++	std::u16string getInputText();
++	void setInputText(const std::u16string& text);
+ 	void load();
+ 	COSModule* GetModule();
+ 
+diff --git a/src/libretro/CMakeLists.txt b/src/libretro/CMakeLists.txt
+index 1590b6ee..c23c184d 100644
+--- a/src/libretro/CMakeLists.txt
++++ b/src/libretro/CMakeLists.txt
+@@ -7,6 +7,8 @@ add_library(cemu_libretro SHARED
+     LibretroAudio.h
+     LibretroInput.cpp
+     LibretroInput.h
++    LibretroKeyboard.cpp
++    LibretroKeyboard.h
+     LibretroVulkan.cpp
+     LibretroVulkan.h
+     Main.cpp
+diff --git a/src/libretro/CemuLibretro.cpp b/src/libretro/CemuLibretro.cpp
+index 605c5faf..978ac951 100644
+--- a/src/libretro/CemuLibretro.cpp
++++ b/src/libretro/CemuLibretro.cpp
+@@ -2,6 +2,7 @@
+ #include "Environment.h"
+ #include "LibretroAudio.h"
+ #include "LibretroInput.h"
++#include "LibretroKeyboard.h"
+ #include "LibretroVulkan.h"
+ 
+ #include "Common/precompiled.h"
+@@ -90,6 +91,7 @@ namespace Libretro::Cemu
+ 		// 5. Initialize Audio & Input
+ 		Libretro::InitializeAudio();
+ 		Libretro::InitializeInput();
++		Libretro::InitializeSoftwareKeyboard();
+ 
+ 		// 6. Initialize Cafe System
+ 		CafeSystem::Initialize();
+@@ -159,6 +161,7 @@ namespace Libretro::Cemu
+ 	{
+ 		LogInfo("Unloading game and shutting down CafeSystem.");
+ 		CafeSystem::Shutdown();
++		Libretro::ShutdownSoftwareKeyboard();
+ 		Libretro::ShutdownAudio();
+ 		if (g_renderer)
+ 		{
+@@ -169,6 +172,7 @@ namespace Libretro::Cemu
+ 
+ 	void RunFrame()
+ 	{
++		Libretro::PollSoftwareKeyboard();
+ 		// Poll at the start so Cafe's async VPAD reads see fresh state immediately,
+ 		// then again after audio drain so presses that arrived mid-frame (common when
+ 		// heavy 3D titles keep the frontend busy) still land before we return.
+diff --git a/src/libretro/LibretroInput.cpp b/src/libretro/LibretroInput.cpp
+index d280b246..556d8039 100644
+--- a/src/libretro/LibretroInput.cpp
++++ b/src/libretro/LibretroInput.cpp
+@@ -1,4 +1,5 @@
+ #include "LibretroInput.h"
++#include "LibretroKeyboard.h"
+ #include "Cafe/OS/libs/swkbd/swkbd.h"
+ #include "Environment.h"
+ #include "input/InputManager.h"
+@@ -137,7 +138,7 @@ namespace Libretro
+ 			}
+ 		}
+ 
+-		if (m_port == 0 && swkbd::hasKeyboardInputHook())
++		if (m_port == 0 && swkbd::hasKeyboardInputHook() && !HasNativeSoftwareKeyboard())
+ 		{
+ 			static bool s_enter_down = false;
+ 			if (s_input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START) ||
+diff --git a/src/libretro/LibretroKeyboard.cpp b/src/libretro/LibretroKeyboard.cpp
+new file mode 100644
+--- /dev/null
++++ b/src/libretro/LibretroKeyboard.cpp
+@@ -0,0 +1,81 @@
++#include "Common/precompiled.h"
++#include "LibretroKeyboard.h"
++#include "Environment.h"
++#include "omni_text_input.h"
++#include "Cafe/OS/libs/swkbd/swkbd.h"
++#include <array>
++#include <mutex>
++
++namespace Libretro
++{
++	namespace
++	{
++		omni_text_input_interface s_interface{};
++		std::mutex s_mutex;
++		uint64_t s_nextSession = 0;
++		uint64_t s_session = 0;
++
++		class NativeKeyboard final : public swkbd::swkbdCallbacks
++		{
++			void showSoftwareKeyboard(const std::string&, sint32 maxLength) override
++			{
++				std::lock_guard lock(s_mutex);
++				s_session = ++s_nextSession;
++				const auto text = swkbd::getInputText();
++				const uint32_t limit = std::clamp(maxLength, 0, OMNI_TEXT_INPUT_CAPACITY - 1);
++				s_interface.show(s_session, reinterpret_cast<const uint16_t*>(text.data()),
++					(uint32_t)text.size(), limit);
++				LogInfo("Native software keyboard requested (limit=%u)", limit);
++			}
++
++			void hideSoftwareKeyboard() override
++			{
++				std::lock_guard lock(s_mutex);
++				if (s_session) s_interface.hide(s_session);
++				s_session = 0;
++			}
++		};
++	}
++
++	void InitializeSoftwareKeyboard()
++	{
++		s_interface = {};
++		s_interface.version = OMNI_TEXT_INPUT_VERSION;
++		if (EnvCb(OMNI_ENVIRONMENT_GET_TEXT_INPUT_INTERFACE, &s_interface) &&
++			s_interface.show && s_interface.hide && s_interface.poll)
++			swkbd::setSwkbdCallbacks(std::make_shared<NativeKeyboard>());
++		else
++			s_interface = {};
++	}
++
++	bool HasNativeSoftwareKeyboard()
++	{
++		return s_interface.show != nullptr;
++	}
++
++	void ShutdownSoftwareKeyboard()
++	{
++		std::lock_guard lock(s_mutex);
++		if (s_session && s_interface.hide) s_interface.hide(s_session);
++		s_session = 0;
++		swkbd::setSwkbdCallbacks(nullptr);
++		s_interface = {};
++	}
++
++	void PollSoftwareKeyboard()
++	{
++		std::lock_guard lock(s_mutex);
++		if (!s_session || !s_interface.poll || !swkbd::hasKeyboardInputHook()) return;
++		std::array<uint16_t, OMNI_TEXT_INPUT_CAPACITY> text{};
++		uint32_t length = 0;
++		bool confirmed = false;
++		if (!s_interface.poll(s_session, text.data(), (uint32_t)text.size(), &length, &confirmed)) return;
++		if (length >= text.size()) return;
++		swkbd::setInputText(std::u16string(text.begin(), text.begin() + length));
++		if (confirmed)
++		{
++			swkbd::keyInput(swkbd::RETURN_KEYCODE);
++			LogInfo("Native software keyboard confirmed");
++		}
++	}
++}
+diff --git a/src/libretro/LibretroKeyboard.h b/src/libretro/LibretroKeyboard.h
+new file mode 100644
+--- /dev/null
++++ b/src/libretro/LibretroKeyboard.h
+@@ -0,0 +1,9 @@
++#pragma once
++
++namespace Libretro
++{
++	void InitializeSoftwareKeyboard();
++	void ShutdownSoftwareKeyboard();
++	void PollSoftwareKeyboard();
++	bool HasNativeSoftwareKeyboard();
++}
+diff --git a/src/libretro/omni_text_input.h b/src/libretro/omni_text_input.h
+new file mode 100644
+--- /dev/null
++++ b/src/libretro/omni_text_input.h
+@@ -0,0 +1,17 @@
++#pragma once
++
++#include <stdint.h>
++
++// Omnidroid private libretro extension. Keep this ABI identical in the core.
++// UTF-16 lengths exclude the terminator. Pointers are valid only for the call.
++#define OMNI_ENVIRONMENT_GET_TEXT_INPUT_INTERFACE (0x20000 | 0x4f01)
++#define OMNI_TEXT_INPUT_VERSION 1
++#define OMNI_TEXT_INPUT_CAPACITY 4096
++
++struct omni_text_input_interface
++{
++    uint32_t version;
++    void (*show)(uint64_t session, const uint16_t* text, uint32_t length, uint32_t max_length);
++    void (*hide)(uint64_t session);
++    bool (*poll)(uint64_t session, uint16_t* text, uint32_t capacity, uint32_t* length, bool* confirmed);
++};

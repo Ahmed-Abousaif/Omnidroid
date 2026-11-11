@@ -314,7 +314,7 @@
     <string name="setting_cemu_screen_view">Screen View</string>
     <string name="value_cemu_screen_tv">TV View</string>
     <string name="value_cemu_screen_pad">GamePad View</string>
-    <string name="value_cemu_screen_side_by_side">Side by Side</string>
+    <string name="value_cemu_screen_side_by_side">Dual View</string>
     <string name="setting_cemu_audio_volume">Audio Volume</string>
     <string name="value_cemu_volume_100">100%</string>
     <string name="value_cemu_volume_80">80%</string>

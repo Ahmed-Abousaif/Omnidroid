@@ -149,6 +149,11 @@ class GameViewModelTouchControls(
         }.distinctUntilChanged()
     }
 
+    fun getTouchScreenRegion(): Flow<TouchScreenRegion?> =
+        combine(screenOrientation, screenLayoutRevision) { orientation, _ ->
+            screenLayoutController.getTouchScreenRegion(orientation)
+        }.distinctUntilChanged()
+
     fun refreshLayout() {
         screenLayoutRevision.value++
     }
