@@ -12,7 +12,7 @@ data class ControllerHints(
     companion object {
         fun library(
             switchConsoles: String,
-            zoom: String,
+            zoom: String? = null,
             select: String,
             back: String,
             options: String,
@@ -20,9 +20,9 @@ data class ControllerHints(
         ) =
             ControllerHints(
                 left =
-                    listOf(
+                    listOfNotNull(
                         ControllerHint(listOf("L1", "R1"), switchConsoles),
-                        ControllerHint(listOf("L2", "R2"), zoom),
+                        zoom?.let { ControllerHint(listOf("L2", "R2"), it) },
                     ),
                 right =
                     listOf(

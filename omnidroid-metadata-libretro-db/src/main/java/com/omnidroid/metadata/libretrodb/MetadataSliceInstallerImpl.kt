@@ -65,6 +65,7 @@ class MetadataSliceInstallerImpl(
                     .distinct()
                     .filter { it !in remainingSourceCores }
                     .forEach { coreName -> dao.deleteVerified(coreName) }
+                database.invalidationTracker.refreshVersionsAsync()
             }
         }
     }
@@ -241,6 +242,7 @@ class MetadataSliceInstallerImpl(
             } finally {
                 runCatching { db.execSQL("DETACH DATABASE slice") }
             }
+            database.invalidationTracker.refreshVersionsAsync()
         }
         sqlite.delete()
     }

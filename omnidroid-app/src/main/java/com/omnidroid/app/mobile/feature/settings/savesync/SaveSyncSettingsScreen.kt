@@ -31,12 +31,13 @@ import com.omnidroid.R
 import com.omnidroid.app.shared.savesync.SaveBackupManager
 import com.omnidroid.app.shared.savesync.SaveBackupWork
 import com.omnidroid.app.shared.savesync.SaveSyncWork
-import com.omnidroid.app.utils.android.settings.OmnidroidCardSettingsGroup
+import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsList
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsListMultiSelect
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsPage
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
+import com.omnidroid.app.utils.android.settings.SettingsHorizontalDivider
 import com.omnidroid.app.utils.android.settings.booleanPreferenceState
 import com.omnidroid.app.utils.android.settings.indexPreferenceState
 import com.omnidroid.app.utils.android.settings.stringsSetPreferenceState
@@ -75,7 +76,7 @@ fun SaveSyncSettingsScreen(
     OmnidroidSettingsPage(modifier = modifier.fillMaxSize()) {
         if (saveSyncState.providers.isNotEmpty()) {
             saveSyncState.providers.forEach { provider ->
-                OmnidroidCardSettingsGroup(title = { Text(provider.displayName) }) {
+                OmnidroidSettingsGroup(title = { Text(provider.displayName) }) {
                     OmnidroidSettingsMenuLink(
                         title = { Text(provider.accountLabel.ifBlank { stringResource(R.string.settings_save_sync_not_configured) }) },
                         subtitle = {
@@ -114,13 +115,14 @@ fun SaveSyncSettingsScreen(
                         )
                     }
                 }
+                SettingsHorizontalDivider()
             }
 
-            OmnidroidCardSettingsGroup(title = { Text(stringResource(R.string.settings_title_save_sync)) }) {
+            OmnidroidSettingsGroup(titleRes = R.string.settings_title_save_sync) {
                 val configured = saveSyncState.isConfigured
                 OmnidroidSettingsSwitch(
                     state = booleanPreferenceState(R.string.pref_key_save_sync_enable, default = false),
-                    title = { Text(text = stringResource(id = R.string.settings_save_sync_include_saves)) },
+                    titleRes = R.string.settings_save_sync_include_saves,
                     subtitle = {
                         Text(
                             text =
@@ -138,8 +140,8 @@ fun SaveSyncSettingsScreen(
                             stringResource(R.string.pref_key_save_sync_cores),
                             emptySet(),
                         ),
-                    title = { Text(text = stringResource(id = R.string.settings_save_sync_include_states)) },
-                    subtitle = { Text(text = stringResource(id = R.string.settings_save_sync_include_states_description)) },
+                    titleRes = R.string.settings_save_sync_include_states,
+                    subtitleRes = R.string.settings_save_sync_include_states_description,
                     entryValues = saveSyncState.coreNames,
                     entries = saveSyncState.coreVisibleNames,
                     enabled = configured && !isSyncInProgress,
@@ -147,8 +149,8 @@ fun SaveSyncSettingsScreen(
                 )
                 OmnidroidSettingsSwitch(
                     state = booleanPreferenceState(R.string.pref_key_save_sync_auto, default = false),
-                    title = { Text(text = stringResource(id = R.string.settings_save_sync_enable_auto)) },
-                    subtitle = { Text(text = stringResource(id = R.string.settings_save_sync_enable_auto_description)) },
+                    titleRes = R.string.settings_save_sync_enable_auto,
+                    subtitleRes = R.string.settings_save_sync_enable_auto_description,
                     enabled = configured && !isSyncInProgress,
                     onCheckedChange = { enabled ->
                         if (enabled) {
@@ -174,7 +176,7 @@ fun SaveSyncSettingsScreen(
                     enabled = configured && !isSyncInProgress,
                 )
                 OmnidroidSettingsMenuLink(
-                    title = { Text(text = stringResource(id = R.string.settings_save_sync_refresh)) },
+                    titleRes = R.string.settings_save_sync_refresh,
                     subtitle = {
                         Text(
                             text =
@@ -188,10 +190,11 @@ fun SaveSyncSettingsScreen(
                     onClick = { SaveSyncWork.enqueueManualWork(context) },
                 )
             }
+            SettingsHorizontalDivider()
         }
 
         // Backup & Migration Section
-        OmnidroidCardSettingsGroup(title = { Text(stringResource(R.string.settings_section_backup_and_migration)) }) {
+        OmnidroidSettingsGroup(titleRes = R.string.settings_section_backup_and_migration) {
             // Direct Lemuroid 1-Tap Migration (shown if detected)
             val stats = saveSyncState.lemuroidStats
             if (stats != null && stats.totalCount > 0) {

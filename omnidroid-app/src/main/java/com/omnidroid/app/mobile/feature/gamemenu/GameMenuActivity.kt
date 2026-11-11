@@ -1,51 +1,22 @@
-@file:Suppress("UNUSED", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-
 package com.omnidroid.app.mobile.feature.gamemenu
 
+import com.omnidroid.app.mobile.shared.compose.sidemenu.SideMenuDestination
+import com.omnidroid.app.mobile.shared.compose.sidemenu.validateSideMenuDestinations
+import com.omnidroid.app.mobile.shared.compose.sidemenu.SideMenuNavHost
+import com.omnidroid.app.mobile.shared.compose.sidemenu.SideMenuScaffold
+import com.omnidroid.app.mobile.shared.compose.sidemenu.rememberSideMenuState
 import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.activity.SystemBarStyle
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusGroup
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -55,15 +26,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.omnidroid.R
@@ -72,17 +40,12 @@ import com.omnidroid.app.mobile.feature.gamemenu.coreoptions.GameMenuCoreOptions
 import com.omnidroid.app.mobile.feature.gamemenu.states.GameMenuStatesScreen
 import com.omnidroid.app.mobile.feature.gamemenu.states.GameMenuStatesViewModel
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
-import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
-import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
-import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
 import com.omnidroid.app.mobile.shared.controller.ControllerHintBar
 import com.omnidroid.app.mobile.shared.controller.ControllerHintBarRowHeight
 import com.omnidroid.app.mobile.shared.controller.ControllerHints
 import com.omnidroid.app.mobile.shared.controller.ControllerInputBridge
 import com.omnidroid.app.mobile.shared.controller.ControllerNavigationState
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
-import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.shared.GameMenuContract
 import com.omnidroid.app.shared.coreoptions.OmnidroidCoreOption
 import com.omnidroid.app.shared.input.InputDeviceManager
@@ -96,7 +59,6 @@ import com.omnidroid.lib.saves.StatesManager
 import com.omnidroid.lib.saves.StatesPreviewManager
 import com.omnidroid.lib.savesync.SaveSyncManager
 import com.omnidroid.touchinput.radial.sensors.TiltConfiguration
-import kotlinx.coroutines.yield
 import java.security.InvalidParameterException
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -116,21 +78,6 @@ class GameMenuActivity : RetrogradeComponentActivity() {
     lateinit var saveSyncManager: SaveSyncManager
 
     private val controllerBridge = ControllerInputBridge()
-
-    data class GameMenuRequest(
-        val coreOptions: List<OmnidroidCoreOption>,
-        val advancedCoreOptions: List<OmnidroidCoreOption>,
-        val game: Game,
-        val coreConfig: SystemCoreConfig,
-        val audioEnabled: Boolean,
-        val fastForwardSupported: Boolean,
-        val frameSpeed: Int,
-        val numDisks: Int,
-        val currentDisk: Int,
-        val currentTiltConfiguration: TiltConfiguration,
-        val allTiltConfigurations: List<TiltConfiguration>,
-        val editTouchControlsSupported: Boolean = true,
-    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(
@@ -192,286 +139,111 @@ class GameMenuActivity : RetrogradeComponentActivity() {
     @Composable
     private fun GameMenuScreen(gameMenuRequest: GameMenuRequest) {
         AppTheme(syncSystemBars = false) {
+            remember {
+                validateSideMenuDestinations(GameMenuRoute.entries.map { SideMenuDestination(it.route, it.titleId, it.parent?.route) })
+            }
             val navController = rememberNavController()
             val controllerNav = remember { ControllerNavigationState() }
-            val panelState =
-                remember {
-                    MutableTransitionState(false).apply { targetState = true }
-                }
-            var pendingResult by remember { mutableStateOf<Intent.() -> Unit>({}) }
-            var hasOpened by remember { mutableStateOf(false) }
-            val panelContentColor = chromeContentColor
-            val panelDivider = chromeColors.divider
-            val panelBackground = homeChromeColor
-
-            val currentRoute =
-                navController.currentBackStackEntryAsState().value?.destination?.route
-                    ?.let { GameMenuRoute.findByRoute(it) }
-                    ?: GameMenuRoute.HOME
-
-            val gamepadConnected =
-                inputDeviceManager.getGamePadsObservable()
-                    .collectAsState(emptyList())
-                    .value
-                    .any { it.getOmnidroidInputDevice() is OmnidroidInputDeviceGamePad }
-
-            val hints =
-                ControllerHints.standard(
-                    select = stringResource(R.string.controller_hint_select),
-                    back = stringResource(R.string.controller_hint_back),
-                )
-
-            fun requestClose(block: Intent.() -> Unit = {}) {
-                if (!panelState.targetState) return
-                pendingResult = block
-                panelState.targetState = false
+            val menu = rememberSideMenuState()
+            var pendingCommand by remember { mutableStateOf<InGameMenuCommand?>(null) }
+            val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+                ?.let { GameMenuRoute.findByRoute(it) } ?: GameMenuRoute.HOME
+            val gamePads = remember { inputDeviceManager.getGamePadsObservable() }
+            val gamepadConnected = gamePads.collectAsState(emptyList()).value
+                .any { it.getOmnidroidInputDevice() is OmnidroidInputDeviceGamePad }
+            val hints = ControllerHints.standard(
+                select = stringResource(R.string.controller_hint_select),
+                back = stringResource(R.string.controller_hint_back),
+            )
+            fun requestClose(command: InGameMenuCommand) {
+                if (!menu.transition.targetState) return
+                pendingCommand = command
+                menu.closeThen()
             }
-
-            LaunchedEffect(panelState.currentState, panelState.targetState, panelState.isIdle) {
-                if (panelState.currentState) hasOpened = true
-                if (hasOpened && panelState.isIdle && !panelState.currentState && !panelState.targetState) {
-                    onResult(pendingResult)
-                }
-                if (panelState.targetState && panelState.isIdle) {
-                    yield()
-                    runCatching { controllerNav.contentFocusRequester?.requestFocus() }
-                }
-            }
-
-            LaunchedEffect(currentRoute) {
-                controllerNav.setHints(hints)
-                yield()
-                runCatching { controllerNav.contentFocusRequester?.requestFocus() }
-            }
-
-            controllerNav.onBack = {
-                if (currentRoute.canGoBack()) {
-                    navController.popBackStack()
-                } else {
-                    requestClose()
-                }
-            }
-
             SideEffect {
                 controllerBridge.navigation = controllerNav
+                controllerNav.onBack = {
+                    if (currentRoute.canGoBack()) navController.popBackStack() else menu.closeThen()
+                }
+                controllerNav.setHints(hints)
             }
-
-            BackHandler(enabled = !currentRoute.canGoBack()) {
-                requestClose()
-            }
-
-            val scrimAlpha by animateFloatAsState(
-                targetValue = if (panelState.targetState) 0.58f else 0f,
-                animationSpec = tween(durationMillis = if (panelState.targetState) 280 else 220),
-                label = "gameMenuScrim",
-            )
-
-            CompositionLocalProvider(
-                LocalControllerNavigation provides controllerNav,
-            ) {
-                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                    val panelWidth =
-                        remember(maxWidth) {
-                            maxOf(320.dp, minOf(maxWidth * 0.42f, 440.dp))
-                        }
-
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .background(Color.Black.copy(alpha = scrimAlpha))
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                ) { requestClose() },
-                    )
-
-                    AnimatedVisibility(
-                        visibleState = panelState,
-                        modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-                        enter =
-                            slideInHorizontally(
-                                animationSpec = tween(280, easing = FastOutSlowInEasing),
-                            ) { it },
-                        exit =
-                            slideOutHorizontally(
-                                animationSpec = tween(220, easing = FastOutSlowInEasing),
-                            ) { it },
+            CompositionLocalProvider(LocalControllerNavigation provides controllerNav) {
+                Box(Modifier.fillMaxSize()) {
+                    SideMenuScaffold(
+                        state = menu,
+                        title = stringResource(currentRoute.titleId),
+                        canGoBack = currentRoute.canGoBack(),
+                        onBack = { navController.popBackStack() },
+                        bottomReserved = if (gamepadConnected) ControllerHintBarRowHeight else 0.dp,
+                        onClosed = { onResult { pendingCommand?.writeTo(this) } },
                     ) {
-                        Surface(
-                            modifier = Modifier.fillMaxHeight().width(panelWidth),
-                            color = panelBackground,
-                            contentColor = panelContentColor,
-                            shape = RectangleShape,
-                            tonalElevation = 0.dp,
-                            shadowElevation = 0.dp,
-                        ) {
-                            CompositionLocalProvider(LocalContentColor provides panelContentColor) {
-                            Row(modifier = Modifier.fillMaxSize()) {
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .width(3.dp)
-                                            .fillMaxHeight()
-                                            .background(LibraryNeonGreen),
+                        SideMenuNavHost(navController, GameMenuRoute.HOME.route) {
+                            composable(GameMenuRoute.HOME) {
+                                GameMenuHomeScreen(
+                                    navController,
+                                    gameMenuRequest,
+                                    onCommand = { requestClose(it) },
+                                    saveSyncSupported = saveSyncManager.isSupported(),
                                 )
-                                Column(
-                                    modifier =
-                                        Modifier
-                                            .weight(1f)
-                                            .fillMaxHeight()
-                                            .padding(
-                                                bottom =
-                                                    if (gamepadConnected) ControllerHintBarRowHeight else 0.dp,
-                                            ),
-                                ) {
-                                    GameMenuHeader(
-                                        title = stringResource(currentRoute.titleId),
-                                        canGoBack = currentRoute.canGoBack(),
-                                        onBack = { navController.popBackStack() },
-                                        onClose = { requestClose() },
-                                    )
-                                    Box(
-                                        modifier =
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .height(1.dp)
-                                                .background(panelDivider),
-                                    )
-                                    NavHost(
-                                        modifier =
-                                            Modifier
-                                                .fillMaxSize()
-                                                .focusGroup(),
-                                        navController = navController,
-                                        startDestination = GameMenuRoute.HOME.route,
-                                        enterTransition = { fadeIn(animationSpec = tween(160)) },
-                                        exitTransition = { fadeOut(animationSpec = tween(160)) },
-                                        predictivePopEnterTransition = { _ -> fadeIn(animationSpec = tween(160)) },
-                                        predictivePopExitTransition = { _ -> fadeOut(animationSpec = tween(160)) },
-                                    ) {
-                                        composable(GameMenuRoute.HOME) {
-                                            GameMenuHomeScreen(
-                                                navController,
-                                                gameMenuRequest,
-                                                onResult = { requestClose(it) },
-                                                saveSyncSupported = saveSyncManager.isSupported(),
-                                            )
-                                        }
-                                        composable(GameMenuRoute.SAVE) {
-                                            GameMenuStatesScreen(
-                                                viewModel(
-                                                    factory =
-                                                        GameMenuStatesViewModel.Factory(
-                                                            application,
-                                                            gameMenuRequest,
-                                                            statesManager,
-                                                            false,
-                                                            statesPreviewManager,
-                                                        ),
-                                                ),
-                                                onStateClicked = {
-                                                    requestClose { putExtra(GameMenuContract.RESULT_SAVE, it) }
-                                                },
-                                            )
-                                        }
-                                        composable(GameMenuRoute.LOAD) {
-                                            GameMenuStatesScreen(
-                                                viewModel(
-                                                    factory =
-                                                        GameMenuStatesViewModel.Factory(
-                                                            application,
-                                                            gameMenuRequest,
-                                                            statesManager,
-                                                            true,
-                                                            statesPreviewManager,
-                                                        ),
-                                                ),
-                                                onStateClicked = {
-                                                    requestClose { putExtra(GameMenuContract.RESULT_LOAD, it) }
-                                                },
-                                            )
-                                        }
-                                        composable(GameMenuRoute.OPTIONS) {
-                                            GameMenuCoreOptionsScreen(
-                                                viewModel(
-                                                    factory =
-                                                        GameMenuCoreOptionsViewModel.Factory(
-                                                            inputDeviceManager,
-                                                        ),
-                                                ),
-                                                gameMenuRequest,
-                                            )
-                                        }
-                                    }
-                                }
                             }
+                            composable(GameMenuRoute.SAVE) {
+                                GameMenuStatesScreen(
+                                    viewModel(
+                                        factory =
+                                            GameMenuStatesViewModel.Factory(
+                                                application,
+                                                gameMenuRequest,
+                                                statesManager,
+                                                false,
+                                                statesPreviewManager,
+                                            ),
+                                    ),
+                                    onStateClicked = {
+                                        requestClose(InGameMenuCommand.Save(it))
+                                    },
+                                    onNewStateClicked = { requestClose(InGameMenuCommand.SaveNew) },
+                                )
+                            }
+                            composable(GameMenuRoute.LOAD) {
+                                GameMenuStatesScreen(
+                                    viewModel(
+                                        factory =
+                                            GameMenuStatesViewModel.Factory(
+                                                application,
+                                                gameMenuRequest,
+                                                statesManager,
+                                                true,
+                                                statesPreviewManager,
+                                            ),
+                                    ),
+                                    onStateClicked = {
+                                        requestClose(InGameMenuCommand.Load(it))
+                                    },
+                                    onAutoSaveClicked = { requestClose(InGameMenuCommand.LoadAutoSave) },
+                                )
+                            }
+                            composable(GameMenuRoute.OPTIONS) {
+                                GameMenuCoreOptionsScreen(
+                                    viewModel(
+                                        factory =
+                                            GameMenuCoreOptionsViewModel.Factory(
+                                                inputDeviceManager,
+                                            ),
+                                    ),
+                                    gameMenuRequest,
+                                )
                             }
                         }
                     }
-
                     if (gamepadConnected) {
                         ControllerHintBar(
-                            visible = panelState.targetState,
+                            visible = menu.transition.targetState,
                             hints = controllerNav.hints.value,
                             modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
                         )
                     }
                 }
             }
-        }
-    }
-
-    @Composable
-    private fun GameMenuHeader(
-        title: String,
-        canGoBack: Boolean,
-        onBack: () -> Unit,
-        onClose: () -> Unit,
-    ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val headerContentColor = chromeContentColor
-            Surface(
-                onClick = { if (canGoBack) onBack() else onClose() },
-                modifier =
-                    Modifier
-                        .size(40.dp)
-                        .controllerFocusGlow(CircleShape),
-                shape = CircleShape,
-                color = Color.Transparent,
-                contentColor = headerContentColor,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    if (canGoBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
-                        )
-                    } else {
-                        Icon(
-                            Icons.Filled.Close,
-                            contentDescription = stringResource(R.string.close),
-                        )
-                    }
-                }
-            }
-            Text(
-                text = title,
-                style =
-                    MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-                color = headerContentColor,
-                modifier = Modifier.padding(start = 8.dp),
-                maxLines = 1,
-            )
         }
     }
 

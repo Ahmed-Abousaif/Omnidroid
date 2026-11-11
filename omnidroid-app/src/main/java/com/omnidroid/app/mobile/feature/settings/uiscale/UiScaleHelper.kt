@@ -12,10 +12,6 @@ object UiScaleHelper {
         return MIN_SCALE + step.coerceIn(0, TOTAL_INCREMENTS) * SCALE_STEP
     }
 
-    fun stepForScale(scale: Float): Int {
-        return ((scale - MIN_SCALE) / SCALE_STEP).roundToInt().coerceIn(0, TOTAL_INCREMENTS)
-    }
-
     fun percentageForStep(step: Int): Int {
         return (scaleForStep(step) * 100).roundToInt()
     }

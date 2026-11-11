@@ -50,15 +50,17 @@ class SettingsViewModel(
         val isSaveSyncSupported: Boolean = false,
     )
 
-    val indexingInProgress = PendingOperationsMonitor(context).anyLibraryOperationInProgress()
+    private val operations = PendingOperationsMonitor(context)
 
-    val directoryScanInProgress = PendingOperationsMonitor(context).isDirectoryScanInProgress()
+    val indexingInProgress = operations.anyLibraryOperationInProgress()
+
+    val directoryScanInProgress = operations.isDirectoryScanInProgress()
 
     val uiState =
         sharedPreferences.getString(context.getString(com.omnidroid.lib.R.string.pref_key_extenral_folder))
             .asFlow()
             .flowOn(Dispatchers.IO)
-            .stateIn(viewModelScope, SharingStarted.Lazily, "")
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
             .map { State(it, saveSyncManager.isSupported()) }
 
     val cacheState =
@@ -71,7 +73,7 @@ class SettingsViewModel(
                     displayNames = supportedCacheValues.map { Formatter.formatShortFileSize(context, it) },
                 ),
             )
-        }.stateIn(viewModelScope, SharingStarted.Lazily, null)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun changeLocalStorageFolder() {
         settingsInteractor.changeLocalStorageFolder()

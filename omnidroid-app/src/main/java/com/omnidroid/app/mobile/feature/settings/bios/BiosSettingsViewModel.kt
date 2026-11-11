@@ -53,7 +53,7 @@ class BiosSettingsViewModel(
             }
             .stateIn(
                 viewModelScope,
-                SharingStarted.Lazily,
+                SharingStarted.WhileSubscribed(5_000),
                 BiosManager.BiosInfo(emptyList(), emptyList()),
             )
 

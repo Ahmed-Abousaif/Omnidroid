@@ -133,6 +133,7 @@ data class ChromeColors(
     val progressBar: Color,
     val progressBarBorder: Color,
     val divider: Color,
+    val gameMenuAccent: Color,
 )
 
 private val DarkChromeColors =
@@ -152,6 +153,7 @@ private val DarkChromeColors =
         progressBar = Color(0xF2121212),
         progressBarBorder = Color(0xFF262626),
         divider = Color.White.copy(alpha = 0.12f),
+        gameMenuAccent = Color(0xFF388D56),
     )
 
 private val LightChromeColors =
@@ -171,6 +173,7 @@ private val LightChromeColors =
         progressBar = Color(0xF2F2F2F2),
         progressBarBorder = Color(0xFFC8C8C8),
         divider = Color(0xFF1A1A1A).copy(alpha = 0.12f),
+        gameMenuAccent = Color(0xFF6ED18F),
     )
 
 val LocalAppDarkTheme = staticCompositionLocalOf { true }
@@ -201,6 +204,11 @@ val chromeMutedContentColor: Color
     @Composable
     @ReadOnlyComposable
     get() = chromeColors.muted
+
+val gameMenuAccentColor: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = chromeColors.gameMenuAccent
 
 /**
  * Soft gray fill with subtle diagonal stripes in light mode; solid near-black in dark mode.

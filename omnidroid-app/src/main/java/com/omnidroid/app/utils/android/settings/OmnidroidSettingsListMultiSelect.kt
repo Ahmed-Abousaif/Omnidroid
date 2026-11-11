@@ -14,6 +14,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,12 +32,14 @@ fun OmnidroidSettingsListMultiSelect(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     state: SettingValueState<Set<String>>,
-    title: @Composable () -> Unit,
+    titleRes: Int? = null,
+    title: @Composable () -> Unit = { Text(stringResource(requireNotNull(titleRes))) },
     entryValues: List<String>,
     entries: List<String>,
     icon: @Composable (() -> Unit)? = null,
     confirmButton: String,
-    subtitle: @Composable (() -> Unit)? = null,
+    subtitleRes: Int? = null,
+    subtitle: (@Composable () -> Unit)? = subtitleRes?.let { { Text(stringResource(it)) } },
     onItemsSelected: ((List<String>) -> Unit)? = null,
     action: @Composable (() -> Unit)? = null,
 ) {

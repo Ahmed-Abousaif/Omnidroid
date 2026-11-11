@@ -26,7 +26,7 @@ class CoresSelectionViewModel(
 
     val indexingInProgress = PendingOperationsMonitor(context).anyLibraryOperationInProgress()
 
-    fun getSelectedCores() = coresSelection.getSelectedCores()
+    val selectedCores = coresSelection.getSelectedCores()
 
     fun changeCore(
         system: GameSystem,

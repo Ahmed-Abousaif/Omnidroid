@@ -1,6 +1,8 @@
 package com.omnidroid.lib.savesync
 
 import android.content.Context
+import com.fredporciuncula.flow.preferences.FlowSharedPreferences
+import kotlinx.coroutines.flow.map
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
 
@@ -13,10 +15,14 @@ enum class GameCloudSyncOverride {
 class GameCloudSyncPreferences(context: Context) {
     private val prefs = SharedPreferencesHelper.getSharedPreferences(context)
 
+    fun observeOverride(gameId: Int) = FlowSharedPreferences(prefs).getString(key(gameId), INHERIT_VALUE).asFlow().map(::decode)
+
+    private fun decode(raw: String): GameCloudSyncOverride =
+        runCatching { GameCloudSyncOverride.valueOf(raw.uppercase()) }.getOrDefault(GameCloudSyncOverride.INHERIT)
+
     fun getOverride(gameId: Int): GameCloudSyncOverride {
         val raw = prefs.getString(key(gameId), INHERIT_VALUE) ?: INHERIT_VALUE
-        return runCatching { GameCloudSyncOverride.valueOf(raw.uppercase()) }
-            .getOrDefault(GameCloudSyncOverride.INHERIT)
+        return decode(raw)
     }
 
     fun setOverride(

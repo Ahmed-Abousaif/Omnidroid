@@ -22,6 +22,10 @@ class CoreVariablesManager(private val sharedPreferences: Lazy<SharedPreferences
             coreVariablesMap["mupen64plus-169screensize"] = mapN64To169Resolution(res43)
         }
 
+        if (systemID == SystemID.GAMECUBE || systemID == SystemID.WII) {
+            coreVariablesMap["dolphin_call_back_audio_method"] = "0"
+        }
+
         return convertMapToCoreVariables(coreVariablesMap)
     }
 

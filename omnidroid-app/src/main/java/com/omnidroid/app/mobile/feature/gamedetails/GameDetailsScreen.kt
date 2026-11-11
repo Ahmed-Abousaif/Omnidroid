@@ -80,7 +80,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.omnidroid.R
-import com.omnidroid.app.mobile.feature.library.LibraryTopBarRowHeight
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
@@ -608,17 +607,9 @@ private fun GameDetailsInfo(
                 modifier = Modifier.padding(top = 4.dp),
             )
 
-            if (state.loadingMetadata) {
-                CircularProgressIndicator(
-                    modifier =
-                        Modifier
-                            .padding(top = 16.dp)
-                            .size(20.dp),
-                    strokeWidth = 2.dp,
-                )
-            } else {
+            if (!state.metadata.description.isNullOrBlank()) {
                 Text(
-                    text = state.metadata.description ?: stringResource(R.string.game_no_description),
+                    text = state.metadata.description,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 12.dp),
                 )
@@ -633,31 +624,13 @@ private fun GameDetailsInfo(
             ) {
                 GameStat(
                     modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.game_genre),
-                    value = state.metadata.genre ?: stringResource(R.string.none),
+                    label = stringResource(R.string.game_play_time),
+                    value = formatPlayTime(state.playTimeMs),
                 )
                 GameStat(
                     modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.game_release_date),
-                    value = state.metadata.releaseDate ?: stringResource(R.string.none),
-                )
-            }
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                GameStat(
-                    modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.game_publisher),
-                    value = state.metadata.publisher ?: stringResource(R.string.none),
-                )
-                GameStat(
-                    modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.game_rating),
-                    value = state.metadata.rating ?: stringResource(R.string.none),
+                    label = stringResource(R.string.game_last_played),
+                    value = formatLastPlayed(game.lastPlayedAt),
                 )
             }
             Row(
@@ -669,13 +642,13 @@ private fun GameDetailsInfo(
             ) {
                 GameStat(
                     modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.game_play_time),
-                    value = formatPlayTime(state.playTimeMs),
+                    label = stringResource(R.string.game_sessions),
+                    value = "${state.sessionCount}",
                 )
                 GameStat(
                     modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.game_last_played),
-                    value = formatLastPlayed(game.lastPlayedAt),
+                    label = stringResource(R.string.game_achievements),
+                    value = "0/0",
                 )
             }
         }

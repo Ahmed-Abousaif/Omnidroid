@@ -1,5 +1,7 @@
 package com.omnidroid.app.mobile.shared.controller
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateOf
@@ -9,6 +11,7 @@ import com.omnidroid.lib.library.db.entity.Game
 val LocalControllerNavigation = compositionLocalOf<ControllerNavigationState?> { null }
 
 class ControllerNavigationState {
+    var modalNavigation by mutableStateOf<ControllerNavigationState?>(null)
     val focusedGame: MutableState<Game?> = mutableStateOf(null)
     val hints: MutableState<ControllerHints> = mutableStateOf(ControllerHints())
     val searchArmed: MutableState<Boolean> = mutableStateOf(false)

@@ -1,6 +1,9 @@
 package com.omnidroid.app.shared.settings
 
 import android.content.Context
+import com.omnidroid.app.OmnidroidApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import com.omnidroid.app.shared.library.LibraryIndexScheduler
 import com.omnidroid.app.shared.storage.cache.CacheCleanerWork
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
@@ -19,7 +22,7 @@ class SettingsInteractor(
         SharedPreferencesHelper.getSharedPreferences(context).edit().clear().apply()
         LibraryIndexScheduler.scheduleLibrarySync(context.applicationContext)
         CacheCleanerWork.enqueueCleanCacheAll(context.applicationContext)
-        deleteDownloadedCores()
+        OmnidroidApplication.scope(context.applicationContext).launch(Dispatchers.IO) { deleteDownloadedCores() }
     }
 
     private fun deleteDownloadedCores() {

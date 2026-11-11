@@ -49,7 +49,7 @@ class InputDevicesSettingsViewModel(
 
     val uiState =
         initializeState(appContext)
-            .stateIn(viewModelScope, started = SharingStarted.Lazily, State())
+            .stateIn(viewModelScope, started = SharingStarted.WhileSubscribed(5_000), State())
 
     fun resetAllBindings() {
         viewModelScope.launch {

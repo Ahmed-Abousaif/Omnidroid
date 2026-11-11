@@ -16,6 +16,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,37 +37,38 @@ import kotlinx.coroutines.launch
 fun OmnidroidSettingsList(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    state: SettingValueState<Int>,
-    title: @Composable () -> Unit,
+    state: SettingValueState<Int>? = null,
+    selectedIndex: Int = state?.value ?: -1,
+    onSelectionChange: (Int) -> Unit = { state?.value = it },
+    titleRes: Int? = null,
+    title: @Composable () -> Unit = { Text(stringResource(requireNotNull(titleRes))) },
     items: List<String>,
     icon: (@Composable () -> Unit)? = null,
     useSelectedValueAsSubtitle: Boolean = true,
-    subtitle: (@Composable () -> Unit)? = null,
+    subtitleRes: Int? = null,
+    subtitle: (@Composable () -> Unit)? = subtitleRes?.let { { Text(stringResource(it)) } },
     closeDialogDelay: Long = 200,
     action: (@Composable () -> Unit)? = null,
     onItemSelected: ((Int, String) -> Unit)? = null,
 ) {
-    if (state.value >= items.size) {
-        throw IndexOutOfBoundsException("Current value for $title list setting cannot be grater than items size")
-    }
-
     var showDialog by remember { mutableStateOf(false) }
+    var pendingSelection by remember(items) { mutableStateOf<Int?>(null) }
 
     val safeSubtitle =
-        if (state.value >= 0 && useSelectedValueAsSubtitle) {
-            { Text(text = items[state.value]) }
+        if (selectedIndex in items.indices && useSelectedValueAsSubtitle) {
+            { Text(text = items[selectedIndex]) }
         } else {
             subtitle
         }
 
     OmnidroidSettingsMenuLink(
         modifier = modifier,
-        enabled = enabled,
+        enabled = enabled && items.isNotEmpty(),
         icon = icon,
         title = title,
         subtitle = safeSubtitle,
         action = action,
-        onClick = { showDialog = true },
+        onClick = { pendingSelection = null; showDialog = true },
     )
 
     if (!showDialog) return
@@ -74,8 +76,9 @@ fun OmnidroidSettingsList(
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
     val onSelected: (Int, Boolean) -> Unit = { selectedIndex, updateState ->
+        pendingSelection = selectedIndex
         coroutineScope.launch {
-            if (updateState) state.value = selectedIndex
+            if (updateState) onSelectionChange(selectedIndex)
             delay(closeDialogDelay)
             showDialog = false
         }
@@ -97,7 +100,7 @@ fun OmnidroidSettingsList(
                 }
 
                 items.forEachIndexed { index, item ->
-                    val isSelected by rememberUpdatedState(newValue = state.value == index)
+                    val isSelected by rememberUpdatedState(newValue = (pendingSelection ?: selectedIndex) == index)
                     Row(
                         modifier =
                             Modifier

@@ -1,10 +1,15 @@
 package com.omnidroid.lib.savesync
 
 import android.content.Context
+import com.fredporciuncula.flow.preferences.FlowSharedPreferences
+import kotlinx.coroutines.flow.map
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
 
 class GameFrameSpeedPreferences(context: Context) {
     private val prefs = SharedPreferencesHelper.getSharedPreferences(context)
+
+    fun observe(gameId: Int) = FlowSharedPreferences(prefs).getInt(key(gameId), DEFAULT_SPEED).asFlow()
+        .map { if (it in ALLOWED_SPEEDS) it else DEFAULT_SPEED }
 
     fun get(gameId: Int): Int {
         val stored = prefs.getInt(key(gameId), DEFAULT_SPEED)

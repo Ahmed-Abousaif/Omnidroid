@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
 import com.omnidroid.R
-import com.omnidroid.app.mobile.feature.library.FloatingChromeButton
+import com.omnidroid.app.mobile.shared.compose.ui.FloatingChromeButton
 import com.omnidroid.app.mobile.feature.library.LibraryFilter
 import com.omnidroid.app.mobile.feature.library.LibraryLayout
 import com.omnidroid.app.mobile.feature.library.LibraryLayoutToggle
@@ -187,14 +187,12 @@ fun UiScalePreviewScreen(
                 // Top bar
                 LibraryTopBar(
                     modifier = Modifier.fillMaxWidth().align(Alignment.TopStart),
-                    operationInProgress = false,
                     gamepadConnected = false,
                     onRandomPressed = {},
                     onCastPressed = {},
                     onSettingsPressed = {},
                     onProfilePressed = {},
                     portrait = portrait,
-                    portraitColumnWidth = screenWidth,
                 )
             }
 

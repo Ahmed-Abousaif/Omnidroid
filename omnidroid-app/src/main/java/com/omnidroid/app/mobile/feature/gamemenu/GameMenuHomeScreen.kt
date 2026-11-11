@@ -1,277 +1,101 @@
 package com.omnidroid.app.mobile.feature.gamemenu
 
-import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
-import com.alorma.compose.settings.storage.memory.rememberMemoryBooleanSettingState
-import com.alorma.compose.settings.storage.memory.rememberMemoryIntSettingState
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.gamemenu.tilt.TiltConfigurationMenuEntry
-import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
-import com.omnidroid.app.shared.GameMenuContract
-import com.omnidroid.app.utils.android.settings.OmnidroidCardSettingsGroup
-import com.omnidroid.app.utils.android.settings.OmnidroidSettingsList
-import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
-import com.omnidroid.app.utils.android.settings.OmnidroidSettingsPage
-import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
-import com.omnidroid.lib.savesync.GameCloudSyncOverride
+import com.omnidroid.app.mobile.shared.compose.gamemenu.MenuDrawableIcon
+import com.omnidroid.app.mobile.shared.compose.gamemenu.FrameSpeedMenuChoice
+import com.omnidroid.app.mobile.shared.compose.gamemenu.CloudSaveMenuChoice
+import com.omnidroid.app.mobile.shared.compose.sidemenu.MenuOption
+import com.omnidroid.app.mobile.shared.compose.sidemenu.SideMenuPage
+import com.omnidroid.app.mobile.shared.compose.sidemenu.MenuSection
+import com.omnidroid.app.mobile.shared.compose.sidemenu.MenuAction
+import com.omnidroid.app.mobile.shared.compose.sidemenu.MenuChoice
+import com.omnidroid.app.mobile.shared.compose.sidemenu.MenuToggle
 import com.omnidroid.lib.savesync.GameCloudSyncPreferences
-import kotlinx.coroutines.yield
 
 @Composable
 fun GameMenuHomeScreen(
     navController: NavController,
-    gameMenuRequest: GameMenuActivity.GameMenuRequest,
-    onResult: (Intent.() -> Unit) -> Unit,
+    gameMenuRequest: GameMenuRequest,
+    onCommand: (InGameMenuCommand) -> Unit,
     saveSyncSupported: Boolean = false,
 ) {
-    val firstItemRequester = remember { FocusRequester() }
-    val controllerNav = LocalControllerNavigation.current
-
-    DisposableEffect(firstItemRequester) {
-        controllerNav?.contentFocusRequester = firstItemRequester
-        onDispose {
-            if (controllerNav?.contentFocusRequester == firstItemRequester) {
-                controllerNav?.contentFocusRequester = null
+    val request = gameMenuRequest
+    var audioEnabled by remember(request.audioEnabled) { mutableStateOf(request.audioEnabled) }
+    val hasSettings = request.advancedCoreOptions.isNotEmpty() || request.coreOptions.isNotEmpty() ||
+        request.coreConfig.controllerConfigs.values.any { it.size >= 2 }
+    val hasControls = request.editTouchControlsSupported || saveSyncSupported || hasSettings || request.allTiltConfigurations.isNotEmpty()
+    SideMenuPage("game-home") {
+        MenuSection("commands") {
+            if (request.coreConfig.statesSupported) {
+                MenuAction("save", titleRes = R.string.game_menu_save, icon = { MenuDrawableIcon(R.drawable.ic_menu_save) }) {
+                    navController.navigateToRoute(GameMenuRoute.SAVE)
+                }
+                MenuAction("load", titleRes = R.string.game_menu_load, icon = { MenuDrawableIcon(R.drawable.ic_menu_load) }) {
+                    navController.navigateToRoute(GameMenuRoute.LOAD)
+                }
+            }
+            MenuAction("restart", titleRes = R.string.game_menu_restart, icon = { MenuDrawableIcon(R.drawable.ic_menu_restart) }) {
+                onCommand(InGameMenuCommand.Restart)
+            }
+            MenuAction("quit", titleRes = R.string.game_menu_quit, icon = { MenuDrawableIcon(R.drawable.ic_menu_quit) }) {
+                onCommand(InGameMenuCommand.Quit)
             }
         }
-    }
-
-    LaunchedEffect(Unit) {
-        yield()
-        runCatching { firstItemRequester.requestFocus() }
-    }
-
-    OmnidroidSettingsPage {
-        OmnidroidCardSettingsGroup {
-            if (gameMenuRequest.coreConfig.statesSupported) {
-                OmnidroidSettingsMenuLink(
-                    modifier = Modifier.focusRequester(firstItemRequester),
-                    title = { Text(text = stringResource(id = R.string.game_menu_save)) },
-                    icon = {
-                        Icon(
-                            painterResource(R.drawable.ic_menu_save),
-                            contentDescription = stringResource(id = R.string.game_menu_save),
-                        )
-                    },
-                    onClick = { navController.navigateToRoute(GameMenuRoute.SAVE) },
-                )
-
-                OmnidroidSettingsMenuLink(
-                    title = { Text(text = stringResource(id = R.string.game_menu_load)) },
-                    icon = {
-                        Icon(
-                            painterResource(R.drawable.ic_menu_load),
-                            contentDescription = stringResource(id = R.string.game_menu_load),
-                        )
-                    },
-                    onClick = { navController.navigateToRoute(GameMenuRoute.LOAD) },
-                )
+        MenuSection("playback") {
+            MenuToggle("mute", titleRes = R.string.game_menu_mute_audio, value = !audioEnabled,
+                icon = { MenuDrawableIcon(R.drawable.ic_menu_mute) },
+            ) { audioEnabled = !it; onCommand(InGameMenuCommand.Audio(!it)) }
+            if (request.fastForwardSupported) {
+                FrameSpeedMenuChoice(request.frameSpeed) { onCommand(InGameMenuCommand.Speed(it)) }
             }
-
-            OmnidroidSettingsMenuLink(
-                modifier =
-                    if (!gameMenuRequest.coreConfig.statesSupported) {
-                        Modifier.focusRequester(firstItemRequester)
-                    } else {
-                        Modifier
-                    },
-                title = { Text(text = stringResource(id = R.string.game_menu_restart)) },
-                icon = {
-                    Icon(
-                        painterResource(R.drawable.ic_menu_restart),
-                        contentDescription = stringResource(id = R.string.game_menu_restart),
-                    )
-                },
-                onClick = {
-                    onResult { putExtra(GameMenuContract.RESULT_RESET, true) }
-                },
-            )
-
-            OmnidroidSettingsMenuLink(
-                title = { Text(text = stringResource(id = R.string.game_menu_quit)) },
-                icon = {
-                    Icon(
-                        painterResource(R.drawable.ic_menu_quit),
-                        contentDescription = stringResource(id = R.string.game_menu_quit),
-                    )
-                },
-                onClick = {
-                    onResult { putExtra(GameMenuContract.RESULT_QUIT, true) }
-                },
-            )
-        }
-
-        OmnidroidCardSettingsGroup {
-            OmnidroidSettingsSwitch(
-                title = { Text(text = stringResource(id = R.string.game_menu_mute_audio)) },
-                icon = {
-                    Icon(
-                        painterResource(R.drawable.ic_menu_mute),
-                        contentDescription = stringResource(id = R.string.game_menu_mute_audio),
-                    )
-                },
-                state = rememberMemoryBooleanSettingState(!gameMenuRequest.audioEnabled),
-                onCheckedChange = {
-                    onResult { putExtra(GameMenuContract.RESULT_ENABLE_AUDIO, !it) }
-                },
-            )
-
-            if (gameMenuRequest.fastForwardSupported) {
-                val speedLabels = stringArrayResource(R.array.game_menu_fast_forward_speeds).toList()
-                val speedValues =
-                    stringArrayResource(R.array.game_menu_fast_forward_speed_values)
-                        .map { it.toInt() }
-
-                val selectedIndex =
-                    speedValues.indexOf(gameMenuRequest.frameSpeed).let { if (it >= 0) it else 0 }
-
-                OmnidroidSettingsList(
-                    title = { Text(text = stringResource(id = R.string.game_menu_fast_forward)) },
-                    items = speedLabels,
-                    useSelectedValueAsSubtitle = false,
-                    subtitle = {
-                        Text(
-                            text =
-                                speedLabels[selectedIndex] +
-                                    " - " +
-                                    stringResource(R.string.game_menu_fast_forward_note),
-                        )
-                    },
-                    icon = {
-                        Icon(
-                            painterResource(R.drawable.ic_menu_fast_forward),
-                            contentDescription = stringResource(id = R.string.game_menu_fast_forward),
-                        )
-                    },
-                    state = rememberMemoryIntSettingState(selectedIndex),
-                    onItemSelected = { index, _ ->
-                        val speed = speedValues[index]
-                        onResult {
-                            putExtra(GameMenuContract.RESULT_SET_FRAME_SPEED, speed)
-                            putExtra(GameMenuContract.RESULT_ENABLE_FAST_FORWARD, speed > 1)
-                        }
-                    },
-                )
-            }
-
-            if (gameMenuRequest.numDisks > 1) {
-                OmnidroidSettingsList(
-                    title = { Text(text = stringResource(id = R.string.game_menu_change_disk_button)) },
-                    items =
-                        (1..gameMenuRequest.numDisks).map {
-                            stringResource(R.string.game_menu_change_disk_disk, it)
-                        },
-                    useSelectedValueAsSubtitle = false,
-                    icon = {
-                        Icon(
-                            painterResource(R.drawable.ic_menu_disk),
-                            contentDescription = stringResource(id = R.string.game_menu_change_disk_button),
-                        )
-                    },
-                    state = rememberMemoryIntSettingState(gameMenuRequest.currentDisk),
-                    onItemSelected = { index, _ ->
-                        onResult { putExtra(GameMenuContract.RESULT_CHANGE_DISK, index) }
-                    },
-                )
+            if (request.numDisks > 1) {
+                MenuChoice(
+                    id = "disc", titleRes = R.string.game_menu_change_disk_button,
+                    options = (0 until request.numDisks).map { MenuOption(it, stringResource(R.string.game_menu_change_disk_disk, it + 1)) },
+                    value = request.currentDisk, useSelectedValueAsSubtitle = false,
+                    icon = { MenuDrawableIcon(R.drawable.ic_menu_disk) },
+                ) { onCommand(InGameMenuCommand.Disc(it)) }
             }
         }
-
-        OmnidroidCardSettingsGroup {
-            if (gameMenuRequest.editTouchControlsSupported) {
-                OmnidroidSettingsMenuLink(
-                    title = { Text(text = stringResource(id = R.string.game_menu_edit_touch_controls)) },
-                    icon = {
-                        Icon(
-                            painterResource(R.drawable.ic_menu_controls),
-                            contentDescription = stringResource(id = R.string.game_menu_edit_touch_controls),
-                        )
-                    },
-                    onClick = {
-                        onResult { putExtra(GameMenuContract.RESULT_EDIT_TOUCH_CONTROLS, true) }
-                    },
-                )
+        MenuSection("controls", visible = hasControls) {
+            if (request.editTouchControlsSupported) {
+                MenuAction("touch-controls", titleRes = R.string.game_menu_edit_touch_controls,
+                    icon = { MenuDrawableIcon(R.drawable.ic_menu_controls) },
+                ) { onCommand(InGameMenuCommand.EditTouchControls) }
             }
-
             if (saveSyncSupported) {
                 val context = LocalContext.current
-                val prefs = remember { GameCloudSyncPreferences(context) }
-                val current = prefs.getOverride(gameMenuRequest.game.id)
-                val items =
-                    listOf(
-                        stringResource(R.string.game_cloud_save_inherit),
-                        stringResource(R.string.game_cloud_save_always),
-                        stringResource(R.string.game_cloud_save_never),
-                    )
-                val values = GameCloudSyncOverride.values()
-                OmnidroidSettingsList(
-                    title = { Text(text = stringResource(id = R.string.game_cloud_save)) },
-                    items = items,
-                    useSelectedValueAsSubtitle = true,
-                    state = rememberMemoryIntSettingState(values.indexOf(current).coerceAtLeast(0)),
-                    onItemSelected = { index, _ ->
-                        prefs.setOverride(gameMenuRequest.game.id, values[index])
-                    },
-                )
+                val prefs = remember(context) { GameCloudSyncPreferences(context) }
+                val changes = remember(prefs, request.game.id) { prefs.observeOverride(request.game.id) }
+                val override by changes.collectAsState(prefs.getOverride(request.game.id))
+                CloudSaveMenuChoice(override) { prefs.setOverride(request.game.id, it) }
             }
-
-            val hasControllers = gameMenuRequest.coreConfig.controllerConfigs.values.any { it.size >= 2 }
-            if (gameMenuRequest.advancedCoreOptions.isNotEmpty() || gameMenuRequest.coreOptions.isNotEmpty() || hasControllers) {
-                OmnidroidSettingsMenuLink(
-                    title = { Text(text = stringResource(id = R.string.game_menu_settings)) },
-                    icon = {
-                        Icon(
-                            painterResource(R.drawable.ic_menu_settings),
-                            contentDescription = stringResource(id = R.string.game_menu_settings),
-                        )
-                    },
-                    onClick = { navController.navigateToRoute(GameMenuRoute.OPTIONS) },
-                )
+            if (hasSettings) {
+                MenuAction("options", titleRes = R.string.game_menu_settings, icon = { MenuDrawableIcon(R.drawable.ic_menu_settings) }) {
+                    navController.navigateToRoute(GameMenuRoute.OPTIONS)
+                }
             }
-
-            if (gameMenuRequest.allTiltConfigurations.isNotEmpty()) {
-                val tiltConfigurationEntries =
-                    gameMenuRequest.allTiltConfigurations
-                        .map { TiltConfigurationMenuEntry.fromTiltConfiguration(it) }
-
-                val selectedIndex =
-                    gameMenuRequest.allTiltConfigurations
-                        .indexOf(gameMenuRequest.currentTiltConfiguration)
-
-                OmnidroidSettingsList(
-                    title = { Text(text = stringResource(id = R.string.game_menu_tilt_sensor)) },
-                    items = tiltConfigurationEntries.map { stringResource(it.descriptionId) },
-                    useSelectedValueAsSubtitle = false,
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Sensors,
-                            contentDescription = stringResource(id = R.string.game_menu_tilt_sensor),
-                        )
-                    },
-                    state = rememberMemoryIntSettingState(selectedIndex),
-                    onItemSelected = { index, _ ->
-                        onResult {
-                            putExtra(
-                                GameMenuContract.RESULT_CHANGE_TILT_CONFIG,
-                                tiltConfigurationEntries[index].configuration,
-                            )
-                        }
-                    },
-                )
+            if (request.allTiltConfigurations.isNotEmpty()) {
+                val entries = request.allTiltConfigurations.map { TiltConfigurationMenuEntry.fromTiltConfiguration(it) }
+                MenuChoice(
+                    id = "tilt", titleRes = R.string.game_menu_tilt_sensor,
+                    options = entries.map { MenuOption(it.configuration, stringResource(it.descriptionId)) },
+                    value = request.currentTiltConfiguration, useSelectedValueAsSubtitle = false,
+                    icon = { Icon(Icons.Default.Sensors, contentDescription = null) },
+                ) { onCommand(InGameMenuCommand.Tilt(it)) }
             }
         }
     }

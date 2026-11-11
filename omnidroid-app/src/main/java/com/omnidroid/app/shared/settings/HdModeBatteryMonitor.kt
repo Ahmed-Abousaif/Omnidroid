@@ -114,7 +114,7 @@ object HdModeBatteryMonitor {
 @Composable
 fun rememberHdModeAllowed(): Boolean {
     val context = LocalContext.current
-    return HdModeBatteryMonitor.allowedFlow(context)
+    return androidx.compose.runtime.remember(context) { HdModeBatteryMonitor.allowedFlow(context) }
         .collectAsState(HdModeBatteryMonitor.isAllowed(context))
         .value
 }

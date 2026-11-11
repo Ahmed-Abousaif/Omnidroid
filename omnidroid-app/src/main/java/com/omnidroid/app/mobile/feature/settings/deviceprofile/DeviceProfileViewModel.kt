@@ -31,10 +31,6 @@ class DeviceProfileViewModel(
         }
     }
 
-    fun refresh() {
-        _uiState.update { it.copy(profile = manager.getProfile()) }
-    }
-
     fun runExtendedBenchmark() {
         if (_uiState.value.runningExtended) return
         viewModelScope.launch {

@@ -19,10 +19,11 @@ import com.omnidroid.app.shared.input.InputKey
 import com.omnidroid.app.shared.input.ShortcutBindingUpdater
 import com.omnidroid.app.shared.input.omnidroiddevice.getOmnidroidInputDevice
 import com.omnidroid.app.shared.settings.GameShortcut
-import com.omnidroid.app.utils.android.settings.OmnidroidCardSettingsGroup
+import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsPage
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
+import com.omnidroid.app.utils.android.settings.SettingsHorizontalDivider
 import com.omnidroid.app.utils.android.settings.booleanPreferenceState
 
 @Composable
@@ -36,9 +37,13 @@ fun InputDevicesSettingsScreen(
             .value
 
     OmnidroidSettingsPage(modifier = modifier.fillMaxSize()) {
-        EnabledDeviceCategory(state)
+        if (state.devices.isNotEmpty()) {
+            EnabledDeviceCategory(state)
+            SettingsHorizontalDivider()
+        }
         state.bindings.forEach { (device, bindings) ->
             DeviceBindingCategory(device, bindings)
+            SettingsHorizontalDivider()
         }
         GeneralOptionsCategory(viewModel)
     }
@@ -52,7 +57,7 @@ private fun DeviceBindingCategory(
     val context = LocalContext.current
     val customizableKeys = device.getOmnidroidInputDevice().getCustomizableKeys()
 
-    OmnidroidCardSettingsGroup(title = { Text(text = device.name) }) {
+    OmnidroidSettingsGroup(title = { Text(text = device.name) }) {
         customizableKeys.forEach { retroKey ->
             val inputKey = bindings.keys[retroKey] ?: InputKey(KeyEvent.KEYCODE_UNKNOWN)
 
@@ -98,7 +103,7 @@ private fun DeviceShortcutBinding(
 
 @Composable
 private fun EnabledDeviceCategory(state: InputDevicesSettingsViewModel.State) {
-    OmnidroidCardSettingsGroup(title = { Text(text = stringResource(R.string.settings_gamepad_category_enabled)) }) {
+    OmnidroidSettingsGroup(titleRes = R.string.settings_gamepad_category_enabled) {
         state.devices.forEach { device ->
             OmnidroidSettingsSwitch(
                 state = booleanPreferenceState(key = device.key, default = device.enabledByDefault),
@@ -110,9 +115,9 @@ private fun EnabledDeviceCategory(state: InputDevicesSettingsViewModel.State) {
 
 @Composable
 private fun GeneralOptionsCategory(viewModel: InputDevicesSettingsViewModel) {
-    OmnidroidCardSettingsGroup(title = { Text(text = stringResource(R.string.settings_gamepad_category_general)) }) {
+    OmnidroidSettingsGroup(titleRes = R.string.settings_gamepad_category_general) {
         OmnidroidSettingsMenuLink(
-            title = { Text(text = stringResource(R.string.settings_gamepad_title_reset_bindings)) },
+            titleRes = R.string.settings_gamepad_title_reset_bindings,
             onClick = { viewModel.resetAllBindings() },
         )
     }

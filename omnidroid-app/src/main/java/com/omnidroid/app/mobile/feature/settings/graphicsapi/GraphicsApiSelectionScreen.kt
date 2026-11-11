@@ -12,11 +12,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.alorma.compose.settings.storage.memory.rememberMemoryIntSettingState
 import com.omnidroid.R
-import com.omnidroid.app.utils.android.settings.OmnidroidCardSettingsGroup
+import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsList
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsPage
+import com.omnidroid.app.utils.android.settings.SettingsHorizontalDivider
 
 @Composable
 fun GraphicsApiSelectionScreen(
@@ -53,15 +53,16 @@ fun GraphicsApiSelectionScreen(
             )
         }
 
-        OmnidroidCardSettingsGroup {
+        SettingsHorizontalDivider()
+
+        OmnidroidSettingsGroup {
             configs.forEach { config ->
                 androidx.compose.runtime.key(config.system.id) {
                     val currentIndex = config.options.indexOf(config.currentSelection).coerceAtLeast(0)
-                    val state = rememberMemoryIntSettingState(currentIndex)
                     val labels = config.options.map { graphicsApiLabel(it) }
 
                     OmnidroidSettingsList(
-                        state = state,
+                        selectedIndex = currentIndex,
                         title = { Text(text = stringResource(config.system.titleResId)) },
                         subtitle = { Text(text = graphicsApiLabel(config.currentSelection)) },
                         items = labels,

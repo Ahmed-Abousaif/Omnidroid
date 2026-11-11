@@ -16,16 +16,14 @@ import kotlinx.coroutines.launch
 
 class GraphicsApiSelectionViewModel(
     private val context: Context,
-    private val coreVariablesManager: CoreVariablesManager,
 ) : ViewModel() {
 
     class Factory(
         private val context: Context,
-        private val coreVariablesManager: CoreVariablesManager,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return GraphicsApiSelectionViewModel(context, coreVariablesManager) as T
+            return GraphicsApiSelectionViewModel(context) as T
         }
     }
 

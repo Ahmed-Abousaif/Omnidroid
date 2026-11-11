@@ -9,6 +9,8 @@ import kotlin.math.abs
 class ControllerInputBridge {
     var navigation: ControllerNavigationState? = null
 
+    private val activeNavigation get() = navigation?.modalNavigation ?: navigation
+
     private var lastX = 0
     private var lastY = 0
     private var lastRepeatAt = 0L
@@ -24,7 +26,7 @@ class ControllerInputBridge {
             return dispatch(event)
         }
 
-        if (navigation?.textInputActive == true && !isBackOrShoulder(event.keyCode)) {
+        if (activeNavigation?.textInputActive == true && !isBackOrShoulder(event.keyCode)) {
             return dispatch(event)
         }
 
@@ -36,7 +38,7 @@ class ControllerInputBridge {
             KeyEvent.KEYCODE_BUTTON_2,
             -> {
                 if (event.action == KeyEvent.ACTION_UP) {
-                    navigation?.onBack?.invoke()
+                    activeNavigation?.onBack?.invoke()
                 }
                 true
             }
@@ -45,7 +47,7 @@ class ControllerInputBridge {
             KeyEvent.KEYCODE_BUTTON_START,
             -> {
                 if (event.action == KeyEvent.ACTION_UP) {
-                    navigation?.onOptions?.invoke()
+                    activeNavigation?.onOptions?.invoke()
                 }
                 true
             }
@@ -53,14 +55,14 @@ class ControllerInputBridge {
             KeyEvent.KEYCODE_BUTTON_4,
             -> {
                 if (event.action == KeyEvent.ACTION_UP) {
-                    navigation?.onSearch?.invoke()
+                    activeNavigation?.onSearch?.invoke()
                 }
                 true
             }
             KeyEvent.KEYCODE_BUTTON_SELECT,
             -> {
                 if (event.action == KeyEvent.ACTION_UP) {
-                    navigation?.onScan?.invoke()
+                    activeNavigation?.onScan?.invoke()
                 }
                 true
             }
@@ -78,13 +80,13 @@ class ControllerInputBridge {
             }
             KeyEvent.KEYCODE_BUTTON_L1 -> {
                 if (event.action == KeyEvent.ACTION_UP) {
-                    navigation?.onPrevConsole?.invoke()
+                    activeNavigation?.onPrevConsole?.invoke()
                 }
                 true
             }
             KeyEvent.KEYCODE_BUTTON_R1 -> {
                 if (event.action == KeyEvent.ACTION_UP) {
-                    navigation?.onNextConsole?.invoke()
+                    activeNavigation?.onNextConsole?.invoke()
                 }
                 true
             }
@@ -154,12 +156,12 @@ class ControllerInputBridge {
 
     private fun zoomIn() {
         if (!canZoom()) return
-        navigation?.onZoomIn?.invoke()
+        activeNavigation?.onZoomIn?.invoke()
     }
 
     private fun zoomOut() {
         if (!canZoom()) return
-        navigation?.onZoomOut?.invoke()
+        activeNavigation?.onZoomOut?.invoke()
     }
 
     private fun canZoom(): Boolean {

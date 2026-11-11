@@ -15,6 +15,7 @@ import android.telephony.PhoneStateListener
 import android.telephony.TelephonyCallback
 import android.telephony.TelephonyDisplayInfo
 import android.telephony.TelephonyManager
+import android.text.format.DateFormat
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -49,9 +50,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.omnidroid.R
 import kotlinx.coroutines.delay
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 data class BatteryStatus(
     val percent: Int = 0,
@@ -108,10 +107,39 @@ fun SystemStatusIndicators(
 
 @Composable
 private fun rememberCurrentTime(): String {
-    var time by remember { mutableStateOf(formatStatusTime()) }
-    LaunchedEffect(Unit) {
+    val context = LocalContext.current
+    var time by remember(context) { mutableStateOf(formatStatusTime(context)) }
+
+    DisposableEffect(context) {
+        val receiver =
+            object : BroadcastReceiver() {
+                override fun onReceive(
+                    receiverContext: Context,
+                    intent: Intent,
+                ) {
+                    time = formatStatusTime(context)
+                }
+            }
+        val filter =
+            IntentFilter().apply {
+                addAction(Intent.ACTION_TIME_TICK)
+                addAction(Intent.ACTION_TIME_CHANGED)
+                addAction(Intent.ACTION_TIMEZONE_CHANGED)
+            }
+        ContextCompat.registerReceiver(
+            context,
+            receiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+        onDispose {
+            runCatching { context.unregisterReceiver(receiver) }
+        }
+    }
+
+    LaunchedEffect(context) {
         while (true) {
-            time = formatStatusTime()
+            time = formatStatusTime(context)
             delay(15_000)
         }
     }
@@ -123,11 +151,8 @@ private const val LOW_BATTERY_PERCENT = 15
 // Status glyphs stay neutral so the green accent is reserved for interactive chrome.
 private const val StatusMutedAlpha = 0.72f
 
-private fun formatStatusTime(): String {
-    return SimpleDateFormat("h:mma", Locale.getDefault())
-        .format(Date())
-        .replace(" ", "")
-        .uppercase(Locale.getDefault())
+private fun formatStatusTime(context: Context): String {
+    return DateFormat.getTimeFormat(context).format(Date())
 }
 
 @Composable

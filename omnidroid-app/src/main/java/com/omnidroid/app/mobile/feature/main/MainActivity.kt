@@ -22,7 +22,6 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -74,33 +73,22 @@ import com.omnidroid.app.mobile.feature.cast.CastPickerSheet
 import com.omnidroid.app.mobile.feature.gamedetails.GameDetailsScreen
 import com.omnidroid.app.mobile.feature.gamedetails.GameDetailsViewModel
 import com.omnidroid.app.mobile.feature.library.LibraryFilter
+import com.omnidroid.app.mobile.feature.library.LibraryLayout
 import com.omnidroid.app.mobile.feature.library.LibraryScreen
 import com.omnidroid.app.mobile.feature.library.LibraryTopBar
-import com.omnidroid.app.mobile.feature.library.LibraryTopBarPortraitHeight
-import com.omnidroid.app.mobile.feature.library.LibraryTopBarRowHeight
 import com.omnidroid.app.mobile.feature.library.LibraryViewModel
+import com.omnidroid.app.mobile.feature.library.gamemenu.LibraryGameMenu
+import com.omnidroid.app.mobile.feature.library.gamemenu.LibraryGameMenuActions
 import com.omnidroid.app.mobile.feature.library.LibraryStartupStore
 import com.omnidroid.app.mobile.feature.library.RegisteredSystemsStore
 import com.omnidroid.app.mobile.feature.profile.ProfileScreen
 import com.omnidroid.app.mobile.feature.profile.ProfileViewModel
-import com.omnidroid.app.mobile.feature.settings.bios.BiosScreen
-import com.omnidroid.app.mobile.feature.settings.bios.BiosSettingsViewModel
-import com.omnidroid.app.mobile.feature.settings.coreselection.CoresSelectionScreen
-import com.omnidroid.app.mobile.feature.settings.coreselection.CoresSelectionViewModel
-import com.omnidroid.app.mobile.feature.settings.graphicsapi.GraphicsApiSelectionScreen
-import com.omnidroid.app.mobile.feature.settings.graphicsapi.GraphicsApiSelectionViewModel
-import com.omnidroid.app.mobile.feature.settings.deviceprofile.DeviceProfileScreen
-import com.omnidroid.app.mobile.feature.settings.deviceprofile.DeviceProfileViewModel
 import com.omnidroid.app.mobile.feature.settings.deviceprofile.ExtendedBenchmarkProgressDialog
 import com.omnidroid.app.mobile.feature.settings.deviceprofile.WelcomeBenchmarkDialog
+import com.omnidroid.app.mobile.feature.settings.general.SettingsSubscreen
+import com.omnidroid.app.mobile.feature.settings.general.SettingsSubscreenContent
 import com.omnidroid.app.mobile.feature.settings.general.SettingsScreen
 import com.omnidroid.app.mobile.feature.settings.general.SettingsViewModel
-import com.omnidroid.app.mobile.feature.settings.inputdevices.InputDevicesSettingsScreen
-import com.omnidroid.app.mobile.feature.settings.inputdevices.InputDevicesSettingsViewModel
-import com.omnidroid.app.mobile.feature.settings.savesync.SaveSyncSettingsScreen
-import com.omnidroid.app.mobile.feature.settings.savesync.SaveSyncSettingsViewModel
-import com.omnidroid.app.mobile.feature.settings.unrecognized.UnrecognizedFilesScreen
-import com.omnidroid.app.mobile.feature.settings.unrecognized.UnrecognizedFilesViewModel
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
@@ -326,10 +314,8 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 infoDialogDisplayed.value = true
             }
 
-            val mainUIState =
-                mainViewModel.state
-                    .collectAsState(MainViewModel.UiState())
-                    .value
+            // Keep the lazily started pending-operation monitor active for isBusy().
+            mainViewModel.state.collectAsState()
 
             val registeredSystemsStore =
                 remember {
@@ -370,10 +356,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     .value
                     .any { it.getOmnidroidInputDevice() is OmnidroidInputDeviceGamePad }
 
+            val isGrid = libraryState.layout == LibraryLayout.GRID
             val libraryHints =
                 ControllerHints.library(
                     switchConsoles = stringResource(R.string.controller_hint_switch_consoles),
-                    zoom = stringResource(R.string.controller_hint_zoom),
+                    zoom = if (isGrid) stringResource(R.string.controller_hint_zoom) else null,
                     select = stringResource(R.string.controller_hint_select),
                     back = stringResource(R.string.controller_hint_back),
                     options = stringResource(R.string.controller_hint_options),
@@ -393,7 +380,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
             val addConsoleHints =
                 ControllerHints.carousel(
                     switchConsoles = stringResource(R.string.controller_hint_switch_consoles),
-                    select = stringResource(R.string.controller_hint_install),
+                    select = stringResource(R.string.controller_hint_manage),
                     back = stringResource(R.string.controller_hint_back),
                 )
             val settingsHints =
@@ -403,7 +390,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     back = stringResource(R.string.controller_hint_back),
                 )
 
-            LaunchedEffect(currentRoute, selectedGameState.value) {
+            LaunchedEffect(currentRoute, selectedGameState.value, libraryState.layout) {
                 controllerNav.setHints(
                     when {
                         selectedGameState.value != null -> simpleHints
@@ -417,12 +404,16 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
             }
 
             controllerNav.onBack = {
-                if (controllerNav.textInputActive || controllerNav.searchArmed.value) {
+                if (controllerNav.modalNavigation != null) {
+                    controllerNav.modalNavigation?.onBack?.invoke()
+                } else if (controllerNav.textInputActive || controllerNav.searchArmed.value) {
                     controllerNav.dismissSearch()
-                } else if (selectedGameState.value != null) {
-                    selectedGameState.value = null
+                } else if (controllerNav.modalNavigation != null) {
+                    controllerNav.modalNavigation?.onBack?.invoke()
                 } else if (currentRoute == MainRoute.GAME_DETAILS) {
                     closeGameDetails()
+                } else if (currentRoute == MainRoute.ADD_CONSOLES) {
+                    onBackPressedDispatcher.onBackPressed()
                 } else {
                     handleLauncherBack(
                         navController = navController,
@@ -438,7 +429,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
             controllerNav.onOptions = {
                 val focusedGame = controllerNav.focusedGame.value
                 when {
-                    selectedGameState.value != null -> selectedGameState.value = null
+                    controllerNav.modalNavigation != null -> controllerNav.modalNavigation?.onOptions?.invoke()
                     focusedGame != null -> selectedGameState.value = focusedGame
                     currentRoute != MainRoute.SETTINGS -> navController.navigateToRoute(MainRoute.SETTINGS)
                 }
@@ -525,10 +516,9 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     calculateAdaptiveLayoutSpec(maxWidth, maxHeight, uiScale)
                 }
             val portrait = maxHeight > maxWidth
-            val portraitHome = portrait && currentRoute == MainRoute.HOME
             val portraitColumnWidth = maxWidth
             val libraryTopPadding =
-                if (portraitHome) adaptiveSpec.topBarPortraitHeight else adaptiveSpec.topBarRowHeight
+                if (portrait) adaptiveSpec.topBarPortraitHeight else adaptiveSpec.topBarRowHeight
             val standardTopPadding = adaptiveSpec.topBarRowHeight
             CompositionLocalProvider(
                 LocalControllerNavigation provides controllerNav,
@@ -540,7 +530,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 containerColor = homeChromeColor,
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
                 bottomBar = {
-                    if (gamepadConnected) {
+                    if (gamepadConnected && controllerNav.modalNavigation == null) {
                         ControllerHintBar(
                             visible = true,
                             hints = controllerNav.hints.value,
@@ -678,120 +668,52 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         )
                     }
                     composable(MainRoute.SETTINGS_UNRECOGNIZED) {
-                        UnrecognizedFilesScreen(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(padding)
-                                    .padding(top = standardTopPadding),
-                            viewModel =
-                                viewModel(
-                                    factory =
-                                        UnrecognizedFilesViewModel.Factory(
-                                            retrogradeDb,
-                                        ),
-                                ),
+                        SettingsSubscreenContent(
+                            subscreen = SettingsSubscreen.UNRECOGNIZED_FILES,
+                            key = null,
+                            modifier = Modifier.fillMaxSize().padding(padding).padding(top = standardTopPadding),
                         )
                     }
                     composable(MainRoute.SETTINGS_BIOS) {
-                        BiosScreen(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(padding)
-                                    .padding(top = standardTopPadding),
-                            viewModel =
-                                viewModel(
-                                    factory =
-                                        BiosSettingsViewModel.Factory(
-                                            biosManager,
-                                            directoriesManager,
-                                            retrofit.create(CoreUpdater.CoreManagerApi::class.java),
-                                            sharedPreferences,
-                                        ),
-                                ),
+                        SettingsSubscreenContent(
+                            subscreen = SettingsSubscreen.BIOS,
+                            key = null,
+                            modifier = Modifier.fillMaxSize().padding(padding).padding(top = standardTopPadding),
                         )
                     }
                     composable(MainRoute.SETTINGS_CORES_SELECTION) {
-                        CoresSelectionScreen(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(padding)
-                                    .padding(top = standardTopPadding),
-                            viewModel =
-                                viewModel(
-                                    factory =
-                                        CoresSelectionViewModel.Factory(
-                                            applicationContext,
-                                            coresSelection,
-                                        ),
-                                ),
+                        SettingsSubscreenContent(
+                            subscreen = SettingsSubscreen.CORES_SELECTION,
+                            key = null,
+                            modifier = Modifier.fillMaxSize().padding(padding).padding(top = standardTopPadding),
                         )
                     }
                     composable(MainRoute.SETTINGS_GRAPHICS_API) {
-                        GraphicsApiSelectionScreen(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(padding)
-                                    .padding(top = standardTopPadding),
-                            viewModel =
-                                viewModel(
-                                    factory =
-                                        GraphicsApiSelectionViewModel.Factory(
-                                            applicationContext,
-                                            coreVariablesManager,
-                                        ),
-                                ),
+                        SettingsSubscreenContent(
+                            subscreen = SettingsSubscreen.GRAPHICS_API,
+                            key = null,
+                            modifier = Modifier.fillMaxSize().padding(padding).padding(top = standardTopPadding),
                         )
                     }
                     composable(MainRoute.SETTINGS_INPUT_DEVICES) {
-                        InputDevicesSettingsScreen(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(padding)
-                                    .padding(top = standardTopPadding),
-                            viewModel =
-                                viewModel(
-                                    factory =
-                                        InputDevicesSettingsViewModel.Factory(
-                                            applicationContext,
-                                            inputDeviceManager,
-                                        ),
-                                ),
+                        SettingsSubscreenContent(
+                            subscreen = SettingsSubscreen.INPUT_DEVICES,
+                            key = null,
+                            modifier = Modifier.fillMaxSize().padding(padding).padding(top = standardTopPadding),
                         )
                     }
                     composable(MainRoute.SETTINGS_SAVE_SYNC) {
-                        SaveSyncSettingsScreen(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(padding)
-                                    .padding(top = standardTopPadding),
-                            viewModel =
-                                viewModel(
-                                    factory =
-                                        SaveSyncSettingsViewModel.Factory(
-                                            application,
-                                            saveSyncManager,
-                                            directoriesManager,
-                                        ),
-                                ),
+                        SettingsSubscreenContent(
+                            subscreen = SettingsSubscreen.SAVE_SYNC,
+                            key = null,
+                            modifier = Modifier.fillMaxSize().padding(padding).padding(top = standardTopPadding),
                         )
                     }
                     composable(MainRoute.SETTINGS_DEVICE_PROFILE) {
-                        DeviceProfileScreen(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(padding)
-                                    .padding(top = standardTopPadding),
-                            viewModel =
-                                viewModel(
-                                    factory = DeviceProfileViewModel.Factory(applicationContext),
-                                ),
+                        SettingsSubscreenContent(
+                            subscreen = SettingsSubscreen.DEVICE_PROFILE,
+                            key = null,
+                            modifier = Modifier.fillMaxSize().padding(padding).padding(top = standardTopPadding),
                         )
                     }
                     composable(MainRoute.SETTINGS_UI_SCALE) {
@@ -802,6 +724,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     }
                     composable(MainRoute.PROFILE) {
                         ProfileScreen(
+                            onGameClick = { gameId -> navController.navigateToGameDetails(gameId) },
                             modifier =
                                 Modifier
                                     .fillMaxSize()
@@ -821,33 +744,34 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 }
             }
 
-            MainGameContextActions(
+            LibraryGameMenu(
                 selectedGameState = selectedGameState,
                 retrogradeDb = retrogradeDb,
                 saveSyncSupported = gameInteractor.isSaveSyncSupported(),
-                cloudOverride = selectedGameState.value?.let { gameInteractor.getCloudOverride(it) },
-                frameSpeed = selectedGameState.value?.let { gameInteractor.getFrameSpeed(it) } ?: 1,
-                onGamePlay = {
-                    libraryViewModel.clearSearchQuery()
-                    gameInteractor.onGamePlay(it)
-                },
-                onGameRestart = {
-                    libraryViewModel.clearSearchQuery()
-                    gameInteractor.onGameRestart(it)
-                },
-                onFavoriteToggle = { game: Game, isFavorite: Boolean ->
-                    gameInteractor.onFavoriteToggle(game, isFavorite)
-                },
-                onCloudOverride = { game, override -> gameInteractor.setCloudOverride(game, override) },
-                onFrameSpeed = { game, speed -> gameInteractor.setFrameSpeed(game, speed) },
-                onSyncGameNow = { gameInteractor.syncGameNow(it) },
-                onSetCustomThumbnail = { game, uri -> gameInteractor.onSetCustomCover(game, uri) },
-                onRemoveCustomThumbnail = { gameInteractor.onRemoveCustomCover(it) },
+                gamepadConnected = gamepadConnected,
                 coverSearcher = coverSearcher,
-                onSetCoverUrl = { game, url -> gameInteractor.onSetCoverUrl(game, url) },
-                onFixGameMatch = { game, title, url -> gameInteractor.onFixGameMatch(game, title, url) },
-                onSetCustomName = { game, name -> gameInteractor.onSetCustomName(game, name) },
-                onRemoveCustomName = { gameInteractor.onRemoveCustomName(it) },
+                actions = LibraryGameMenuActions(
+                    play = {
+                        libraryViewModel.clearSearchQuery()
+                        gameInteractor.onGamePlay(it)
+                    },
+                    restart = {
+                        libraryViewModel.clearSearchQuery()
+                        gameInteractor.onGameRestart(it)
+                    },
+                    favorite = { game: Game, isFavorite: Boolean ->
+                        gameInteractor.onFavoriteToggle(game, isFavorite)
+                    },
+                    cloudOverride = { game, override -> gameInteractor.setCloudOverride(game, override) },
+                    frameSpeed = { game, speed -> gameInteractor.setFrameSpeed(game, speed) },
+                    syncNow = { gameInteractor.syncGameNow(it) },
+                    setThumbnail = { game, uri -> gameInteractor.onSetCustomCover(game, uri) },
+                    removeThumbnail = { gameInteractor.onRemoveCustomCover(it) },
+                    setCoverUrl = { game, url -> gameInteractor.onSetCoverUrl(game, url) },
+                    fixMatch = { game, title, url -> gameInteractor.onFixGameMatch(game, title, url) },
+                    setName = { game, name -> gameInteractor.onSetCustomName(game, name) },
+                    removeName = { gameInteractor.onRemoveCustomName(it) },
+                ),
             )
 
             if (showCastPicker.value) {
@@ -913,16 +837,10 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 ExtendedBenchmarkProgressDialog(progress = extendedBenchmarkProgress.value)
             }
 
-            val compactProgress by animateFloatAsState(
-                targetValue = if (currentRoute == MainRoute.GAME_DETAILS) 1f else 0f,
-                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
-                label = "topBarCompactProgress",
-            )
             if (currentRoute != MainRoute.SETTINGS_UI_SCALE) {
                 LibraryTopBar(
-                    modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(),
-                    operationInProgress =
-                        libraryState.operationInProgress || mainUIState.operationInProgress,
+                    modifier = Modifier.fillMaxSize(),
+                    bottomPadding = padding.calculateBottomPadding(),
                     syncProgress = libraryState.syncProgress,
                     gamepadConnected = gamepadConnected,
                     onRandomPressed = {
@@ -936,14 +854,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     },
                     onSettingsPressed = { navController.navigateToRoute(MainRoute.SETTINGS) },
                     onProfilePressed = { navController.navigateToRoute(MainRoute.PROFILE) },
-                    overlayTitleId =
-                        currentRoute.takeIf {
-                            it != MainRoute.HOME && it != MainRoute.GAME_DETAILS && it != MainRoute.SETTINGS_UI_SCALE
-                        }?.titleId,
-                    onBackPressed = {
-                        navController.popBackStack()
-                    },
-                    compactProgress = compactProgress,
                     searchQuery = libraryState.searchQuery,
                     onSearchQueryChange = { libraryViewModel.changeQueryString(it) },
                     onClearSearch = { libraryViewModel.clearSearchQuery() },
@@ -952,8 +862,14 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         (libraryState.filter as? LibraryFilter.System)?.metaSystemID?.titleResId,
                     consoleGameCount = libraryState.selectedSystemGameCount,
                     portrait = portrait,
-                    portraitColumnWidth = portraitColumnWidth,
-                    detailsMode = currentRoute == MainRoute.GAME_DETAILS,
+                    showLibraryControls = currentRoute == MainRoute.HOME,
+                    onBackPressed =
+                        if (currentRoute == MainRoute.HOME || (currentRoute == MainRoute.ADD_CONSOLES && portrait)) {
+                            null
+                        } else ({
+                            if (currentRoute == MainRoute.ADD_CONSOLES) onBackPressedDispatcher.onBackPressed()
+                            else navController.popBackStack()
+                        }),
                 )
             }
 

@@ -66,6 +66,55 @@
     <string name="status_battery_low">Battery low, %1$d percent</string>
     <string name="status_gamepad_connected">Gamepad connected</string>
     <string name="title_add_console">Consoles</string>
+    <string name="consoles_installed_count">%1$d/%2$d systems</string>
+    <string name="consoles_no_results">No matching consoles</string>
+    <string name="consoles_reset_search">Clear search</string>
+    <string name="consoles_in_library">In library</string>
+    <string name="consoles_attention">Needs attention</string>
+    <string name="consoles_emulator_ready">Emulator ready</string>
+    <string name="consoles_available">Available to add</string>
+    <string name="consoles_db_ready">Database ready</string>
+    <string name="consoles_db_partial">Database incomplete</string>
+    <string name="consoles_db_missing">No offline database</string>
+    <string name="consoles_db_unavailable">No database available</string>
+    <string name="consoles_back_catalogue">All consoles</string>
+    <string name="consoles_not_added">Not added to library</string>
+    <string name="consoles_emulator_section">Emulator</string>
+    <string name="consoles_database_section">Offline game database</string>
+    <string name="consoles_built_in">Built into Omnidroid</string>
+    <string name="consoles_installed">Installed and ready</string>
+    <string name="consoles_not_installed">Emulator not installed</string>
+    <string name="consoles_emulator_unavailable">No emulator available for this system.</string>
+    <string name="consoles_install_console">Install</string>
+    <string name="consoles_add_library">Add</string>
+    <string name="consoles_repair_emulator">Repair</string>
+    <string name="consoles_library_count">%1$,d games</string>
+    <string name="consoles_emulator_summary">%1$s · %2$s</string>
+    <string name="consoles_emulator_builtin_short">Built-in</string>
+    <string name="consoles_emulator_installed_short">Installed</string>
+    <string name="consoles_emulator_missing_short">Not installed</string>
+    <string name="consoles_database_short">Database</string>
+    <string name="consoles_database_titles">%1$,d titles</string>
+    <string name="consoles_database_partial_titles">%1$,d titles · incomplete</string>
+    <string name="consoles_setup_help">Sets up the emulator and offline database. Add your own games from the library.</string>
+    <string name="consoles_database_missing_status">Not downloaded</string>
+    <string name="consoles_database_detail">%1$,d titles · %2$d of %3$d database parts installed</string>
+    <string name="consoles_database_help">Title information for matching your games and finding covers. Game files are not included.</string>
+    <string name="consoles_refresh_database">Refresh database</string>
+    <string name="consoles_download_database_full">Download database</string>
+    <string name="consoles_delete_database_full">Delete database</string>
+    <string name="consoles_remove_section">Remove from Omnidroid</string>
+    <string name="consoles_remove_help">Clears this console’s library entries and offline database. Your game files stay on your device.</string>
+    <string name="consoles_remove_console_full">Remove console</string>
+    <string name="consoles_setting_up">Setting up console…</string>
+    <string name="consoles_refreshing">Downloading database…</string>
+    <string name="consoles_deleting">Deleting database…</string>
+    <string name="consoles_removing">Removing console…</string>
+    <string name="consoles_wait_for_action">Another console operation is in progress. You can keep browsing.</string>
+    <string name="consoles_install_failed">The emulator could not be installed. Check your connection and try again.</string>
+    <string name="consoles_database_failed">The offline database could not be fully downloaded. Check your connection and use Download database to retry.</string>
+    <string name="consoles_action_failed">The operation could not be completed. Please try again.</string>
+    <string name="controller_hint_manage">Select / manage</string>
     <string name="consoles_your_games">Your games: %1$,d</string>
     <string name="consoles_database_games">Database: %1$,d games</string>
     <string name="consoles_database_missing">Database: not downloaded</string>
@@ -92,6 +141,8 @@
     <string name="game_rating">Rating</string>
     <string name="game_play_time">Play time</string>
     <string name="game_last_played">Last played</string>
+    <string name="game_sessions">Sessions</string>
+    <string name="game_achievements">Achievements</string>
     <string name="game_never_played">Never</string>
     <string name="game_play_time_hours">%1$d h %2$d min</string>
     <string name="game_play_time_minutes">%1$d min</string>
@@ -110,6 +161,7 @@
     <string name="install_console">Install</string>
     <string name="console_installed">Installed</string>
     <string name="back">Back</string>
+    <string name="settings_back_to">Back to %s settings</string>
     <string name="close">Close</string>
 
     <string name="game_page_search_suggestion">Search ROMs</string>
@@ -171,7 +223,7 @@
     <string name="url_donate_ko_fi" translatable="false">https://ko-fi.com/abousaif</string>
     <string name="url_developer_github" translatable="false">https://github.com/Ahmed-Abousaif</string>
     <string name="settings_title_enable_autosave">Autosave state</string>
-    <string name="settings_description_enable_autosave">Save state when exiting via game menu</string>
+    <string name="settings_description_enable_autosave">Save state when exiting or backgrounding a game, and resume it on launch</string>
     <string name="settings_title_enable_touch_feedback">Vibrate on touch</string>
     <string name="settings_title_tilt_sensitivity">Tilt sensor sensitivity</string>
     <string name="settings_title_hd_quality">HD mode quality</string>
@@ -439,9 +491,6 @@
     <string name="game_match_apply_cover_only">Cover Only</string>
     <string name="game_match_updated_success">Game match updated</string>
     <string name="game_cover_updated_success">Cover updated</string>
-    <string name="settings_title_precache_covers">Pre-cache All Covers</string>
-    <string name="settings_description_precache_covers">Download all library box arts for offline use</string>
-    <string name="settings_precache_covers_started">Pre-caching covers in background…</string>
 
     <string name="home_notification_title">Enable notifications</string>
     <string name="home_notification_message">Omnidroid uses notifications to let you know when a game or operation is running in background.</string>
@@ -609,4 +658,5 @@
     <string name="controller_hint_install">Install</string>
     <string name="console_not_added">Not added yet</string>
 
+    <string name="game_menu_appearance">Appearance</string>
 </resources>

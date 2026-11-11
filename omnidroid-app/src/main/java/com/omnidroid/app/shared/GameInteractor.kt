@@ -71,7 +71,8 @@ class GameInteractor(
         isFavorite: Boolean,
     ) {
         appScope.launch {
-            retrogradeDb.gameDao().update(game.copy(isFavorite = isFavorite))
+            val current = retrogradeDb.gameDao().selectById(game.id) ?: return@launch
+            retrogradeDb.gameDao().update(current.copy(isFavorite = isFavorite))
         }
     }
 
@@ -166,8 +167,6 @@ class GameInteractor(
         }
     }
 
-    fun getFrameSpeed(game: Game): Int = frameSpeedPrefs.get(game.id)
-
     fun setFrameSpeed(
         game: Game,
         speed: Int,
@@ -176,8 +175,6 @@ class GameInteractor(
     }
 
     fun isSaveSyncSupported(): Boolean = saveSyncManager.isSupported()
-
-    fun getCloudOverride(game: Game): GameCloudSyncOverride = cloudPrefs.getOverride(game.id)
 
     fun setCloudOverride(
         game: Game,

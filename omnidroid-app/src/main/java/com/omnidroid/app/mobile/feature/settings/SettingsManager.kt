@@ -2,7 +2,10 @@ package com.omnidroid.app.mobile.feature.settings
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.fredporciuncula.flow.preferences.FlowSharedPreferences
+import com.omnidroid.app.utils.settings.safeGetBoolean
+import com.omnidroid.app.utils.settings.safeGetInt
+import com.omnidroid.app.utils.settings.safeGetString
+import com.omnidroid.app.utils.settings.safeGetStringSet
 import com.omnidroid.R
 import com.omnidroid.app.shared.settings.HDModeQuality
 import com.omnidroid.app.shared.settings.HdModeBatteryMonitor
@@ -10,12 +13,10 @@ import com.omnidroid.common.math.Fraction
 import com.omnidroid.lib.storage.cache.CacheCleaner
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 class SettingsManager(private val context: Context, sharedPreferences: Lazy<SharedPreferences>) {
-    private val sharedPreferences by lazy { FlowSharedPreferences(sharedPreferences.get()) }
+    private val sharedPreferences by lazy { sharedPreferences.get() }
 
     private fun getString(resId: Int) = context.getString(resId)
 
@@ -27,7 +28,7 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
 
     suspend fun virtualPadOpacity() = floatPreference(R.string.pref_key_virtual_pad_opacity, 100, 100)
 
-    suspend fun lowLatencyAudio() = booleanPreference(R.string.pref_key_low_latency_audio, false)
+    suspend fun lowLatencyAudio() = booleanPreference(R.string.pref_key_low_latency_audio, true)
 
     suspend fun screenFilter() =
         stringPreference(
@@ -60,10 +61,6 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
 
     suspend fun enableImmersiveMode() = booleanPreference(R.string.pref_key_enable_immersive_mode, false)
 
-
-
-
-
     suspend fun cacheSizeBytes() =
         stringPreference(
             R.string.pref_key_max_cache_size,
@@ -77,9 +74,7 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
         default: Boolean,
     ): Boolean =
         withContext(Dispatchers.IO) {
-            sharedPreferences.getBoolean(getString(keyId), default)
-                .asFlow()
-                .first()
+            sharedPreferences.safeGetBoolean(getString(keyId), default)
         }
 
     private suspend fun stringPreference(
@@ -87,9 +82,7 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
         default: String,
     ): String =
         withContext(Dispatchers.IO) {
-            sharedPreferences.getString(getString(keyId), default)
-                .asFlow()
-                .first()
+            sharedPreferences.safeGetString(getString(keyId), default) ?: default
         }
 
     private suspend fun stringSetPreference(
@@ -97,9 +90,7 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
         default: Set<String>,
     ): Set<String> =
         withContext(Dispatchers.IO) {
-            sharedPreferences.getStringSet(getString(keyId), default)
-                .asFlow()
-                .first()
+            sharedPreferences.safeGetStringSet(getString(keyId), default)?.toSet() ?: default
         }
 
     private suspend fun floatPreference(
@@ -108,10 +99,7 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
         defaultNumerator: Int,
     ): Float =
         withContext(Dispatchers.IO) {
-            sharedPreferences.getInt(getString(keyId), defaultNumerator)
-                .asFlow()
-                .map { Fraction(it, denominator).floatValue }
-                .first()
+            Fraction(sharedPreferences.safeGetInt(getString(keyId), defaultNumerator), denominator).floatValue
         }
 
     private suspend fun intPreference(
@@ -119,8 +107,6 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
         default: Int,
     ): Int =
         withContext(Dispatchers.IO) {
-            sharedPreferences.getInt(getString(keyId), default)
-                .asFlow()
-                .first()
+            sharedPreferences.safeGetInt(getString(keyId), default)
         }
 }

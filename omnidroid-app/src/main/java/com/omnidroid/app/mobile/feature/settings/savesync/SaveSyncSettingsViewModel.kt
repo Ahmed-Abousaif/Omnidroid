@@ -59,7 +59,7 @@ class SaveSyncSettingsViewModel(
             refreshTick.collect {
                 emit(buildState())
             }
-        }.stateIn(viewModelScope, SharingStarted.Lazily, State())
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), State())
 
     fun refresh() {
         refreshTick.value += 1
@@ -87,11 +87,11 @@ class SaveSyncSettingsViewModel(
         refresh()
     }
 
-    private suspend fun buildState(): State {
+    private suspend fun buildState(): State = withContext(Dispatchers.IO) {
         val stats = withContext(Dispatchers.IO) {
             migrationManager.detectLemuroidSaves()
         }
-        return State(
+        State(
             isConfigured = saveSyncManager.isConfigured(),
             savesSpace = saveSyncManager.computeSavesSpace(),
             lastSyncInfo = saveSyncManager.getLastSyncInfo(),

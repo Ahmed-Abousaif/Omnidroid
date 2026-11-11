@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.lib.library.db.RetrogradeDatabase
+import com.omnidroid.lib.library.db.dao.GamePlayStats
 import com.omnidroid.lib.library.db.entity.Game
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,13 +39,13 @@ class GameDetailsViewModel(
         val game: Game? = null,
         val metadata: GameRemoteMetadata = GameRemoteMetadata(),
         val playTimeMs: Long = 0L,
-        val loadingMetadata: Boolean = true,
+        val sessionCount: Int = 0,
+        val loadingMetadata: Boolean = false,
         val playingTrailer: Boolean = false,
     )
 
     private val playTimeStore = PlayTimeStore(appContext)
     private val metadataFlow = MutableStateFlow(GameRemoteMetadata())
-    private val loadingMetadataFlow = MutableStateFlow(true)
     private val playingTrailerFlow = MutableStateFlow(false)
 
     val state: StateFlow<UiState> =
@@ -52,23 +53,30 @@ class GameDetailsViewModel(
             retrogradeDb.gameDao().observeById(gameId).filterNotNull(),
             metadataFlow,
             playTimeStore.observe(gameId),
-            loadingMetadataFlow,
+            retrogradeDb.gameSessionDao().observeStatsForGame(gameId),
             playingTrailerFlow,
-        ) { game, metadata, playTimeMs, loadingMetadata, playingTrailer ->
+        ) { game, metadata, legacyPlayTimeMs, sessionStats, playingTrailer ->
+            val totalPlayTimeMs = maxOf(sessionStats.totalDurationMs, legacyPlayTimeMs)
+            val sessionCount = maxOf(sessionStats.sessionCount, if (totalPlayTimeMs > 0L) 1 else 0)
             UiState(
                 game = game,
                 metadata = metadata,
-                playTimeMs = playTimeMs,
-                loadingMetadata = loadingMetadata,
+                playTimeMs = totalPlayTimeMs,
+                sessionCount = sessionCount,
+                loadingMetadata = false,
                 playingTrailer = playingTrailer,
             )
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState(game = initialGame))
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            UiState(
+                game = initialGame,
+                playTimeMs = playTimeStore.get(gameId),
+                sessionCount = if (playTimeStore.get(gameId) > 0L) 1 else 0,
+            ),
+        )
 
     init {
-        viewModelScope.launch {
-            metadataFlow.value = GameRemoteMetadata()
-            loadingMetadataFlow.value = false
-        }
         viewModelScope.launch {
             retrogradeDb.gameDao().observeById(gameId).collect { game ->
                 val url = game?.coverFrontUrl ?: return@collect

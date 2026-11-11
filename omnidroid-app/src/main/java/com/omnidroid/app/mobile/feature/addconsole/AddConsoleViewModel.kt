@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.library.RegisteredSystemsStore
 import com.omnidroid.app.shared.covers.CustomCoverManager
 import com.omnidroid.lib.core.ConsoleManager
@@ -17,11 +18,13 @@ import com.omnidroid.lib.library.db.dao.SystemCount
 import com.omnidroid.lib.library.metaSystemID
 import com.omnidroid.metadata.libretrodb.db.LibretroDBManager
 import com.omnidroid.metadata.libretrodb.db.entity.InstalledSlice
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -68,7 +71,18 @@ class AddConsoleViewModel(
         val databaseInstalled: Boolean,
         val databaseGameCount: Int,
         val libraryGameCount: Int,
-    )
+        val installedDatabaseCount: Int = if (databaseInstalled) 1 else 0,
+        val expectedDatabaseCount: Int = 1,
+        val hasDownloadedCore: Boolean = coreInstalled && !coreBundled,
+    ) {
+        val hasDatabase: Boolean get() = installedDatabaseCount > 0
+        val databaseAvailable: Boolean get() = expectedDatabaseCount > 0
+        val needsAttention: Boolean
+            get() =
+                (registeredOrHasGames || hasDatabase || hasDownloadedCore) &&
+                    (!coreInstalled || (databaseAvailable && !databaseInstalled))
+        val canRemove: Boolean get() = registeredOrHasGames || hasDatabase || hasDownloadedCore
+    }
 
     enum class BusyAction {
         INSTALL,
@@ -82,6 +96,7 @@ class AddConsoleViewModel(
         val busyMetaSystemID: MetaSystemID? = null,
         val busyAction: BusyAction? = null,
         val errorMessage: String? = null,
+        val loading: Boolean = true,
     )
 
     private data class LibrarySnapshot(
@@ -107,10 +122,20 @@ class AddConsoleViewModel(
         combine(
             registeredSystemsStore.observe(),
             retrogradeDb.gameDao().selectSystemsWithCount(),
-            libretroDb.dbInstance.sliceDao().observeAll(),
             corePresenceRevision,
-        ) { registered, counts, slices, revision ->
-            LibrarySnapshot(registered, counts, slices, revision)
+            coresSelection.getSelectedCores(),
+            libretroDb.dbInstance.sliceDao().observeAll(),
+        ) { registered, counts, revision, _, dbSlices ->
+            val directSlices =
+                withContext(Dispatchers.IO) {
+                    runCatching { libretroDb.dbInstance.sliceDao().all() }.getOrNull()
+                }
+            LibrarySnapshot(
+                registered = registeredSystemsStore.get() + registered,
+                counts = counts,
+                slices = directSlices ?: dbSlices,
+                corePresenceRevision = revision,
+            )
         }
 
     private val busySnapshot =
@@ -140,21 +165,34 @@ class AddConsoleViewModel(
                             val databaseInstalled =
                                 relatedSlices.isNotEmpty() && installedRelated.size == relatedSlices.size
                             val databaseGameCount = installedRelated.sumOf { it.rows }
-                            val catalogCores = ConsoleManager.catalogCoresFor(meta)
-                            val primaryCore = catalogCores.firstOrNull()
+                            val selectedCores = ConsoleManager.coresFor(meta, coresSelection)
+                            val catalogCores = (selectedCores + ConsoleManager.catalogCoresFor(meta)).distinct()
                             val coreInstalled =
-                                catalogCores.any { ConsoleManager.isCorePresent(applicationContext, it) }
+                                selectedCores.isNotEmpty() &&
+                                    selectedCores.all {
+                                        ConsoleManager.isCorePresent(applicationContext, it)
+                                    }
                             val coreBundled =
-                                catalogCores.any { ConsoleManager.isCoreBundled(applicationContext, it) }
+                                selectedCores.isNotEmpty() &&
+                                    selectedCores.all {
+                                        ConsoleManager.isCoreBundled(applicationContext, it)
+                                    }
                             ConsoleItem(
                                 metaSystemID = meta,
                                 registeredOrHasGames = meta in installedMeta,
                                 coreInstalled = coreInstalled,
                                 coreBundled = coreBundled,
-                                coreDisplayName = primaryCore?.coreDisplayName,
+                                coreDisplayName = selectedCores.joinToString { it.coreDisplayName }.ifBlank { null },
                                 databaseInstalled = databaseInstalled,
                                 databaseGameCount = databaseGameCount,
                                 libraryGameCount = libraryGameCount,
+                                installedDatabaseCount = installedRelated.size,
+                                expectedDatabaseCount = relatedSlices.size,
+                                hasDownloadedCore =
+                                    catalogCores.any {
+                                        ConsoleManager.isCorePresent(applicationContext, it) &&
+                                            !ConsoleManager.isCoreBundled(applicationContext, it)
+                                    },
                             )
                         }
                         .sortedWith(
@@ -164,15 +202,22 @@ class AddConsoleViewModel(
                 busyMetaSystemID = busy.busyMeta,
                 busyAction = busy.busyAction,
                 errorMessage = busy.errorMessage,
+                loading = false,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
 
     fun install(metaSystemID: MetaSystemID) {
         runExclusive(metaSystemID, BusyAction.INSTALL) {
             val cores = ConsoleManager.coresFor(metaSystemID, coresSelection)
-            coreUpdater.downloadCores(applicationContext, cores)
+            check(cores.isNotEmpty()) { applicationContext.getString(R.string.consoles_emulator_unavailable) }
+            val missing = cores.filterNot { ConsoleManager.isCorePresent(applicationContext, it) }
+            if (missing.isNotEmpty()) coreUpdater.downloadCores(applicationContext, missing)
+            check(cores.all { ConsoleManager.isCorePresent(applicationContext, it) }) {
+                applicationContext.getString(R.string.consoles_install_failed)
+            }
             registeredSystemsStore.register(metaSystemID)
             corePresenceRevision.value = corePresenceRevision.value + 1
+            runCatching { sliceInstaller.ensureSlices(applicationContext, cores) }
         }
     }
 
@@ -182,6 +227,7 @@ class AddConsoleViewModel(
                 ConsoleManager.coresFor(metaSystemID, coresSelection)
                     .ifEmpty { ConsoleManager.catalogCoresFor(metaSystemID) }
             sliceInstaller.ensureSlices(applicationContext, cores, force = true)
+            checkDatabase(metaSystemID)
         }
     }
 
@@ -194,9 +240,15 @@ class AddConsoleViewModel(
     fun removeConsole(metaSystemID: MetaSystemID) {
         runExclusive(metaSystemID, BusyAction.REMOVE_CONSOLE) {
             val cores =
-                ConsoleManager.coresFor(metaSystemID, coresSelection)
-                    .ifEmpty { ConsoleManager.catalogCoresFor(metaSystemID) }
-            val remaining = registeredSystemsStore.get()
+                (
+                    ConsoleManager.coresFor(metaSystemID, coresSelection) +
+                        ConsoleManager.catalogCoresFor(metaSystemID)
+                ).distinct()
+            val systemsWithGames =
+                retrogradeDb.gameDao().selectSystemsWithCount().first()
+                    .filter { it.count > 0 }
+                    .mapNotNull { runCatching { GameSystem.findById(it.systemId).metaSystemID() }.getOrNull() }
+            val remaining = registeredSystemsStore.get() + systemsWithGames
             val safeToDelete =
                 ConsoleManager.coresSafeToUninstall(
                     applicationContext,
@@ -230,22 +282,36 @@ class AddConsoleViewModel(
         errorFlow.value = null
     }
 
+    private suspend fun checkDatabase(metaSystemID: MetaSystemID) {
+        val expected = ConsoleManager.sliceIdsFor(metaSystemID)
+        if (expected.isEmpty()) return
+        val installedIds = libretroDb.dbInstance.sliceDao().all().map { it.sliceId }.toSet()
+        check(installedIds.containsAll(expected)) {
+            applicationContext.getString(R.string.consoles_database_failed)
+        }
+    }
+
     private fun runExclusive(
         metaSystemID: MetaSystemID,
         action: BusyAction,
         block: suspend () -> Unit,
     ) {
         if (busyMetaFlow.value != null) return
+        // Claim the operation before launching, including multiple clicks in the same frame.
+        busyMetaFlow.value = metaSystemID
+        busyActionFlow.value = action
+        errorFlow.value = null
         viewModelScope.launch {
-            busyMetaFlow.value = metaSystemID
-            busyActionFlow.value = action
-            errorFlow.value = null
             try {
                 withContext(Dispatchers.IO) { block() }
-            } catch (error: Throwable) {
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
                 Timber.e(error, "Console action %s failed for %s", action, metaSystemID.name)
-                errorFlow.value = error.message
+                errorFlow.value = error.message?.takeIf { it.isNotBlank() }
+                    ?: applicationContext.getString(R.string.consoles_action_failed)
             } finally {
+                corePresenceRevision.value = corePresenceRevision.value + 1
                 busyMetaFlow.value = null
                 busyActionFlow.value = null
             }
