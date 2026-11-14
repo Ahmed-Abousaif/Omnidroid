@@ -9,10 +9,11 @@ Community requests, feature milestones, and bug reports from the community, orga
 ### v3.0.0
 
 - Rebuilt extra-display detection and output for dual-screen handhelds and compatible TVs, with an Omnidroid welcome screen, per-display controls, safe lifecycle handling, and a lightweight single-screen path that starts the display coordinator only when needed
+- Rebuild the Consoles page to be the hub for managing installed emulators and game databases and assets and to help manage/update them
 - Updated Nintendo Switch emulation to include Eden's latest fixes and improvements
 - Added more save slots per game and an Autosave option in the Load State menu, where save states are supported
 - Redesigned Wii U (Cemu) dual view in landscape with the TV above a centered GamePad at half the width and height; the on-screen button toggles directly between TV and dual view, with touch mapped to the displayed GamePad
-- Fixed duplicated TV/GamePad output by preserving separate screen images, and added automatic phone keyboard support for in-game text entry, editing, and Done confirmation
+- Fixed duplicated TV/GamePad output for Wii U by preserving separate screen images, and added automatic phone keyboard support for in-game text entry, editing, and Done confirmation
 - Added button UI scaling for the library interface in Settings > Display, featuring a live mock library preview that scales the console, library, and favorites buttons, the view mode toggle, search bar, and top utility buttons up to 25% larger across 5 discrete increments
 - Added clearer save/load errors and options to retry or quit without saving if a save fails
 - Fixed Library crashing (tested 100,000 games) by Rebuilding Grid/List with bounded paging and correctly sized covers; fixed paging-key collisions and Continue-cover layout loops
