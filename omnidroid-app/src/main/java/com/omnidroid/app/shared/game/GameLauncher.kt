@@ -9,7 +9,6 @@ import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.app.mobile.shared.compose.dialog.DialogActionRole
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogAction
 import com.omnidroid.app.mobile.shared.compose.dialog.showOmnidroidDialog
-import com.omnidroid.app.shared.cast.CastDisplayManager
 import com.omnidroid.app.shared.game.backend.RequirementPickerLauncherActivity
 import com.omnidroid.app.shared.input.InputDeviceManager
 import com.omnidroid.app.shared.main.GameLaunchTaskHandler
@@ -40,8 +39,6 @@ class GameLauncher(
     private val settingsManager: SettingsManager,
 
     private val gameCloudSyncPreferences: GameCloudSyncPreferences,
-
-    private val castDisplayManager: CastDisplayManager,
 
     private val inputDeviceManager: InputDeviceManager,
 
@@ -145,8 +142,6 @@ class GameLauncher(
 
                 gameLaunchTaskHandler.handleGameStart(activity.applicationContext)
 
-                castDisplayManager.hideIdleForGame()
-
                 BaseGameActivity.launchGame(
 
                     activity,
@@ -158,8 +153,6 @@ class GameLauncher(
                     loadSave,
 
                     leanback,
-
-                    castDisplayManager.launchOptions(),
 
                     isExternalLaunch,
 

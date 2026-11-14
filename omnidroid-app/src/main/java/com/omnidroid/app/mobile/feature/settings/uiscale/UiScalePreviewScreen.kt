@@ -189,7 +189,7 @@ fun UiScalePreviewScreen(
                     modifier = Modifier.fillMaxWidth().align(Alignment.TopStart),
                     gamepadConnected = false,
                     onRandomPressed = {},
-                    onCastPressed = {},
+                    onDisplaysPressed = {},
                     onSettingsPressed = {},
                     onProfilePressed = {},
                     portrait = portrait,

@@ -976,7 +976,7 @@ androidComponents {
 
 
 
-        val baseVersionCode = 270
+        val baseVersionCode = android.defaultConfig.versionCode ?: error("Missing application version code")
 
 
 

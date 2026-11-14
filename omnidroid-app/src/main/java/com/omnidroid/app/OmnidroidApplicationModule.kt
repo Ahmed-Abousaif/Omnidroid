@@ -23,7 +23,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.room.Room
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
-import com.omnidroid.app.shared.cast.CastDisplayManager
+import com.omnidroid.app.shared.displays.DisplayClient
 import com.omnidroid.app.shared.game.GameLauncher
 import com.omnidroid.app.shared.input.InputDeviceManager
 import com.omnidroid.app.shared.main.GameLaunchTaskHandler
@@ -383,9 +383,9 @@ object OmnidroidApplicationModule {
 
     @Provides
     @Singleton
-    fun castDisplayManager(
+    fun displayClient(
         @ApplicationContext context: Context,
-    ) = CastDisplayManager(context)
+    ) = (context.applicationContext as OmnidroidApplication).displays
 
     @Provides
     @Singleton
@@ -395,7 +395,6 @@ object OmnidroidApplicationModule {
         saveSyncManager: SaveSyncManager,
         settingsManager: SettingsManager,
         gameCloudSyncPreferences: GameCloudSyncPreferences,
-        castDisplayManager: CastDisplayManager,
         inputDeviceManager: InputDeviceManager,
     ) = GameLauncher(
         coresSelection,
@@ -403,7 +402,6 @@ object OmnidroidApplicationModule {
         saveSyncManager,
         settingsManager,
         gameCloudSyncPreferences,
-        castDisplayManager,
         inputDeviceManager,
     )
 

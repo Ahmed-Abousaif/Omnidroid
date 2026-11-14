@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="secondary_display_background">#101317</color>
+    <color name="secondary_display_text">#F0F3F4</color>
+    <color name="secondary_display_secondary_text">#AFB7BE</color>
+    <color name="secondary_display_accent">#C2F970</color>
+    <style name="OmnidroidSecondaryDisplayTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/secondary_display_background</item>
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+    <string name="displays_title">Displays</string>
+    <string name="displays_description">Show an Omnidroid welcome screen on supported extra displays. Games stay on your current screen.</string>
+    <string name="displays_automatic">Show automatically</string>
+    <string name="displays_connecting">Checking displays…</string>
+    <string name="displays_none">No independent extra display is available. Some TV connections support screen mirroring only.</string>
+    <string name="displays_connection_settings">Connection settings</string>
+    <string name="displays_connection_help">Connect a TV or monitor using your device’s display settings. Independent output depends on the device and connection.</string>
+    <string name="displays_show">Show</string>
+    <string name="displays_hide">Hide</string>
+    <string name="displays_retry">Retry</string>
+    <string name="displays_status_showing">Showing welcome screen</string>
+    <string name="displays_status_sleeping">Display is sleeping</string>
+    <string name="displays_status_hidden">Welcome screen hidden</string>
+    <string name="displays_status_paused">Waiting for Omnidroid to be active</string>
+    <string name="displays_status_ready">Opening welcome screen…</string>
+    <string name="displays_status_unavailable">Independent output is unavailable on this display</string>
+    <string name="displays_dimensions">%1$d × %2$d</string>
+    <string name="displays_placeholder_title">Dual-screen support is on the way</string>
+    <string name="displays_brand">Omnidroid</string>
+    <string name="displays_placeholder_message">We’re working on a dedicated Omnidroid experience for dual-screen devices. Stay tuned.</string>
+</resources>

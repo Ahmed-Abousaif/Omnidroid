@@ -14,6 +14,7 @@ import com.omnidroid.lib.backend.ConsoleBackendRegistry
 import com.omnidroid.lib.backend.libretro.LibretroBackendDescriptor
 import com.omnidroid.lib.backend.switch_backend.SwitchBackendDescriptor
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
+import com.omnidroid.app.shared.displays.DisplayClient
 import com.omnidroid.app.shared.covers.CoverUtils
 import com.omnidroid.app.shared.startup.GameProcessInitializer
 import com.omnidroid.app.shared.startup.MainProcessInitializer
@@ -36,6 +37,8 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
 
     @Inject
     lateinit var settingsManager: SettingsManager
+
+    val displays by lazy { DisplayClient(this) }
 
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -65,6 +68,8 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
             }
 
         AppInitializer.getInstance(this).initializeComponent(initializeComponent)
+
+        displays.register()
 
         DynamicColors.applyToActivitiesIfAvailable(this)
 

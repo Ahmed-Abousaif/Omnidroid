@@ -122,7 +122,7 @@ import kotlin.math.roundToInt
 fun LibraryTopBar(
     gamepadConnected: Boolean,
     onRandomPressed: () -> Unit,
-    onCastPressed: () -> Unit,
+    onDisplaysPressed: () -> Unit,
     onSettingsPressed: () -> Unit,
     modifier: Modifier = Modifier,
     bottomPadding: Dp = 0.dp,
@@ -133,7 +133,7 @@ fun LibraryTopBar(
     searchQuery: String = "",
     onSearchQueryChange: (String) -> Unit = {},
     onClearSearch: () -> Unit = {},
-    casting: Boolean = false,
+    hasSecondaryOutput: Boolean = false,
     consoleTitleId: Int? = null,
     consoleGameCount: Int? = null,
     portrait: Boolean = false,
@@ -209,10 +209,10 @@ fun LibraryTopBar(
                 Spacer(modifier = Modifier.width(6.dp))
             }
             LibraryUtilityButtons(
-                casting = casting,
+                hasSecondaryOutput = hasSecondaryOutput,
                 iconSize = iconSize,
                 onRandomPressed = onRandomPressed,
-                onCastPressed = onCastPressed,
+                onDisplaysPressed = onDisplaysPressed,
                 onSettingsPressed = onSettingsPressed,
             )
             if (!portrait) {
@@ -302,13 +302,13 @@ private fun LibrarySearchRow(
     }
 }
 
-/** Settings, cast and play-random: borderless utility actions, unlike the dock's console circles. */
+/** Settings, displays and play-random: borderless utility actions, unlike the dock's console circles. */
 @Composable
 private fun LibraryUtilityButtons(
-    casting: Boolean,
+    hasSecondaryOutput: Boolean,
     iconSize: Dp,
     onRandomPressed: () -> Unit,
-    onCastPressed: () -> Unit,
+    onDisplaysPressed: () -> Unit,
     onSettingsPressed: () -> Unit,
 ) {
     Row(
@@ -322,11 +322,11 @@ private fun LibraryUtilityButtons(
                 modifier = Modifier.size(iconSize),
             )
         }
-        FloatingChromeButton(onClick = onCastPressed) {
+        FloatingChromeButton(onClick = onDisplaysPressed) {
             Icon(
-                imageVector = if (casting) Icons.Filled.CastConnected else Icons.Filled.Cast,
-                contentDescription = stringResource(R.string.cast),
-                tint = if (casting) LibraryNeonGreen else LocalContentColor.current,
+                imageVector = if (hasSecondaryOutput) Icons.Filled.CastConnected else Icons.Filled.Cast,
+                contentDescription = stringResource(R.string.displays_title),
+                tint = if (hasSecondaryOutput) LibraryNeonGreen else LocalContentColor.current,
                 modifier = Modifier.size(iconSize),
             )
         }

@@ -41,6 +41,18 @@
         android:roundIcon="@mipmap/omnidroid_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/OmnidroidMaterialTheme">
+        <service
+            android:name=".app.shared.displays.DisplaySessionService"
+            android:exported="false" />
+        <activity
+            android:name=".app.shared.displays.SecondaryDisplayActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity="${applicationId}.secondaryDisplay"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|fontScale|uiMode|locale|layoutDirection"
+            android:theme="@style/OmnidroidSecondaryDisplayTheme" />
+
         <activity
             android:name="com.omnidroid.app.mobile.feature.main.MainActivity"
             android:exported="true"

@@ -10,7 +10,6 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import com.omnidroid.R
-import com.omnidroid.app.shared.cast.CastDisplayManager
 import com.omnidroid.app.shared.game.BaseGameActivity
 import com.omnidroid.app.shared.main.GameLaunchTaskHandler
 import com.omnidroid.common.kotlin.serializable
@@ -32,9 +31,6 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
 
     @Inject
     lateinit var gameLaunchTaskHandler: GameLaunchTaskHandler
-
-    @Inject
-    lateinit var castDisplayManager: CastDisplayManager
 
     private var syncJob: Job? = null
     private var finished = false
@@ -94,14 +90,12 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
         syncJob?.cancel()
         findViewById<ProgressBar>(R.id.progressBar).visibility = View.GONE
         gameLaunchTaskHandler.handleGameStart(applicationContext)
-        castDisplayManager.hideIdleForGame()
         BaseGameActivity.launchGame(
             this,
             coreConfig,
             game,
             loadSave,
             leanback,
-            castDisplayManager.launchOptions(),
             isExternalLaunch,
         )
     }

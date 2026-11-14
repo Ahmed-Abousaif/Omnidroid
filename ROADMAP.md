@@ -6,8 +6,9 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ## Completed
 
-### v2.7.0
+### v3.0.0
 
+- Rebuilt extra-display detection and output for dual-screen handhelds and compatible TVs, with an Omnidroid welcome screen, per-display controls, safe lifecycle handling, and a lightweight single-screen path that starts the display coordinator only when needed
 - Updated Nintendo Switch emulation to include Eden's latest fixes and improvements
 - Added more save slots per game and an Autosave option in the Load State menu, where save states are supported
 - Redesigned Wii U (Cemu) dual view in landscape with the TV above a centered GamePad at half the width and height; the on-screen button toggles directly between TV and dual view, with touch mapped to the displayed GamePad

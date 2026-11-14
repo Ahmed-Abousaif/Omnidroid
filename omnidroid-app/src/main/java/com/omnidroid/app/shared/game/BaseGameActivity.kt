@@ -973,8 +973,6 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
             useLeanback: Boolean,
 
-            activityOptions: android.os.Bundle? = null,
-
             isExternalLaunch: Boolean = false,
 
         ) {
@@ -1045,21 +1043,15 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
                     }
 
-                    if (activityOptions != null) {
-
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-
-                    }
-
                 }
 
             if (isExternalLaunch) {
 
-                activity.startActivity(intent, activityOptions)
+                activity.startActivity(intent)
 
             } else {
 
-                activity.startActivityForResult(intent, REQUEST_PLAY_GAME, activityOptions)
+                activity.startActivityForResult(intent, REQUEST_PLAY_GAME)
 
             }
 

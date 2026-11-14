@@ -31,14 +31,6 @@
     <string name="discover">Discover</string>
     <string name="rescan">Rescan</string>
     <string name="library_scanning">Scanning…</string>
-    <string name="cast">Cast</string>
-    <string name="cast_title">Cast to a display</string>
-    <string name="cast_description">Connect a TV or monitor with Cast, wireless display, or HDMI, then choose it here. Games launch on that screen.</string>
-    <string name="cast_this_device">This device</string>
-    <string name="cast_find_display">Find a display</string>
-    <string name="cast_no_displays">No extra displays found. Use Find a display to connect a TV, then come back and pick it.</string>
-    <string name="cast_idle_title">Ready to play</string>
-    <string name="cast_idle_message">Choose a game on your device. It will appear here.</string>
     <string name="stop">Stop</string>
     <string name="none">None</string>
     <string name="directory">Directory</string>

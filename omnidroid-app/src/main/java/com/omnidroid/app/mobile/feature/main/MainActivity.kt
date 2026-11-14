@@ -65,7 +65,7 @@ import com.omnidroid.R
 import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.app.mobile.feature.addconsole.AddConsoleScreen
 import com.omnidroid.app.mobile.feature.addconsole.AddConsoleViewModel
-import com.omnidroid.app.mobile.feature.cast.CastPickerSheet
+import com.omnidroid.app.mobile.feature.displays.DisplaysDialog
 import com.omnidroid.app.mobile.feature.gamedetails.GameDetailsScreen
 import com.omnidroid.app.mobile.feature.gamedetails.GameDetailsViewModel
 import com.omnidroid.app.mobile.feature.library.LibraryFilter
@@ -99,8 +99,7 @@ import com.omnidroid.app.mobile.shared.controller.ControllerInputBridge
 import com.omnidroid.app.mobile.shared.controller.ControllerNavigationState
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.shared.GameInteractor
-import com.omnidroid.app.shared.cast.CastDisplayManager
-import com.omnidroid.app.shared.cast.StopCastResult
+import com.omnidroid.app.shared.displays.DisplayClient
 import com.omnidroid.app.shared.deviceprofile.DeviceProfileManager
 import com.omnidroid.app.shared.game.BaseGameActivity
 import com.omnidroid.app.shared.game.GamePlatformSession
@@ -209,7 +208,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
     lateinit var coreVariablesManager: com.omnidroid.lib.core.CoreVariablesManager
 
     @Inject
-    lateinit var castDisplayManager: CastDisplayManager
+    lateinit var displayClient: DisplayClient
 
     @Inject
     lateinit var appUpdater: AppUpdater
@@ -280,11 +279,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 remember {
                     mutableStateOf(false)
                 }
-            val showCastPicker =
+            val showDisplays =
                 remember {
                     mutableStateOf(false)
                 }
-            val castState = castDisplayManager.state.collectAsState().value
+            val displaysState = displayClient.state.collectAsState().value
 
             val deviceProfileManager = remember { DeviceProfileManager.get(applicationContext) }
             val showWelcomeBenchmark = remember { mutableStateOf(false) }
@@ -438,7 +437,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         libraryState = libraryState,
                         infoDialogDisplayed = infoDialogDisplayed,
                         selectedGameState = selectedGameState,
-                        showCastPicker = showCastPicker,
+                        showDisplays = showDisplays,
                         libraryViewModel = libraryViewModel,
                     )
                 }
@@ -498,7 +497,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 currentRoute == MainRoute.GAME_DETAILS &&
                     selectedGameState.value == null &&
                     !infoDialogDisplayed.value &&
-                    !showCastPicker.value
+                    !showDisplays.value
             BackHandler(enabled = !detailsBackIsAPlainPop) {
                 if (selectedGameState.value != null) {
                     selectedGameState.value = null
@@ -511,7 +510,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         libraryState = libraryState,
                         infoDialogDisplayed = infoDialogDisplayed,
                         selectedGameState = selectedGameState,
-                        showCastPicker = showCastPicker,
+                        showDisplays = showDisplays,
                         libraryViewModel = libraryViewModel,
                     )
                 }
@@ -800,23 +799,13 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 ),
             )
 
-            if (showCastPicker.value) {
-                CastPickerSheet(
-                    state = castState,
-                    onSelectDisplay = { displayId ->
-                        castDisplayManager.selectDisplay(displayId)
-                        showCastPicker.value = false
-                        castDisplayManager.showIdle(this@MainActivity)
-                    },
-                    onStopCasting = {
-                        val result = castDisplayManager.stopCasting()
-                        showCastPicker.value = false
-                        if (result is StopCastResult.NeedsSystemDisconnect) {
-                            castDisplayManager.openSystemCastSettings(this@MainActivity)
-                        }
-                    },
-                    onFindDisplay = { castDisplayManager.openSystemCastSettings(this@MainActivity) },
-                    onDismiss = { showCastPicker.value = false },
+            if (showDisplays.value) {
+                DisplaysDialog(
+                    state = displaysState,
+                    onAutomaticChanged = displayClient::setAutomatic,
+                    onHiddenChanged = displayClient::setHidden,
+                    onConnectionSettings = { DisplayClient.openConnectionSettings(this@MainActivity) },
+                    onDismiss = { showDisplays.value = false },
                 )
             }
 
@@ -879,16 +868,16 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     },
                     sort = libraryState.sort,
                     onSortChange = { libraryViewModel.setSort(it) },
-                    onCastPressed = {
-                        castDisplayManager.refresh()
-                        showCastPicker.value = true
+                    onDisplaysPressed = {
+                        displayClient.refresh()
+                        showDisplays.value = true
                     },
                     onSettingsPressed = { navController.navigateToRoute(MainRoute.SETTINGS) },
                     onProfilePressed = { navController.navigateToRoute(MainRoute.PROFILE) },
                     searchQuery = libraryState.searchQuery,
                     onSearchQueryChange = { libraryViewModel.changeQueryString(it) },
                     onClearSearch = { libraryViewModel.clearSearchQuery() },
-                    casting = castState.isCasting,
+                    hasSecondaryOutput = displaysState.hasOutput,
                     consoleTitleId =
                         (libraryState.filter as? LibraryFilter.System)?.metaSystemID?.titleResId,
                     consoleGameCount = libraryState.selectedSystemGameCount,
@@ -943,15 +932,8 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
         super.onResume()
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
         hideSystemBars()
-        castDisplayManager.refresh()
-        castDisplayManager.attachHost(this)
         GamePlatformSession.reportLibrary(this)
         appUpdater.onHostResumed(this)
-    }
-
-    override fun onDestroy() {
-        castDisplayManager.hideIdle()
-        super.onDestroy()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -997,12 +979,12 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
         libraryState: LibraryViewModel.UiState,
         infoDialogDisplayed: MutableState<Boolean>,
         selectedGameState: MutableState<Game?>,
-        showCastPicker: MutableState<Boolean>,
+        showDisplays: MutableState<Boolean>,
         libraryViewModel: LibraryViewModel,
     ) {
         when {
-            showCastPicker.value -> {
-                showCastPicker.value = false
+            showDisplays.value -> {
+                showDisplays.value = false
             }
             infoDialogDisplayed.value -> {
                 infoDialogDisplayed.value = false
@@ -1054,7 +1036,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
         when (requestCode) {
             BaseGameActivity.REQUEST_PLAY_GAME -> {
-                castDisplayManager.restoreIdle(this)
                 lifecycleScope.safeLaunch {
                     gameLaunchTaskHandler.handleGameFinish(
                         this@MainActivity,
