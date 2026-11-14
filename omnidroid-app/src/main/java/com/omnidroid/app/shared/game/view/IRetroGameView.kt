@@ -5,7 +5,6 @@ import android.view.MotionEvent
 import android.view.SurfaceView
 import android.view.View
 import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleOwner
 import com.omnidroid.common.graphics.takeScreenshot
 import com.omnidroid.libretrodroid.Controller
 import com.omnidroid.libretrodroid.GLRetroView

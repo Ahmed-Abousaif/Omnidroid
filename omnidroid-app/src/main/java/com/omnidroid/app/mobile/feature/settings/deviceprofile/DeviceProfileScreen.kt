@@ -9,10 +9,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,7 +28,6 @@ import androidx.compose.material.icons.outlined.DeveloperBoard
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.Speed
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,11 +36,11 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,8 +54,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.shared.deviceprofile.BenchmarkResult
 import com.omnidroid.app.shared.deviceprofile.CpuInfo
@@ -615,7 +616,9 @@ private fun Panel(
 
 @Composable
 fun ExtendedBenchmarkProgressDialog(progress: Float) {
-    AlertDialog(
+    OmnidroidDialog(
+        dismissOnBackPress = false,
+        dismissOnClickOutside = false,
         onDismissRequest = { },
         title = { Text(text = stringResource(R.string.settings_device_profile_benchmark_running_title)) },
         text = {
@@ -648,7 +651,7 @@ fun WelcomeBenchmarkDialog(
     onAgree: () -> Unit,
     onDecline: () -> Unit,
 ) {
-    AlertDialog(
+    OmnidroidDialog(
         onDismissRequest = onDecline,
         icon = {
             Icon(
@@ -661,12 +664,12 @@ fun WelcomeBenchmarkDialog(
         title = { Text(text = stringResource(R.string.device_profile_welcome_title)) },
         text = { Text(text = stringResource(R.string.device_profile_welcome_message)) },
         confirmButton = {
-            TextButton(onClick = onAgree) {
+            OmnidroidDialogButton(onClick = onAgree) {
                 Text(text = stringResource(R.string.device_profile_welcome_agree))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDecline) {
+            OmnidroidDialogButton(onClick = onDecline) {
                 Text(text = stringResource(R.string.device_profile_welcome_decline))
             }
         },

@@ -208,11 +208,6 @@ class LibraryViewModel(
         searchQueryFlow.value = ""
     }
 
-    fun resetHomeUi() {
-        clearSearchQuery()
-        filterFlow.value = LibraryFilter.All
-    }
-
     fun setZoomDensity(density: Int) {
         val value = density.coerceIn(0, MAX_ZOOM_DENSITY)
         zoomDensityFlow.value = value

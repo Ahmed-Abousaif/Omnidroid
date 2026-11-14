@@ -2,8 +2,6 @@
 <resources>
     <string name="title_home">Domovská stránka</string>
     <string name="title_search">Hledat</string>
-    <string name="title_systems">Systémy</string>
-    <string name="title_games">Hry</string>
     <string name="title_settings">Nastavení</string>
     <string name="recent">Nedávné</string>
     <string name="favorites">Oblíbené</string>
@@ -17,14 +15,9 @@
     <string name="ok">OK</string>
     <string name="cancel">Zrušit</string>
     <string name="settings">Nastavení</string>
-    <string name="save_sync">Uložit synchronizaci</string>
     <string name="show_all">Zobrazit vše</string>
     <string name="back">Zpět</string>
     <string name="close">Zavřít</string>
-    <string name="game_page_search_suggestion">Hledat hry</string>
-    <string name="settings_category_general">Obecné</string>
-    <string name="settings_category_input">Vstup</string>
-    <string name="settings_category_misc">Ostatní</string>
     <string name="settings_title_enable_autosave">Stav automatického uložení</string>
     <string name="settings_description_enable_autosave">Uložit stav při ukončení v nabídce hry</string>
     <string name="settings_title_enable_touch_feedback">Vibrace při dotyku</string>
@@ -42,7 +35,6 @@
     <string name="settings_gamepad_category_enabled">Povolená zařízení</string>
     <string name="settings_gamepad_category_general">Obecné</string>
     <string name="settings_gamepad_title_reset_bindings">Rezetovat nastavení kláves</string>
-    <string name="settings_gamepad_title_game_menu">Menu</string>
     <string name="settings_title_open_cores_selection">Změnit jádra</string>
     <string name="settings_description_open_cores_selection">Vyberte, které jádro je přiřazeno k systému</string>
     <string name="settings_title_display_bios_info">BIOS</string>
@@ -51,8 +43,6 @@
     <string name="settings_bios_category_not_detected">Podporováno</string>
     <string name="settings_title_reset_settings">Obnovení továrního nastavení</string>
     <string name="settings_description_reset_settings">Resetovat Omnidroid do továrního nastavení</string>
-    <string name="settings_title_advanced_settings">Pokročilé nastavení</string>
-    <string name="settings_description_advanced_settings">Zobrazit pokročilé nastavení</string>
     <string name="settings_title_low_latency_audio">Preferovat zvuk s nízkou latencí</string>
     <string name="settings_description_low_latency_audio">Snížit latenci zvuku na podporovaných zařízeních. Může způsobit nepříjemné zvuky.</string>
     <string name="settings_title_direct_game_load">Přímé načtení hry</string>
@@ -69,7 +59,6 @@
     <string name="settings_save_sync_refresh_description">Provést manuální syncrhonizaci.\n%1$s</string>
     <string name="settings_save_sync_enable_auto">Automatická synchronizace</string>
     <string name="settings_save_sync_enable_auto_description">Automaticky provést synchronizaci před a poo ukončení hry pokud jste připojení k WiFi</string>
-    <string name="settings_save_sync_configure">Konfigurovat %1$s</string>
     <string name="settings_save_sync_include_saves">Synchronizace stavů ve hře</string>
     <string name="settings_save_sync_include_saves_description">%1$s na zařízení</string>
     <string name="settings_save_sync_include_states">Synchronizace stavů</string>
@@ -78,16 +67,6 @@
     <string name="game_context_menu_remove_from_favorites">Odebrat z oblíbených</string>
     <string name="game_context_menu_resume">Pokračovat</string>
     <string name="game_context_menu_restart">Restartovat</string>
-    <string name="game_context_menu_create_shortcut">Připnout do launcheru</string>
-    <string name="home_notification_title">Povolit oznámení</string>
-    <string name="home_notification_message">Omnidroid používá oznámení, aby informoval, zda hra nebo operace běží v pozadí.</string>
-    <string name="home_notification_action">Povolit</string>
-    <string name="home_microphone_title">Povolit mikrofon</string>
-    <string name="home_microphone_message">Nintendo DS hry mohou používat mikrofon k poskytování některých funkcí.</string>
-    <string name="home_microphone_action">Povolit</string>
-    <string name="home_empty_title">Zvolit složku s ROMkami</string>
-    <string name="home_empty_message">Omnidroid potřebuje naskenovat složku obsahující ROM soubory.\nTo může trvat až několik minut.</string>
-    <string name="home_empty_action">Vybrat adresář</string>
     <string name="game_menu_save">Uložit</string>
     <string name="game_menu_load">Načíst</string>
     <string name="game_menu_restart">Restartovat</string>
@@ -106,8 +85,6 @@
     <string name="game_toast_quick_save_loaded">Rychlé načtení</string>
     <string name="game_toast_quick_save_saved">Rychlé uložení</string>
     <string name="empty_view_default">Žádné položky</string>
-    <string name="core_settings_title">Nastavení jádra</string>
-    <string name="core_settings_category_preferences">Preference</string>
     <string name="core_settings_category_controllers">Ovladače</string>
     <string name="core_settings_controller">Ovladač %1$s</string>
     <string name="game_menu_title">Herní menu</string>
@@ -129,29 +106,19 @@
         \n\nPokud nic z výše uvedeného nepomůže, je možné, že tato hra/jádro není podporováno vaším zařízením.
     </string>
     <string name="game_loader_error_missing_bios">Vypadá to, že vám chybí požadované BIOS soubory. Vložte je do složky s ROMkami a znovu naskenujte. Vyžadouvané soubory: %1$s</string>
-    <string name="game_shortcut_error">Nastala chyba při načítání vaší hry. Prosím, zkontrolujte, zda tato hra existuje ve vaší knihovně.</string>
     <string name="dialog_saf_not_found">Toto zařízení nepodporuje výběr souborů zapomocí StorageAccessFramework. Prosím, zkopírujte ručně nekomprimované ROM soubory do %1$s a znovu oskenujte.</string>
-    <string name="system_grid_details">%1$s her</string>
     <string name="tv_folder_picker_title">Zvolit složku s ROMkami</string>
     <string name="tv_folder_picker_action_choose">Zvolit</string>
     <string name="tv_folder_picker_action_cancel">Zrušit</string>
     <string name="tv_folder_storage_primary">Primární úložiště</string>
     <string name="tv_folder_storage_secondary">Sekundární úložiště %1$s</string>
     <string name="tv_folder_storage_title">Vyberte úložiště</string>
-    <string name="tv_home_section_favorites">Oblíbené</string>
-    <string name="tv_home_section_recents">Nedávné</string>
-    <string name="tv_home_section_systems">Systémy</string>
-    <string name="tv_home_section_settings">Nastavení</string>
     <string name="gamepad_binding_update_title">Přiřadit \"RetroPad %1$s\"</string>
     <string name="gamepad_binding_update_description">Stiskněte tlačítko na svém \"%1$s\"</string>
     <string name="shortcut_binding_update_title">Přiřadit \"Zástupce %1$s\"</string>
     <string name="shortcut_binding_update_description">Stiskněte první, poté druhé tlačítko pro navázání kombinace na \"%1$s\"</string>
-    <string name="tv_search_results">Hry</string>
     <string name="tv_game_message_missing_gamepad">Gamepad je zapotřebí k hraní. Prosím připojte nějaký.</string>
-    <string name="game_edit_touch_controls_error_not_visible">Odpojte ovladač pro úpravu dotykového ovládání</string>
     <string name="game_interactory_busy">Vyčkejte pro dokončení zbývajících operací</string>
-    <string name="mobile_settings_help">Nápověda</string>
-    <string name="mobile_settings_support">Podpora</string>
     <string name="omnidroid_help_content"><![CDATA[        <b>&#8226;Jak se používá Omnidroid</b><br/>
         Zkopírujte veškeré vaše ROM soubory do složky na vašem zařízení a vyberte ji v Omnidroidu. Tahle složka může mít podsložky. Až sken zkončí, měli by jste vidět vaše hry.<br/><br/>
         <b>&#8226;Proč to nenašlo žádné hry?</b><br/>

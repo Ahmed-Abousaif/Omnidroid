@@ -1,4 +1,5 @@
 import java.util.Properties
+import java.util.concurrent.Callable
 
 
 
@@ -57,11 +58,11 @@ android {
 
 
 
-        versionCode = 270
+        versionCode = 300
 
 
 
-        versionName = "2.7.0" // Keep in sync with OmnidroidCores when you cut version tags
+        versionName = "3.0.0" // Keep in sync with OmnidroidCores when you cut version tags
 
 
 
@@ -651,7 +652,7 @@ android {
 
 
 
-                // Local/CI without a release keystore — fall back to debug signing material only.
+                // Local/CI without a release keystore â€” fall back to debug signing material only.
 
 
 
@@ -1040,6 +1041,7 @@ androidComponents {
 
 
 dependencies {
+    implementation("androidx.window:window:1.5.0")
 
 
 
@@ -1298,7 +1300,10 @@ dependencies {
 
 
 
-    implementation(deps.libs.composeHtmlText)
+    implementation(deps.libs.composeHtmlText) {
+        // The library does not use tooling; keep previews supplied by debugImplementation.
+        exclude(group = "androidx.compose.ui", module = "ui-tooling")
+    }
 
 
 
@@ -1310,15 +1315,7 @@ dependencies {
 
 
 
-    implementation(deps.libs.composeSettings.uiTilesExtended)
-
-
-
-    implementation(deps.libs.composeSettings.diskStorage)
-
-
-
-    implementation(deps.libs.composeSettings.memoryStorage)
+    implementation(deps.libs.composeSettings.baseStorage)
 
 
 
@@ -1782,6 +1779,54 @@ tasks.register("verifyConsoleBackendRatchet") {
 
 // Device capacity tests run only against the debug instrumentation target.
 android.defaultConfig.testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+androidComponents.finalizeDsl { extension ->
+    listOf("benchmarkRelease", "nonMinifiedRelease").forEach { name ->
+        extension.sourceSets.getByName(name).apply {
+            java.srcDir("src/benchmark/java")
+            manifest.srcFile("src/benchmark/AndroidManifest.xml")
+        }
+    }
+}
+
+// This AGP/Kotlin/Baseline Profile combination snapshots a literal "provider(?)"
+// source path. Rebuild only the profiling variants' source inputs from real dirs.
+gradle.projectsEvaluated {
+    val appProject = rootProject.project(":omnidroid-app")
+    val kotlinAndroid = appProject.extensions
+        .getByType<org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension>()
+    val releaseSources = kotlinAndroid.sourceSets.getByName("release").kotlin.srcDirs
+    listOf("benchmarkRelease", "nonMinifiedRelease").forEach { name ->
+        kotlinAndroid.sourceSets.findByName(name)?.kotlin?.apply {
+            setSrcDirs(srcDirs.filterNot { it.name == "provider(?)" } + releaseSources)
+        }
+    }
+    appProject.tasks.withType<com.google.devtools.ksp.gradle.KspAATask>().configureEach {
+        if (name.contains("BenchmarkRelease") || name.contains("NonMinifiedRelease")) {
+            val javaSources = kspConfig.javaSourceRoots.from.map { input ->
+                if (input is Callable<*>) {
+                    Callable {
+                        (input.call() as? Collection<*>)?.filterNot {
+                            it is org.gradle.api.file.ConfigurableFileTree && it.dir.name == "provider(?)"
+                        }
+                    }
+                } else input
+            }
+            kspConfig.javaSourceRoots.setFrom(javaSources)
+        }
+    }
+    appProject.tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        if (name.contains("BenchmarkRelease") || name.contains("NonMinifiedRelease")) {
+            val variant = name.removePrefix("compile").removeSuffix("Kotlin").replaceFirstChar { it.lowercase() }
+            val roots = kotlinAndroid.target.compilations.getByName(variant).allKotlinSourceSets
+                .flatMap { it.kotlin.srcDirs }.filterNot { it.name == "provider(?)" }
+            setSource(roots)
+            source(appProject.tasks.named("generate${variant.replaceFirstChar { it.uppercase() }}BuildConfig"))
+            dependsOn(name.replaceFirst("compile", "ksp"))
+        }
+    }
+}
+
 dependencies {
     androidTestImplementation(platform(deps.libs.androidx.compose.composeBom))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")

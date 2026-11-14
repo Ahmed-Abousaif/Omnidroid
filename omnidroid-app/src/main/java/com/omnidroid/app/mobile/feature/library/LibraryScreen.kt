@@ -1,6 +1,7 @@
 package com.omnidroid.app.mobile.feature.library
 
 import android.content.Context
+import androidx.activity.compose.ReportDrawnWhen
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
@@ -105,7 +106,9 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.omnidroid.BuildConfig
 import com.omnidroid.R
+import com.omnidroid.app.utils.android.benchmarkTag
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidEmptyView
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
@@ -127,7 +130,6 @@ import kotlin.math.roundToInt
 
 val LibrarySidebarWidth = 80.dp
 val LibrarySidebarButtonSize = 48.dp
-val LibrarySidebarInset = (LibrarySidebarWidth - LibrarySidebarButtonSize) / 2
 
 fun libraryGridRows(zoomDensity: Int, availableHeight: Dp, isSquare: Boolean = false): Int {
     if (isSquare) {
@@ -203,9 +205,13 @@ fun LibraryScreen(
     controllerConnected: Boolean = false,
     portraitColumnWidth: Dp = Dp.Unspecified,
     backdropTopBleed: Dp = 0.dp,
+    onOpenContinueGame: (Game) -> Unit = onGameClick,
 ) {
     val state = viewModel.state.collectAsState().value
     val games = viewModel.games.collectAsLazyPagingItems()
+    if (BuildConfig.BUILD_TYPE == "benchmarkRelease" || BuildConfig.BUILD_TYPE == "nonMinifiedRelease") {
+        ReportDrawnWhen { games.loadState.refresh is LoadState.NotLoading }
+    }
     var startupTarget by remember { mutableStateOf<MetaSystemID?>(null) }
     var backdropGame by remember { mutableStateOf<Game?>(null) }
     val consoleSelection =
@@ -251,6 +257,7 @@ fun LibraryScreen(
                     state = state,
                     games = games,
                     onGameClick = onGameClick,
+                    onOpenContinueGame = onOpenContinueGame,
                     onContinueClick = onContinueClick,
                     onGameLongClick = onGameLongClick,
                     onFavoriteToggle = onFavoriteToggle,
@@ -300,6 +307,7 @@ fun LibraryScreen(
                     state = state,
                     games = games,
                     onGameClick = onGameClick,
+                    onOpenContinueGame = onOpenContinueGame,
                     onContinueClick = onContinueClick,
                     onGameLongClick = onGameLongClick,
                     onFavoriteToggle = onFavoriteToggle,
@@ -662,6 +670,7 @@ private fun LibraryGames(
     state: LibraryViewModel.UiState,
     games: LazyPagingItems<Game>,
     onGameClick: (Game) -> Unit,
+    onOpenContinueGame: (Game) -> Unit,
     onContinueClick: (Game) -> Unit,
     onGameLongClick: (Game) -> Unit,
     onFavoriteToggle: (Game, Boolean) -> Unit,
@@ -700,7 +709,7 @@ private fun LibraryGames(
     val currentZoomDensity by rememberUpdatedState(state.zoomDensity)
     val currentOnZoomDensityChange by rememberUpdatedState(onZoomDensityChange)
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize().benchmarkTag(if (isRefreshing) "library-loading" else "library-ready")) {
         Box(
             modifier =
                 Modifier
@@ -755,6 +764,7 @@ private fun LibraryGames(
                                 showControllerGlyph = requestInitialFocus,
                                 focusRequester = firstItemRequester,
                                 onOpenGame = onGameClick,
+                                onOpenContinueGame = onOpenContinueGame,
                                 onPlayGame = onContinueClick,
                                 onGameLongClick = onGameLongClick,
                                 onFavoriteToggle = onFavoriteToggle,

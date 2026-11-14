@@ -398,7 +398,6 @@ class OmnidroidLibrary(
         when (detection) {
             is Detection.Ready ->
                 saveGame(
-                    provider,
                     group,
                     existing,
                     insertedId,
@@ -435,7 +434,6 @@ class OmnidroidLibrary(
     }
 
     private suspend fun saveGame(
-        provider: StorageProvider,
         group: GroupedStorageFiles,
         existing: Game?,
         insertedId: Int?,
@@ -506,7 +504,6 @@ class OmnidroidLibrary(
         val cartridge = metadata.findCartridge(crc)
         if (cartridge?.system != null) {
             saveGame(
-                provider,
                 group,
                 existing,
                 null,
@@ -524,7 +521,7 @@ class OmnidroidLibrary(
                 setOf(SystemID.ATARI7800, SystemID.PC_ENGINE),
             )
         if (hinted != null) {
-            saveGame(provider, group, existing, null, hinted, null, startedAtMs, metadata, archiveEntry)
+            saveGame(group, existing, null, hinted, null, startedAtMs, metadata, archiveEntry)
         } else {
             reject(
                 provider,
@@ -560,7 +557,6 @@ class OmnidroidLibrary(
         }
         val (systemId, driverName) = resolved
         saveGame(
-            provider,
             group,
             existing,
             insertedId,

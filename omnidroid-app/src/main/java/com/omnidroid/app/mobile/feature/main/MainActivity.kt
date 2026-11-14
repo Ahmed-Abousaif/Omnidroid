@@ -1,5 +1,7 @@
 package com.omnidroid.app.mobile.feature.main
 
+import androidx.compose.material3.Text
+
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
@@ -15,27 +17,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -49,10 +40,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -75,39 +71,42 @@ import com.omnidroid.app.mobile.feature.gamedetails.GameDetailsViewModel
 import com.omnidroid.app.mobile.feature.library.LibraryFilter
 import com.omnidroid.app.mobile.feature.library.LibraryLayout
 import com.omnidroid.app.mobile.feature.library.LibraryScreen
+import com.omnidroid.app.mobile.feature.library.LibraryStartupStore
 import com.omnidroid.app.mobile.feature.library.LibraryTopBar
 import com.omnidroid.app.mobile.feature.library.LibraryViewModel
+import com.omnidroid.app.mobile.feature.library.RegisteredSystemsStore
 import com.omnidroid.app.mobile.feature.library.gamemenu.LibraryGameMenu
 import com.omnidroid.app.mobile.feature.library.gamemenu.LibraryGameMenuActions
-import com.omnidroid.app.mobile.feature.library.LibraryStartupStore
-import com.omnidroid.app.mobile.feature.library.RegisteredSystemsStore
 import com.omnidroid.app.mobile.feature.profile.ProfileScreen
 import com.omnidroid.app.mobile.feature.profile.ProfileViewModel
 import com.omnidroid.app.mobile.feature.settings.deviceprofile.ExtendedBenchmarkProgressDialog
 import com.omnidroid.app.mobile.feature.settings.deviceprofile.WelcomeBenchmarkDialog
+import com.omnidroid.app.mobile.feature.settings.general.SettingsScreen
 import com.omnidroid.app.mobile.feature.settings.general.SettingsSubscreen
 import com.omnidroid.app.mobile.feature.settings.general.SettingsSubscreenContent
-import com.omnidroid.app.mobile.feature.settings.general.SettingsScreen
 import com.omnidroid.app.mobile.feature.settings.general.SettingsViewModel
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogWidth
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
-import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
+import com.omnidroid.app.mobile.shared.compose.ui.GameCoverOrigin
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.calculateAdaptiveLayoutSpec
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
 import com.omnidroid.app.mobile.shared.controller.ControllerHintBar
 import com.omnidroid.app.mobile.shared.controller.ControllerHints
 import com.omnidroid.app.mobile.shared.controller.ControllerInputBridge
 import com.omnidroid.app.mobile.shared.controller.ControllerNavigationState
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
-import com.omnidroid.app.shared.input.omnidroiddevice.OmnidroidInputDeviceGamePad
-import com.omnidroid.app.shared.input.omnidroiddevice.getOmnidroidInputDevice
 import com.omnidroid.app.shared.GameInteractor
 import com.omnidroid.app.shared.cast.CastDisplayManager
 import com.omnidroid.app.shared.cast.StopCastResult
 import com.omnidroid.app.shared.deviceprofile.DeviceProfileManager
 import com.omnidroid.app.shared.game.BaseGameActivity
-import com.omnidroid.app.shared.game.GameLauncher
 import com.omnidroid.app.shared.game.GamePlatformSession
 import com.omnidroid.app.shared.input.InputDeviceManager
+import com.omnidroid.app.shared.input.omnidroiddevice.OmnidroidInputDeviceGamePad
+import com.omnidroid.app.shared.input.omnidroiddevice.getOmnidroidInputDevice
 import com.omnidroid.app.shared.main.BusyActivity
 import com.omnidroid.app.shared.main.GameLaunchTaskHandler
 import com.omnidroid.app.shared.settings.SettingsInteractor
@@ -120,21 +119,20 @@ import com.omnidroid.ext.feature.review.ReviewManager
 import com.omnidroid.lib.android.RetrogradeComponentActivity
 import com.omnidroid.lib.bios.BiosManager
 import com.omnidroid.lib.core.CoreUpdater
-import com.omnidroid.lib.preferences.SharedPreferencesHelper
-import com.omnidroid.lib.storage.DirectoriesManager
-import retrofit2.Retrofit
 import com.omnidroid.lib.core.CoresSelection
 import com.omnidroid.lib.core.MetadataSliceInstaller
-import com.omnidroid.lib.library.MetaSystemID
 import com.omnidroid.lib.library.SystemID
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.savesync.SaveSyncManager
+import com.omnidroid.lib.storage.DirectoriesManager
 import dagger.hilt.android.AndroidEntryPoint
 import de.charlex.compose.material3.HtmlText
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import retrofit2.Retrofit
 
 @AndroidEntryPoint
 class MainActivity : RetrogradeComponentActivity(), BusyActivity {
@@ -208,7 +206,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { }
 
     private val mainViewModel: MainViewModel by viewModels {
-        MainViewModel.Factory(applicationContext, saveSyncManager)
+        MainViewModel.Factory(applicationContext)
     }
 
     private val storagePermissionLauncher =
@@ -277,10 +275,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 }
             }
 
-            LaunchedEffect(currentRoute) {
-                mainViewModel.changeRoute(currentRoute)
-            }
-
             val selectedGameState =
                 remember {
                     mutableStateOf<Game?>(null)
@@ -308,10 +302,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
             val onGameFavoriteToggle = { game: Game, isFavorite: Boolean ->
                 gameInteractor.onFavoriteToggle(game, isFavorite)
-            }
-
-            val onHelpPressed = {
-                infoDialogDisplayed.value = true
             }
 
             // Keep the lazily started pending-operation monitor active for isBusy().
@@ -567,6 +557,10 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 animatedVisibilityScope = this,
                                 viewModel = libraryViewModel,
                                 onGameClick = onGameClick,
+                                onOpenContinueGame = { game ->
+                                    lastClickedGame = game
+                                    navController.navigateToGameDetails(game.id, GameCoverOrigin.Continue)
+                                },
                                 onContinueClick = {
                                     libraryViewModel.clearSearchQuery()
                                     gameInteractor.onGamePlay(it)
@@ -596,6 +590,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                         .padding(top = standardTopPadding),
                                 sharedTransitionScope = this@SharedTransitionLayout,
                                 animatedVisibilityScope = this,
+                                coverOrigin = entry.gameCoverOrigin,
                                 viewModel =
                                     viewModel(
                                         factory =
@@ -618,6 +613,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                 onOpenSettings = { selectedGameState.value = it },
                                 onSetCustomName = { game, name -> gameInteractor.onSetCustomName(game, name) },
                                 onSetCustomThumbnail = { game, uri -> gameInteractor.onSetCustomCover(game, uri) },
+                                backdropTopBleed = standardTopPadding,
                             )
                         }
                     composable(MainRoute.ADD_CONSOLES) {
@@ -805,10 +801,15 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                             .replace("\$SYSTEMS", systemFolders)
                     }
 
-                AlertDialog(
+                OmnidroidDialog(
                     text = { HtmlText(text = message) },
+                    width = DialogWidth.Standard,
                     onDismissRequest = { infoDialogDisplayed.value = false },
-                    confirmButton = { },
+                    confirmButton = {
+                        OmnidroidDialogButton(onClick = { infoDialogDisplayed.value = false }) {
+                            Text(stringResource(R.string.settings_action_close))
+                        }
+                    },
                 )
             }
 
@@ -864,7 +865,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     portrait = portrait,
                     showLibraryControls = currentRoute == MainRoute.HOME,
                     onBackPressed =
-                        if (currentRoute == MainRoute.HOME || (currentRoute == MainRoute.ADD_CONSOLES && portrait)) {
+                        if (currentRoute == MainRoute.HOME) {
                             null
                         } else ({
                             if (currentRoute == MainRoute.ADD_CONSOLES) onBackPressedDispatcher.onBackPressed()
@@ -1011,7 +1012,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
     override fun activity(): Activity = this
 
-    override fun isBusy(): Boolean = mainViewModel.state.value.operationInProgress ?: false
+    override fun isBusy(): Boolean = mainViewModel.state.value.operationInProgress
 
     override fun onActivityResult(
         requestCode: Int,
@@ -1025,7 +1026,6 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 castDisplayManager.restoreIdle(this)
                 lifecycleScope.safeLaunch {
                     gameLaunchTaskHandler.handleGameFinish(
-                        true,
                         this@MainActivity,
                         resultCode,
                         data,

@@ -21,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
@@ -49,7 +48,6 @@ enum class GameCardInfoStyle {
     MINIMAL,
 }
 
-private val CardCorner = RoundedCornerShape(4.dp)
 private val ContinueButtonCorner = RoundedCornerShape(4.dp)
 internal val LibraryCardCaptionHeight = 52.dp
 

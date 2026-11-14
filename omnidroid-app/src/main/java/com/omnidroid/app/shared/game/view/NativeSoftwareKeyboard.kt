@@ -1,6 +1,5 @@
 package com.omnidroid.app.shared.game.view
 
-import android.app.AlertDialog
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -10,11 +9,23 @@ import android.text.InputType
 import android.text.TextWatcher
 import android.view.KeyEvent
 import android.view.View
-import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.viewinterop.AndroidView
 import com.omnidroid.R
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogActionRole
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogWidth
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogAction
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogHandle
+import com.omnidroid.app.mobile.shared.compose.dialog.dialogActivity
+import com.omnidroid.app.mobile.shared.compose.dialog.showOmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.libretrodroid.LibretroDroid
 import com.omnidroid.libretrodroid.TextInputRequest
 
@@ -22,7 +33,7 @@ import com.omnidroid.libretrodroid.TextInputRequest
 internal class NativeSoftwareKeyboard(private val anchor: View) {
     private val handler = Handler(Looper.getMainLooper())
     private var running = false
-    private var dialog: AlertDialog? = null
+    private var dialog: OmnidroidDialogHandle? = null
     private var editor: EditText? = null
     private var shownSession = 0L
     private var dismissedSession = 0L
@@ -65,6 +76,7 @@ internal class NativeSoftwareKeyboard(private val anchor: View) {
 
     private fun show(request: TextInputRequest) {
         dismiss()
+        val activity = anchor.context.dialogActivity() ?: return
         shownSession = request.session
         val field = EditText(anchor.context).apply {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
@@ -73,17 +85,10 @@ internal class NativeSoftwareKeyboard(private val anchor: View) {
             filters = arrayOf(InputFilter.LengthFilter(request.maxLength.coerceAtLeast(0)))
             setText(request.text)
             setSelection(text.length)
-            val padding = (20 * resources.displayMetrics.density).toInt()
+            val padding = (12 * resources.displayMetrics.density).toInt()
             setPadding(padding, padding, padding, padding)
         }
         editor = field
-        val popup = AlertDialog.Builder(anchor.context)
-            .setTitle(R.string.game_keyboard_title)
-            .setView(field)
-            .setPositiveButton(R.string.game_keyboard_done, null)
-            .setNegativeButton(android.R.string.cancel) { _, _ -> dismissedSession = request.session }
-            .create()
-        dialog = popup
         var submitted = false
         fun submit() {
             if (submitted) return
@@ -108,29 +113,47 @@ internal class NativeSoftwareKeyboard(private val anchor: View) {
                 true
             } else false
         }
-        popup.setOnCancelListener { dismissedSession = request.session }
-        popup.setOnDismissListener {
-            if (dialog === popup) {
-                dialog = null
-                editor = null
-                shownSession = 0L
-            }
-        }
-        popup.setOnShowListener {
-            popup.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener { submit() }
-            field.requestFocus()
-            field.post {
+        var popup: OmnidroidDialogHandle? = null
+        popup = showOmnidroidDialog(
+            width = DialogWidth.Input,
+            activity = activity,
+            title = activity.getString(R.string.game_keyboard_title),
+            forceDark = true,
+            actions = listOf(
+                OmnidroidDialogAction(activity.getString(android.R.string.cancel), DialogActionRole.Cancel) {
+                    dismissedSession = request.session
+                },
+                OmnidroidDialogAction(activity.getString(R.string.game_keyboard_done), dismissOnClick = false) { submit() },
+            ),
+            onCancel = { dismissedSession = request.session },
+            onDismiss = {
                 if (dialog === popup) {
-                    val ime = anchor.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    ime.showSoftInput(field, InputMethodManager.SHOW_IMPLICIT)
+                    dialog = null
+                    editor = null
+                    shownSession = 0L
                 }
-            }
-        }
-        popup.window?.setSoftInputMode(
-            WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE or
-                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE,
+            },
+            content = {
+                val colors = chromeColors
+                AndroidView(
+                    modifier = Modifier.fillMaxWidth(),
+                    factory = {
+                        field.apply {
+                            setTextColor(colors.content.toArgb())
+                            setHintTextColor(colors.muted.toArgb())
+                            requestFocus()
+                            post {
+                                if (dialog === popup) {
+                                    val ime = anchor.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                                    ime.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+                                }
+                            }
+                        }
+                    },
+                )
+            },
         )
-        popup.show()
+        dialog = popup
     }
 
     private fun dismiss() {

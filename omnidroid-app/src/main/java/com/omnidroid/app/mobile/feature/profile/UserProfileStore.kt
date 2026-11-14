@@ -4,7 +4,6 @@ import android.content.Context
 import com.fredporciuncula.flow.preferences.FlowSharedPreferences
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -64,7 +63,6 @@ class UserProfileStore(context: Context) {
     // ──────────────────────────────────────────────────────────────────────────
 
     /** Returns null when the player has not set a custom picture (use the bundled robot drawable). */
-    fun getProfilePicUri(): String? = preferences.getString(KEY_PIC_URI, null)
 
     fun setProfilePicUri(uri: String?) {
         preferences.edit().putString(KEY_PIC_URI, uri).apply()

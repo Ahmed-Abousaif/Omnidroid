@@ -70,13 +70,20 @@ fun AppTopBar(
 
     CompositionLocalProvider(LocalContentColor provides chromeContentColor) {
         Box(modifier = modifier.fillMaxSize()) {
+            // The fade is part of the chrome, independent of control visibility and clipping.
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(height)
+                        .background(Brush.verticalGradient(listOf(homeChromeColor, Color.Transparent))),
+            )
             Column(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .height(height)
                         .clipToBounds()
-                        .background(Brush.verticalGradient(listOf(homeChromeColor, Color.Transparent)))
                         .then(if (portrait) Modifier else Modifier.hugDisplayCutout(WindowInsetsSides.Horizontal)),
             ) {
                 Row(

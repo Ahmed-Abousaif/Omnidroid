@@ -1,11 +1,9 @@
 package com.omnidroid.app.shared.covers
 
 import android.content.Context
-import android.widget.ImageView
 import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.imageLoader
-import coil.load
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -29,22 +27,6 @@ object CoverUtils {
         coverCacheStore?.let { return it }
         return synchronized(this) {
             coverCacheStore ?: CoverCacheStore(context.applicationContext).also { coverCacheStore = it }
-        }
-    }
-
-    fun loadCover(
-        game: Game,
-        imageView: ImageView?,
-    ) {
-        if (imageView == null) return
-
-        imageView.load(coverData(game), imageView.context.imageLoader) {
-            val fallbackDrawable = getFallbackDrawable(game)
-            fallback(fallbackDrawable)
-            error(fallbackDrawable)
-            val key = coverCacheKey(game)
-            memoryCacheKey(key)
-            diskCacheKey(key)
         }
     }
 
@@ -80,7 +62,6 @@ object CoverUtils {
     private fun resolveProcessedCover(
         game: Game,
         preferredCoverUrl: String? = null,
-        context: Context? = null,
     ): File? {
         val url = preferredCoverUrl ?: game.coverFrontUrl ?: return null
         val store = coverCacheStore ?: return null
@@ -236,8 +217,4 @@ object CoverUtils {
         return ColorUtils.randomColor(game.title)
     }
 
-    fun customCoverCacheKey(game: Game): String? {
-        val file = resolveCustomCoverFile(game) ?: return null
-        return "${file.absolutePath}:${file.lastModified()}"
-    }
 }

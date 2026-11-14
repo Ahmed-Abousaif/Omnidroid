@@ -2,8 +2,6 @@
 <resources>
     <string name="title_home">Acasă</string>
     <string name="title_search">Caută</string>
-    <string name="title_systems">Sisteme</string>
-    <string name="title_games">Jocuri</string>
     <string name="title_settings">Setări</string>
     <string name="recent">Recente</string>
     <string name="favorites">Favorite</string>
@@ -17,14 +15,9 @@
     <string name="ok">OK</string>
     <string name="cancel">Anulare</string>
     <string name="settings">Setări</string>
-    <string name="save_sync">Salvează sincronizarea</string>
     <string name="show_all">Afișare toate</string>
     <string name="back">Înapoi</string>
     <string name="close">Închide</string>
-    <string name="game_page_search_suggestion">Caută jocuri</string>
-    <string name="settings_category_general">Setări generale</string>
-    <string name="settings_category_input">Intrări</string>
-    <string name="settings_category_misc">Diverse</string>
     <string name="settings_title_enable_autosave">Autosalvare in curs</string>
     <string name="settings_description_enable_autosave">Salvează starea la ieșirea din meniul jocului</string>
     <string name="settings_title_enable_touch_feedback">Vibrează la atingere</string>
@@ -42,7 +35,6 @@
     <string name="settings_gamepad_category_enabled">Dispozitive activate</string>
     <string name="settings_gamepad_category_general">Setări generale</string>
     <string name="settings_gamepad_title_reset_bindings">Resetare legături</string>
-    <string name="settings_gamepad_title_game_menu">Meniu</string>
     <string name="settings_title_open_cores_selection">Schimbă Nucleele</string>
     <string name="settings_description_open_cores_selection">Selectați care nucleu este asociat unui sistem</string>
     <string name="settings_title_display_bios_info">BIOS</string>
@@ -51,8 +43,6 @@
     <string name="settings_bios_category_not_detected">Suportat</string>
     <string name="settings_title_reset_settings">Resetare la valorile din fabrică</string>
     <string name="settings_description_reset_settings">Resetați Omnidroid la setările sale din fabrică</string>
-    <string name="settings_title_advanced_settings">Setări avansate</string>
-    <string name="settings_description_advanced_settings">Afișează setările avansate</string>
     <string name="settings_title_low_latency_audio">Preferă audio cu latență mică</string>
     <string name="settings_description_low_latency_audio">Reduceți latența audio pe dispozitivele acceptate. Poate crește numărul de glitch-uri.</string>
     <string name="settings_title_direct_game_load">Încărcare directă a jocului</string>
@@ -69,7 +59,6 @@
     <string name="settings_save_sync_refresh_description">Efectuează acum o sincronizare manuală.\n%1$s</string>
     <string name="settings_save_sync_enable_auto">Auto-Sincronizare</string>
     <string name="settings_save_sync_enable_auto_description">Efectuează automat o sincronizare înainte și după o sesiune de joc când este conectat la Wifi</string>
-    <string name="settings_save_sync_configure">Configurare %1$s</string>
     <string name="settings_save_sync_include_saves">Sincronizare salvări în joc</string>
     <string name="settings_save_sync_include_saves_description">%1$s pe dispozitiv</string>
     <string name="settings_save_sync_include_states">Sincronizează setările</string>
@@ -78,16 +67,6 @@
     <string name="game_context_menu_remove_from_favorites">Șterge din Favoriți</string>
     <string name="game_context_menu_resume">Reluaţi</string>
     <string name="game_context_menu_restart">Reporniţi</string>
-    <string name="game_context_menu_create_shortcut">Fixează în lansator</string>
-    <string name="home_notification_title">Activați notificările</string>
-    <string name="home_notification_message">Omnidroid folosește notificări pentru a te anunța când un joc sau o activitate rulează în fundal.</string>
-    <string name="home_notification_action">Activați</string>
-    <string name="home_microphone_title">Activează microfonul</string>
-    <string name="home_microphone_message">Jocurile Nintendo DS pot folosi microfonul pentru a oferi unele funcționalități.</string>
-    <string name="home_microphone_action">Activare</string>
-    <string name="home_empty_title">Alege directorul de ROM-uri</string>
-    <string name="home_empty_message">Omnidroid trebuie să scaneze un director care conține fișiere ROM.\nAcest lucru ar putea dura până la câteva minute.</string>
-    <string name="home_empty_action">Selectare director</string>
     <string name="game_menu_save">Salvare</string>
     <string name="game_menu_load">Încărcare</string>
     <string name="game_menu_restart">Reporniţi</string>
@@ -106,8 +85,6 @@
     <string name="game_toast_quick_save_loaded">Încărcare rapidă</string>
     <string name="game_toast_quick_save_saved">Salvat rapid</string>
     <string name="empty_view_default">Nu există articole</string>
-    <string name="core_settings_title">Setări nucleu</string>
-    <string name="core_settings_category_preferences">Preferințe</string>
     <string name="core_settings_category_controllers">Controlori</string>
     <string name="core_settings_controller">Controller %1$s</string>
     <string name="game_menu_title">Meniul jocului</string>
@@ -123,29 +100,19 @@
     <string name="game_loader_error_save">Ceva rău s-a întâmplat cu fișierul de salvare. Dacă problema persistă, dezactivați salvarea automată.</string>
     <string name="game_loader_error_unsupported_architecture">Acest nucleu nu este acceptat de dispozitivul dvs.</string>
     <string name="game_loader_error_missing_bios">Se pare că nu ai BIOS necesar, pune-le în directorul ROM-uri și rescanează. Fișiere necesare: %1$s</string>
-    <string name="game_shortcut_error">Ceva rău s-a întâmplat în timpul încărcării jocului. Te rugăm să te asiguri că acest joc mai există în biblioteca ta.</string>
     <string name="dialog_saf_not_found">Acest dispozitiv nu acceptă selectorul de fișiere StorageAccessFramework copiați manual fișierele ROM necomprimate în %1$s și apăsați Rescan.</string>
-    <string name="system_grid_details">Partide %1$s</string>
     <string name="tv_folder_picker_title">Selectează directorul ROM-urilor</string>
     <string name="tv_folder_picker_action_choose">Selectați</string>
     <string name="tv_folder_picker_action_cancel">Anulați</string>
     <string name="tv_folder_storage_primary">Stocare principală</string>
     <string name="tv_folder_storage_secondary">Stocare secundară %1$s</string>
     <string name="tv_folder_storage_title">Alege stocarea</string>
-    <string name="tv_home_section_favorites">Favorite</string>
-    <string name="tv_home_section_recents">Recente</string>
-    <string name="tv_home_section_systems">Sisteme</string>
-    <string name="tv_home_section_settings">Setări</string>
     <string name="gamepad_binding_update_title">Asociați „RetroPad %1$s”</string>
     <string name="gamepad_binding_update_description">Apăsați un buton pe „%1$s”</string>
     <string name="shortcut_binding_update_title">Asociază \"Scurtătură %1$s\"</string>
     <string name="shortcut_binding_update_description">Apăsați primul, apoi al doilea buton pentru a lega o combinație pe \"%1$s</string>
-    <string name="tv_search_results">Jocuri</string>
     <string name="tv_game_message_missing_gamepad">Jocurile sunt necesare pentru a juca. Vă rugăm să conectați unul.</string>
-    <string name="game_edit_touch_controls_error_not_visible">Deconectează tastatura pentru a edita controalele de atingere</string>
     <string name="game_interactory_busy">Așteptați ca operațiunile în așteptare să se finalizeze</string>
-    <string name="mobile_settings_help">Ajutor</string>
-    <string name="mobile_settings_support">Asistență</string>
     <string name="omnidroid_help_content"><![CDATA[        <b>&#8226;Cum folosesc Omnidroid?</b><br/>
         Copiază toate fișierele ROM-uri într-un director de pe dispozitivul tău și selectează-le în Omnidroid. Acest director are permisiunea de a avea subdirectoare. După ce scanarea se finalizează ar trebui să vezi jocurile tale.<br/><br/>
         <b>&#8226;De ce nu sunt detectate jocurile mele?</b><br/>

@@ -204,7 +204,7 @@ internal object CsoImage {
                 val offset = lba.toLong() * 2048
                 if (offset + 2048 > total) return null
                 val block = (offset / blockSize).toInt()
-                val decoded = decodeBlock(source, indexBytes, block, blocks, blockSize, align, lz4) ?: return null
+                val decoded = decodeBlock(source, indexBytes, block, blockSize, align, lz4) ?: return null
                 val start = (offset % blockSize).toInt()
                 if (start + 2048 > decoded.size) return null
                 return decoded.copyOfRange(start, start + 2048)
@@ -216,7 +216,6 @@ internal object CsoImage {
         source: RandomAccessBytes,
         index: ByteArray,
         block: Int,
-        blocks: Int,
         blockSize: Int,
         align: Int,
         lz4: Boolean,

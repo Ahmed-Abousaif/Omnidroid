@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -16,17 +17,15 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import com.omnidroid.R
 import com.omnidroid.app.utils.android.settings.stringPreferenceState
 
 // Cool gray ↔ white fills (#E8E8E8…#FFFFFF). Override surfaceContainer* so M3 dialogs
 // don't fall back to the purple baseline tokens.
 private val LightSurfaceDim = Color(0xFFE8E8E8)
+private val LightBackground = Color(0xFFF2F2F2)
 private val LightSurface = Color(0xFFF5F5F5)
 private val LightSurfaceBright = Color(0xFFFFFFFF)
 private val LightSurfaceContainerLowest = Color(0xFFFFFFFF)
@@ -53,7 +52,7 @@ private val LightColorScheme =
         errorContainer = md_theme_light_errorContainer,
         onError = md_theme_light_onError,
         onErrorContainer = md_theme_light_onErrorContainer,
-        background = md_theme_light_background,
+        background = LightBackground,
         onBackground = md_theme_light_onBackground,
         surface = md_theme_light_surface,
         onSurface = md_theme_light_onSurface,
@@ -109,12 +108,8 @@ private val DarkColorScheme =
         scrim = md_theme_dark_scrim,
     )
 
-/** Fixed dark chrome used by in-game UI. Prefer [homeChromeColor] / [Modifier.homeChromeBackground] for library chrome. */
-val HomeChromeBackground = Color(0xFF0B0B0B)
 val LibraryNeonGreen = Color(0xFF00B33C)
 val BatteryLowRed = Color(0xFFFF3B30)
-
-private val LightStripe = Color(0xFFF2F2F2)
 
 @Immutable
 data class ChromeColors(
@@ -205,38 +200,13 @@ val chromeMutedContentColor: Color
     @ReadOnlyComposable
     get() = chromeColors.muted
 
-val gameMenuAccentColor: Color
-    @Composable
-    @ReadOnlyComposable
-    get() = chromeColors.gameMenuAccent
-
 /**
- * Soft gray fill with subtle diagonal stripes in light mode; solid near-black in dark mode.
+ * Plain off-white fill in light mode; solid near-black in dark mode.
  * Use on library/settings screen roots — not in-game or gamepad surfaces.
  */
 fun Modifier.homeChromeBackground(): Modifier =
     composed {
-        val darkTheme = LocalAppDarkTheme.current
-        val base = MaterialTheme.colorScheme.background
-        val stripe = LightStripe.copy(alpha = 0.32f)
-        drawBehind {
-            drawRect(base)
-            if (!darkTheme) {
-                val spacing = 36.dp.toPx()
-                val stroke = 2.75.dp.toPx()
-                val extent = size.width + size.height
-                var x = -size.height
-                while (x < extent) {
-                    drawLine(
-                        color = stripe,
-                        start = Offset(x, size.height),
-                        end = Offset(x + size.height, 0f),
-                        strokeWidth = stroke,
-                    )
-                    x += spacing
-                }
-            }
-        }
+        background(MaterialTheme.colorScheme.background)
     }
 
 /**

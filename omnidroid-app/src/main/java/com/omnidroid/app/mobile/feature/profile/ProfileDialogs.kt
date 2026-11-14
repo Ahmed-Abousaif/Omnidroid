@@ -5,10 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,9 +16,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
-import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
-import com.omnidroid.app.mobile.shared.compose.ui.chromeMutedContentColor
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogActionRole
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogWidth
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogTextField
 
 @Composable
 internal fun EditProfileTagDialog(
@@ -31,14 +30,12 @@ internal fun EditProfileTagDialog(
 ) {
     var tag by rememberSaveable(currentTag) { mutableStateOf(currentTag) }
     val save = { if (tag.isNotBlank()) onConfirm(tag.trim()) }
-    AlertDialog(
+    OmnidroidDialog(
+        width = DialogWidth.Input,
         onDismissRequest = onDismiss,
-        containerColor = chromeColors.menu,
-        titleContentColor = chromeContentColor,
-        textContentColor = chromeMutedContentColor,
         title = { Text(stringResource(R.string.profile_change_tag)) },
         text = {
-            OutlinedTextField(
+            OmnidroidDialogTextField(
                 value = tag,
                 onValueChange = { tag = it.take(UserProfileStore.MAX_TAG_LENGTH) },
                 modifier = Modifier.fillMaxWidth(),
@@ -50,10 +47,10 @@ internal fun EditProfileTagDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = save, enabled = tag.isNotBlank()) { Text(stringResource(R.string.profile_save_tag)) }
+            OmnidroidDialogButton(onClick = save, enabled = tag.isNotBlank()) { Text(stringResource(R.string.profile_save_tag)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+            OmnidroidDialogButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
         },
     )
 }
@@ -65,26 +62,23 @@ internal fun ProfilePhotoDialog(
     onChoosePhoto: () -> Unit,
     onRemovePhoto: () -> Unit,
 ) {
-    AlertDialog(
+    OmnidroidDialog(
         onDismissRequest = onDismiss,
-        containerColor = chromeColors.menu,
-        titleContentColor = chromeContentColor,
-        textContentColor = chromeMutedContentColor,
         title = { Text(stringResource(R.string.profile_change_picture)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onChoosePhoto, modifier = Modifier.fillMaxWidth()) {
+                OmnidroidDialogButton(onClick = onChoosePhoto, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.profile_choose_photo))
                 }
                 if (hasCustomPhoto) {
-                    TextButton(onClick = onRemovePhoto, modifier = Modifier.fillMaxWidth()) {
+                    OmnidroidDialogButton(onClick = onRemovePhoto, role = DialogActionRole.Destructive, modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.profile_remove_picture))
                     }
                 }
             }
         },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+        dismissButton = {
+            OmnidroidDialogButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
         },
     )
 }

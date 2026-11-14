@@ -14,16 +14,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -41,6 +39,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.omnidroid.R
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogScrollInfo
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogWidth
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogTextField
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.metadata.libretrodb.CoverSearchResult
 import com.omnidroid.metadata.libretrodb.CoverSearcher
@@ -59,6 +62,21 @@ fun CoverSearchDialog(
     var results by remember { mutableStateOf<List<CoverSearchResult>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var selectedCandidate by remember { mutableStateOf<CoverSearchResult?>(null) }
+    val gridState = rememberLazyGridState()
+    val gridLayout = gridState.layoutInfo
+    val gridSpacing = with(LocalDensity.current) { 8.dp.toPx() }
+    val gridScrollInfo = if (!isLoading && (gridState.canScrollForward || gridState.canScrollBackward)) {
+        val rowHeight = gridLayout.visibleItemsInfo.maxOfOrNull { it.size.height }?.toFloat() ?: 1f
+        val rowCount = (gridLayout.totalItemsCount + 1) / 2
+        val viewportHeight = (gridLayout.viewportEndOffset - gridLayout.viewportStartOffset).toFloat()
+        val estimatedHeight = rowCount * (rowHeight + gridSpacing)
+        val offset = (gridState.firstVisibleItemIndex / 2) * (rowHeight + gridSpacing) + gridState.firstVisibleItemScrollOffset
+        DialogScrollInfo(
+            progress = if (!gridState.canScrollForward) 1f else offset / (estimatedHeight - viewportHeight).coerceAtLeast(1f),
+            visibleFraction = (viewportHeight / estimatedHeight.coerceAtLeast(1f)).coerceIn(0f, 0.98f),
+            canScrollForward = gridState.canScrollForward,
+        )
+    } else null
 
     LaunchedEffect(game.id, query) {
         val trimmed = query.trim()
@@ -80,7 +98,9 @@ fun CoverSearchDialog(
         }
     }
 
-    AlertDialog(
+    OmnidroidDialog(
+        width = DialogWidth.Expanded,
+        bodyScrollInfo = gridScrollInfo,
         onDismissRequest = onDismiss,
         title = { Text(text = stringResource(R.string.game_search_cover_title)) },
         text = {
@@ -88,7 +108,7 @@ fun CoverSearchDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                OutlinedTextField(
+                OmnidroidDialogTextField(
                     value = query,
                     onValueChange = { query = it },
                     label = { Text(stringResource(R.string.game_search_cover_hint)) },
@@ -100,7 +120,7 @@ fun CoverSearchDialog(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 200.dp, max = 360.dp),
+                            .heightIn(max = 360.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     when {
@@ -117,6 +137,7 @@ fun CoverSearchDialog(
                         }
                         else -> {
                             LazyVerticalGrid(
+                                state = gridState,
                                 columns = GridCells.Fixed(2),
                                 contentPadding = PaddingValues(4.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -138,14 +159,14 @@ fun CoverSearchDialog(
         },
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            OmnidroidDialogButton(onClick = onDismiss) {
                 Text(text = stringResource(R.string.cancel))
             }
         },
     )
 
     selectedCandidate?.let { candidate ->
-        AlertDialog(
+        OmnidroidDialog(
             onDismissRequest = { selectedCandidate = null },
             title = { Text(text = stringResource(R.string.game_match_dialog_title)) },
             text = {
@@ -185,7 +206,7 @@ fun CoverSearchDialog(
                 }
             },
             confirmButton = {
-                Button(
+                OmnidroidDialogButton(
                     onClick = {
                         val chosen = candidate
                         selectedCandidate = null
@@ -197,20 +218,18 @@ fun CoverSearchDialog(
                 }
             },
             dismissButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    TextButton(onClick = { selectedCandidate = null }) {
-                        Text(text = stringResource(R.string.cancel))
-                    }
-                    TextButton(
-                        onClick = {
-                            val chosen = candidate
-                            selectedCandidate = null
-                            onUpdateCoverOnly(chosen.coverUrl)
-                            onDismiss()
-                        },
-                    ) {
-                        Text(text = stringResource(R.string.game_match_apply_cover_only))
-                    }
+                OmnidroidDialogButton(onClick = { selectedCandidate = null }) {
+                    Text(text = stringResource(R.string.cancel))
+                }
+                OmnidroidDialogButton(
+                    onClick = {
+                        val chosen = candidate
+                        selectedCandidate = null
+                        onUpdateCoverOnly(chosen.coverUrl)
+                        onDismiss()
+                    },
+                ) {
+                    Text(text = stringResource(R.string.game_match_apply_cover_only))
                 }
             },
         )

@@ -2,8 +2,6 @@
 <resources>
     <string name="title_home">Startside</string>
     <string name="title_search">Søg</string>
-    <string name="title_systems">Systemer</string>
-    <string name="title_games">Spil</string>
     <string name="title_settings">Indstillinger</string>
     <string name="recent">For nylig</string>
     <string name="favorites">Favoritter</string>
@@ -17,14 +15,9 @@
     <string name="ok">Ok</string>
     <string name="cancel">Annullér</string>
     <string name="settings">Indstillinger</string>
-    <string name="save_sync">Gem Synkronisering</string>
     <string name="show_all">Vis alle</string>
     <string name="back">Tilbage</string>
     <string name="close">Luk</string>
-    <string name="game_page_search_suggestion">Søg i spil</string>
-    <string name="settings_category_general">Generelt</string>
-    <string name="settings_category_input">Input</string>
-    <string name="settings_category_misc">Diverse</string>
     <string name="settings_title_enable_autosave">Gem tilstand automatisk</string>
     <string name="settings_description_enable_autosave">Gem tilstand når du afslutter via spilmenuen</string>
     <string name="settings_title_enable_touch_feedback">Vibrér ved berøring</string>
@@ -42,7 +35,6 @@
     <string name="settings_gamepad_category_enabled">Aktiverede enheder</string>
     <string name="settings_gamepad_category_general">Generelt</string>
     <string name="settings_gamepad_title_reset_bindings">Nulstil bindinger</string>
-    <string name="settings_gamepad_title_game_menu">Menu</string>
     <string name="settings_title_open_cores_selection">Skift Core System</string>
     <string name="settings_description_open_cores_selection">Vælg hvilken Core der er tilknyttet et system</string>
     <string name="settings_title_display_bios_info">BIOS</string>
@@ -51,8 +43,6 @@
     <string name="settings_bios_category_not_detected">Understøttet</string>
     <string name="settings_title_reset_settings">Gendan fabriksindstillinger</string>
     <string name="settings_description_reset_settings">Nulstil Omnidroid til fabriksindstillinger</string>
-    <string name="settings_title_advanced_settings">Avancerede Indstillinger</string>
-    <string name="settings_description_advanced_settings">Vis avancerede indstillinger</string>
     <string name="settings_title_low_latency_audio">Foretræk low-latency lyd</string>
     <string name="settings_description_low_latency_audio">Reducer latency på understøttede enheder. Kan øge antallet af lydfejl.</string>
     <string name="settings_title_direct_game_load">Direkte spil indlæsning</string>
@@ -69,7 +59,6 @@
     <string name="settings_save_sync_refresh_description">Udfør en manuel synkronisering nu.\n%1$s</string>
     <string name="settings_save_sync_enable_auto">Auto-Synkronisering</string>
     <string name="settings_save_sync_enable_auto_description">Udfør automatisk en synkronisering før og efter en spilsession, når den er tilsluttet Wifi</string>
-    <string name="settings_save_sync_configure">Konfigurer %1$s</string>
     <string name="settings_save_sync_include_saves">Synkronisering når der gemmes i spil</string>
     <string name="settings_save_sync_include_saves_description">%1$s på enhed</string>
     <string name="settings_save_sync_include_states">Synkroniserings tilstande</string>
@@ -78,16 +67,6 @@
     <string name="game_context_menu_remove_from_favorites">Fjern fra Favoritter</string>
     <string name="game_context_menu_resume">Fortsæt</string>
     <string name="game_context_menu_restart">Genstart</string>
-    <string name="game_context_menu_create_shortcut">Føj til Startskærm</string>
-    <string name="home_notification_title">Aktiver notifikationer</string>
-    <string name="home_notification_message">Omnidroid bruger notifikationer til at lade dig vide, når et spil eller en operation kører i baggrunden.</string>
-    <string name="home_notification_action">Aktiver</string>
-    <string name="home_microphone_title">Aktiver mikrofon</string>
-    <string name="home_microphone_message">Nintendo DS spil kan bruge mikrofonen til at give nogle funktionaliteter.</string>
-    <string name="home_microphone_action">Aktiver</string>
-    <string name="home_empty_title">Vælg ROMs-mappe</string>
-    <string name="home_empty_message">Omnidroid skanner mappen med ROM-filer.\nDette kan tage op til et par minutter.</string>
-    <string name="home_empty_action">Vælg mappe</string>
     <string name="game_menu_save">Gem</string>
     <string name="game_menu_load">Indlæs</string>
     <string name="game_menu_restart">Genstart</string>
@@ -106,8 +85,6 @@
     <string name="game_toast_quick_save_loaded">Hurtig indlæst</string>
     <string name="game_toast_quick_save_saved">Hurtig gemt</string>
     <string name="empty_view_default">Ingen filer</string>
-    <string name="core_settings_title">System Indstillinger</string>
-    <string name="core_settings_category_preferences">Indstillinger</string>
     <string name="core_settings_category_controllers">Controllere</string>
     <string name="core_settings_controller">Controller %1$s</string>
     <string name="game_menu_title">Spilmenu</string>
@@ -129,29 +106,19 @@
         \n\n Hvis ingen af ovenstående virker, kan det være muligt, at dette spil/system ikke understøttes af denne enhed.
     </string>
     <string name="game_loader_error_missing_bios">Det ser ud til, at du mangler de nødvendige BIOS, gem dem i din ROMS-mappe og skan igen. Krævede filer: %1$s</string>
-    <string name="game_shortcut_error">Der skete en fejl under indlæsning af dit spil. Sørg for, at dette spil stadig findes i dit bibliotek.</string>
     <string name="dialog_saf_not_found">Denne enhed understøtter ikke StorageAccessFramework filvælgeren. Kopiér venligst ukomprimerede ROM-filer til %1$s manuelt og tryk på Skan igen.</string>
-    <string name="system_grid_details">%1$s spil</string>
     <string name="tv_folder_picker_title">Vælg ROMs-mappe</string>
     <string name="tv_folder_picker_action_choose">Vælg</string>
     <string name="tv_folder_picker_action_cancel">Annullér</string>
     <string name="tv_folder_storage_primary">Primær lagerplads</string>
     <string name="tv_folder_storage_secondary">Sekundær lagerplads %1$s</string>
     <string name="tv_folder_storage_title">Vælg lagerplads</string>
-    <string name="tv_home_section_favorites">Favoritter</string>
-    <string name="tv_home_section_recents">Seneste</string>
-    <string name="tv_home_section_systems">Systemer</string>
-    <string name="tv_home_section_settings">Indstillinger</string>
     <string name="gamepad_binding_update_title">Forbind til \"RetroPad %1$s\"</string>
     <string name="gamepad_binding_update_description">Tryk på en knap på din \"%1$s\"</string>
     <string name="shortcut_binding_update_title">Tilknyt \"Genvej %1$s\"</string>
     <string name="shortcut_binding_update_description">Tryk på den første, derefter anden knap for at binde en combo på din \"%1$s\"</string>
-    <string name="tv_search_results">Spil</string>
     <string name="tv_game_message_missing_gamepad">Gamepads er påkrævet for at spille. Tilslut venligst en.</string>
-    <string name="game_edit_touch_controls_error_not_visible">Afbryd forbindelsen til din Gamepad for at redigere din touch-kontroller</string>
     <string name="game_interactory_busy">Vent til processen er afsluttet</string>
-    <string name="mobile_settings_help">Hjælp</string>
-    <string name="mobile_settings_support">Support</string>
     <string name="omnidroid_help_content"><![CDATA[        <b>&#8226;Hvordan bruger jeg Omnidroid?</b><br/>
         Kopier alle dine ROMS-filer til en mappe på din enhed og vælg denne i Omnidroid. Denne mappe har tilladelse til at have undermapper. Efter scanningen er færdig, skulle du se dine spil.<br/><br/>
         <b>&#8226;Hvorfor blev mine spil ikke opdaget?</b><br/>

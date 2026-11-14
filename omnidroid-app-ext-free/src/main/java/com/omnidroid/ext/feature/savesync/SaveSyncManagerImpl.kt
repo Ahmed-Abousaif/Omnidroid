@@ -3,7 +3,6 @@ package com.omnidroid.ext.feature.savesync
 import android.app.Activity
 import android.content.Context
 import com.omnidroid.lib.library.CoreID
-import com.omnidroid.lib.savesync.CloudSaveProviderInfo
 import com.omnidroid.lib.savesync.ConflictResolution
 import com.omnidroid.lib.savesync.ConflictStore
 import com.omnidroid.lib.savesync.SaveConflict
@@ -40,10 +39,6 @@ class SaveSyncManagerImpl(
     override fun computeStatesSpace(coreID: CoreID): String =
         formatSize(File(directoriesManager.getStatesDirectory(), coreID.coreName))
 
-    override fun getProviders(): List<CloudSaveProviderInfo> = emptyList()
-
-    override fun signOut(providerId: String) {}
-
     override fun getConflicts(): List<SaveConflict> = conflictStore.load()
 
     override fun resolveConflict(
@@ -66,8 +61,6 @@ class SaveSyncManagerImpl(
         }
         conflictStore.remove(conflictId)
     }
-
-    override fun computeRemoteUsage(providerId: String): String = ""
 
     private fun formatSize(directory: File): String {
         val size = directory.walkBottomUp().fold(0L) { acc, file -> acc + file.length() }

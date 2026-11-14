@@ -1,7 +1,8 @@
 package com.omnidroid.app.utils.android
 
 import android.app.Activity
-import androidx.appcompat.app.AlertDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogAction
+import com.omnidroid.app.mobile.shared.compose.dialog.showOmnidroidDialog
 
 // TODO COMPOSE... How do they look in the post compose world?
 fun Activity.displayErrorDialog(
@@ -17,9 +18,10 @@ fun Activity.displayErrorDialog(
     actionLabel: String,
     action: () -> Unit,
 ) {
-    AlertDialog.Builder(this)
-        .setMessage(message)
-        .setPositiveButton(actionLabel) { _, _ -> action() }
-        .setCancelable(false)
-        .show()
+    showOmnidroidDialog(
+        activity = this,
+        message = message,
+        cancelable = false,
+        actions = listOf(OmnidroidDialogAction(actionLabel, onClick = action)),
+    )
 }

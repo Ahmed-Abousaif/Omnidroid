@@ -2,8 +2,6 @@
 <resources>
     <string name="title_home">Kezdőlap</string>
     <string name="title_search">Keresés</string>
-    <string name="title_systems">Konzolok</string>
-    <string name="title_games">Játékok</string>
     <string name="title_settings">Beállítások</string>
     <string name="recent">Legutóbbiak</string>
     <string name="favorites">Kedvencek</string>
@@ -17,11 +15,7 @@
     <string name="ok">OK</string>
     <string name="cancel">Mégse</string>
     <string name="settings">Beállítások</string>
-    <string name="save_sync">Mentés szinkronizáció</string>
     <string name="show_all">Összes</string>
-    <string name="settings_category_general">Általános</string>
-    <string name="settings_category_input">Bemenet</string>
-    <string name="settings_category_misc">Egyéb</string>
     <string name="settings_title_enable_autosave">Automatikus mentés</string>
     <string name="settings_title_enable_touch_feedback">Érintéskor vibrálás</string>
     <string name="settings_title_tilt_sensitivity">Döntés-szenzor érzékenység</string>
@@ -32,7 +26,6 @@
     <string name="settings_gamepad_category_enabled">Eszközök engedélyezése</string>
     <string name="settings_gamepad_category_general">Általános</string>
     <string name="settings_gamepad_title_reset_bindings">Alaphelyzetbe állítás</string>
-    <string name="settings_gamepad_title_game_menu">Menü</string>
     <string name="settings_title_open_cores_selection">Váltás a Core-ok között</string>
     <string name="settings_description_open_cores_selection">Core társítása egyes konzolokhoz</string>
     <string name="settings_title_display_bios_info">BIOS</string>

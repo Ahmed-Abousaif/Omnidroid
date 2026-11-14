@@ -56,7 +56,7 @@ class CoreUpdaterImpl(
                 )
             }
             val installManager = SplitInstallManagerFactory.create(context)
-            val installSession = installCores(installManager, missing, context)
+            val installSession = installCores(installManager, missing)
 
             try {
                 cancelPendingInstalls(installManager, installSession)
@@ -110,7 +110,6 @@ class CoreUpdaterImpl(
     private suspend fun installCores(
         installManager: SplitInstallManager,
         coreIDs: List<CoreID>,
-        context: Context,
     ): Int? {
         val installSession = requestCoresInstall(installManager, coreIDs) ?: return null
 
@@ -218,14 +217,11 @@ class CoreUpdaterImpl(
     }
 
     private fun log(message: String) {
-        if (VERBOSE) {
-            Log.i(TAG_LOG, message)
-        }
+        Log.i(TAG_LOG, message)
     }
 
     companion object {
         private const val TAG_LOG = "CoreUpdaterImpl"
-        private const val VERBOSE = true
         private const val RETRY_ATTEMPTS = 5
         private val RETRY_DELAY = 2.seconds
         private const val PLAY_STORE_PACKAGE = "com.android.vending"

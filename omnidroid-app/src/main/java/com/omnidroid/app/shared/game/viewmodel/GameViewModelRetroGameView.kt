@@ -24,7 +24,6 @@ import com.omnidroid.lib.game.GameLoader
 import com.omnidroid.lib.game.GameLoaderError
 import com.omnidroid.lib.game.GameLoaderException
 import com.omnidroid.lib.graphics.VulkanDetector
-import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.db.entity.Game

@@ -398,11 +398,13 @@ no separate current `LazyColumn` library implementation to modify.
 
 Each row fills width and has height `adaptive.listThumbHeight + 8.dp`. List
 uses 8 dp item spacing and horizontal padding, plus 12 dp vertical padding.
-`LibraryGameRow` draws the thumbnail, display name, subtitle and trailing
-Continue/favorite marker. The row has a 10 dp corner radius, 4 dp cover inset,
-and reduced alpha for unavailable games. Its thumbnail width is
-`listThumbHeight * LibraryGameCardAspectRatio`, and that width is also supplied
-as its image decode width. [Viewport][paged], [row renderer][cells].
+`LibraryGameRow` draws the thumbnail, display name, subtext row (via
+`LibraryGameSubtext`, displaying the console name and developer alongside
+`ConsoleGameStats` session count, playtime timer, and achievements, matching
+the carousel view layout) and trailing Continue/favorite marker. The row has a
+10 dp corner radius, 4 dp cover inset, and reduced alpha for unavailable games.
+Its thumbnail width is `listThumbHeight * LibraryGameCardAspectRatio`, and that
+width is also supplied as its image decode width. [Viewport][paged], [row renderer][cells].
 
 `GameUtils.getGameSubtitle` produces the subtitle. Displayed title, metadata,
 favorite styling, focus and actions are painted by the row renderer; ordering

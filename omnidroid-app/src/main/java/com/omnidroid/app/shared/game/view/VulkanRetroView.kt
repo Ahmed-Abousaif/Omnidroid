@@ -6,7 +6,6 @@ import android.content.res.Configuration
 import android.os.Build
 import android.graphics.PointF
 import android.graphics.RectF
-import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.Surface
 import android.view.SurfaceHolder

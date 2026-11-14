@@ -4,17 +4,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,9 +18,13 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.alorma.compose.settings.storage.base.SettingValueState
+import com.omnidroid.R
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 
 @Composable
 fun OmnidroidSettingsListMultiSelect(
@@ -48,7 +47,7 @@ fun OmnidroidSettingsListMultiSelect(
     }
 
     var showDialog by remember { mutableStateOf(false) }
-    val scrollState = rememberScrollState()
+    var pendingSelection by remember { mutableStateOf(state.value) }
 
     OmnidroidSettingsMenuLink(
         modifier = modifier,
@@ -57,27 +56,23 @@ fun OmnidroidSettingsListMultiSelect(
         title = title,
         subtitle = subtitle,
         action = action,
-        onClick = { showDialog = true },
+        onClick = { pendingSelection = state.value.toSet(); showDialog = true },
     )
 
     if (!showDialog) return
 
     val onAdd: (Int) -> Unit = { selectedIndex ->
-        val mutable = state.value.toMutableSet()
-        mutable.add(entryValues[selectedIndex])
-        state.value = mutable
+        pendingSelection = pendingSelection + entryValues[selectedIndex]
     }
     val onRemove: (Int) -> Unit = { selectedIndex ->
-        val mutable = state.value.toMutableSet()
-        mutable.remove(entryValues[selectedIndex])
-        state.value = mutable
+        pendingSelection = pendingSelection - entryValues[selectedIndex]
     }
 
-    AlertDialog(
+    OmnidroidDialog(
         title = title,
         text = {
             Column(
-                modifier = Modifier.verticalScroll(scrollState),
+                modifier = Modifier,
             ) {
                 if (subtitle != null) {
                     subtitle()
@@ -85,12 +80,12 @@ fun OmnidroidSettingsListMultiSelect(
                 }
 
                 entryValues.forEachIndexed { index, item ->
-                    val isSelected by rememberUpdatedState(newValue = state.value.contains(item))
+                    val isSelected by rememberUpdatedState(newValue = pendingSelection.contains(item))
                     Row(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .height(56.dp)
+                                .heightIn(min = 48.dp)
                                 .toggleable(
                                     role = Role.Checkbox,
                                     value = isSelected,
@@ -119,14 +114,18 @@ fun OmnidroidSettingsListMultiSelect(
         },
         onDismissRequest = { showDialog = false },
         confirmButton = {
-            TextButton(
+            OmnidroidDialogButton(
                 onClick = {
+                    state.value = pendingSelection
                     showDialog = false
-                    onItemsSelected?.invoke(entryValues.filter { state.value.contains(it) })
+                    onItemsSelected?.invoke(entryValues.filter { pendingSelection.contains(it) })
                 },
             ) {
                 Text(text = confirmButton)
             }
+        },
+        dismissButton = {
+            OmnidroidDialogButton(onClick = { showDialog = false }) { Text(stringResource(R.string.cancel)) }
         },
     )
 }

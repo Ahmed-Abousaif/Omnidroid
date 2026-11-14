@@ -2,8 +2,6 @@
 <resources>
     <string name="title_home">Início</string>
     <string name="title_search">Buscar</string>
-    <string name="title_systems">Sistemas</string>
-    <string name="title_games">Jogos</string>
     <string name="title_settings">Configurações</string>
     <string name="recent">Recentes</string>
     <string name="favorites">Favoritos</string>
@@ -17,14 +15,9 @@
     <string name="ok">OK</string>
     <string name="cancel">Cancelar</string>
     <string name="settings">Configurações</string>
-    <string name="save_sync">Salvar Sincronização</string>
     <string name="show_all">Mostrar todos</string>
     <string name="back">Voltar</string>
     <string name="close">Fechar</string>
-    <string name="game_page_search_suggestion">Pesquisar jogos</string>
-    <string name="settings_category_general">Geral</string>
-    <string name="settings_category_input">Entrada</string>
-    <string name="settings_category_misc">Outras configurações</string>
     <string name="settings_title_enable_autosave">Estado de salvamento automático</string>
     <string name="settings_description_enable_autosave">Salvar estado quando sair pelo menu do jogo</string>
     <string name="settings_title_enable_touch_feedback">Vibrar no toque</string>
@@ -42,7 +35,6 @@
     <string name="settings_gamepad_category_enabled">Dispositivos ativos</string>
     <string name="settings_gamepad_category_general">Geral</string>
     <string name="settings_gamepad_title_reset_bindings">Redefinir ligações</string>
-    <string name="settings_gamepad_title_game_menu">Menu</string>
     <string name="settings_title_open_cores_selection">Alterar Núcleos</string>
     <string name="settings_description_open_cores_selection">Selecione qual núcleo está associado ao sistema</string>
     <string name="settings_title_display_bios_info">BIOS</string>
@@ -51,8 +43,6 @@
     <string name="settings_bios_category_not_detected">Suportado</string>
     <string name="settings_title_reset_settings">Redefinição de fábrica</string>
     <string name="settings_description_reset_settings">Redefinir Omnidroid para suas configurações de fábrica</string>
-    <string name="settings_title_advanced_settings">Configurações avançadas</string>
-    <string name="settings_description_advanced_settings">Exibir configurações avançadas</string>
     <string name="settings_title_low_latency_audio">Preferir áudio com baixa latência</string>
     <string name="settings_description_low_latency_audio">Reduzir a latência do áudio nos dispositivos suportados. Pode aumentar as falhas no áudio.</string>
     <string name="settings_title_direct_game_load">Carregamento direto do jogo</string>
@@ -69,7 +59,6 @@
     <string name="settings_save_sync_refresh_description">Execute uma Sincronização manual agora.\n%1$s</string>
     <string name="settings_save_sync_enable_auto">Auto Sincronizar</string>
     <string name="settings_save_sync_enable_auto_description">Executar automaticamente uma sincronização antes e depois de uma sessão de jogo quando conectado a um Wi-Fi</string>
-    <string name="settings_save_sync_configure">Configurar %1$s</string>
     <string name="settings_save_sync_include_saves">Sincronizar saves no jogo</string>
     <string name="settings_save_sync_include_saves_description">%1$s no dispositivo</string>
     <string name="settings_save_sync_include_states">Status da sincronização</string>
@@ -78,16 +67,6 @@
     <string name="game_context_menu_remove_from_favorites">Remover dos favoritos</string>
     <string name="game_context_menu_resume">Continuar</string>
     <string name="game_context_menu_restart">Reiniciar</string>
-    <string name="game_context_menu_create_shortcut">Fixar na tela inicial</string>
-    <string name="home_notification_title">Ativar notificações</string>
-    <string name="home_notification_message">O Omnidroid usa notificações para informar quando um jogo ou uma operação está rodando em segundo plano.</string>
-    <string name="home_notification_action">Ativar</string>
-    <string name="home_microphone_title">Ativar microfone</string>
-    <string name="home_microphone_message">Os jogos de Nintendo DS podem usar o microfone para algumas funções.</string>
-    <string name="home_microphone_action">Ativar</string>
-    <string name="home_empty_title">Selecionar diretório das ROMs</string>
-    <string name="home_empty_message">Omnidroid precisa verificar um diretório contendo arquivos da ROM.\nIsto pode levar alguns minutos.</string>
-    <string name="home_empty_action">Selecione o diretório</string>
     <string name="game_menu_save">Salvar</string>
     <string name="game_menu_load">Carregar</string>
     <string name="game_menu_restart">Reiniciar</string>
@@ -106,8 +85,6 @@
     <string name="game_toast_quick_save_loaded">Carregamento rápido</string>
     <string name="game_toast_quick_save_saved">Salvamento rapido</string>
     <string name="empty_view_default">Nenhum item</string>
-    <string name="core_settings_title">Configurações do Núcleo</string>
-    <string name="core_settings_category_preferences">Preferências</string>
     <string name="core_settings_category_controllers">Controles</string>
     <string name="core_settings_controller">Controle %1$s</string>
     <string name="game_menu_title">Menu do jogo</string>
@@ -129,29 +106,19 @@
         \n\n Se nenhuma das opções acima funcionar, pode ser possível que este jogo/núcleo não seja compatível com este dispositivo.
     </string>
     <string name="game_loader_error_missing_bios">Parece que você está faltando a BIOS necessária, coloque-a no diretório das suas ROMs e tente novamente. Arquivos necessários: %1$s</string>
-    <string name="game_shortcut_error">Algo ruim aconteceu durante o carregamento do seu jogo. Por favor, certifique-se de que este jogo ainda existe na sua biblioteca.</string>
     <string name="dialog_saf_not_found">Este dispositivo não suporta o selecionador de arquivo \"StorageAccessFramework\". Por favor, copie manualmente arquivos da ROM descomprimida para %1$s e aperte em verificar novamente.</string>
-    <string name="system_grid_details">%1$s Jogos</string>
     <string name="tv_folder_picker_title">Selecionar diretório das ROMs</string>
     <string name="tv_folder_picker_action_choose">Selecionar</string>
     <string name="tv_folder_picker_action_cancel">Cancelar</string>
     <string name="tv_folder_storage_primary">Armazenamento Principal</string>
     <string name="tv_folder_storage_secondary">Armazenamento secundário %1$s</string>
     <string name="tv_folder_storage_title">Selecionar armazenamento</string>
-    <string name="tv_home_section_favorites">Favoritos</string>
-    <string name="tv_home_section_recents">Recente</string>
-    <string name="tv_home_section_systems">Sistemas</string>
-    <string name="tv_home_section_settings">Configurações</string>
     <string name="gamepad_binding_update_title">Associe \"RetroPad %1$s\"</string>
     <string name="gamepad_binding_update_description">Pressione um botão em seu\"%1$s\"</string>
     <string name="shortcut_binding_update_title">Vincular \"Atalho %1$s\"</string>
     <string name="shortcut_binding_update_description">Pressione o primeiro e depois o segundo botão para configurar um combo no seu \"%1$s\"</string>
-    <string name="tv_search_results">Jogos</string>
     <string name="tv_game_message_missing_gamepad">Controles são necessários para jogar. Por favor, conecte um.</string>
-    <string name="game_edit_touch_controls_error_not_visible">Desconecte seu controle para editar seus controles de toque</string>
     <string name="game_interactory_busy">Aguarde a conclusão das operações pendentes</string>
-    <string name="mobile_settings_help">Ajuda</string>
-    <string name="mobile_settings_support">Apoie-nos</string>
     <string name="omnidroid_help_content"><![CDATA[        <b>&#8226;Como eu uso o Omnidroid?</b><br/>
         Copie todas as suas ROMs para um diretório no seu dispositivo e selecione-o dentro do Omnidroid. Esse diretório pode ter subdiretórios. Após a conclusão da digitalização, você deve ver seus jogos.<br/><br/>
         <b>&#8226;Por que meus jogos não são detectados?</b><br/>

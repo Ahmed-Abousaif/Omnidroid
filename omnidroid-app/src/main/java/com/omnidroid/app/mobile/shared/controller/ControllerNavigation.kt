@@ -30,7 +30,6 @@ class ControllerNavigationState {
     var onCycleSettings: ((Int) -> Unit)? = null
     var onCarouselPrev: () -> Unit = {}
     var onCarouselNext: () -> Unit = {}
-    var onCarouselConfirm: () -> Unit = {}
 
     fun setFocusedGame(game: Game?) {
         focusedGame.value = game

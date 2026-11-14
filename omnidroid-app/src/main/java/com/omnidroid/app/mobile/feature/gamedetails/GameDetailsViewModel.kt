@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.lib.library.db.RetrogradeDatabase
-import com.omnidroid.lib.library.db.dao.GamePlayStats
 import com.omnidroid.lib.library.db.entity.Game
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -40,7 +39,6 @@ class GameDetailsViewModel(
         val metadata: GameRemoteMetadata = GameRemoteMetadata(),
         val playTimeMs: Long = 0L,
         val sessionCount: Int = 0,
-        val loadingMetadata: Boolean = false,
         val playingTrailer: Boolean = false,
     )
 
@@ -63,7 +61,6 @@ class GameDetailsViewModel(
                 metadata = metadata,
                 playTimeMs = totalPlayTimeMs,
                 sessionCount = sessionCount,
-                loadingMetadata = false,
                 playingTrailer = playingTrailer,
             )
         }.stateIn(

@@ -3,15 +3,13 @@ package com.omnidroid.app.mobile.feature.settings.general
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -24,6 +22,8 @@ import com.omnidroid.app.mobile.feature.library.LibraryStartupStore
 import com.omnidroid.app.mobile.feature.library.StartupDestinationPickerDialog
 import com.omnidroid.app.mobile.feature.library.startupDestinationLabel
 import com.omnidroid.app.mobile.feature.library.startupDestinations
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.shared.library.LibraryIndexScheduler
 import com.omnidroid.app.shared.library.LibraryPeriodicScanScheduler
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
@@ -101,12 +101,13 @@ internal fun LibraryMaintenanceSettings(
     }
 
     if (clearMissingDialogState.value) {
-        AlertDialog(
+        OmnidroidDialog(
+            destructive = true,
             title = { Text(stringResource(id = R.string.settings_title_clear_missing_games)) },
             text = { Text(stringResource(id = R.string.settings_description_clear_missing_games)) },
             onDismissRequest = { clearMissingDialogState.value = false },
             confirmButton = {
-                TextButton(
+                OmnidroidDialogButton(
                     onClick = {
                         clearMissingDialogState.value = false
                         scope.launch {
@@ -140,7 +141,7 @@ internal fun LibraryMaintenanceSettings(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { clearMissingDialogState.value = false }) {
+                OmnidroidDialogButton(onClick = { clearMissingDialogState.value = false }) {
                     Text(text = stringResource(id = R.string.cancel))
                 }
             },

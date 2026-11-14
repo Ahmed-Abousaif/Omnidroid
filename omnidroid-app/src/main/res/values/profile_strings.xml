@@ -7,7 +7,6 @@
     <string name="profile_console_help">Add a console or scan its games to unlock it in your collection.</string>
     <string name="profile_unlocked">Unlocked</string>
     <string name="profile_locked">Not unlocked yet</string>
-    <string name="profile_xp_bonus">Streak XP bonus</string>
     <string name="profile_best_streak_days">Best: %d days</string>
     <string name="profile_save_tag">Save tag</string>
     <string name="profile_choose_photo">Choose a photo</string>

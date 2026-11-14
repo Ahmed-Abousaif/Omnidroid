@@ -5,28 +5,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.omnidroid.app.utils.games.GameUtils
-import com.omnidroid.lib.library.db.entity.Game
-
-@Composable
-fun OmnidroidGameTexts(
-    modifier: Modifier = Modifier,
-    game: Game,
-    titleMaxLines: Int = 1,
-) {
-    val context = LocalContext.current
-    val subtitle =
-        remember(game.id) {
-            GameUtils.getGameSubtitle(context, game)
-        }
-
-    OmnidroidTexts(modifier, game.displayName, subtitle, titleMaxLines)
-}
 
 @Composable
 fun OmnidroidTexts(

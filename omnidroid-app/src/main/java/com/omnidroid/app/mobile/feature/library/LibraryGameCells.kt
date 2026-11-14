@@ -2,8 +2,6 @@ package com.omnidroid.app.mobile.feature.library
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -33,13 +31,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,15 +43,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.GameCardInfoStyle
+import com.omnidroid.app.mobile.shared.compose.ui.GameCoverOrigin
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameCard
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
+import com.omnidroid.app.mobile.shared.compose.ui.gameCoverSharedBounds
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.mobile.shared.controller.reportControllerGame
-import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.lib.library.db.entity.Game
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -69,14 +66,14 @@ internal fun LibraryGameCardItem(
     infoStyle: GameCardInfoStyle,
     fillCard: Boolean,
     decodeWidth: Dp,
-    sharedCover: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
     val cornerAnim by libraryCoverCorner(animatedVisibilityScope, game.id, 4.dp)
-    val coverSharedModifier = if (sharedCover) libraryCoverSharedBounds(
+    val coverSharedModifier = Modifier.gameCoverSharedBounds(
         sharedTransitionScope, animatedVisibilityScope, game.id, cornerAnim,
-    ) else Modifier
+        if (continueAction) GameCoverOrigin.Continue else GameCoverOrigin.Library,
+    )
     OmnidroidGameCard(
         modifier = modifier,
         coverModifier = coverSharedModifier,
@@ -99,22 +96,17 @@ internal fun LibraryGameRow(
     game: Game,
     modifier: Modifier = Modifier,
     continueAction: Boolean,
-    sharedCover: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
-    val context = LocalContext.current
-    val subtitle =
-        remember(game.id, game.systemId, game.developer, game.title, game.customName) {
-            GameUtils.getGameSubtitle(context, game)
-        }
     val rowCorner = 10.dp
     val coverInset = 4.dp
     val shape = RoundedCornerShape(rowCorner)
     val cornerAnim by libraryCoverCorner(animatedVisibilityScope, game.id, (rowCorner - coverInset).coerceAtLeast(0.dp))
-    val coverSharedModifier = if (sharedCover) libraryCoverSharedBounds(
+    val coverSharedModifier = Modifier.gameCoverSharedBounds(
         sharedTransitionScope, animatedVisibilityScope, game.id, cornerAnim,
-    ) else Modifier
+        if (continueAction) GameCoverOrigin.Continue else GameCoverOrigin.Library,
+    )
     val adaptiveSpec = LocalAdaptiveLayout.current
     val thumbHeight = adaptiveSpec.listThumbHeight
     val thumbWidth = thumbHeight * LibraryGameCardAspectRatio
@@ -171,12 +163,8 @@ internal fun LibraryGameRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = chromeColors.muted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                LibraryGameSubtext(
+                    game = game,
                     modifier = Modifier.padding(top = 2.dp),
                 )
             }
@@ -242,22 +230,3 @@ private fun libraryCoverCorner(
     label = "coverCorner-$gameId",
     transitionSpec = { tween(durationMillis = 400, easing = FastOutSlowInEasing) },
 ) { target -> if (target == EnterExitState.Visible) restingCorner else 16.dp }
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-@Composable
-private fun libraryCoverSharedBounds(
-    shared: SharedTransitionScope,
-    visibility: AnimatedVisibilityScope,
-    gameId: Int,
-    corner: Dp,
-): Modifier = with(shared) {
-    Modifier.sharedBounds(
-        sharedContentState = rememberSharedContentState(key = "game-cover-$gameId"),
-        animatedVisibilityScope = visibility,
-        enter = EnterTransition.None,
-        exit = ExitTransition.None,
-        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-        boundsTransform = { _, _ -> tween(durationMillis = 400, easing = FastOutSlowInEasing) },
-        clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(corner)),
-    )
-}

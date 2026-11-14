@@ -5,7 +5,6 @@ import android.view.View
 import com.omnidroid.lib.backend.BackendCapabilities
 import com.omnidroid.lib.backend.BackendSession
 import com.omnidroid.lib.backend.ConsoleBackendRegistry
-import com.omnidroid.lib.library.CoreID
 import com.omnidroid.app.shared.game.backend.libretro.LibretroBackendSession
 import com.omnidroid.app.shared.game.backend.switch_backend.SwitchBackendSession
 import android.content.Context
@@ -316,7 +315,6 @@ class BaseGameScreenViewModel(
 
     suspend fun loadSwitchGame(
         applicationContext: Context,
-        game: Game,
         systemCoreConfig: SystemCoreConfig,
         gameLoader: GameLoader,
     ) {
@@ -356,8 +354,6 @@ class BaseGameScreenViewModel(
                 activity = activity,
 
                 game = game,
-
-                systemCoreConfig = systemCoreConfig,
 
                 sharedPreferences = sharedPreferences,
 

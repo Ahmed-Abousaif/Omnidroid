@@ -14,7 +14,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.ui.res.stringResource
@@ -32,6 +31,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import com.alorma.compose.settings.storage.base.SettingValueState
+import com.omnidroid.app.mobile.shared.compose.ui.LocalAppDarkTheme
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import androidx.compose.material3.ListItem
@@ -40,7 +40,7 @@ import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSwitch
 import kotlin.math.roundToInt
 
-/** Optional host surface for rows; null preserves standard settings/card colors. */
+/** Optional host surface for rows; null uses the app's default settings colors. */
 val LocalSettingsRowContainerColor = staticCompositionLocalOf<Color?> { null }
 
 @Composable
@@ -152,30 +152,6 @@ fun SettingsHorizontalDivider(
 }
 
 @Composable
-fun OmnidroidCardSettingsGroup(
-    modifier: Modifier = Modifier,
-    titleRes: Int? = null,
-    title: @Composable (() -> Unit)? = titleRes?.let { { Text(stringResource(it)) } },
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Surface(color = Color.Transparent, tonalElevation = 0.dp) {
-        Column(
-            modifier =
-                modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp),
-        ) {
-            OutlinedCard {
-                if (title != null) {
-                    SettingsGroupTitleSmall(title)
-                }
-                content()
-            }
-        }
-    }
-}
-
-@Composable
 fun OmnidroidSettingsSlider(
     modifier: Modifier = Modifier,
     state: SettingValueState<Int>,
@@ -189,7 +165,7 @@ fun OmnidroidSettingsSlider(
     valueText: (@Composable (Int) -> Unit)? = null,
 ) {
     val defaultColors = ListItemDefaults.colors(
-        containerColor = LocalSettingsRowContainerColor.current ?: Color.Transparent,
+        containerColor = settingsRowContainerColor() ?: Color.Transparent,
     )
     val disabledColors =
         ListItemDefaults.colors(
@@ -267,8 +243,13 @@ private fun SettingsGroupTitleSmall(title: @Composable () -> Unit) {
 }
 
 @Composable
+private fun settingsRowContainerColor(): Color? =
+    LocalSettingsRowContainerColor.current
+        ?: if (LocalAppDarkTheme.current) null else MaterialTheme.colorScheme.background
+
+@Composable
 private fun omnidroidSettingsColor(enabled: Boolean): ListItemColors {
-    val defaultColors = LocalSettingsRowContainerColor.current?.let {
+    val defaultColors = settingsRowContainerColor()?.let {
         ListItemDefaults.colors(containerColor = it)
     } ?: ListItemDefaults.colors()
 

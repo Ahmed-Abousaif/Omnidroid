@@ -13,6 +13,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.omnidroid.R
+import com.omnidroid.app.mobile.shared.compose.ui.GameCoverOrigin
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 
@@ -56,12 +57,21 @@ fun NavController.navigateToGameDetails(gameId: Int) {
     this.navigate("games/$gameId")
 }
 
+internal fun NavController.navigateToGameDetails(gameId: Int, origin: GameCoverOrigin) {
+    navigateToGameDetails(gameId)
+    currentBackStackEntry?.savedStateHandle?.set("coverOrigin", origin.name)
+}
+
+internal val NavBackStackEntry.gameCoverOrigin: GameCoverOrigin
+    get() = if (savedStateHandle.get<String>("coverOrigin") == GameCoverOrigin.Continue.name) {
+        GameCoverOrigin.Continue
+    } else GameCoverOrigin.Library
+
 enum class MainRoute(
     val route: String,
     @StringRes val titleId: Int,
     val parent: MainRoute? = null,
     val arguments: List<NamedNavArgument> = emptyList(),
-    val showBottomNavigation: Boolean = true,
 ) {
     HOME(
         route = "home",
@@ -72,72 +82,60 @@ enum class MainRoute(
         titleId = R.string.title_game,
         parent = HOME,
         arguments = listOf(navArgument("gameId") { type = NavType.IntType }),
-        showBottomNavigation = false,
     ),
     ADD_CONSOLES(
         route = "systems/add",
         titleId = R.string.title_add_console,
         parent = HOME,
-        showBottomNavigation = false,
     ),
     SETTINGS(
         route = "settings/home",
         titleId = R.string.title_settings,
-        showBottomNavigation = false,
     ),
     SETTINGS_UNRECOGNIZED(
         route = "settings/unrecognized",
         titleId = R.string.settings_title_unrecognized_files,
         parent = SETTINGS,
-        showBottomNavigation = false,
     ),
     SETTINGS_BIOS(
         route = "settings/bios",
         titleId = R.string.settings_title_display_bios_info,
         parent = SETTINGS,
-        showBottomNavigation = false,
     ),
     SETTINGS_CORES_SELECTION(
         route = "settings/cores",
         titleId = R.string.settings_title_open_cores_selection,
         parent = SETTINGS,
-        showBottomNavigation = false,
     ),
     SETTINGS_GRAPHICS_API(
         route = "settings/graphicsapi",
         titleId = R.string.settings_title_graphics_api_selection,
         parent = SETTINGS,
-        showBottomNavigation = false,
     ),
     SETTINGS_INPUT_DEVICES(
         route = "settings/inputdevices",
         titleId = R.string.settings_title_gamepad_settings,
         parent = SETTINGS,
-        showBottomNavigation = false,
     ),
     SETTINGS_SAVE_SYNC(
         route = "settings/savesync",
         titleId = R.string.settings_title_saves_backup,
         parent = SETTINGS,
-        showBottomNavigation = false,
     ),
     SETTINGS_DEVICE_PROFILE(
         route = "settings/deviceprofile",
         titleId = R.string.settings_title_device_profile,
         parent = SETTINGS,
-        showBottomNavigation = false,
     ),
     SETTINGS_UI_SCALE(
         route = "settings/uiscale",
         titleId = R.string.settings_title_button_ui_scale,
         parent = SETTINGS,
-        showBottomNavigation = false,
     ),
     PROFILE(
         route = "profile",
         titleId = R.string.title_profile,
         parent = HOME,
-        showBottomNavigation = false,
     ),
     ;
 

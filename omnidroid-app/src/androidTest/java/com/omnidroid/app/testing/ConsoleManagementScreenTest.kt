@@ -166,7 +166,6 @@ class ConsoleManagementScreenTest {
             )
                 .hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
         }
-        compose.onNodeWithTag("console-catalogue").performScrollToIndex(1)
         compose.onNodeWithText(label(R.string.consoles_reset_search)).performScrollTo().performClick()
         compose.onNodeWithTag("console-catalogue").performScrollToIndex(1)
         compose.onNodeWithTag("console-NES").assertIsDisplayed()

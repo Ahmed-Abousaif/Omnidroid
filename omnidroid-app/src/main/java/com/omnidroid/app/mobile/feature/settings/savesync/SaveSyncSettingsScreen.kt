@@ -6,14 +6,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,6 +24,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.omnidroid.R
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogActionRole
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.shared.savesync.SaveBackupManager
 import com.omnidroid.app.shared.savesync.SaveBackupWork
 import com.omnidroid.app.shared.savesync.SaveSyncWork
@@ -258,7 +257,7 @@ fun SaveSyncSettingsScreen(
     // Lemuroid 1-Tap Migration Confirmation Dialog
     if (showMigrateConfirmDialog && saveSyncState.lemuroidStats != null) {
         val stats = saveSyncState.lemuroidStats!!
-        AlertDialog(
+        OmnidroidDialog(
             onDismissRequest = { showMigrateConfirmDialog = false },
             title = { Text(stringResource(R.string.settings_save_sync_migrate_lemuroid_confirm_title)) },
             text = {
@@ -271,7 +270,7 @@ fun SaveSyncSettingsScreen(
                 )
             },
             confirmButton = {
-                TextButton(
+                OmnidroidDialogButton(
                     onClick = {
                         viewModel.migrateFromLemuroid()
                         showMigrateConfirmDialog = false
@@ -279,7 +278,7 @@ fun SaveSyncSettingsScreen(
                 ) { Text(stringResource(R.string.settings_save_sync_migrate_lemuroid_action)) }
             },
             dismissButton = {
-                TextButton(onClick = { showMigrateConfirmDialog = false }) {
+                OmnidroidDialogButton(onClick = { showMigrateConfirmDialog = false }) {
                     Text(stringResource(R.string.cancel))
                 }
             },
@@ -288,12 +287,12 @@ fun SaveSyncSettingsScreen(
 
     // Lemuroid Transfer Guide Dialog
     if (showMigrationGuideDialog) {
-        AlertDialog(
+        OmnidroidDialog(
             onDismissRequest = { showMigrationGuideDialog = false },
             title = { Text(stringResource(R.string.migration_guide_title)) },
             text = {
                 Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    modifier = Modifier,
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Text(stringResource(R.string.migration_guide_intro), style = MaterialTheme.typography.bodyMedium)
@@ -306,7 +305,7 @@ fun SaveSyncSettingsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showMigrationGuideDialog = false }) {
+                OmnidroidDialogButton(onClick = { showMigrationGuideDialog = false }) {
                     Text(stringResource(R.string.ok))
                 }
             },
@@ -314,12 +313,12 @@ fun SaveSyncSettingsScreen(
     }
 
     signOutProvider?.let { provider ->
-        AlertDialog(
+        OmnidroidDialog(
             onDismissRequest = { signOutProvider = null },
             title = { Text(stringResource(R.string.settings_save_sync_sign_out)) },
             text = { Text(stringResource(R.string.settings_save_sync_sign_out_confirm, provider.displayName)) },
             confirmButton = {
-                TextButton(
+                OmnidroidDialogButton(
                     onClick = {
                         viewModel.signOut(provider.id)
                         signOutProvider = null
@@ -327,7 +326,7 @@ fun SaveSyncSettingsScreen(
                 ) { Text(stringResource(R.string.ok)) }
             },
             dismissButton = {
-                TextButton(onClick = { signOutProvider = null }) {
+                OmnidroidDialogButton(onClick = { signOutProvider = null }) {
                     Text(stringResource(R.string.pre_game_sync_cancel))
                 }
             },
@@ -335,7 +334,7 @@ fun SaveSyncSettingsScreen(
     }
 
     if (showingConflicts) {
-        AlertDialog(
+        OmnidroidDialog(
             onDismissRequest = { showingConflicts = false },
             title = { Text(stringResource(R.string.settings_save_sync_conflicts)) },
             text = {
@@ -343,19 +342,19 @@ fun SaveSyncSettingsScreen(
                     Text(stringResource(R.string.settings_save_sync_conflicts_none))
                 } else {
                     Column(
-                        modifier = Modifier.verticalScroll(rememberScrollState()),
+                        modifier = Modifier,
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         saveSyncState.conflicts.forEach { conflict ->
                             Text(conflict.relativePath, style = MaterialTheme.typography.titleSmall)
-                            Row {
-                                TextButton(onClick = { viewModel.resolveConflict(conflict.id, ConflictResolution.USE_LOCAL) }) {
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OmnidroidDialogButton(role = DialogActionRole.Destructive, onClick = { viewModel.resolveConflict(conflict.id, ConflictResolution.USE_LOCAL) }) {
                                     Text(stringResource(R.string.settings_save_sync_conflict_use_local))
                                 }
-                                TextButton(onClick = { viewModel.resolveConflict(conflict.id, ConflictResolution.USE_CLOUD) }) {
+                                OmnidroidDialogButton(role = DialogActionRole.Destructive, onClick = { viewModel.resolveConflict(conflict.id, ConflictResolution.USE_CLOUD) }) {
                                     Text(stringResource(R.string.settings_save_sync_conflict_use_cloud))
                                 }
-                                TextButton(onClick = { viewModel.resolveConflict(conflict.id, ConflictResolution.KEEP_BOTH) }) {
+                                OmnidroidDialogButton(role = DialogActionRole.Alternative, onClick = { viewModel.resolveConflict(conflict.id, ConflictResolution.KEEP_BOTH) }) {
                                     Text(stringResource(R.string.settings_save_sync_conflict_keep_both))
                                 }
                             }
@@ -364,7 +363,7 @@ fun SaveSyncSettingsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showingConflicts = false }) { Text(stringResource(R.string.ok)) }
+                OmnidroidDialogButton(onClick = { showingConflicts = false }) { Text(stringResource(R.string.ok)) }
             },
         )
     }

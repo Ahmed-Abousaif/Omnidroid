@@ -2,8 +2,6 @@
 <resources>
     <string name="title_home">الرئيسية</string>
     <string name="title_search">بحث</string>
-    <string name="title_systems">الأنظمة</string>
-    <string name="title_games">الألعاب</string>
     <string name="title_settings">الإعدادات</string>
     <string name="recent">الحديثة</string>
     <string name="favorites">المفضلة</string>
@@ -17,14 +15,9 @@
     <string name="ok">موافق</string>
     <string name="cancel">إلغاء</string>
     <string name="settings">الإعدادات</string>
-    <string name="save_sync">حفظ المزامنة</string>
     <string name="show_all">عرض الكل</string>
     <string name="back">رجوع</string>
     <string name="close">إغلاق</string>
-    <string name="game_page_search_suggestion">البحث عن الألعاب</string>
-    <string name="settings_category_general">عام</string>
-    <string name="settings_category_input">إدخال</string>
-    <string name="settings_category_misc">متفرقات</string>
     <string name="settings_title_enable_autosave">حفظ تلقائي للحالة</string>
     <string name="settings_description_enable_autosave">حفظ الحالة عند الخروج من قائمة اللعبة</string>
     <string name="settings_title_enable_touch_feedback">اهتزاز عند اللمس</string>
@@ -42,7 +35,6 @@
     <string name="settings_gamepad_category_enabled">الأجهزة المفعلة</string>
     <string name="settings_gamepad_category_general">عام</string>
     <string name="settings_gamepad_title_reset_bindings">إعادة ضبط الارتباطات</string>
-    <string name="settings_gamepad_title_game_menu">القائمة</string>
     <string name="settings_title_open_cores_selection">تغيير النواة</string>
     <string name="settings_description_open_cores_selection">حدد أي نواة مرتبطة بنظام</string>
     <string name="settings_title_display_bios_info">BIOS</string>
@@ -51,8 +43,6 @@
     <string name="settings_bios_category_not_detected">مدعومة</string>
     <string name="settings_title_reset_settings">إعادة تعيين جميع الإعدادات</string>
     <string name="settings_description_reset_settings">إعادة تعيين Omnidroid إلى إعدادات المصنع</string>
-    <string name="settings_title_advanced_settings">إعدادات متقدمة</string>
-    <string name="settings_description_advanced_settings">عرض الإعدادات المتقدمة</string>
     <string name="settings_title_low_latency_audio">تفضيل صوت مباشر</string>
     <string name="settings_description_low_latency_audio">تقليل تأخير الصوت على الأجهزة المدعومة. قد يؤدي ذلك إلى زيادة اخطاء في الصوت.</string>
     <string name="settings_title_direct_game_load">Direct game load</string>
@@ -69,7 +59,6 @@
     <string name="settings_save_sync_refresh_description">إجراء مزامنة يدوية الآن.\n%1$s</string>
     <string name="settings_save_sync_enable_auto">المزامنة التلقائية</string>
     <string name="settings_save_sync_enable_auto_description">إجراء المزامنة تلقائياً قبل جلسة اللعب وبعدها عند الاتصال بشبكة Wifi</string>
-    <string name="settings_save_sync_configure">تكوين %1$s</string>
     <string name="settings_save_sync_include_saves">مزامنة عمليات الحفظ داخل اللعبة</string>
     <string name="settings_save_sync_include_saves_description">%1$s على الجهاز</string>
     <string name="settings_save_sync_include_states">مزامنة الحالات</string>
@@ -78,16 +67,6 @@
     <string name="game_context_menu_remove_from_favorites">إزالة من المفضلة</string>
     <string name="game_context_menu_resume">استئناف</string>
     <string name="game_context_menu_restart">إعادة التشغيل</string>
-    <string name="game_context_menu_create_shortcut">تثبيت على الشاشة الرئيسية</string>
-    <string name="home_notification_title">تمكين الإشعارات</string>
-    <string name="home_notification_message">يستخدم Omnidroid الإشعارات لإعلامك عندما تكون اللعبة أو العملية قيد التشغيل في الخلفية.</string>
-    <string name="home_notification_action">تمكين</string>
-    <string name="home_microphone_title">تفعيل لاقط الصوت</string>
-    <string name="home_microphone_message">ألعاب Nintendo DS يمكنها استعمال لاقط الصوت لتوفير بعض الوظائف.</string>
-    <string name="home_microphone_action">تفعيل</string>
-    <string name="home_empty_title">حدد مجلد ROM</string>
-    <string name="home_empty_message">يحتاج Omnidroid إلى فحص المجلد الذي يحتوي على ملفات ROM.\nقد يستغرق ذلك بضع دقائق.</string>
-    <string name="home_empty_action">حدد المجلد</string>
     <string name="game_menu_save">حفظ</string>
     <string name="game_menu_load">تحميل</string>
     <string name="game_menu_restart">إعادة التشغيل</string>
@@ -106,8 +85,6 @@
     <string name="game_toast_quick_save_loaded">تحميل سريع</string>
     <string name="game_toast_quick_save_saved">حفظ سريع</string>
     <string name="empty_view_default">لا توجد عناصر</string>
-    <string name="core_settings_title">إعدادات النواة</string>
-    <string name="core_settings_category_preferences">التفضيلات</string>
     <string name="core_settings_category_controllers">التحكم</string>
     <string name="core_settings_controller">التحكم %1$s</string>
     <string name="game_menu_title">قائمة اللعبة</string>
@@ -129,29 +106,19 @@
         \n\nإذا لم تعمل أي من الخطوات المذكورة أعلاه، قد يكون من الممكن أن تكون هذه اللعبة/النواة غير مدعومة على هذا الجهاز.
     </string>
     <string name="game_loader_error_missing_bios">يبدو أنك فقدت BIOS المطلوب، ضعهم في مجلد ROMs الخاص بك وإعادة الفحص. الملفات المطلوبة: %1$s</string>
-    <string name="game_shortcut_error">حدث شيء سيئ أثناء تحميل لعبتك. الرجاء التأكد من أن هذه اللعبة لا تزال موجودة في مكتبتك.</string>
     <string name="dialog_saf_not_found">هذا الجهاز لا يدعم منتقي ملفات StorageAccessFramework. الرجاء نسخ ملفات ROM غير مضغوطة يدوياً إلى %1$s ثم اضغط على إعادة الفحص.</string>
-    <string name="system_grid_details">%1$s ألعاب</string>
     <string name="tv_folder_picker_title">حدد مجلد ROM</string>
     <string name="tv_folder_picker_action_choose">اختر</string>
     <string name="tv_folder_picker_action_cancel">إلغاء</string>
     <string name="tv_folder_storage_primary">وحدة التخزين الرئيسية</string>
     <string name="tv_folder_storage_secondary">وحدة التخزين الثانوية %1$s</string>
     <string name="tv_folder_storage_title">اختر وحدة التخزين</string>
-    <string name="tv_home_section_favorites">المفضلات</string>
-    <string name="tv_home_section_recents">المستخدمة مؤخّراً</string>
-    <string name="tv_home_section_systems">الأنظمة</string>
-    <string name="tv_home_section_settings">الإعدادات</string>
     <string name="gamepad_binding_update_title">ارتبط بـ \"RetroPad %1$s\"</string>
     <string name="gamepad_binding_update_description">اضغط على زر على \"%1$s\"</string>
     <string name="shortcut_binding_update_title">ربط \"الاختصار %1$s\"</string>
     <string name="shortcut_binding_update_description">اضغط على الزر الأول، ثم ثانية لربط مجموعة على \"%1$s\"</string>
-    <string name="tv_search_results">الأعاب</string>
     <string name="tv_game_message_missing_gamepad">وحدة التحكم مطلوبة للعب. الرجاء توصيل واحدة منها.</string>
-    <string name="game_edit_touch_controls_error_not_visible">أقطع الاتصال بلوحة التحكم الخاصة بك لتحرير عناصر التحكم الخاصة بها</string>
     <string name="game_interactory_busy">انتظر حتى تكتمل العمليات المعلقة</string>
-    <string name="mobile_settings_help">مساعدة</string>
-    <string name="mobile_settings_support">الدعم</string>
     <string name="omnidroid_help_content"><![CDATA[        <b>&#8226;كيف أستخدم Omnidroid؟</b><br/>
         نسخ جميع ملفات الالعاب الخاصة بك في مجلد على جهازك واختيارها داخل تطبيق Omnidroid. يسمح لهذا المجلد بأن يحتوي على دلائل فرعية. بعد الانتهاء من الفحص، لابد ان ترى ألعابك.<br/><br/>
         <b>&#8226;لماذا لم يتم اكتشاف ألعابي؟</b><br/>

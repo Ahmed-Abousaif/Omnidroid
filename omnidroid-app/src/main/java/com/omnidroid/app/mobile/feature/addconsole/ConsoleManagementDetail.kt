@@ -3,7 +3,6 @@ package com.omnidroid.app.mobile.feature.addconsole
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,21 +14,21 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.SportsEsports
 import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
@@ -37,7 +36,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -61,8 +59,6 @@ internal fun ConsoleManagementDetail(
     console: ConsoleItem,
     busyAction: BusyAction?,
     actionsEnabled: Boolean,
-    showBack: Boolean = false,
-    onBack: () -> Unit = {},
     onInstall: () -> Unit,
     onRefetch: () -> Unit,
     onDelete: () -> Unit,
@@ -74,29 +70,18 @@ internal fun ConsoleManagementDetail(
     val actionColor = lerp(chromeColors.panel, accent, 0.22f)
     key(console.metaSystemID) {
         Column(
-            modifier.verticalScroll(rememberScrollState()).focusGroup().padding(vertical = 4.dp),
+            modifier.verticalScroll(rememberScrollState()).focusRequester(focusRequester).focusGroup()
+                .padding(vertical = 4.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(
                 Modifier.fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        Brush.horizontalGradient(listOf(lerp(chromeColors.panel, accent, 0.16f), chromeColors.panel)),
-                    )
+                    .background(chromeColors.panel)
                     .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                if (showBack) {
-                    DetailIconAction(
-                        icon = Icons.AutoMirrored.Outlined.ArrowBack,
-                        label = stringResource(R.string.consoles_back_catalogue),
-                        enabled = true,
-                        onClick = onBack,
-                        modifier = Modifier.focusRequester(focusRequester),
-                        tonal = false,
-                    )
-                }
                 ConsoleArtwork(console, busyAction != null, Modifier.size(48.dp))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(
@@ -189,48 +174,52 @@ internal fun ConsoleManagementDetail(
                     ),
                 actions = {
                     if (console.databaseAvailable) {
-                        DetailIconAction(
-                            icon = if (console.databaseInstalled) Icons.Outlined.Refresh else Icons.Outlined.Download,
-                            label =
-                                stringResource(
-                                    if (console.databaseInstalled) {
-                                        R.string.consoles_refresh_database
-                                    } else {
-                                        R.string.consoles_download_database_full
-                                    },
-                                ),
-                            enabled = actionsEnabled,
-                            onClick = onRefetch,
-                            containerColor = actionColor,
-                        )
-                        if (console.hasDatabase) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             DetailIconAction(
-                                icon = Icons.Outlined.DeleteOutline,
-                                label = stringResource(R.string.consoles_delete_database_full),
+                                icon = if (console.databaseInstalled) Icons.Outlined.Refresh else Icons.Outlined.Download,
+                                label =
+                                    stringResource(
+                                        if (console.databaseInstalled) {
+                                            R.string.consoles_refresh_database
+                                        } else {
+                                            R.string.consoles_download_database_full
+                                        },
+                                    ),
                                 enabled = actionsEnabled,
-                                onClick = onDelete,
-                                containerColor = if (actionsEnabled) ConsoleDangerRed.copy(alpha = 0.16f) else chromeColors.panelSelected,
-                                contentColor = if (actionsEnabled) ConsoleDangerRed else chromeColors.faint,
+                                onClick = onRefetch,
+                                containerColor = accent,
                             )
+                            if (console.hasDatabase) {
+                                DetailIconAction(
+                                    icon = Icons.Outlined.DeleteOutline,
+                                    label = stringResource(R.string.consoles_delete_database_full),
+                                    enabled = actionsEnabled,
+                                    onClick = onDelete,
+                                    containerColor = ConsoleDangerRed,
+                                )
+                            }
                         }
                     }
                 },
             )
             if (console.canRemove) {
                 HorizontalDivider(color = chromeColors.divider)
-                TextButton(
+                Button(
                     onClick = onRemove,
                     enabled = actionsEnabled,
-                    modifier = Modifier.align(Alignment.CenterHorizontally).controllerFocusGlow(ConsoleControlShape),
+                    modifier =
+                        Modifier.fillMaxWidth().padding(horizontal = 12.dp).controllerFocusGlow(ConsoleControlShape),
+                    shape = ConsoleControlShape,
                     colors =
-                        ButtonDefaults.textButtonColors(
-                            contentColor = ConsoleDangerRed,
+                        ButtonDefaults.buttonColors(
+                            containerColor = ConsoleDangerRed,
+                            contentColor = Color.White,
+                            disabledContainerColor = chromeColors.panelSelected,
                             disabledContentColor = chromeColors.faint,
                         ),
                 ) {
                     Text(
                         stringResource(R.string.consoles_remove_console_full),
-                        color = if (actionsEnabled) ConsoleDangerRed else chromeColors.faint,
                         fontWeight = FontWeight.Medium,
                     )
                 }
@@ -263,24 +252,22 @@ private fun DetailIconAction(
     label: String,
     enabled: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    tonal: Boolean = true,
-    containerColor: Color = chromeColors.panelSelected,
-    contentColor: Color = chromeColors.content,
+    containerColor: Color,
 ) {
-    IconButton(
+    FilledIconButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.size(48.dp).controllerFocusGlow(ConsoleControlShape),
+        modifier = Modifier.size(48.dp).padding(6.dp).controllerFocusGlow(ConsoleControlShape),
+        shape = ConsoleControlShape,
+        colors =
+            IconButtonDefaults.filledIconButtonColors(
+                containerColor = containerColor,
+                contentColor = Color.White,
+                disabledContainerColor = chromeColors.panelSelected,
+                disabledContentColor = chromeColors.faint,
+            ),
     ) {
-        Box(
-            Modifier.size(36.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(if (tonal) containerColor else Color.Transparent),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, label, Modifier.size(18.dp), tint = if (enabled) contentColor else chromeColors.faint)
-        }
+        Icon(icon, label, Modifier.size(18.dp))
     }
 }
 

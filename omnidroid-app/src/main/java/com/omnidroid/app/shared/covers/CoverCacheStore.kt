@@ -247,14 +247,20 @@ class CoverCacheStore(
     }
 
     private fun touch(file: File) {
-        file.setLastModified(System.currentTimeMillis())
+        // The image timestamp is its content version in Coil's cache key, not its LRU age.
+        val marker = accessMarker(file)
+        runCatching {
+            if (!marker.setLastModified(System.currentTimeMillis())) marker.createNewFile()
+        }
     }
+
+    private fun accessMarker(file: File): File = File("${file.path}.access")
 
     private fun evictIfNeeded() {
         val files =
             root.walkTopDown()
                 .filter { it.isFile && (it.extension == "webp" || it.extension == "jpg") }
-                .sortedBy { it.lastModified() }
+                .sortedBy { maxOf(it.lastModified(), accessMarker(it).lastModified()) }
                 .toList()
         var total = files.sumOf { it.length() }
         if (total <= MAX_CACHE_BYTES) return
@@ -265,6 +271,7 @@ class CoverCacheStore(
             val file = files[index++]
             val size = file.length()
             if (file.delete()) {
+                accessMarker(file).delete()
                 total -= size
                 evictedFiles++
                 evictedBytes += size

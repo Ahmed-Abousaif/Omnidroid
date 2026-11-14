@@ -2,9 +2,9 @@ package com.omnidroid.app.shared.game
 
 import android.app.Activity
 import android.content.Intent
-import android.net.Uri
-import android.content.pm.ActivityInfo
 import android.content.SharedPreferences
+import android.content.pm.ActivityInfo
+import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -12,60 +12,54 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.omnidroid.R
-import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.app.mobile.feature.game.GameActivity
 import com.omnidroid.app.mobile.feature.game.GameService
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogActionRole
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogAction
+import com.omnidroid.app.mobile.shared.compose.dialog.showOmnidroidDialog
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
 import com.omnidroid.app.shared.GameMenuContract
 import com.omnidroid.app.shared.ImmersiveActivity
 import com.omnidroid.app.shared.coreoptions.CoreOption
 import com.omnidroid.app.shared.coreoptions.OmnidroidCoreOption
-import com.omnidroid.app.shared.game.viewmodel.GameViewModelSideEffects
 import com.omnidroid.app.shared.game.viewmodel.GameViewModelRetroGameView
+import com.omnidroid.app.shared.game.viewmodel.GameViewModelSideEffects
 import com.omnidroid.app.shared.input.InputDeviceManager
 import com.omnidroid.app.shared.rumble.RumbleManager
-import com.omnidroid.app.mobile.feature.gamedetails.PlayTimeStore
-import com.omnidroid.app.mobile.feature.profile.UserProfileStore
-import com.omnidroid.app.mobile.feature.profile.XPCalculator
-import com.omnidroid.app.shared.savesync.SaveSyncWork
 import com.omnidroid.app.shared.settings.ControllerConfigsManager
-import com.omnidroid.app.shared.storage.cache.CacheCleanerWork
-import com.omnidroid.app.tv.channel.ChannelUpdateWork
 import com.omnidroid.app.tv.shared.TVHelper
-import com.omnidroid.lib.library.db.RetrogradeDatabase
-import com.omnidroid.lib.library.db.entity.GameSession
-import com.omnidroid.common.coroutines.safeCollect
-import com.omnidroid.common.animationDuration
 import com.omnidroid.common.coroutines.launchOnState
+import com.omnidroid.common.coroutines.safeCollect
 import com.omnidroid.common.displayToast
 import com.omnidroid.common.dump
 import com.omnidroid.common.kotlin.serializable
+import com.omnidroid.lib.backend.BackendID
+import com.omnidroid.lib.backend.ConsoleBackendRegistry
 import com.omnidroid.lib.core.CoreVariable
 import com.omnidroid.lib.core.CoreVariablesManager
 import com.omnidroid.lib.game.GameLoader
-import com.omnidroid.lib.backend.ConsoleBackendRegistry
-import com.omnidroid.lib.backend.BackendID
-import com.omnidroid.lib.backend.BackendFeatureFlags
-import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.ExposedSetting
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemCoreConfig
+import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.saves.SavesManager
-import com.omnidroid.lib.savesync.GameFrameSpeedPreferences
 import com.omnidroid.lib.saves.StatesManager
 import com.omnidroid.lib.saves.StatesPreviewManager
+import com.omnidroid.lib.savesync.GameFrameSpeedPreferences
 import com.omnidroid.touchinput.radial.sensors.TiltConfiguration
 import dagger.Lazy
+import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
 
 abstract class BaseGameActivity : ImmersiveActivity() {
 
@@ -209,8 +203,6 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                 baseGameScreenViewModel.loadSwitchGame(
 
                     applicationContext,
-
-                    game,
 
                     systemCoreConfig,
 
@@ -566,15 +558,19 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
     private fun displaySaveFailureDialog() {
         if (isFinishing || isDestroyed) return
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle(R.string.game_save_failed_title)
-            .setMessage(R.string.game_save_failed_message)
-            .setPositiveButton(R.string.game_menu_states_retry) { _, _ -> baseGameScreenViewModel.requestFinish() }
-            .setNegativeButton(R.string.cancel, null)
-            .setNeutralButton(R.string.game_quit_without_saving) { _, _ ->
-                baseGameScreenViewModel.requestFinishWithoutSaving()
-            }
-            .show()
+        showOmnidroidDialog(
+            activity = this,
+            title = getString(R.string.game_save_failed_title),
+            message = getString(R.string.game_save_failed_message),
+            forceDark = true,
+            actions = listOf(
+                OmnidroidDialogAction(getString(R.string.cancel), DialogActionRole.Cancel),
+                OmnidroidDialogAction(getString(R.string.game_quit_without_saving), DialogActionRole.Destructive) {
+                    baseGameScreenViewModel.requestFinishWithoutSaving()
+                },
+                OmnidroidDialogAction(getString(R.string.game_menu_states_retry)) { baseGameScreenViewModel.requestFinish() },
+            ),
+        )
     }
 
     private fun performSaveQuickSave() {
@@ -979,23 +975,19 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
                     val item = unfulfilled.first()
 
-                    androidx.appcompat.app.AlertDialog.Builder(activity)
-
-                        .setTitle(reqDesc.title)
-
-                        .setMessage(item.description)
-
-                        .setPositiveButton(R.string.switch_keys_import_action) { _, _ ->
-
-                            item.action?.let { action ->
-                                com.omnidroid.app.shared.game.backend.RequirementPickerLauncherActivity.launch(activity, action)
-                            }
-
-                        }
-
-                        .setNegativeButton(android.R.string.cancel, null)
-
-                        .show()
+                    showOmnidroidDialog(
+                        activity = activity,
+                        title = reqDesc.title,
+                        message = item.description,
+                        actions = listOf(
+                            OmnidroidDialogAction(activity.getString(android.R.string.cancel), DialogActionRole.Cancel),
+                            OmnidroidDialogAction(activity.getString(R.string.switch_keys_import_action)) {
+                                item.action?.let { action ->
+                                    com.omnidroid.app.shared.game.backend.RequirementPickerLauncherActivity.launch(activity, action)
+                                }
+                            },
+                        ),
+                    )
 
                 }
 

@@ -182,14 +182,13 @@ private fun LazyGridScope.libraryCells(
             )
         } else {
             val featured = items.isFeatured(index)
-            // Continue can duplicate a normal game, but must not duplicate its shared-cover match.
-            // Two differently sized matches in one screen can keep lookahead measuring forever.
+            // Continue and the ordinary copy use separate shared-cover identities.
             val modifier = if (index == 0) cellModifier.focusRequester(firstItemRequester) else cellModifier
             val onClick = { if (featured) onContinueClick(game) else onGameClick(game) }
             if (isList) {
                 LibraryGameRow(
                     sharedTransitionScope, animatedVisibilityScope, game, modifier,
-                    continueAction = featured, sharedCover = !featured,
+                    continueAction = featured,
                     onClick = onClick, onLongClick = { onGameLongClick(game) },
                 )
             } else {
@@ -197,7 +196,6 @@ private fun LazyGridScope.libraryCells(
                     sharedTransitionScope, animatedVisibilityScope, game, modifier,
                     continueAction = featured, infoStyle = infoStyle, fillCard = fillCard,
                     decodeWidth = decodeWidth,
-                    sharedCover = !featured,
                     onClick = onClick, onLongClick = { onGameLongClick(game) },
                 )
             }

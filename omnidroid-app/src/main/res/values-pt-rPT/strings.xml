@@ -2,8 +2,6 @@
 <resources>
     <string name="title_home">Início</string>
     <string name="title_search">Pesquisar</string>
-    <string name="title_systems">Sistemas</string>
-    <string name="title_games">Jogos</string>
     <string name="title_settings">Configurações</string>
     <string name="recent">Recentes</string>
     <string name="favorites">Favoritos</string>
@@ -17,14 +15,9 @@
     <string name="ok">OK</string>
     <string name="cancel">Cancelar</string>
     <string name="settings">Configurações</string>
-    <string name="save_sync">Gravar Sincronização</string>
     <string name="show_all">Mostrar Todos</string>
     <string name="back">Voltar</string>
     <string name="close">Fechar</string>
-    <string name="game_page_search_suggestion">Pesquisar jogos</string>
-    <string name="settings_category_general">Geral</string>
-    <string name="settings_category_input">Entrada</string>
-    <string name="settings_category_misc">Diversos</string>
     <string name="settings_title_enable_autosave">Auto-gravar estado</string>
     <string name="settings_description_enable_autosave">Guardar o estado do jogo quando sair para o menu</string>
     <string name="settings_title_enable_touch_feedback">Vibrar ao toque</string>
@@ -42,7 +35,6 @@
     <string name="settings_gamepad_category_enabled">Dispositivos habilitados</string>
     <string name="settings_gamepad_category_general">Geral</string>
     <string name="settings_gamepad_title_reset_bindings">Redefinir combinações</string>
-    <string name="settings_gamepad_title_game_menu">Menu</string>
     <string name="settings_title_open_cores_selection">Alterar Núcleos</string>
     <string name="settings_description_open_cores_selection">Seleccione o núcleo que quer associar ao sistema</string>
     <string name="settings_title_display_bios_info">BIOS</string>
@@ -51,8 +43,6 @@
     <string name="settings_bios_category_not_detected">Suportado</string>
     <string name="settings_title_reset_settings">Redefinição de fábrica</string>
     <string name="settings_description_reset_settings">Redefinir Omnidroid para as suas configurações de fábrica</string>
-    <string name="settings_title_advanced_settings">Configurações avançadas</string>
-    <string name="settings_description_advanced_settings">Exibir configurações avançadas</string>
     <string name="settings_title_low_latency_audio">Preferir áudio de baixa latência</string>
     <string name="settings_description_low_latency_audio">Reduzir a latência de áudio nos dispositivos suportados. Pode aumentar as falhas de áudio.</string>
     <string name="settings_title_direct_game_load">Carregamento direto do jogo</string>
@@ -69,7 +59,6 @@
     <string name="settings_save_sync_refresh_description">Executar uma sincronização manual agora.\n%1$s</string>
     <string name="settings_save_sync_enable_auto">Auto-Sincronização</string>
     <string name="settings_save_sync_enable_auto_description">Executar uma sincronização automaticamente antes e depois uma sessão de jogo quando conectado a WiFi</string>
-    <string name="settings_save_sync_configure">Configurar %1$s</string>
     <string name="settings_save_sync_include_saves">Sincronizar gravações dos jogos</string>
     <string name="settings_save_sync_include_saves_description">%1$s no dispositivo</string>
     <string name="settings_save_sync_include_states">Sincronizar estados</string>
@@ -78,16 +67,6 @@
     <string name="game_context_menu_remove_from_favorites">Remover dos favoritos</string>
     <string name="game_context_menu_resume">Retomar</string>
     <string name="game_context_menu_restart">Reiniciar</string>
-    <string name="game_context_menu_create_shortcut">Fixar no launcher</string>
-    <string name="home_notification_title">Permitir notificações</string>
-    <string name="home_notification_message">Omnidroid usa notificações para alertar quando um jogo ou operação está em execução em segundo plano.</string>
-    <string name="home_notification_action">Habilitar</string>
-    <string name="home_microphone_title">Ativar microfone</string>
-    <string name="home_microphone_message">Os jogos de Nintendo DS podem usar o microfone para fornecer algumas funcionalidades.</string>
-    <string name="home_microphone_action">Ativar</string>
-    <string name="home_empty_title">Seleccionar directório de ROMs</string>
-    <string name="home_empty_message">O Omnidroid precisa de verificar um directório contendo arquivos de ROM.\nIsto pode levar alguns minutos.</string>
-    <string name="home_empty_action">Seleccionar Directório</string>
     <string name="game_menu_save">Guardar</string>
     <string name="game_menu_load">Carregar</string>
     <string name="game_menu_restart">Reiniciar</string>
@@ -106,8 +85,6 @@
     <string name="game_toast_quick_save_loaded">Carregamento rápido</string>
     <string name="game_toast_quick_save_saved">Salvamento rápido</string>
     <string name="empty_view_default">Nenhum item</string>
-    <string name="core_settings_title">Configurações do Núcleo</string>
-    <string name="core_settings_category_preferences">Preferências</string>
     <string name="core_settings_category_controllers">Controladores</string>
     <string name="core_settings_controller">Controlador %1$s</string>
     <string name="game_menu_title">Menu do jogo</string>
@@ -129,29 +106,19 @@
         \n\n Se nenhuma destas sugestões funcionar, é possível que este Jogo/Núcleo não seja suportado pelo seu dispositivo.
     </string>
     <string name="game_loader_error_missing_bios">Parece que falta a BIOS necessária, coloque-a no directório das suas ROMs e tente novamente. Arquivos necessários: %1$s</string>
-    <string name="game_shortcut_error">Aconteceu algo errado durante o carregamento do seu jogo. Por favor, certifique-se de que este jogo ainda existe na sua biblioteca.</string>
     <string name="dialog_saf_not_found">Este dispositivo não suporta o seleccionador de arquivo StorageAccessFramework. Por favor copie manualmente arquivos da ROM descomprimida para %1$s e faça o Rescan.</string>
-    <string name="system_grid_details">%1$s jogos</string>
     <string name="tv_folder_picker_title">Seleccionar directório de ROMs</string>
     <string name="tv_folder_picker_action_choose">Seleccionar</string>
     <string name="tv_folder_picker_action_cancel">Cancelar</string>
     <string name="tv_folder_storage_primary">Armazenamento principal</string>
     <string name="tv_folder_storage_secondary">Armazenamento secundário %1$s</string>
     <string name="tv_folder_storage_title">Seleccionar armazenamento</string>
-    <string name="tv_home_section_favorites">Favoritos</string>
-    <string name="tv_home_section_recents">Recente</string>
-    <string name="tv_home_section_systems">Sistemas</string>
-    <string name="tv_home_section_settings">Configurações</string>
     <string name="gamepad_binding_update_title">Associar \"RetroPad %1$s\"</string>
     <string name="gamepad_binding_update_description">Pressione um botão no seu\"%1$s\"</string>
     <string name="shortcut_binding_update_title">Associar \"Atalho %1$s\"</string>
     <string name="shortcut_binding_update_description">Pressione o primeiro, depois o segundo botão para vincular um combo no seu \"%1$s\"</string>
-    <string name="tv_search_results">Jogos</string>
     <string name="tv_game_message_missing_gamepad">É necessário comandos para jogar. Por favor, conecte um.</string>
-    <string name="game_edit_touch_controls_error_not_visible">Desconecte o seu comando para editar os seus controles de toque</string>
     <string name="game_interactory_busy">Aguarde pela conclusão das operações pendentes</string>
-    <string name="mobile_settings_help">Ajuda</string>
-    <string name="mobile_settings_support">Suporte</string>
     <string name="omnidroid_help_content"><![CDATA[        <b>&#8226;Como usar o Omnidroid?</b><br/>
         Copie todas as suas ROMs para um directório no seu dispositivo e seleccione-o dentro do Omnidroid. Esse directório pode ter subdirectórios. Após a conclusão do scan, você deve ver os seus jogos.<br/><br/>
         <b>&#8226;Porque é que os meus jogos não são detectados?</b><br/>

@@ -4,34 +4,31 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.alorma.compose.settings.storage.base.SettingValueState
+import com.omnidroid.R
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun OmnidroidSettingsList(
@@ -47,7 +44,6 @@ fun OmnidroidSettingsList(
     useSelectedValueAsSubtitle: Boolean = true,
     subtitleRes: Int? = null,
     subtitle: (@Composable () -> Unit)? = subtitleRes?.let { { Text(stringResource(it)) } },
-    closeDialogDelay: Long = 200,
     action: (@Composable () -> Unit)? = null,
     onItemSelected: ((Int, String) -> Unit)? = null,
 ) {
@@ -73,25 +69,14 @@ fun OmnidroidSettingsList(
 
     if (!showDialog) return
 
-    val coroutineScope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
-    val onSelected: (Int, Boolean) -> Unit = { selectedIndex, updateState ->
-        pendingSelection = selectedIndex
-        coroutineScope.launch {
-            if (updateState) onSelectionChange(selectedIndex)
-            delay(closeDialogDelay)
-            showDialog = false
-        }
-    }
-
-    AlertDialog(
+    OmnidroidDialog(
         title = title,
         text = {
             Column(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .verticalScroll(scrollState)
+
                         .selectableGroup(),
             ) {
                 if (subtitle != null) {
@@ -105,14 +90,13 @@ fun OmnidroidSettingsList(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .height(56.dp)
+                                .heightIn(min = 48.dp)
                                 .controllerFocusGlow(RoundedCornerShape(8.dp))
                                 .selectable(
                                     role = Role.RadioButton,
                                     selected = isSelected,
                                     onClick = {
-                                        onSelected(index, !isSelected)
-                                        onItemSelected?.invoke(index, items[index])
+                                        pendingSelection = index
                                     },
                                 ),
                         verticalAlignment = Alignment.CenterVertically,
@@ -131,7 +115,19 @@ fun OmnidroidSettingsList(
             }
         },
         onDismissRequest = { showDialog = false },
-        confirmButton = {},
-        dismissButton = {},
+        confirmButton = {
+            val selection = pendingSelection ?: selectedIndex
+            OmnidroidDialogButton(
+                enabled = selection in items.indices,
+                onClick = {
+                    if (selection != selectedIndex) onSelectionChange(selection)
+                    onItemSelected?.invoke(selection, items[selection])
+                    showDialog = false
+                },
+            ) { Text(stringResource(R.string.ok)) }
+        },
+        dismissButton = {
+            OmnidroidDialogButton(onClick = { showDialog = false }) { Text(stringResource(R.string.cancel)) }
+        },
     )
 }

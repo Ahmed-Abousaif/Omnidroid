@@ -157,7 +157,6 @@ class TiltSensor(context: Context) : SensorEventListener {
     }
 
     companion object {
-        const val SKIPPED_MEASUREMENTS = 1
         const val MEASUREMENTS_BUFFER_SIZE = 5
         val MAX_MAX_ROTATION = Math.toRadians(20.0).toFloat()
         val MIN_MAX_ROTATION = Math.toRadians(2.5).toFloat()

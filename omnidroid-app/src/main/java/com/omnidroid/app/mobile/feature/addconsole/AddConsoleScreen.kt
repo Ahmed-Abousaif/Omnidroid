@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,18 +16,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -63,7 +57,8 @@ import androidx.compose.ui.unit.sp
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.addconsole.AddConsoleViewModel.ConsoleItem
 import com.omnidroid.app.mobile.feature.library.LibrarySearchField
-import com.omnidroid.app.mobile.shared.compose.ui.BatteryLowRed
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
@@ -76,7 +71,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-internal val ConsolePanelShape = RoundedCornerShape(20.dp)
 internal val ConsoleControlShape = RoundedCornerShape(12.dp)
 
 private enum class ConfirmAction { DELETE_DATABASE, REMOVE_CONSOLE }
@@ -121,7 +115,7 @@ internal fun ConsoleManagementContent(
         }
     val resolvedId = resolveConsoleSelection(selectedId, if (detailOpen) state.consoles else catalogue)
     val selected = state.consoles.firstOrNull { it.metaSystemID == resolvedId }
-    val gridState = rememberLazyGridState()
+    val listState = rememberLazyListState()
     val snackbar = remember { SnackbarHostState() }
     val navigation = LocalControllerNavigation.current
     val focusManager = LocalFocusManager.current
@@ -135,7 +129,7 @@ internal fun ConsoleManagementContent(
     LaunchedEffect(resolvedId) { selectedId = resolvedId }
     LaunchedEffect(query) {
         navigationJob?.cancel()
-        gridState.scrollToItem(0)
+        listState.scrollToItem(0)
     }
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
@@ -161,9 +155,9 @@ internal fun ConsoleManagementContent(
                 navigationJob =
                     scope.launch {
                         if (split || !detailOpen) {
-                            gridState.scrollToItem(next)
+                            listState.scrollToItem(next)
                             val targetId = catalogue[next].metaSystemID
-                            snapshotFlow { gridState.layoutInfo.visibleItemsInfo.any { it.key == targetId.name } }
+                            snapshotFlow { listState.layoutInfo.visibleItemsInfo.any { it.key == targetId.name } }
                                 .first { it }
                             runCatching { requesters[targetId]?.requestFocus() }
                         } else {
@@ -219,58 +213,55 @@ internal fun ConsoleManagementContent(
                             },
                         )
                     }
-                    LazyVerticalGrid(
-                        columns = if (split) GridCells.Fixed(1) else GridCells.Adaptive(156.dp),
-                        state = gridState,
+                    LazyColumn(
+                        state = listState,
                         contentPadding = PaddingValues(bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier.weight(1f).fillMaxWidth().focusGroup().testTag("console-catalogue"),
                     ) {
-                    when {
-                        state.loading ->
-                            item(span = { GridItemSpan(maxLineSpan) }) {
-                                Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                                    CircularProgressIndicator(color = LibraryNeonGreen)
-                                }
-                            }
-                        catalogue.isEmpty() ->
-                            item(span = { GridItemSpan(maxLineSpan) }) {
-                                Column(
-                                    Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                                ) {
-                                    Icon(Icons.Outlined.Search, null, Modifier.size(32.dp), tint = chromeColors.muted)
-                                    Text(stringResource(R.string.consoles_no_results), color = chromeColors.content)
-                                    TextButton(onClick = {
-                                        query = ""
-                                    }) {
-                                        Text(stringResource(R.string.consoles_reset_search))
+                        when {
+                            state.loading ->
+                                item {
+                                    Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                                        CircularProgressIndicator(color = LibraryNeonGreen)
                                     }
                                 }
-                            }
-                        else ->
-                            items(catalogue, key = { it.metaSystemID.name }) { console ->
-                                ConsoleCatalogueCard(
-                                    console = console,
-                                    selected = console.metaSystemID == resolvedId,
-                                    busy = console.metaSystemID == state.busyMetaSystemID,
-                                    horizontal = split,
-                                    modifier =
-                                        Modifier.testTag("console-${console.metaSystemID.name}")
-                                            .focusRequester(requesters.getValue(console.metaSystemID))
-                                            .onFocusChanged { if (it.isFocused) selectedId = console.metaSystemID },
-                                    onClick = {
-                                        focusManager.clearFocus()
-                                        selectedId = console.metaSystemID
-                                        detailOpen = true
-                                    },
-                                )
-                            }
+                            catalogue.isEmpty() ->
+                                item {
+                                    Column(
+                                        Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                                    ) {
+                                        Icon(Icons.Outlined.Search, null, Modifier.size(32.dp), tint = chromeColors.muted)
+                                        Text(stringResource(R.string.consoles_no_results), color = chromeColors.content)
+                                        TextButton(onClick = {
+                                            query = ""
+                                        }) {
+                                            Text(stringResource(R.string.consoles_reset_search))
+                                        }
+                                    }
+                                }
+                            else ->
+                                items(catalogue, key = { it.metaSystemID.name }) { console ->
+                                    ConsoleCatalogueRow(
+                                        console = console,
+                                        selected = console.metaSystemID == resolvedId,
+                                        busy = console.metaSystemID == state.busyMetaSystemID,
+                                        modifier =
+                                            Modifier.testTag("console-${console.metaSystemID.name}")
+                                                .focusRequester(requesters.getValue(console.metaSystemID))
+                                                .onFocusChanged { if (it.isFocused) selectedId = console.metaSystemID },
+                                        onClick = {
+                                            focusManager.clearFocus()
+                                            selectedId = console.metaSystemID
+                                            detailOpen = true
+                                        },
+                                    )
+                                }
+                        }
                     }
                 }
-            }
             }
             if (split) {
                 VerticalDivider(
@@ -283,8 +274,6 @@ internal fun ConsoleManagementContent(
                     console = selected,
                     busyAction = state.busyAction.takeIf { state.busyMetaSystemID == selected.metaSystemID },
                     actionsEnabled = !busy,
-                    showBack = !split,
-                    onBack = { detailOpen = false },
                     onInstall = { onInstall(selected.metaSystemID) },
                     onRefetch = { onRefetchDatabase(selected.metaSystemID) },
                     onDelete = { confirmation = ConsoleConfirmation(selected, ConfirmAction.DELETE_DATABASE) },
@@ -298,7 +287,8 @@ internal fun ConsoleManagementContent(
     }
     confirmation?.let { pending ->
         val delete = pending.action == ConfirmAction.DELETE_DATABASE
-        AlertDialog(
+        OmnidroidDialog(
+            destructive = true,
             onDismissRequest = { confirmation = null },
             title = {
                 Text(
@@ -320,7 +310,7 @@ internal fun ConsoleManagementContent(
                 )
             },
             confirmButton = {
-                TextButton(
+                OmnidroidDialogButton(
                     enabled = !busy,
                     onClick = {
                         confirmation = null
@@ -337,12 +327,11 @@ internal fun ConsoleManagementContent(
                         stringResource(
                             if (delete) R.string.consoles_confirm_delete else R.string.consoles_confirm_remove,
                         ),
-                        color = BatteryLowRed,
                     )
                 }
             },
             dismissButton = {
-                TextButton(
+                OmnidroidDialogButton(
                     onClick = { confirmation = null },
                 ) { Text(stringResource(R.string.consoles_cancel)) }
             },

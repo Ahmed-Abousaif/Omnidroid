@@ -67,10 +67,6 @@ class ConsoleAchievementsStore(
                 })
         }
 
-    /** Flow of the unlocked console count only. */
-    fun observeUnlockedCount(): Flow<Int> =
-        observeAchievements().map { list -> list.count { it.unlocked } }
-
     /**
      * Returns the highest milestone badge earned for [unlockedCount], or null if below the first tier.
      *

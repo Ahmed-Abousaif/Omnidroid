@@ -111,15 +111,6 @@ class InputDeviceManager(
         }
     }
 
-    suspend fun getCurrentShortcuts(inputDevice: InputDevice): List<GameShortcut> {
-        return withContext(Dispatchers.IO) {
-            GameShortcutType.entries.mapNotNull { type ->
-                val preference = sharedPreferences.getString(computeGameShortcutPreference(inputDevice, type), "")
-                parseShortcutPreference(preference, inputDevice, type)
-            }
-        }
-    }
-
     private fun parseBindingsPreference(
         preference: String?,
         inputDevice: InputDevice,
@@ -276,14 +267,6 @@ class InputDeviceManager(
 
         fun computeKeyBindingGamePadPreference(inputDevice: InputDevice) =
             "${GAME_PAD_BINDING_PREFERENCE_BASE_KEY}_${getSharedPreferencesId(inputDevice)}"
-
-        fun computeKeyBindingRetroKeyPreference(
-            inputDevice: InputDevice,
-            retroKey: RetroKey,
-        ): String {
-            val keyCode = retroKey.keyCode
-            return "${GAME_PAD_BINDING_PREFERENCE_BASE_KEY}_${getSharedPreferencesId(inputDevice)}_$keyCode"
-        }
 
         val OUTPUT_KEYS: List<RetroKey> =
             retroKeysOf(

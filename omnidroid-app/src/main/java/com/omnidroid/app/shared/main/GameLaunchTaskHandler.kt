@@ -26,7 +26,6 @@ class GameLaunchTaskHandler(
     }
 
     suspend fun handleGameFinish(
-        enableRatingFlow: Boolean,
         activity: Activity,
         resultCode: Int,
         data: Intent?,
@@ -35,7 +34,7 @@ class GameLaunchTaskHandler(
             data?.extras?.getSerializable(BaseGameActivity.PLAY_GAME_RESULT_GAME) as Game?
         rescheduleBackgroundWork(activity.applicationContext, finishedGame)
         when (resultCode) {
-            Activity.RESULT_OK -> handleSuccessfulGameFinish(activity, enableRatingFlow, data)
+            Activity.RESULT_OK -> handleSuccessfulGameFinish(activity, data)
             BaseGameActivity.RESULT_ERROR ->
                 handleUnsuccessfulGameFinish(
                     activity,
@@ -78,7 +77,6 @@ class GameLaunchTaskHandler(
 
     private suspend fun handleSuccessfulGameFinish(
         activity: Activity,
-        enableRatingFlow: Boolean,
         data: Intent?,
     ) {
         val duration =
@@ -108,9 +106,7 @@ class GameLaunchTaskHandler(
             )
         }
 
-        if (enableRatingFlow) {
-            displayReviewRequest(activity, duration)
-        }
+        displayReviewRequest(activity, duration)
     }
 
     private suspend fun displayReviewRequest(

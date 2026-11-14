@@ -2,8 +2,6 @@
 <resources>
     <string name="title_home">Startseite</string>
     <string name="title_search">Suche</string>
-    <string name="title_systems">Systeme</string>
-    <string name="title_games">Spiele</string>
     <string name="title_settings">Einstellungen</string>
     <string name="recent">Verlauf</string>
     <string name="favorites">Favoriten</string>
@@ -17,14 +15,9 @@
     <string name="ok">OK</string>
     <string name="cancel">Abbrechen</string>
     <string name="settings">Einstellungen</string>
-    <string name="save_sync">Synchronisation speichern</string>
     <string name="show_all">Alle anzeigen</string>
     <string name="back">Zurück</string>
     <string name="close">Schließen</string>
-    <string name="game_page_search_suggestion">Spielsuche</string>
-    <string name="settings_category_general">Allgemein</string>
-    <string name="settings_category_input">Eingabe</string>
-    <string name="settings_category_misc">Sonstiges</string>
     <string name="settings_title_enable_autosave">Zustand automatisch speichern</string>
     <string name="settings_description_enable_autosave">Status beim Beenden über das Spielmenü speichern</string>
     <string name="settings_title_enable_touch_feedback">Vibrieren bei Berührung</string>
@@ -42,7 +35,6 @@
     <string name="settings_gamepad_category_enabled">Aktivierte Geräte</string>
     <string name="settings_gamepad_category_general">Allgemein</string>
     <string name="settings_gamepad_title_reset_bindings">Zuordnungen zurücksetzen</string>
-    <string name="settings_gamepad_title_game_menu">Menü</string>
     <string name="settings_title_open_cores_selection">Kerne ändern</string>
     <string name="settings_description_open_cores_selection">Wähle aus, welcher Kern einem System zugeordnet ist</string>
     <string name="settings_title_display_bios_info">BIOS</string>
@@ -51,8 +43,6 @@
     <string name="settings_bios_category_not_detected">Unterstützt</string>
     <string name="settings_title_reset_settings">Auf Werkseinstellungen zurücksetzen</string>
     <string name="settings_description_reset_settings">Omnidroid auf Werkseinstellungen zurücksetzen</string>
-    <string name="settings_title_advanced_settings">Erweiterte Einstellungen</string>
-    <string name="settings_description_advanced_settings">Erweiterte Einstellungen anzeigen</string>
     <string name="settings_title_low_latency_audio">Bevorzuge latenzarmen Ton</string>
     <string name="settings_description_low_latency_audio">Reduziert die Audio-Latenz auf unterstützten Geräten. Erhöht möglicherweise Audiofehler.</string>
     <string name="settings_title_direct_game_load">Spiele sofort laden</string>
@@ -69,7 +59,6 @@
     <string name="settings_save_sync_refresh_description">Führe jetzt eine manuelle Synchronisierung durch.\n%1$s</string>
     <string name="settings_save_sync_enable_auto">Automatisch synchronisieren</string>
     <string name="settings_save_sync_enable_auto_description">Automatisch synchronisieren vor und nach einer Spielsitzung bei Verbindung mit Wi-Fi</string>
-    <string name="settings_save_sync_configure">Einstellung %1$s</string>
     <string name="settings_save_sync_include_saves">In-Game Speicherstände synchronisieren</string>
     <string name="settings_save_sync_include_saves_description">%1$s auf Gerät</string>
     <string name="settings_save_sync_include_states">Synchronisiere Zustände</string>
@@ -78,16 +67,6 @@
     <string name="game_context_menu_remove_from_favorites">Aus Favoriten entfernen</string>
     <string name="game_context_menu_resume">Fortsetzen</string>
     <string name="game_context_menu_restart">Neustart</string>
-    <string name="game_context_menu_create_shortcut">Zum Startbildschirm hinzufügen</string>
-    <string name="home_notification_title">Alle Benachrichtigungen aktivieren</string>
-    <string name="home_notification_message">Omnidroid verwendet Benachrichtigungen, um dich darüber zu informieren, wenn ein Spiel oder eine Operation im Hintergrund läuft.</string>
-    <string name="home_notification_action">Aktivieren</string>
-    <string name="home_microphone_title">Mikrofon aktivieren</string>
-    <string name="home_microphone_message">Nintendo DS Spiele können das Mikrofon verwenden, um einige Funktionen bereitzustellen.</string>
-    <string name="home_microphone_action">Aktivieren</string>
-    <string name="home_empty_title">ROMs Verzeichnis wählen</string>
-    <string name="home_empty_message">Omnidroid muss ein Verzeichnis mit ROM Dateien scannen.\nDies kann einige Minuten dauern.</string>
-    <string name="home_empty_action">Verzeichnis wählen</string>
     <string name="game_menu_save">Speichern</string>
     <string name="game_menu_load">Laden</string>
     <string name="game_menu_restart">Neustart</string>
@@ -106,8 +85,6 @@
     <string name="game_toast_quick_save_loaded">Schnell geladen</string>
     <string name="game_toast_quick_save_saved">Schnell gespeichert</string>
     <string name="empty_view_default">Keine Einträge</string>
-    <string name="core_settings_title">Kerneinstellungen</string>
-    <string name="core_settings_category_preferences">Einstellungen</string>
     <string name="core_settings_category_controllers">Controller</string>
     <string name="core_settings_controller">Controller %1$s</string>
     <string name="game_menu_title">Spielmenü</string>
@@ -129,29 +106,19 @@
         \n\nWenn keine der oben genannten Möglichkeiten funktioniert, ist es möglich, dass dieses Game/Core von diesem Gerät nicht unterstützt wird.
     </string>
     <string name="game_loader_error_missing_bios">Es sieht so aus, als würde das benötigte BIOS fehlen, lege es in dein ROM-Verzeichnis und scanne erneut. Benötigte Dateien: %1$s</string>
-    <string name="game_shortcut_error">Beim Laden deines Spiels ist etwas schief gelaufen. Bitte stell sicher, dass dieses Spiel noch in deiner Bibliothek existiert.</string>
     <string name="dialog_saf_not_found">Dieses Gerät unterstützt nicht die \"StorageAccessFrame\"-Dateiauswahl. Kopieren Sie unkomprimierte ROM-Dateien manuell nach %1$s und drücken Sie \"Rescan\".</string>
-    <string name="system_grid_details">%1$s Spiele</string>
     <string name="tv_folder_picker_title">Wähle ROMs Verzeichnis</string>
     <string name="tv_folder_picker_action_choose">Auswählen</string>
     <string name="tv_folder_picker_action_cancel">Abbrechen</string>
     <string name="tv_folder_storage_primary">Hauptspeicher</string>
     <string name="tv_folder_storage_secondary">Sekundärer Speicher %1$s</string>
     <string name="tv_folder_storage_title">Speicher auswählen</string>
-    <string name="tv_home_section_favorites">Favoriten</string>
-    <string name="tv_home_section_recents">Zuletzt benutzt</string>
-    <string name="tv_home_section_systems">Systeme</string>
-    <string name="tv_home_section_settings">Einstellungen</string>
     <string name="gamepad_binding_update_title">Ordne \"RetroPad %1$s\" zu</string>
     <string name="gamepad_binding_update_description">Drücke eine Taste auf deinem \"%1$s\"</string>
     <string name="shortcut_binding_update_title">Verknüpfen Sie \"Verknüpfung %1$s\"</string>
     <string name="shortcut_binding_update_description">Drücken Sie die erste, dann die zweite Taste, um eine Kombo auf Ihre \"%1$s \" zu binden</string>
-    <string name="tv_search_results">Spiele</string>
     <string name="tv_game_message_missing_gamepad">Controller sind zum Spielen erforderlich. Bitte eines verbinden.</string>
-    <string name="game_edit_touch_controls_error_not_visible">Trenne dein Pad, um deine Touchsteuerungen zu bearbeiten</string>
     <string name="game_interactory_busy">Warte, bis der Vorgang abgeschlossen ist</string>
-    <string name="mobile_settings_help">Hilfe</string>
-    <string name="mobile_settings_support">Unterstützung</string>
     <string name="omnidroid_help_content"><![CDATA[        <b>&#8226;Wie verwende ich Omnidroid?</b><br/>
         Kopiere alle ROMs in ein Verzeichnis auf deinem Gerät und wähle es in Omnidroid aus. Dieses Verzeichnis darf Unterverzeichnisse haben. Nach dem Scan solltest du deine Spiele sehen.<br/><br/>
         <b>&#8226;Warum werden meine Spiele nicht erkannt?</b><br/>

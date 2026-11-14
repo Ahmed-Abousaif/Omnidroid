@@ -1,7 +1,6 @@
 package com.omnidroid.app.shared.switch_emu
 
 import android.content.Context
-import android.net.Uri
 import android.view.MotionEvent
 import android.view.Surface
 import org.yuzu.yuzu_emu.NativeLibrary

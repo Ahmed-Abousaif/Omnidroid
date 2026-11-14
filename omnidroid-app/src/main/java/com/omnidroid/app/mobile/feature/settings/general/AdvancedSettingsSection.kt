@@ -1,15 +1,15 @@
 package com.omnidroid.app.mobile.feature.settings.general
 
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import com.omnidroid.R
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsList
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
@@ -72,12 +72,13 @@ private fun FactoryResetDialog(
     viewModel: SettingsViewModel,
 ) {
     val onDismiss = { factoryResetDialogState.value = false }
-    AlertDialog(
+    OmnidroidDialog(
+        destructive = true,
         title = { Text(stringResource(id = R.string.reset_settings_warning_message_title)) },
         text = { Text(stringResource(id = R.string.reset_settings_warning_message_description)) },
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(
+            OmnidroidDialogButton(
                 onClick = {
                     viewModel.resetAllSettings()
                     factoryResetDialogState.value = false
@@ -87,7 +88,7 @@ private fun FactoryResetDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            OmnidroidDialogButton(onClick = onDismiss) {
                 Text(text = stringResource(id = R.string.cancel))
             }
         },

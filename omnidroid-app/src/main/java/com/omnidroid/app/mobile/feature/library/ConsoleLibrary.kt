@@ -1,11 +1,7 @@
 package com.omnidroid.app.mobile.feature.library
 
-import android.os.Build
 import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.EnterExitState
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -74,7 +70,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
@@ -93,6 +88,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -114,6 +111,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import androidx.compose.ui.unit.offset
 import androidx.paging.compose.LazyPagingItems
 import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
@@ -124,8 +122,12 @@ import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
+import com.omnidroid.app.mobile.shared.compose.ui.GameCoverOrigin
+import com.omnidroid.app.mobile.shared.compose.ui.gameCoverSharedBounds
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.utils.games.GameUtils
+import com.omnidroid.app.shared.covers.backdropRequest
+import coil.compose.AsyncImage
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.db.dao.GamePlayStats
 import com.omnidroid.lib.library.db.entity.Game
@@ -146,6 +148,7 @@ private val LandscapeCardCorner = 10.dp
 private val PortraitCardCorner = 18.dp
 private val ConsoleActionHeight = 40.dp
 private val ConsoleActionShape = RoundedCornerShape(8.dp)
+private val ConsoleActionShadowPadding = 12.dp
 private val ConsoleStartMinWidth = 168.dp
 private val GlowSpread = 14.dp
 private const val GlowLayers = 14
@@ -275,6 +278,7 @@ internal fun ConsoleLibrary(
     onGameLongClick: (Game) -> Unit,
     onFavoriteToggle: (Game, Boolean) -> Unit,
     onBackdropGameChange: (Game?) -> Unit,
+    onOpenContinueGame: (Game) -> Unit = onOpenGame,
 ) {
     val items = ConsoleItems(games, featured)
     val state = rememberConsoleCarouselState(selection)
@@ -310,7 +314,7 @@ internal fun ConsoleLibrary(
 
     val onCardClick: (Int, Game) -> Unit = { index, game ->
         if (index == selectedIndex && abs(state.position - index) < 0.1f) {
-            onOpenGame(game)
+            if (items.isFeatured(index)) onOpenContinueGame(game) else onOpenGame(game)
         } else {
             state.animateTo(scope, index)
         }
@@ -495,8 +499,9 @@ private fun ConsoleLandscapeCarousel(
                             },
                             pulse = pulse,
                             sharedModifier =
-                                game?.takeUnless { items.isFeatured(index) }?.let {
-                                    consoleCoverSharedBounds(sharedTransitionScope, animatedVisibilityScope, it, LandscapeCardCorner)
+                                game?.let {
+                                    consoleCoverSharedBounds(sharedTransitionScope, animatedVisibilityScope, it, LandscapeCardCorner,
+                                        if (items.isFeatured(index)) GameCoverOrigin.Continue else GameCoverOrigin.Library)
                                 } ?: Modifier,
                             onClick = { game?.let { onCardClick(index, it) } },
                             onLongClick = { game?.let(onGameLongClick) },
@@ -509,11 +514,7 @@ private fun ConsoleLandscapeCarousel(
                     compact = metrics.compactInfo,
                     showControllerGlyph = showControllerGlyph,
                     modifier =
-                        Modifier.graphicsLayer {
-                            val settled = state.settledAmount()
-                            alpha = settled
-                            translationY = (1f - settled) * 10.dp.toPx()
-                        },
+                        Modifier.consoleActionFade(settledAmount = { state.settledAmount() }, slide = true),
                     onPlay = onPlay,
                     onFavoriteToggle = onFavoriteToggle,
                     onSettings = onGameLongClick,
@@ -677,11 +678,6 @@ private fun LandscapeInfoPanel(
     onSettings: (Game) -> Unit,
 ) {
     if (game == null) return
-    val context = LocalContext.current
-    val subtitle =
-        remember(game.id, game.systemId, game.developer) {
-            GameUtils.getGameSubtitle(context, game).trim()
-        }
     Column(modifier = modifier, verticalArrangement = Arrangement.Bottom) {
         // Weighted so a long title gives up lines instead of squeezing the action buttons.
         ConsoleRotatingTitle(
@@ -693,32 +689,7 @@ private fun LandscapeInfoPanel(
             active = true,
             modifier = Modifier.weight(1f, fill = false),
         )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (subtitle.isNotBlank()) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = chromeColors.muted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                Text(
-                    text = "-",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = chromeColors.muted,
-                )
-            }
-            ConsoleGameStats(
-                game = game,
-                tint = chromeColors.muted,
-                hasShadow = false,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            )
-        }
+        LibraryGameSubtext(game = game)
         Spacer(modifier = Modifier.height(if (compact) 6.dp else 10.dp))
         ConsoleActions(
             label = stringResource(if (continueAction) R.string.continue_playing else R.string.library_console_start),
@@ -783,8 +754,9 @@ private fun ConsolePortraitCarousel(
                             },
                             pulse = pulse,
                             sharedModifier =
-                                game?.takeUnless { items.isFeatured(index) }?.let {
-                                    consoleCoverSharedBounds(sharedTransitionScope, animatedVisibilityScope, it, PortraitCardCorner)
+                                game?.let {
+                                    consoleCoverSharedBounds(sharedTransitionScope, animatedVisibilityScope, it, PortraitCardCorner,
+                                        if (items.isFeatured(index)) GameCoverOrigin.Continue else GameCoverOrigin.Library)
                                 } ?: Modifier,
                             onClick = { game?.let { onCardClick(index, it) } },
                             onLongClick = { game?.let(onGameLongClick) },
@@ -798,7 +770,7 @@ private fun ConsolePortraitCarousel(
                                 if (items.isFeatured(selectedIndex)) R.string.continue_playing else R.string.library_console_start,
                             ),
                         showControllerGlyph = showControllerGlyph,
-                        modifier = Modifier.graphicsLayer { alpha = state.settledAmount() },
+                        modifier = Modifier.consoleActionFade(settledAmount = { state.settledAmount() }),
                         game = items.gameAt(selectedIndex),
                         onPlay = onPlay,
                         onFavoriteToggle = onFavoriteToggle,
@@ -933,7 +905,48 @@ private fun ConsolePortraitCard(
 }
 
 @Composable
-private fun ConsoleGameStats(
+internal fun LibraryGameSubtext(
+    game: Game,
+    modifier: Modifier = Modifier,
+    tint: Color = chromeColors.muted,
+    hasShadow: Boolean = false,
+) {
+    val context = LocalContext.current
+    val subtitle =
+        remember(game.id, game.systemId, game.developer) {
+            GameUtils.getGameSubtitle(context, game).trim()
+        }
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (subtitle.isNotBlank()) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelMedium,
+                color = tint,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            Text(
+                text = "-",
+                style = MaterialTheme.typography.labelMedium,
+                color = tint,
+            )
+        }
+        ConsoleGameStats(
+            game = game,
+            tint = tint,
+            hasShadow = hasShadow,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        )
+    }
+}
+
+@Composable
+internal fun ConsoleGameStats(
     game: Game,
     tint: Color,
     modifier: Modifier = Modifier,
@@ -992,7 +1005,7 @@ private fun ConsolePortraitGameStats(
 }
 
 @Composable
-private fun ConsoleStatItem(
+internal fun ConsoleStatItem(
     icon: ImageVector,
     text: String,
     tint: Color,
@@ -1024,7 +1037,7 @@ private fun ConsoleStatItem(
     }
 }
 
-private fun formatPlayTime(playTimeMs: Long): String {
+internal fun formatPlayTime(playTimeMs: Long): String {
     if (playTimeMs <= 0L) return "0m"
     val hours = TimeUnit.MILLISECONDS.toHours(playTimeMs)
     val minutes = TimeUnit.MILLISECONDS.toMinutes(playTimeMs) % 60
@@ -1088,6 +1101,23 @@ private fun ConsoleSystemChip(
         )
     }
 }
+
+/** Keep surfaces and shadows in one opacity layer, with room outside the controls' layout bounds. */
+private fun Modifier.consoleActionFade(
+    settledAmount: () -> Float,
+    slide: Boolean = false,
+): Modifier =
+    layout { measurable, constraints ->
+        val inset = ConsoleActionShadowPadding.roundToPx()
+        val placeable = measurable.measure(constraints.offset(horizontal = inset * 2, vertical = inset * 2))
+        layout(placeable.width - inset * 2, placeable.height - inset * 2) {
+            placeable.place(-inset, -inset)
+        }
+    }.graphicsLayer {
+        val settled = settledAmount()
+        alpha = settled
+        if (slide) translationY = (1f - settled) * 10.dp.toPx()
+    }.padding(ConsoleActionShadowPadding)
 
 @Composable
 private fun ConsoleActions(
@@ -1223,26 +1253,25 @@ internal fun ConsoleBackdrop(
     game: Game?,
     modifier: Modifier = Modifier,
 ) {
-    val canBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    Box(modifier = modifier) {
-        Crossfade(
-            targetState = game,
-            animationSpec = tween(durationMillis = 450),
-            label = "consoleBackdrop",
-            modifier = Modifier.fillMaxSize(),
-        ) { target ->
-            if (target != null) {
-                OmnidroidGameImage(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .then(if (canBlur) Modifier.blur(36.dp) else Modifier)
-                            .graphicsLayer { alpha = if (canBlur) 0.5f else 0.2f },
-                    game = target,
-                    aspectRatio = null,
-                )
-            }
+    BoxWithConstraints(modifier = modifier) {
+        val context = LocalContext.current
+        val longest = maxOf(maxWidth.value, maxHeight.value, 1f)
+        val width = (128f * maxWidth.value / longest).roundToInt().coerceIn(1, 128)
+        val height = (128f * maxHeight.value / longest).roundToInt().coerceIn(1, 128)
+        val radius = (36f * 128f / longest).roundToInt().coerceIn(1, 32)
+        val request = remember(game?.id, game?.coverFrontUrl, game?.customCoverPath, width, height, radius, context) {
+            game?.let { backdropRequest(context, it, width, height, radius) }
         }
+        val fallback = ColorPainter(homeChromeColor)
+        AsyncImage(
+            model = request,
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds,
+            alpha = 0.5f,
+            fallback = fallback,
+            error = fallback,
+        )
         val chrome = homeChromeColor
         Box(
             modifier =
@@ -1344,6 +1373,7 @@ private fun consoleCoverSharedBounds(
     animatedVisibilityScope: AnimatedVisibilityScope,
     game: Game,
     corner: Dp,
+    origin: GameCoverOrigin,
 ): Modifier {
     val cornerAnim by animatedVisibilityScope.transition.animateDp(
         label = "coverCorner-${game.id}",
@@ -1351,17 +1381,5 @@ private fun consoleCoverSharedBounds(
     ) { targetState ->
         if (targetState == EnterExitState.Visible) corner else 16.dp
     }
-    return with(sharedTransitionScope) {
-        Modifier.sharedBounds(
-            sharedContentState = rememberSharedContentState(key = "game-cover-${game.id}"),
-            animatedVisibilityScope = animatedVisibilityScope,
-            enter = EnterTransition.None,
-            exit = ExitTransition.None,
-            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-            boundsTransform = { _, _ ->
-                tween(durationMillis = 400, easing = FastOutSlowInEasing)
-            },
-            clipInOverlayDuringTransition = OverlayClip(RoundedCornerShape(cornerAnim)),
-        )
-    }
+    return Modifier.gameCoverSharedBounds(sharedTransitionScope, animatedVisibilityScope, game.id, cornerAnim, origin)
 }

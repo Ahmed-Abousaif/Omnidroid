@@ -18,9 +18,7 @@ import com.omnidroid.common.coroutines.launchOnState
 import com.omnidroid.common.coroutines.safeCollect
 import com.omnidroid.common.kotlin.NTuple2
 import com.omnidroid.common.kotlin.NTuple4
-import com.omnidroid.common.kotlin.filterNotNullValues
 import com.omnidroid.common.kotlin.toIndexedMap
-import com.omnidroid.common.kotlin.zipOnKeys
 import com.omnidroid.lib.controller.ControllerConfig
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemCoreConfig
@@ -248,10 +246,8 @@ class GameViewModelInput(
     ): Int? {
         return supported
             .firstOrNull { controller ->
-                sequenceOf(
-                    controller.id == controllerConfig.libretroId,
-                    controller.description == controllerConfig.libretroDescriptor,
-                ).any { it }
+                controller.id == controllerConfig.libretroId ||
+                    controller.description == controllerConfig.libretroDescriptor
             }?.id
     }
 

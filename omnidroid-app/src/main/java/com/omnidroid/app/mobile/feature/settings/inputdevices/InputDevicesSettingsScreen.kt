@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.input.GamePadBindingActivity
 import com.omnidroid.app.mobile.feature.input.GamePadShortcutBindingActivity

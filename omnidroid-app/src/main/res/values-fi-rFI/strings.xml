@@ -2,8 +2,6 @@
 <resources>
     <string name="title_home">Koti</string>
     <string name="title_search">Etsi</string>
-    <string name="title_systems">Järjestelmät</string>
-    <string name="title_games">Pelit</string>
     <string name="title_settings">Asetukset</string>
     <string name="recent">Recents</string>
     <string name="favorites">Suosikit</string>
@@ -17,14 +15,9 @@
     <string name="ok">Ok</string>
     <string name="cancel">Peruuta</string>
     <string name="settings">Asetukset</string>
-    <string name="save_sync">Tallenna Synkronointi</string>
     <string name="show_all">Näytä Kaikki</string>
     <string name="back">Takaisin</string>
     <string name="close">Sulje</string>
-    <string name="game_page_search_suggestion">Etsi pelejä</string>
-    <string name="settings_category_general">Yleiset</string>
-    <string name="settings_category_input">Input</string>
-    <string name="settings_category_misc">Sekalaiset</string>
     <string name="settings_title_enable_autosave">Autosave state</string>
     <string name="settings_description_enable_autosave">Tallenna tila poistuttaessa pelivalikosta</string>
     <string name="settings_title_enable_touch_feedback">Värinä kosketettaessa</string>
@@ -42,7 +35,6 @@
     <string name="settings_gamepad_category_enabled">Käytössä olevat laitteet</string>
     <string name="settings_gamepad_category_general">Yleiset</string>
     <string name="settings_gamepad_title_reset_bindings">Nollaa sidokset</string>
-    <string name="settings_gamepad_title_game_menu">Valikko</string>
     <string name="settings_title_open_cores_selection">Vaihda Ytimiä</string>
     <string name="settings_description_open_cores_selection">Valitse mikä ydin on liitetty järjestelmään</string>
     <string name="settings_title_display_bios_info">BIOS</string>
@@ -51,8 +43,6 @@
     <string name="settings_bios_category_not_detected">Tuettu</string>
     <string name="settings_title_reset_settings">Tehdasasetusten palautus</string>
     <string name="settings_description_reset_settings">Nollaa Omnidroid tehdasasetuksiinsa</string>
-    <string name="settings_title_advanced_settings">Edistyneet asetukset</string>
-    <string name="settings_description_advanced_settings">Näytä lisäasetukset</string>
     <string name="settings_title_low_latency_audio">Suosi alhaisen latenssin ääntä</string>
     <string name="settings_description_low_latency_audio">Vähentää äänilatenssia tuetuissa laitteissa. Voi lisätä ääniglitches.</string>
     <string name="settings_title_direct_game_load">Suora peli kuormitus</string>
@@ -69,7 +59,6 @@
     <string name="settings_save_sync_refresh_description">Suorita manuaalinen synkronointi nyt.\n%1$s</string>
     <string name="settings_save_sync_enable_auto">Automaattinen Synkronointi</string>
     <string name="settings_save_sync_enable_auto_description">Suorita synkronointi automaattisesti ennen ja jälkeen pelin istuntoa Wifiin yhdistettynä</string>
-    <string name="settings_save_sync_configure">Määritä %1$s</string>
     <string name="settings_save_sync_include_saves">Synkronoi pelin sisäiset tallennukset</string>
     <string name="settings_save_sync_include_saves_description">%1$s laitteella</string>
     <string name="settings_save_sync_include_states">Synkronoi tilat</string>
@@ -78,16 +67,6 @@
     <string name="game_context_menu_remove_from_favorites">Poista suosikeista</string>
     <string name="game_context_menu_resume">Jatka</string>
     <string name="game_context_menu_restart">Käynnistä Uudelleen</string>
-    <string name="game_context_menu_create_shortcut">Kiinnitä käynnistettäväksi</string>
-    <string name="home_notification_title">Ota ilmoitukset käyttöön</string>
-    <string name="home_notification_message">Omnidroid käyttää ilmoituksia ilmoittaakseen sinulle, milloin peli tai operaatio on käynnissä taustalla.</string>
-    <string name="home_notification_action">Aktivoi</string>
-    <string name="home_microphone_title">Ota mikrofoni käyttöön</string>
-    <string name="home_microphone_message">Nintendo DS -pelit voivat käyttää mikrofonia tarjotakseen joitakin toimintoja.</string>
-    <string name="home_microphone_action">Aktivoi</string>
-    <string name="home_empty_title">Valitse ROMien hakemisto</string>
-    <string name="home_empty_message">Omnidroid tarvitsee skannata ROM -tiedostoja sisältävän hakemiston.\nTämä saattaa kestää jopa muutaman minuutin.</string>
-    <string name="home_empty_action">Valitse Hakemisto</string>
     <string name="game_menu_save">Tallenna</string>
     <string name="game_menu_load">Lataa</string>
     <string name="game_menu_restart">Käynnistä Uudelleen</string>
@@ -105,8 +84,6 @@
     <string name="game_toast_quick_save_loaded">Nopea ladattu</string>
     <string name="game_toast_quick_save_saved">Nopea tallennus</string>
     <string name="empty_view_default">Ei Kohteita</string>
-    <string name="core_settings_title">Ydin Asetukset</string>
-    <string name="core_settings_category_preferences">Asetukset</string>
     <string name="core_settings_category_controllers">Ohjaimet</string>
     <string name="core_settings_controller">Ohjain %1$s</string>
     <string name="game_menu_title">Pelivalikko</string>
@@ -128,29 +105,19 @@
         \n\nJos mikään yllämainituista ei toimi, saattaa olla mahdollista, että tämä laite ei tue tätä peliä/ydintä.
     </string>
     <string name="game_loader_error_missing_bios">Näyttää siltä, että sinulta puuttuu tarvittava BIOS, laita ne ROM-hakemistoosi ja rescan. Vaaditut tiedostot: %1$s</string>
-    <string name="game_shortcut_error">Jotain pahaa tapahtui ladattaessa peliäsi. Varmista, että tämä peli on edelleen olemassa kirjastossasi.</string>
     <string name="dialog_saf_not_found">Tämä laite ei tue StorageAccessFramework tiedostojen poimintaa. Kopioi manuaalisesti pakkaamattomat ROM tiedostot %1$s ja paina Rescania.</string>
-    <string name="system_grid_details">%1$s peliä</string>
     <string name="tv_folder_picker_title">Valitse ROMien Hakemisto</string>
     <string name="tv_folder_picker_action_choose">Valitse</string>
     <string name="tv_folder_picker_action_cancel">Peruuta</string>
     <string name="tv_folder_storage_primary">Ensisijainen tallennustila</string>
     <string name="tv_folder_storage_secondary">Toissijainen tallennustila %1$s</string>
     <string name="tv_folder_storage_title">Valitse tallennustila</string>
-    <string name="tv_home_section_favorites">Suosikit</string>
-    <string name="tv_home_section_recents">Viimeisimmät</string>
-    <string name="tv_home_section_systems">Järjestelmät</string>
-    <string name="tv_home_section_settings">Asetukset</string>
     <string name="gamepad_binding_update_title">Liitä \"RetroPad %1$s\"</string>
     <string name="gamepad_binding_update_description">Paina painiketta \"%1$s\"</string>
     <string name="shortcut_binding_update_title">Liitä \"Pikakuvake %1$s\"</string>
     <string name="shortcut_binding_update_description">Paina ensimmäistä, sitten toista painiketta sitomaan combo sinun \"%1$s\"</string>
-    <string name="tv_search_results">Pelit</string>
     <string name="tv_game_message_missing_gamepad">Pelitassut vaaditaan pelaamaan. Ole hyvä ja yhdistä yksi.</string>
-    <string name="game_edit_touch_controls_error_not_visible">Katkaise laitteesi yhteys muokataksesi kosketustoimintojasi</string>
     <string name="game_interactory_busy">Odota, että vireillä olevat toimet saatetaan päätökseen</string>
-    <string name="mobile_settings_help">Ohje</string>
-    <string name="mobile_settings_support">Tuki</string>
     <string name="omnidroid_crash_disclamer">Näyttää siltä, että Libretro ydin on kokenut odottamattoman ongelman. Jos se on pysyvä, kokeile seuraavasti:\n
         \n\u2022 Poista automaattinen tallennus ja käynnistä peli
         \n\u2022 Mene Android-asetuksiin ja tyhjennä sovelluksen välimuisti

@@ -3,12 +3,8 @@ package com.omnidroid.app.mobile.feature.settings.general
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.omnidroid.R
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.update.AppUpdater
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
@@ -34,16 +32,16 @@ internal fun AboutSettings() {
     val context = LocalContext.current
     var showLicenses by remember { mutableStateOf(false) }
     if (showLicenses) {
-        AlertDialog(
+        OmnidroidDialog(
             onDismissRequest = { showLicenses = false },
             confirmButton = {
-                TextButton(onClick = { showLicenses = false }) {
+                OmnidroidDialogButton(onClick = { showLicenses = false }) {
                     Text(text = stringResource(id = R.string.settings_action_close))
                 }
             },
             title = { Text(text = stringResource(R.string.settings_title_open_source_licenses)) },
             text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Column(modifier = Modifier) {
                     Text(text = stringResource(id = R.string.settings_license_soundtouch))
                 }
             },

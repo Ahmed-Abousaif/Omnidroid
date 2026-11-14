@@ -38,8 +38,6 @@ fun ByteArray.toHexString(): String {
     return builder.toString()
 }
 
-fun ByteArray.isAllZeros(): Boolean = this.firstOrNull { it != 0x0.toByte() } == null
-
 /** Return the index at which the array was found or -1. */
 fun ByteArray.indexOf(byteArray: ByteArray): Int {
     if (byteArray.isEmpty()) {

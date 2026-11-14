@@ -90,12 +90,3 @@ internal fun ByteArray.startsWithAscii(text: String): Boolean {
     if (size < expected.size) return false
     return expected.indices.all { this[it] == expected[it] }
 }
-
-internal fun ByteArray.containsAscii(text: String): Boolean {
-    val expected = text.toByteArray(Charsets.US_ASCII)
-    if (expected.isEmpty() || size < expected.size) return false
-    for (start in 0..size - expected.size) {
-        if (expected.indices.all { this[start + it] == expected[it] }) return true
-    }
-    return false
-}

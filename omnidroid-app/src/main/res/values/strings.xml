@@ -1,20 +1,15 @@
 <resources>
     <string name="title_home">Home</string>
     <string name="title_search">Search</string>
-    <string name="title_systems">Systems</string>
-    <string name="title_games">Games</string>
     <string name="title_settings">Settings</string>
     <string name="title_profile">Profile</string>
 
     <!-- Profile screen -->
-    <string name="profile_default_tag">Pro Gamer</string>
     <string name="profile_level">Level %d</string>
     <string name="profile_xp_progress">%1$s / %2$s XP</string>
     <string name="profile_total_playtime">Total Playtime</string>
     <string name="profile_streak_current">Current Streak</string>
-    <string name="profile_streak_best">Best Streak</string>
     <string name="profile_streak_multiplier">×%1$.1f</string>
-    <string name="profile_streak_days">%d days</string>
     <string name="profile_consoles_unlocked">%1$d / %2$d Consoles Unlocked</string>
     <string name="profile_change_picture">Change Picture</string>
     <string name="profile_remove_picture">Remove Picture</string>
@@ -26,8 +21,6 @@
     <string name="profile_badge_master">Omnidroid Master</string>
     <string name="profile_achievements">Console Collection</string>
     <string name="profile_recent_sessions">Recent Sessions</string>
-    <string name="profile_view_all">View all (%d)</string>
-    <string name="profile_show_less">Show less</string>
     <string name="profile_session_xp">+%d XP</string>
     <string name="profile_xp_to_next">%d XP to level up</string>
     <string name="profile_streak_fire">🔥</string>
@@ -54,7 +47,6 @@
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="settings">Settings</string>
-    <string name="save_sync">Save Sync</string>
     <string name="show_all">Show All</string>
     <string name="continue_playing">Continue</string>
     <string name="status_wifi_off">Wi-Fi off</string>
@@ -73,17 +65,8 @@
     <string name="consoles_attention">Needs attention</string>
     <string name="consoles_emulator_ready">Emulator ready</string>
     <string name="consoles_available">Available to add</string>
-    <string name="consoles_db_ready">Database ready</string>
-    <string name="consoles_db_partial">Database incomplete</string>
-    <string name="consoles_db_missing">No offline database</string>
     <string name="consoles_db_unavailable">No database available</string>
-    <string name="consoles_back_catalogue">All consoles</string>
-    <string name="consoles_not_added">Not added to library</string>
     <string name="consoles_emulator_section">Emulator</string>
-    <string name="consoles_database_section">Offline game database</string>
-    <string name="consoles_built_in">Built into Omnidroid</string>
-    <string name="consoles_installed">Installed and ready</string>
-    <string name="consoles_not_installed">Emulator not installed</string>
     <string name="consoles_emulator_unavailable">No emulator available for this system.</string>
     <string name="consoles_install_console">Install</string>
     <string name="consoles_add_library">Add</string>
@@ -96,14 +79,11 @@
     <string name="consoles_database_short">Database</string>
     <string name="consoles_database_titles">%1$,d titles</string>
     <string name="consoles_database_partial_titles">%1$,d titles · incomplete</string>
-    <string name="consoles_setup_help">Sets up the emulator and offline database. Add your own games from the library.</string>
     <string name="consoles_database_missing_status">Not downloaded</string>
     <string name="consoles_database_detail">%1$,d titles · %2$d of %3$d database parts installed</string>
-    <string name="consoles_database_help">Title information for matching your games and finding covers. Game files are not included.</string>
     <string name="consoles_refresh_database">Refresh database</string>
     <string name="consoles_download_database_full">Download database</string>
     <string name="consoles_delete_database_full">Delete database</string>
-    <string name="consoles_remove_section">Remove from Omnidroid</string>
     <string name="consoles_remove_help">Clears this console’s library entries and offline database. Your game files stay on your device.</string>
     <string name="consoles_remove_console_full">Remove console</string>
     <string name="consoles_setting_up">Setting up console…</string>
@@ -115,16 +95,6 @@
     <string name="consoles_database_failed">The offline database could not be fully downloaded. Check your connection and use Download database to retry.</string>
     <string name="consoles_action_failed">The operation could not be completed. Please try again.</string>
     <string name="controller_hint_manage">Select / manage</string>
-    <string name="consoles_your_games">Your games: %1$,d</string>
-    <string name="consoles_database_games">Database: %1$,d games</string>
-    <string name="consoles_database_missing">Database: not downloaded</string>
-    <string name="consoles_core_label">Core: %1$s</string>
-    <string name="consoles_core_missing">Core: not installed</string>
-    <string name="consoles_core_bundled">Core: %1$s (built-in)</string>
-    <string name="consoles_download_database">Download DB</string>
-    <string name="consoles_refetch_database">Refetch DB</string>
-    <string name="consoles_delete_database">Delete DB</string>
-    <string name="consoles_remove_console">Remove</string>
     <string name="consoles_delete_database_title">Delete database?</string>
     <string name="consoles_delete_database_message">Removes the offline title database for %1$s. Your library games stay; covers and matching may be limited until you download it again.</string>
     <string name="consoles_remove_console_title">Remove console?</string>
@@ -135,21 +105,17 @@
     <string name="consoles_cancel">Cancel</string>
     <string name="title_game">Game</string>
     <string name="game_play">Play</string>
-    <string name="game_genre">Genre</string>
-    <string name="game_release_date">Release date</string>
-    <string name="game_publisher">Publisher</string>
-    <string name="game_rating">Rating</string>
     <string name="game_play_time">Play time</string>
     <string name="game_last_played">Last played</string>
     <string name="game_sessions">Sessions</string>
     <string name="game_achievements">Achievements</string>
+    <string name="game_info">Info</string>
+    <string name="game_retro_achievements_wip">RetroAchievements are WIP</string>
     <string name="game_never_played">Never</string>
     <string name="game_play_time_hours">%1$d h %2$d min</string>
     <string name="game_play_time_minutes">%1$d min</string>
     <string name="game_trailer">Play trailer</string>
     <string name="game_settings">Game settings</string>
-    <string name="game_no_description">No description available for this game.</string>
-    <string name="game_settings_unavailable">No extra settings for this game.</string>
     <string name="game_unavailable">This game is unavailable. Reconnect the folder or remove it from the library.</string>
     <string name="game_unavailable_badge">Unavailable</string>
     <string name="settings_title_clear_missing_games">Clear missing games</string>
@@ -158,15 +124,11 @@
     <string name="settings_description_periodic_library_scan">When charging and idle, occasionally rescan the games folder in the background. Off by default.</string>
     <string name="settings_clear_missing_games_done">Removed %1$d missing games</string>
     <string name="settings_clear_missing_games_none">No missing games to clear</string>
-    <string name="install_console">Install</string>
-    <string name="console_installed">Installed</string>
     <string name="back">Back</string>
     <string name="settings_back_to">Back to %s settings</string>
     <string name="close">Close</string>
 
-    <string name="game_page_search_suggestion">Search ROMs</string>
 
-    <string name="settings_category_general">General</string>
     <string name="settings_category_library">Library</string>
     <string name="settings_category_display">Display</string>
     <string name="settings_category_controllers">Controls</string>
@@ -174,8 +136,6 @@
     <string name="settings_category_emulation">Emulation</string>
     <string name="settings_category_advanced">Advanced</string>
     <string name="settings_category_about">About</string>
-    <string name="settings_category_input">Input</string>
-    <string name="settings_category_misc">Miscellaneous</string>
     <string name="settings_section_folder">Folder</string>
     <string name="settings_section_maintenance">Maintenance</string>
     <string name="settings_section_on_screen">On-screen</string>
@@ -199,8 +159,6 @@
     <string name="settings_section_about_developer">About the developer</string>
     <string name="settings_title_about_developer">Ahmed Abousaif</string>
     <string name="settings_description_about_developer">Creator of Omnidroid, rebuilding the Lemuroid experience into a faster, better, and more seamless Android game launcher.</string>
-    <string name="settings_title_developer_github">GitHub</string>
-    <string name="settings_description_developer_github">Source code and other projects</string>
 
     <string name="settings_section_updates">Updates</string>
     <string name="settings_title_check_for_updates">Check for updates</string>
@@ -217,7 +175,6 @@
     <string name="app_update_error_generic">Could not check for updates. Try again later.</string>
     <string name="app_update_up_to_date_title">You\'re up to date</string>
     <string name="app_update_up_to_date_body">You already have the latest version of Omnidroid.</string>
-    <string name="app_update_unknown_sources_needed">Allow installs from this app in system settings to finish the update, then return to Omnidroid.</string>
     <string name="url_privacy_policy" translatable="false">https://github.com/Ahmed-Abousaif/Omnidroid/blob/master/PRIVACY.md</string>
     <string name="url_donate_buy_me_a_coffee" translatable="false">https://www.buymeacoffee.com/abousaif</string>
     <string name="url_donate_ko_fi" translatable="false">https://ko-fi.com/abousaif</string>
@@ -238,7 +195,6 @@
     <string name="settings_description_immersive_mode">Colors the background from the game\'s visuals</string>
 
     <string name="settings_title_app_theme">Theme</string>
-    <string name="settings_description_app_theme">Switch between dark and light appearance</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_theme_light">Light</string>
 
@@ -248,7 +204,6 @@
     <string name="ui_scale_title">Button UI Scale</string>
     <string name="ui_scale_default">Default (100%)</string>
     <string name="ui_scale_maximum">Maximum (+25%)</string>
-    <string name="ui_scale_step_info">Scale %1$d%%</string>
     <string name="save">Save</string>
 
     <string name="settings_title_gamepad_settings">Gamepads &amp; keyboards</string>
@@ -259,7 +214,6 @@
     <string name="settings_gamepad_category_enabled">Enabled devices</string>
     <string name="settings_gamepad_category_general">General</string>
     <string name="settings_gamepad_title_reset_bindings">Reset bindings</string>
-    <string name="settings_gamepad_title_game_menu">Menu</string>
 
     <string name="settings_title_open_cores_selection">Change Cores</string>
     <string name="settings_description_open_cores_selection">Select which core is associated to a system</string>
@@ -284,65 +238,29 @@
     <string name="settings_ps2_bios_europe">Europe</string>
     <string name="settings_ps2_bios_japan">Japan</string>
 
-    <string name="settings_bios_category_switch">Nintendo Switch</string>
-    <string name="settings_switch_keys_title">Decryption Keys (prod.keys)</string>
     <string name="settings_switch_keys_installed">prod.keys installed</string>
     <string name="settings_switch_keys_missing">Missing prod.keys - Tap to select file</string>
     <string name="settings_switch_keys_import_success">prod.keys imported successfully</string>
     <string name="settings_switch_keys_import_failed">Failed to import prod.keys</string>
-    <string name="game_loader_error_missing_switch_keys">Decryption keys (prod.keys) are required to run Nintendo Switch games. Please import your prod.keys file before starting the game.</string>
     <string name="switch_keys_import_action">Import prod.keys</string>
-    <string name="settings_switch_firmware_title">System Firmware</string>
-    <string name="settings_switch_firmware_desc">Optional. Some Switch games require system firmware to run or render correctly.</string>
-    <string name="settings_switch_firmware_installed">Firmware installed</string>
-    <string name="settings_switch_firmware_missing">Not installed (Optional) - Tap to select firmware (.zip)</string>
     <string name="settings_switch_firmware_import_success">Switch firmware installed successfully</string>
     <string name="settings_switch_firmware_import_failed">Failed to install firmware. Make sure the archive contains .nca files</string>
 
     <string name="settings_title_reset_settings">Factory reset</string>
     <string name="settings_title_unrecognized_files">Unrecognized files</string>
-    <string name="settings_title_game_databases">Game databases</string>
-    <string name="settings_description_game_databases">Downloaded title data for each console</string>
-    <string name="game_databases_header_desc">Offline database slices provide instant ROM identification, metadata, and accurate cover art matching.</string>
-    <string name="game_databases_missing">Not downloaded</string>
-    <string name="game_databases_retry">Retry</string>
-    <string name="game_databases_refetch">Refetch</string>
-    <string name="game_databases_download">Download</string>
-    <string name="game_databases_refresh_all">Refresh All</string>
     <string name="game_databases_refreshing_all">Refreshing…</string>
-    <string name="game_databases_installed">%1$d games, %2$s</string>
-    <string name="game_databases_installed_count">%1$d / %2$d Installed</string>
-    <string name="game_databases_total_games">%1$,d Games</string>
-    <string name="game_databases_games_count">%1$,d games</string>
-    <string name="game_databases_build_hash">Build %1$s</string>
     <string name="game_databases_search_placeholder">Search consoles…</string>
-    <string name="game_databases_filter_all">All</string>
-    <string name="game_databases_filter_installed">Installed</string>
-    <string name="game_databases_filter_missing">Missing</string>
-    <string name="game_databases_no_results">No consoles match your search.</string>
     <string name="settings_description_unrecognized_files">Files the scanner could not add to your library</string>
     <string name="unrecognized_files_empty">Every scanned file was recognized.</string>
     <string name="settings_description_reset_settings">Reset Omnidroid to its factory settings</string>
 
-    <string name="settings_title_advanced_settings">Advanced settings</string>
-    <string name="settings_description_advanced_settings">Display advanced settings</string>
 
     <string name="settings_title_device_profile">Device profile</string>
     <string name="settings_description_device_profile">CPU, GPU, and performance benchmarks</string>
     <string name="settings_device_profile_loading">Collecting device information…</string>
-    <string name="settings_device_profile_category_device">Device</string>
     <string name="settings_device_profile_category_cpu">CPU</string>
     <string name="settings_device_profile_category_gpu">GPU</string>
     <string name="settings_device_profile_category_benchmark">Benchmarks</string>
-    <string name="settings_device_profile_manufacturer">Manufacturer</string>
-    <string name="settings_device_profile_model">Model</string>
-    <string name="settings_device_profile_brand">Brand</string>
-    <string name="settings_device_profile_android">Android</string>
-    <string name="settings_device_profile_abis">Supported ABIs</string>
-    <string name="settings_device_profile_soc">SoC</string>
-    <string name="settings_device_profile_ram">RAM</string>
-    <string name="settings_device_profile_board">Board</string>
-    <string name="settings_device_profile_hardware">Hardware</string>
     <string name="settings_device_profile_cpu_name">Processor</string>
     <string name="settings_device_profile_cpu_hardware">CPU hardware</string>
     <string name="settings_device_profile_cpu_cores">Cores</string>
@@ -356,10 +274,7 @@
     <string name="settings_device_profile_vulkan">Vulkan</string>
     <string name="settings_device_profile_supported">Supported</string>
     <string name="settings_device_profile_not_supported">Not supported</string>
-    <string name="settings_device_profile_vulkan_level">Vulkan hardware level</string>
-    <string name="settings_device_profile_vulkan_version">Vulkan hardware version</string>
     <string name="settings_device_profile_vulkan_compute_level">Vulkan compute level</string>
-    <string name="settings_device_profile_vulkan_compute_version">Vulkan compute version</string>
     <string name="settings_device_profile_quick_benchmark">Quick baseline</string>
     <string name="settings_device_profile_extended_benchmark">30-second benchmark</string>
     <string name="settings_device_profile_benchmark_not_run">Not run yet</string>
@@ -412,7 +327,6 @@
     <string name="settings_save_sync_refresh_description">Perform a manual Sync now.\n%1$s</string>
     <string name="settings_save_sync_enable_auto">Auto-Sync</string>
     <string name="settings_save_sync_enable_auto_description">Periodically sync on Wi-Fi, and sync this game after a session</string>
-    <string name="settings_save_sync_configure">Configure %1$s</string>
     <string name="settings_save_sync_connect">Connect</string>
     <string name="settings_save_sync_sign_out">Sign out</string>
     <string name="settings_save_sync_sign_out_confirm">Sign out of %1$s? Saves already in the cloud are not deleted.</string>
@@ -472,7 +386,6 @@
     <string name="game_context_menu_remove_from_favorites">Remove from favorites</string>
     <string name="game_context_menu_resume">Resume</string>
     <string name="game_context_menu_restart">Restart</string>
-    <string name="game_context_menu_create_shortcut">Pin to launcher</string>
     <string name="game_context_menu_set_custom_thumbnail">Set custom thumbnail</string>
     <string name="game_context_menu_change_thumbnail">Change thumbnail</string>
     <string name="game_context_menu_remove_thumbnail">Remove thumbnail</string>
@@ -492,17 +405,8 @@
     <string name="game_match_updated_success">Game match updated</string>
     <string name="game_cover_updated_success">Cover updated</string>
 
-    <string name="home_notification_title">Enable notifications</string>
-    <string name="home_notification_message">Omnidroid uses notifications to let you know when a game or operation is running in background.</string>
-    <string name="home_notification_action">Enable</string>
 
-    <string name="home_microphone_title">Enable microphone</string>
-    <string name="home_microphone_message">Nintendo DS games can use the microphone to provide some functionalities.</string>
-    <string name="home_microphone_action">Enable</string>
 
-    <string name="home_empty_title">Select ROMs directory</string>
-    <string name="home_empty_message">Omnidroid needs to scan a directory containing ROM files.\nThis might take up to a few minutes.</string>
-    <string name="home_empty_action">Select Directory</string>
 
 
     <string name="game_menu_save">Save</string>
@@ -528,8 +432,6 @@
 
     <string name="empty_view_default">No Items</string>
 
-    <string name="core_settings_title">Core Settings</string>
-    <string name="core_settings_category_preferences">Preferences</string>
     <string name="core_settings_category_controllers">Controllers</string>
     <string name="core_settings_controller">Controller %1$s</string>
 
@@ -566,11 +468,9 @@
 
     <string name="game_loader_error_missing_bios">It looks like you\'re missing the required BIOS, put them in your ROMs directory and rescan. Required files: %1$s</string>
 
-    <string name="game_shortcut_error">Something bad happened while loading your game. Please make sure this game still exists in your library.</string>
 
     <string name="dialog_saf_not_found">This device does not support the StorageAccessFramework file picker. Please manually copy uncompressed ROM files into %1$s and hit Rescan.</string>
 
-    <string name="system_grid_details">%1$s games</string>
 
     <string name="tv_folder_picker_title">Select ROMs Directory</string>
     <string name="tv_folder_picker_action_choose">Select</string>
@@ -579,28 +479,20 @@
     <string name="tv_folder_storage_secondary">Secondary storage %1$s</string>
     <string name="tv_folder_storage_title">Choose storage</string>
 
-    <string name="tv_home_section_favorites">Favorites</string>
-    <string name="tv_home_section_recents">Recent</string>
-    <string name="tv_home_section_systems">Systems</string>
-    <string name="tv_home_section_settings">Settings</string>
 
     <string name="gamepad_binding_update_title">Associate \"RetroPad %1$s\"</string>
     <string name="gamepad_binding_update_description">Press a button on your \"%1$s\"</string>
     <string name="shortcut_binding_update_title">Associate \"Shortcut %1$s\"</string>
     <string name="shortcut_binding_update_description">Press the first, then second button to bind a combo on your \"%1$s\"</string>
 
-    <string name="tv_search_results">Games</string>
     <string name="tv_game_message_missing_gamepad">Gamepads are required to play. Please connect one.</string>
 
-    <string name="game_edit_touch_controls_error_not_visible">Disconnect your pad to edit your touch controls</string>
 
     <string name="game_interactory_busy">Wait for the pending operations to complete</string>
     <string name="game_interactor_notification_permission_required">Please enable notifications to continue</string>
 
     <string name="game_process_another_game_running">Please close the current game before starting another</string>
 
-    <string name="mobile_settings_help">Help</string>
-    <string name="mobile_settings_support">Support</string>
     <string name="omnidroid_help_content"><![CDATA[
         <b>&#8226;How do I use Omnidroid?</b><br/>
         Copy all your ROMs files into a directory on your device and select it within Omnidroid. This directory is allowed to have subdirectories. After the scan completes you should see your games.<br/><br/>
@@ -641,7 +533,6 @@
     <string name="controller_hint_back">Back</string>
     <string name="controller_hint_options">Options</string>
     <string name="controller_hint_search">Search</string>
-    <string name="controller_hint_scan">Scan</string>
     <string name="controller_hint_zoom">Zoom</string>
     <string name="library_zoom_in">Zoom in</string>
     <string name="library_zoom_out">Zoom out</string>
@@ -655,8 +546,7 @@
     <string name="library_sort_recent">Recently played</string>
     <string name="library_sort_favorites">Favorites first</string>
     <string name="library_sort_console">By console</string>
-    <string name="controller_hint_install">Install</string>
-    <string name="console_not_added">Not added yet</string>
 
     <string name="game_menu_appearance">Appearance</string>
+    <string name="dialog_more_below">More below</string>
 </resources>

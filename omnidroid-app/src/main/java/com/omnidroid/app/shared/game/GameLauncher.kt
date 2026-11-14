@@ -1,27 +1,27 @@
 package com.omnidroid.app.shared.game
-import com.omnidroid.lib.library.SystemCoreConfig
+
 import android.app.Activity
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.omnidroid.R
 import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogActionRole
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogAction
+import com.omnidroid.app.mobile.shared.compose.dialog.showOmnidroidDialog
 import com.omnidroid.app.shared.cast.CastDisplayManager
+import com.omnidroid.app.shared.game.backend.RequirementPickerLauncherActivity
 import com.omnidroid.app.shared.input.InputDeviceManager
 import com.omnidroid.app.shared.main.GameLaunchTaskHandler
 import com.omnidroid.app.shared.savesync.PreGameSyncActivity
+import com.omnidroid.app.tv.shared.TVHelper
+import com.omnidroid.common.displayToast
 import com.omnidroid.lib.backend.ConsoleBackendRegistry
-import com.omnidroid.lib.backend.RequirementAction
 import com.omnidroid.lib.backend.RequirementDescriptor
 import com.omnidroid.lib.backend.RequirementItem
 import com.omnidroid.lib.backend.RequirementSeverity
-import com.omnidroid.app.shared.game.backend.RequirementPickerLauncherActivity
-import com.omnidroid.app.tv.shared.TVHelper
-import com.omnidroid.common.displayToast
 import com.omnidroid.lib.core.CoresSelection
-import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.GameSystem
-import com.omnidroid.lib.library.SystemID
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.savesync.GameCloudSyncPreferences
 import com.omnidroid.lib.savesync.SaveSyncManager
@@ -189,23 +189,17 @@ class GameLauncher(
 
         val item = unfulfilled.firstOrNull() ?: return
 
-        androidx.appcompat.app.AlertDialog.Builder(activity)
-
-            .setTitle(descriptor.title)
-
-            .setMessage(item.description)
-
-            .setPositiveButton(R.string.switch_keys_import_action) { _, _ ->
-
-                item.action?.let { action ->
-                    RequirementPickerLauncherActivity.launch(activity, action)
-                }
-
-            }
-
-            .setNegativeButton(android.R.string.cancel, null)
-
-            .show()
+        showOmnidroidDialog(
+            activity = activity,
+            title = descriptor.title,
+            message = item.description,
+            actions = listOf(
+                OmnidroidDialogAction(activity.getString(android.R.string.cancel), DialogActionRole.Cancel),
+                OmnidroidDialogAction(activity.getString(R.string.switch_keys_import_action)) {
+                    item.action?.let { RequirementPickerLauncherActivity.launch(activity, it) }
+                },
+            ),
+        )
 
     }
 

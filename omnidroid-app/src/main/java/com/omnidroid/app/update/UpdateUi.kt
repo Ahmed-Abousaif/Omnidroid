@@ -3,13 +3,9 @@ package com.omnidroid.app.update
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.omnidroid.R
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeCardColor
 
 @Composable
@@ -41,7 +39,7 @@ fun AppUpdateOverlay(
         is UpdateState.Available -> {
             var showDetails by remember(state.version) { mutableStateOf(true) }
             if (showDetails) {
-                AlertDialog(
+                OmnidroidDialog(
                     onDismissRequest = {
                         showDetails = false
                         onLater()
@@ -56,7 +54,7 @@ fun AppUpdateOverlay(
                         )
                     },
                     text = {
-                        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        Column(modifier = Modifier) {
                             if (state.notes.isNotBlank()) {
                                 Text(text = state.notes, style = MaterialTheme.typography.bodyMedium)
                             } else {
@@ -65,25 +63,23 @@ fun AppUpdateOverlay(
                         }
                     },
                     confirmButton = {
-                        TextButton(onClick = onUpdate) {
+                        OmnidroidDialogButton(onClick = onUpdate) {
                             Text(text = stringResource(R.string.app_update_action_update))
                         }
                     },
                     dismissButton = {
-                        Row {
-                            if (supportsGitHubOptions) {
-                                TextButton(onClick = onSkip) {
-                                    Text(text = stringResource(R.string.app_update_action_skip))
-                                }
+                        if (supportsGitHubOptions) {
+                            OmnidroidDialogButton(onClick = onSkip) {
+                                Text(text = stringResource(R.string.app_update_action_skip))
                             }
-                            TextButton(
-                                onClick = {
-                                    showDetails = false
-                                    onLater()
-                                },
-                            ) {
-                                Text(text = stringResource(R.string.app_update_action_later))
-                            }
+                        }
+                        OmnidroidDialogButton(
+                            onClick = {
+                                showDetails = false
+                                onLater()
+                            },
+                        ) {
+                            Text(text = stringResource(R.string.app_update_action_later))
                         }
                     },
                 )
@@ -129,10 +125,10 @@ fun AppUpdateOverlay(
             }
         }
         is UpdateState.Error -> {
-            AlertDialog(
+            OmnidroidDialog(
                 onDismissRequest = onDismissError,
                 confirmButton = {
-                    TextButton(onClick = onDismissError) {
+                    OmnidroidDialogButton(onClick = onDismissError) {
                         Text(text = stringResource(R.string.settings_action_close))
                     }
                 },
@@ -147,10 +143,10 @@ fun AppUpdateOverlay(
             )
         }
         is UpdateState.UpToDate -> {
-            AlertDialog(
+            OmnidroidDialog(
                 onDismissRequest = onLater,
                 confirmButton = {
-                    TextButton(onClick = onLater) {
+                    OmnidroidDialogButton(onClick = onLater) {
                         Text(text = stringResource(R.string.settings_action_close))
                     }
                 },

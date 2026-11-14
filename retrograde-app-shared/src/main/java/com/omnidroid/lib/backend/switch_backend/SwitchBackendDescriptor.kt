@@ -24,18 +24,13 @@ class SwitchBackendDescriptor : ConsoleBackendDescriptor {
     override val ownedCoreIDs: Set<CoreID> = setOf(CoreID.SWITCH)
     override val ownedSystemIDs: Set<SystemID> = setOf(SystemID.SWITCH)
 
-    /**
-     * Enabled in Stage (d) now that unified input routing is wired.
-     */
-    var enableTouchLayout: Boolean = true
-
     override fun capabilities(config: SystemCoreConfig): BackendCapabilities {
         return BackendCapabilities(
             supportsSaveStates = false,
             supportsDiscSwap = false,
             supportsFastForward = false,
             supportsRewind = false,
-            supportsCustomTouchLayout = enableTouchLayout,
+            supportsCustomTouchLayout = true,
             supportsShaders = false,
             supportsRumble = false,
         )

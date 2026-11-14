@@ -147,9 +147,7 @@ object deps {
 
         object composeSettings {
             const val uiTiles = "com.github.alorma.compose-settings:ui-tiles:2.1.0"
-            const val uiTilesExtended = "com.github.alorma.compose-settings:ui-tiles-extended:2.1.0"
-            const val diskStorage = "com.github.alorma:compose-settings-storage-disk:2.0.0"
-            const val memoryStorage = "com.github.alorma:compose-settings-storage-memory:2.0.0"
+            const val baseStorage = "com.github.alorma:compose-settings-storage-base:2.0.0"
         }
 
         const val kotlinxCoroutinesAndroid = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2"

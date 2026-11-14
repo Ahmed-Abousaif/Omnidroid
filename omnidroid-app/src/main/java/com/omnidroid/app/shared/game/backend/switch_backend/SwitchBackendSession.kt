@@ -10,7 +10,6 @@ import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
-import android.view.ViewGroup
 import android.widget.FrameLayout
 import com.omnidroid.app.shared.game.view.IRetroGameView
 import com.omnidroid.app.shared.switch_emu.EdenBridge
@@ -19,7 +18,6 @@ import com.omnidroid.lib.backend.BackendSession
 import com.omnidroid.lib.backend.NormalizedKey
 import com.omnidroid.lib.backend.NormalizedMotionSource
 import com.omnidroid.lib.core.CoreVariablesManager
-import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.libretrodroid.Controller
 import com.omnidroid.libretrodroid.GLRetroView
@@ -42,7 +40,6 @@ import timber.log.Timber
 class SwitchBackendSession(
     private val activity: Activity,
     private val game: Game,
-    private val systemCoreConfig: SystemCoreConfig,
     private val sharedPreferences: SharedPreferences,
     override val capabilities: BackendCapabilities,
     private val onEmulationExit: (resultCode: Int) -> Unit = {},

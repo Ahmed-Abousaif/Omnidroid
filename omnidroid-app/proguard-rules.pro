@@ -57,19 +57,12 @@
 -dontnote android.net.http.*
 
 ## Kotlin serialization
+# kotlinx.serialization supplies consumer rules for reachable models and serializers.
+# Avoid blanket keeps here so R8 can optimize unused members and serializers.
 -keepattributes *Annotation*, InnerClasses
 -dontnote kotlinx.serialization.SerializationKt
--keep,includedescriptorclasses class com.omnidroid.**$$serializer { *; }
--keepclassmembers class com.omnidroid.** {
-    *** Companion;
-}
--keepclasseswithmembers class com.omnidroid.** {
-    kotlinx.serialization.KSerializer serializer(...);
-}
 
-## App update (GitHub release JSON models + Play In-App Updates)
--keep class com.omnidroid.app.update.GitHubReleaseDto { *; }
--keep class com.omnidroid.app.update.GitHubAssetDto { *; }
+## Play In-App Updates
 -dontwarn com.google.android.play.core.**
 
 ## LibretroDroid JNI Interface (strictly scoped to C++ FindClass/GetMethodID/GetFieldID)

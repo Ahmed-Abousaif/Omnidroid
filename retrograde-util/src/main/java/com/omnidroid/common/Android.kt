@@ -38,10 +38,6 @@ fun Context.animationDuration(): Int {
     return resources.getInteger(android.R.integer.config_mediumAnimTime)
 }
 
-fun Context.shortAnimationDuration(): Int {
-    return resources.getInteger(android.R.integer.config_shortAnimTime)
-}
-
 fun Context.longAnimationDuration(): Int {
     return resources.getInteger(android.R.integer.config_longAnimTime)
 }

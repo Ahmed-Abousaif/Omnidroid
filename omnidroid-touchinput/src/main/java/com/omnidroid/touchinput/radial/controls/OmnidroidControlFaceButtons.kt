@@ -22,19 +22,15 @@ fun OmnidroidControlFaceButtons(
     rotationInDegrees: Float = 0f,
     ids: PersistentList<Id.Key>,
     includeComposite: Boolean = true,
-    applyPadding: Boolean = true,
-    trackPointers: Boolean = true,
     background: @Composable () -> Unit = { OmnidroidControlBackground() },
     idsForegrounds: PersistentMap<Id.Key, @Composable (State<Boolean>) -> Unit>,
 ) {
     val theme = LocalOmnidroidPadTheme.current
     ControlFaceButtons(
-        modifier =
-            modifier
-                .run { if (applyPadding) padding(theme.padding) else modifier },
+        modifier = modifier.padding(theme.padding),
         includeComposite = includeComposite,
         ids = ids,
-        trackPointers = trackPointers,
+        trackPointers = true,
         rotationInDegrees = rotationInDegrees,
         foreground = { id, pressed -> (idsForegrounds[id]!!)(pressed) },
         background = background,
@@ -48,18 +44,13 @@ fun OmnidroidControlFaceButtons(
     modifier: Modifier = Modifier,
     primaryAnchors: PersistentList<Anchor<Id.Key>>,
     background: @Composable () -> Unit = { OmnidroidControlBackground() },
-    applyPadding: Boolean = true,
-    trackPointers: Boolean = true,
     idsForegrounds: PersistentMap<Id.Key, @Composable (State<Boolean>) -> Unit>,
 ) {
-    val theme = LocalOmnidroidPadTheme.current
     ControlFaceButtons(
-        modifier =
-            modifier
-                .run { if (applyPadding) padding(theme.padding) else modifier },
+        modifier = modifier,
         primaryAnchors = primaryAnchors,
         compositeAnchors = persistentListOf(),
-        trackPointers = trackPointers,
+        trackPointers = false,
         foreground = { id, pressed -> (idsForegrounds[id]!!)(pressed) },
         background = background,
         foregroundComposite = { OmnidroidCompositeForeground(it) },

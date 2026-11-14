@@ -3,7 +3,7 @@
 Omnidroid builds the Switch native backend from Eden source. Updates follow the latest commit on `master`, not a release APK. Each update resolves `master` once and checks out that exact SHA, so the packaged native libraries have a reproducible source pin.
 
 - Source: `modules/switch/upstream/eden` (`https://git.eden-emu.dev/eden-emu/eden.git`).
-- Current pin: `cf654052c416f9e7c80cef0a7d321476b1c52f99` (2026-11-10).
+- Current pin: `4a2c923419da30bc272df6dbeb2866dd1b59cade` (2026-11-14).
 - Builder: `omnidroid-cores/build_eden.py`.
 - Output: `omnidroid-cores/omnidroid_core_switch/src/main/jniLibs/arm64-v8a/`.
 - Provenance: `omnidroid-cores/omnidroid_core_switch/src/main/eden-build.json` records the source SHA, NDK, and SHA-256 of each library.

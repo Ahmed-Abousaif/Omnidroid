@@ -52,14 +52,10 @@ class PendingOperationsMonitor(private val appContext: Context) {
     }
 
     private fun isJobRunning(workInfos: List<WorkInfo>): Boolean {
-        return workInfos
-            .map { it.state }
-            .any { it in listOf(WorkInfo.State.RUNNING, WorkInfo.State.ENQUEUED) }
+        return workInfos.any { it.state == WorkInfo.State.RUNNING || it.state == WorkInfo.State.ENQUEUED }
     }
 
     private fun isPeriodicJobRunning(workInfos: List<WorkInfo>): Boolean {
-        return workInfos
-            .map { it.state }
-            .any { it in listOf(WorkInfo.State.RUNNING) }
+        return workInfos.any { it.state == WorkInfo.State.RUNNING }
     }
 }

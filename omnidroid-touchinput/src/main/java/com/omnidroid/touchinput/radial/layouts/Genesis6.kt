@@ -53,8 +53,6 @@ fun PadKitScope.Genesis6Right(
             OmnidroidControlFaceButtons(
                 primaryAnchors = centralAnchors,
                 background = { },
-                applyPadding = false,
-                trackPointers = false,
                 idsForegrounds =
                     persistentMapOf<Id.Key, @Composable (State<Boolean>) -> Unit>(
                         Id.Key(KeyEvent.KEYCODE_BUTTON_X) to { OmnidroidCentralButton(pressedState = it, label = "Y") },

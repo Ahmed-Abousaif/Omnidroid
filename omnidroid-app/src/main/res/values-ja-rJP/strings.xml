@@ -2,8 +2,6 @@
 <resources>
     <string name="title_home">ホーム</string>
     <string name="title_search">検索</string>
-    <string name="title_systems">システム</string>
-    <string name="title_games">ゲーム</string>
     <string name="title_settings">設定</string>
     <string name="recent">最近使用した項目</string>
     <string name="favorites">お気に入り</string>
@@ -17,14 +15,9 @@
     <string name="ok">OK</string>
     <string name="cancel">キャンセル</string>
     <string name="settings">設定</string>
-    <string name="save_sync">セーブデータを同期</string>
     <string name="show_all">すべて表示</string>
     <string name="back">戻る</string>
     <string name="close">閉じる</string>
-    <string name="game_page_search_suggestion">ゲームを検索</string>
-    <string name="settings_category_general">全般</string>
-    <string name="settings_category_input">入力</string>
-    <string name="settings_category_misc">その他</string>
     <string name="settings_title_enable_autosave">状態の自動保存</string>
     <string name="settings_description_enable_autosave">ゲームメニューから終了する際にプレイ中の状態を保存する</string>
     <string name="settings_title_enable_touch_feedback">タッチ時に振動</string>
@@ -42,7 +35,6 @@
     <string name="settings_gamepad_category_enabled">有効なデバイス</string>
     <string name="settings_gamepad_category_general">全般</string>
     <string name="settings_gamepad_title_reset_bindings">バインディングをリセット</string>
-    <string name="settings_gamepad_title_game_menu">メニュー</string>
     <string name="settings_title_open_cores_selection">コアを変更</string>
     <string name="settings_description_open_cores_selection">システムに関連付けられているコアを選択してください</string>
     <string name="settings_title_display_bios_info">BIOS</string>
@@ -51,8 +43,6 @@
     <string name="settings_bios_category_not_detected">サポート</string>
     <string name="settings_title_reset_settings">初期化</string>
     <string name="settings_description_reset_settings">Omnidroidを初期状態にリセットします</string>
-    <string name="settings_title_advanced_settings">詳細設定</string>
-    <string name="settings_description_advanced_settings">詳細設定を表示します</string>
     <string name="settings_title_low_latency_audio">低遅延音声を優先</string>
     <string name="settings_description_low_latency_audio">対応デバイスで音声の遅延を軽減します。音声の乱れが発生する場合があります。</string>
     <string name="settings_title_direct_game_load">ゲームの直接ロード</string>
@@ -69,7 +59,6 @@
     <string name="settings_save_sync_refresh_description">手動同期を実行します。\n%1$s</string>
     <string name="settings_save_sync_enable_auto">自動同期</string>
     <string name="settings_save_sync_enable_auto_description">Wi-Fi接続時に、ゲームプレイの前後に自動的に同期を実行します</string>
-    <string name="settings_save_sync_configure">%1$s を設定</string>
     <string name="settings_save_sync_include_saves">ゲーム内セーブデータを同期</string>
     <string name="settings_save_sync_include_saves_description">デバイス上の%1$s</string>
     <string name="settings_save_sync_include_states">一時保存データを同期</string>
@@ -78,17 +67,6 @@
     <string name="game_context_menu_remove_from_favorites">お気に入りから削除</string>
     <string name="game_context_menu_resume">再開</string>
     <string name="game_context_menu_restart">再起動</string>
-    <string name="game_context_menu_create_shortcut">ランチャーに追加</string>
-    <string name="home_notification_title">通知を有効化</string>
-    <string name="home_notification_message">Omnidroid は、ゲームや操作がバックグラウンドで実行されているときに通知を使用します。</string>
-    <string name="home_notification_action">有効にする</string>
-    <string name="home_microphone_title">マイクを有効化</string>
-    <string name="home_microphone_message">ニンテンドーDSゲームはマイクを使っていくつかの機能を提供することができます。</string>
-    <string name="home_microphone_action">有効にする</string>
-    <string name="home_empty_title">ROMディレクトリを選択</string>
-    <string name="home_empty_message">OmnidroidはROMファイルが入ったディレクトリをスキャンする必要があります。
-\nこれには数分かかる場合があります。</string>
-    <string name="home_empty_action">ディレクトリを選択</string>
     <string name="game_menu_save">保存</string>
     <string name="game_menu_load">読み込み</string>
     <string name="game_menu_restart">再起動</string>
@@ -106,8 +84,6 @@
     <string name="game_toast_quick_save_loaded">クイック読み込み中</string>
     <string name="game_toast_quick_save_saved">クイック保存</string>
     <string name="empty_view_default">アイテムがありません</string>
-    <string name="core_settings_title">コア設定</string>
-    <string name="core_settings_category_preferences">設定</string>
     <string name="core_settings_category_controllers">コントローラ</string>
     <string name="core_settings_controller">コントローラ %1$s</string>
     <string name="game_menu_title">ゲームメニュー</string>
@@ -130,29 +106,19 @@
     </string>
     <string name="game_loader_error_missing_bios">必要なBIOSファイルが見つかりません。ROMディレクトリにBIOSを入れて、再スキャンしてください。
 \n必要なファイル：%1$s</string>
-    <string name="game_shortcut_error">ゲームの読み込み中に問題が発生しました。このゲームがまだライブラリに存在していることを確認してください。</string>
     <string name="dialog_saf_not_found">このデバイスはStorageAccessFrameworkファイルピッカーをサポートしていません。非圧縮ROMファイルを手動で %1$s にコピーし、Rescanを押してください。</string>
-    <string name="system_grid_details">%1$s ゲーム</string>
     <string name="tv_folder_picker_title">ROMディレクトリを選択</string>
     <string name="tv_folder_picker_action_choose">選択</string>
     <string name="tv_folder_picker_action_cancel">キャンセル</string>
     <string name="tv_folder_storage_primary">プライマリストレージ</string>
     <string name="tv_folder_storage_secondary">セカンダリストレージ %1$s</string>
     <string name="tv_folder_storage_title">ストレージを選択</string>
-    <string name="tv_home_section_favorites">お気に入り</string>
-    <string name="tv_home_section_recents">最近のもの</string>
-    <string name="tv_home_section_systems">システム</string>
-    <string name="tv_home_section_settings">設定</string>
     <string name="gamepad_binding_update_title">アソシエイト\"RetroPad %1$s\"</string>
     <string name="gamepad_binding_update_description">\"%1$s\" のボタンを押してください</string>
     <string name="shortcut_binding_update_title">\"ショートカット %1$s\" を関連付けます</string>
     <string name="shortcut_binding_update_description">最初のボタンを押し、次に2番目のボタンを押してコンボ\"%1$s\"をバインドします</string>
-    <string name="tv_search_results">ゲーム</string>
     <string name="tv_game_message_missing_gamepad">ゲームパッドが必要です。接続してください。</string>
-    <string name="game_edit_touch_controls_error_not_visible">タッチコントロールを編集するにはパッドを取り外してください</string>
     <string name="game_interactory_busy">保留中の操作が完了するまで待ちます</string>
-    <string name="mobile_settings_help">ヘルプ</string>
-    <string name="mobile_settings_support">サポート</string>
     <string name="omnidroid_help_content"><![CDATA[        <b>&#8226;Omnidroidの使い方は？</b><br/>
         すべてのROMファイルをお使いのデバイス内のディレクトリにコピーし、Omnidroidでそのディレクトリを選択してください。このディレクトリ内にサブディレクトリがあっても問題ありません。スキャンが完了すると、ゲームが表示されるはずです。<br/><br/>
         <b>&#8226;・ゲームが認識されないのはなぜ？</b><br/>

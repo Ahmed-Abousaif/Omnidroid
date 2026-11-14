@@ -29,9 +29,6 @@ import com.omnidroid.lib.core.SyncProgressTracker
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.storage.DirectoriesManager
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onEach
 import retrofit2.Retrofit
 
 class CoreUpdaterImpl(
