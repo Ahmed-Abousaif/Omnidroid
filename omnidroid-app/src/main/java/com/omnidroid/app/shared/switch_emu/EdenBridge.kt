@@ -11,6 +11,7 @@ import org.yuzu.yuzu_emu.features.input.model.NpadStyleIndex
 import org.yuzu.yuzu_emu.utils.FileUtil
 import org.yuzu.yuzu_emu.utils.NativeConfig
 import com.omnidroid.lib.core.CoreLibraryLocator
+import com.omnidroid.lib.core.GithubCoreDownloader
 import com.omnidroid.lib.library.CoreID
 import timber.log.Timber
 import java.io.File
@@ -216,7 +217,7 @@ object EdenBridge {
         val hookLibPath = if (File(nativeLibDir, "libhook_impl.so").exists()) {
             nativeLibDir.absolutePath + "/"
         } else {
-            val coreDir = File(context.filesDir, "cores/2.7.0")
+            val coreDir = File(context.filesDir, "cores/${GithubCoreDownloader.CORES_VERSION}")
             if (File(coreDir, "libhook_impl.so").exists()) {
                 coreDir.absolutePath + "/"
             } else {
