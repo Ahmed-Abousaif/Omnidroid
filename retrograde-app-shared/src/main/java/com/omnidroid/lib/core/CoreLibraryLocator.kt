@@ -5,6 +5,14 @@ import com.omnidroid.lib.library.CoreID
 import java.io.File
 
 object CoreLibraryLocator {
+    /** Installed binaries from older core releases still need an update. */
+    fun findCurrent(
+        context: Context,
+        coreID: CoreID,
+    ): File? =
+        findBundled(context, coreID)
+            ?: GithubCoreDownloader.findCached(File(context.filesDir, "cores"), coreID)
+
     fun find(
         context: Context,
         coreID: CoreID,

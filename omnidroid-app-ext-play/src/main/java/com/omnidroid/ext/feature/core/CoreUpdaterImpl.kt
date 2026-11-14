@@ -12,14 +12,15 @@ import com.google.android.play.core.ktx.sessionId
 import com.google.android.play.core.splitinstall.SplitInstallManager
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.omnidroid.common.coroutines.retry
-import com.omnidroid.lib.core.CoreLibraryLocator
 import com.omnidroid.lib.core.CoreAssets
+import com.omnidroid.lib.core.CoreLibraryLocator
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.GithubCoreDownloader
 import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.core.SyncProgressTracker
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.storage.DirectoriesManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
@@ -29,7 +30,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
 import retrofit2.Retrofit
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.CancellationException
 
 class CoreUpdaterImpl(
     private val directoriesManager: DirectoriesManager,
@@ -43,50 +43,56 @@ class CoreUpdaterImpl(
         context: Context,
         coreIDs: List<CoreID>,
     ) {
-        val missing = coreIDs.filter { CoreLibraryLocator.findBundled(context, it) == null }
-        val total = missing.size
+        val progress = SyncProgressTracker.session()
+        try {
+            // Rotation/resume checks must not announce downloads for current cached binaries.
+            val missing = coreIDs.distinct().filter { CoreLibraryLocator.findCurrent(context, it) == null }
+            val total = missing.size
 
-        if (missing.isNotEmpty() && isInstalledFromPlayStore(context)) {
-            missing.forEachIndexed { index, coreID ->
-                SyncProgressTracker.update(
-                    stepText = "Installing core: ${coreID.coreDisplayName}",
+            if (missing.isNotEmpty() && isInstalledFromPlayStore(context)) {
+                missing.forEachIndexed { index, coreID ->
+                    progress.update(
+                        stepText = "Installing core: ${coreID.coreDisplayName}",
+                        current = index + 1,
+                        total = total,
+                        isIndeterminate = false,
+                    )
+                }
+                val installManager = SplitInstallManagerFactory.create(context)
+                val installSession = installCores(installManager, missing)
+
+                try {
+                    cancelPendingInstalls(installManager, installSession)
+                } catch (e: Throwable) {
+                    log("Error while canceling pending installs: ${e.message}")
+                }
+            }
+
+            missing.filter { CoreLibraryLocator.findCurrent(context, it) == null }.forEachIndexed { index, coreID ->
+                progress.update(
+                    stepText = "Downloading core: ${coreID.coreDisplayName}",
                     current = index + 1,
                     total = total,
                     isIndeterminate = false,
                 )
+                log("Falling back to GitHub download for ${coreID.coreName}")
+                githubCoreDownloader.retrieve(coreID)
             }
-            val installManager = SplitInstallManagerFactory.create(context)
-            val installSession = installCores(installManager, missing)
+
+            CoreAssets.install(context, coreIDs, api, directoriesManager)
 
             try {
-                cancelPendingInstalls(installManager, installSession)
-            } catch (e: Throwable) {
-                log("Error while canceling pending installs: ${e.message}")
+                sliceInstaller.ensureSlices(context, coreIDs)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (e: Exception) {
+                log("Error while installing metadata slices: ${e.message}")
             }
+
+            log("downloadCores has terminated")
+        } finally {
+            progress.clear()
         }
-
-        missing.filter { CoreLibraryLocator.findBundled(context, it) == null }.forEachIndexed { index, coreID ->
-            SyncProgressTracker.update(
-                stepText = "Downloading core: ${coreID.coreDisplayName}",
-                current = index + 1,
-                total = total,
-                isIndeterminate = false,
-            )
-            log("Falling back to GitHub download for ${coreID.coreName}")
-            githubCoreDownloader.retrieve(coreID)
-        }
-
-        CoreAssets.install(context, coreIDs, api, directoriesManager)
-
-        try {
-            sliceInstaller.ensureSlices(context, coreIDs)
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (e: Exception) {
-            log("Error while installing metadata slices: ${e.message}")
-        }
-
-        log("downloadCores has terminated")
     }
 
     override suspend fun uninstallCores(
@@ -106,11 +112,17 @@ class CoreUpdaterImpl(
         CoreAssets.remove(context, coreIDs, directoriesManager)
     }
 
-    override suspend fun refreshAssets(context: Context, coreIDs: List<CoreID>) {
+    override suspend fun refreshAssets(
+        context: Context,
+        coreIDs: List<CoreID>,
+    ) {
         CoreAssets.install(context, coreIDs, api, directoriesManager, force = true)
     }
 
-    override suspend fun removeAssets(context: Context, coreIDs: List<CoreID>) {
+    override suspend fun removeAssets(
+        context: Context,
+        coreIDs: List<CoreID>,
+    ) {
         CoreAssets.remove(context, coreIDs, directoriesManager)
     }
 

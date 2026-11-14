@@ -53,9 +53,9 @@ class LibraryIndexWork
                 indexResult.deltaCount < SILENT_DELTA_THRESHOLD &&
                     indexResult.newSystemIds.isEmpty()
             if (silent) {
-                SyncProgressTracker.clear()
+                progress.clear()
             } else {
-                SyncProgressTracker.update(
+                progress.update(
                     stepText = applicationContext.getString(com.omnidroid.R.string.library_scanning),
                     current = indexResult.deltaCount,
                     total = indexResult.deltaCount + indexResult.unchanged,
@@ -70,6 +70,11 @@ class LibraryIndexWork
         }
 
         companion object {
+            // A scan can hand its message to the next worker in the same library chain.
+            private val progress = SyncProgressTracker.session()
+
+            internal fun clearProgress() = progress.clear()
+
             const val SILENT_DELTA_THRESHOLD = 20
         }
     }

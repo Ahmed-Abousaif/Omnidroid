@@ -20,16 +20,16 @@
 package com.omnidroid.ext.feature.core
 
 import android.content.Context
-import com.omnidroid.lib.core.CoreLibraryLocator
 import com.omnidroid.lib.core.CoreAssets
+import com.omnidroid.lib.core.CoreLibraryLocator
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.GithubCoreDownloader
 import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.core.SyncProgressTracker
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.storage.DirectoriesManager
-import retrofit2.Retrofit
 import kotlinx.coroutines.CancellationException
+import retrofit2.Retrofit
 import timber.log.Timber
 
 class CoreUpdaterImpl(
@@ -44,24 +44,30 @@ class CoreUpdaterImpl(
         context: Context,
         coreIDs: List<CoreID>,
     ) {
-        val missing = coreIDs.filter { CoreLibraryLocator.findBundled(context, it) == null }
-        val total = missing.size
-        missing.forEachIndexed { index, coreID ->
-            SyncProgressTracker.update(
-                stepText = "Downloading core: ${coreID.coreDisplayName}",
-                current = index + 1,
-                total = total,
-                isIndeterminate = false,
-            )
-            retrieveFile(context, coreID)
-        }
-        CoreAssets.install(context, coreIDs, api, directoriesManager)
+        val progress = SyncProgressTracker.session()
         try {
-            sliceInstaller.ensureSlices(context, coreIDs)
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (error: Exception) {
-            Timber.w(error, "The optional title database can be retried from Consoles")
+            // Rotation/resume checks must not announce downloads for current cached binaries.
+            val missing = coreIDs.distinct().filter { CoreLibraryLocator.findCurrent(context, it) == null }
+            val total = missing.size
+            missing.forEachIndexed { index, coreID ->
+                progress.update(
+                    stepText = "Downloading core: ${coreID.coreDisplayName}",
+                    current = index + 1,
+                    total = total,
+                    isIndeterminate = false,
+                )
+                retrieveFile(context, coreID)
+            }
+            CoreAssets.install(context, coreIDs, api, directoriesManager)
+            try {
+                sliceInstaller.ensureSlices(context, coreIDs)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Timber.w(error, "The optional title database can be retried from Consoles")
+            }
+        } finally {
+            progress.clear()
         }
     }
 
@@ -83,11 +89,17 @@ class CoreUpdaterImpl(
         CoreAssets.remove(context, coreIDs, directoriesManager)
     }
 
-    override suspend fun refreshAssets(context: Context, coreIDs: List<CoreID>) {
+    override suspend fun refreshAssets(
+        context: Context,
+        coreIDs: List<CoreID>,
+    ) {
         CoreAssets.install(context, coreIDs, api, directoriesManager, force = true)
     }
 
-    override suspend fun removeAssets(context: Context, coreIDs: List<CoreID>) {
+    override suspend fun removeAssets(
+        context: Context,
+        coreIDs: List<CoreID>,
+    ) {
         CoreAssets.remove(context, coreIDs, directoriesManager)
     }
 
@@ -99,5 +111,4 @@ class CoreUpdaterImpl(
         // permanently pin a stale downloaded .so and never pick up core fixes.
         CoreLibraryLocator.findBundled(context, coreID) ?: githubCoreDownloader.retrieve(coreID)
     }
-
 }

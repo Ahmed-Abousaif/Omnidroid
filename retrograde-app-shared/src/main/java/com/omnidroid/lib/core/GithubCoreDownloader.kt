@@ -13,19 +13,16 @@ class GithubCoreDownloader(
     private val api: CoreUpdater.CoreManagerApi,
 ) {
     suspend fun retrieve(coreID: CoreID): File {
-        Timber.i("Downloading core $coreID from github")
-
         val mainCoresDirectory = directoriesManager.getCoresDirectory()
+        findCached(mainCoresDirectory, coreID)?.let { return it }
+
+        Timber.i("Downloading core $coreID from github")
         val coresDirectory =
             File(mainCoresDirectory, CORES_VERSION).apply {
                 mkdirs()
             }
 
         val destFile = File(coresDirectory, coreID.libretroFileName)
-        if (destFile.exists()) {
-            return destFile
-        }
-
         runCatching {
             deleteOutdatedCores(mainCoresDirectory)
         }
@@ -80,6 +77,13 @@ class GithubCoreDownloader(
     }
 
     companion object {
+        fun findCached(
+            coresDirectory: File,
+            coreID: CoreID,
+        ): File? =
+            File(File(coresDirectory, CORES_VERSION), coreID.libretroFileName)
+                .takeIf { it.isFile && it.length() > 0L }
+
         // Keep in sync with omnidroid-app versionName / OmnidroidCores git tags.
         const val CORES_VERSION = "3.0.0"
         val BASE_URI = Uri.parse("https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/")
