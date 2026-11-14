@@ -23,6 +23,8 @@ import com.omnidroid.lib.core.CoreVariablesManager
 import com.omnidroid.lib.game.GameLoader
 import com.omnidroid.lib.game.GameLoaderError
 import com.omnidroid.lib.game.GameLoaderException
+import com.omnidroid.lib.core.CoreAssets
+import com.omnidroid.lib.library.metaSystemID
 import com.omnidroid.lib.graphics.VulkanDetector
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemCoreConfig
@@ -137,7 +139,13 @@ class GameViewModelRetroGameView(
                     } else {
                         ""
                     }
-                sideEffects.requestFailureFinish(message)
+                if (it is GameLoaderException &&
+                    (it.error is GameLoaderError.MissingAssets || it.error is GameLoaderError.CoreUninstalled)
+                ) {
+                    sideEffects.requestConsoleSetup(message)
+                } else {
+                    sideEffects.requestFailureFinish(message)
+                }
             }
             .debounce(200)
             .collect { loadingState ->
@@ -405,12 +413,25 @@ class GameViewModelRetroGameView(
                 else -> GameLoaderError.Generic
             }
 
-        sideEffects.requestFailureFinish(getErrorMessage(gameLoaderError))
+        scope.launch {
+            if ((gameLoaderError is GameLoaderError.LoadGame || gameLoaderError is GameLoaderError.LoadCore) &&
+                CoreAssets.hasAssets(systemCoreConfig.coreID) && !CoreAssets.isReady(appContext, systemCoreConfig.coreID)
+            ) {
+                sideEffects.requestConsoleSetup(getErrorMessage(GameLoaderError.MissingAssets(systemCoreConfig.coreID)))
+            } else {
+                sideEffects.requestFailureFinish(getErrorMessage(gameLoaderError))
+            }
+        }
     }
 
     private fun getErrorMessage(gameError: GameLoaderError): String {
         val message =
             when (gameError) {
+                is GameLoaderError.MissingAssets -> appContext.getString(
+                    R.string.game_missing_assets_message,
+                    appContext.getString(system.metaSystemID().titleResId),
+                )
+                is GameLoaderError.CoreUninstalled -> appContext.getString(R.string.game_core_uninstalled_message)
                 is GameLoaderError.GLIncompatible -> {
                     appContext.getString(R.string.game_loader_error_gl_incompatible)
                 }

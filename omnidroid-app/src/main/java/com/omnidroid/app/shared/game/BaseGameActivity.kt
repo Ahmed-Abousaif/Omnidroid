@@ -19,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.game.GameActivity
 import com.omnidroid.app.mobile.feature.game.GameService
+import com.omnidroid.app.mobile.feature.main.MainActivity
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.app.mobile.shared.compose.dialog.DialogActionRole
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogAction
@@ -46,6 +47,7 @@ import com.omnidroid.lib.core.CoreVariablesManager
 import com.omnidroid.lib.game.GameLoader
 import com.omnidroid.lib.library.ExposedSetting
 import com.omnidroid.lib.library.GameSystem
+import com.omnidroid.lib.library.metaSystemID
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
@@ -543,6 +545,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                     is GameViewModelSideEffects.UiEffect.SaveFailedOnQuit -> displaySaveFailureDialog()
 
                     is GameViewModelSideEffects.UiEffect.FailureFinish -> performErrorFinish(it.message)
+                    is GameViewModelSideEffects.UiEffect.ConsoleSetupRequired -> displayConsoleSetupDialog(it.message)
 
                     is GameViewModelSideEffects.UiEffect.SaveQuickSave -> performSaveQuickSave()
 
@@ -569,6 +572,23 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                     baseGameScreenViewModel.requestFinishWithoutSaving()
                 },
                 OmnidroidDialogAction(getString(R.string.game_menu_states_retry)) { baseGameScreenViewModel.requestFinish() },
+            ),
+        )
+    }
+
+    private fun displayConsoleSetupDialog(message: String) {
+        if (isFinishing || isDestroyed) return
+        showOmnidroidDialog(
+            activity = this,
+            title = getString(R.string.game_console_setup_title),
+            message = message,
+            forceDark = true,
+            actions = listOf(
+                OmnidroidDialogAction(getString(R.string.cancel), DialogActionRole.Cancel) { finishAndExitProcess() },
+                OmnidroidDialogAction(getString(R.string.game_open_console)) {
+                    startActivity(MainActivity.consoleIntent(this, system.metaSystemID()))
+                    finishAndExitProcess()
+                },
             ),
         )
     }

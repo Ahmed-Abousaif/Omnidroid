@@ -11,6 +11,10 @@ sealed class GameLoaderError {
 
     object LoadGame : GameLoaderError()
 
+    data class MissingAssets(val coreID: com.omnidroid.lib.library.CoreID) : GameLoaderError()
+
+    object CoreUninstalled : GameLoaderError()
+
     object Saves : GameLoaderError()
 
     object UnsupportedArchitecture : GameLoaderError()

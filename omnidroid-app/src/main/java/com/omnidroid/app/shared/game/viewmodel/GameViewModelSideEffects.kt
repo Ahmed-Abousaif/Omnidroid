@@ -23,6 +23,7 @@ class GameViewModelSideEffects(private val scope: CoroutineScope) {
         data object SaveFailedOnQuit : UiEffect
 
         data class FailureFinish(val message: String) : UiEffect
+        data class ConsoleSetupRequired(val message: String) : UiEffect
 
         data object LoadQuickSave : UiEffect
 
@@ -85,6 +86,10 @@ class GameViewModelSideEffects(private val scope: CoroutineScope) {
                 uiEffects.emit(UiEffect.FailureFinish(message))
             }
         }
+    }
+
+    fun requestConsoleSetup(message: String) {
+        scope.launch { uiEffects.emit(UiEffect.ConsoleSetupRequired(message)) }
     }
 
     fun saveQuickSave() {

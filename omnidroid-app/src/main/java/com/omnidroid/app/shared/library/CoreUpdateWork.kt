@@ -8,11 +8,14 @@ import com.omnidroid.app.mobile.feature.library.RegisteredSystemsStore
 import com.omnidroid.app.mobile.shared.NotificationsManager
 import com.omnidroid.app.utils.android.createSyncForegroundInfo
 import com.omnidroid.lib.core.CoreLibraryLocator
+import com.omnidroid.lib.core.ConsoleInstallPreferences
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.core.CoresSelection
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.GameSystem
+import com.omnidroid.lib.library.metaSystemID
+import kotlinx.coroutines.CancellationException
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -66,12 +69,13 @@ class CoreUpdateWork
                     )
                 }
 
-                if (needsDownload) {
-                    coreUpdater.downloadCores(applicationContext, missingCores)
-                }
+                coreUpdater.downloadCores(applicationContext, requiredCores)
                 sliceInstaller.ensureSlices(applicationContext, requiredCores)
-            } catch (e: Throwable) {
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
                 Timber.e(e, "Core update work failed with exception: ${e.message}")
+                return if (runAttemptCount < 2) Result.retry() else Result.failure()
             } finally {
                 SyncProgressTracker.clear()
             }
@@ -91,6 +95,7 @@ class CoreUpdateWork
 
             return (systemsWithGames + registeredSystems)
                 .distinctBy { it.id }
+                .filter { it.metaSystemID() !in ConsoleInstallPreferences(applicationContext).uninstalled() }
                 .map { coresSelection.getCoreConfigForSystem(it).coreID }
                 .distinct()
         }

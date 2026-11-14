@@ -2,122 +2,96 @@ package com.omnidroid.lib.core.assetsmanager
 
 import android.content.SharedPreferences
 import android.net.Uri
-import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.GithubCoreDownloader
-import com.omnidroid.lib.library.CoreID
+import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.storage.DirectoriesManager
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.ResponseBody
-import retrofit2.Response
-import timber.log.Timber
-import java.io.File
-import java.util.zip.ZipInputStream
 
-class CemuAssetsManager : CoreID.AssetsManager {
-    override suspend fun clearAssets(directoriesManager: DirectoriesManager) {
-        withContext(Dispatchers.IO) {
-            keysFiles(directoriesManager).forEach { it.delete() }
+class CemuAssetsManager : ArchiveAssetsManager() {
+    override val directoryName = ".cemu-assets"
+    override val versionKey = CEMU_ASSETS_VERSION_KEY
+    override val version = CEMU_ASSETS_VERSION
+    override val downloadUrl get() = CEMU_ASSETS_URL.toString()
+
+    override fun mapEntry(name: String): String? =
+        "keys.txt".takeIf { name.substringAfterLast('/').equals(it, ignoreCase = true) }
+
+    private fun key(line: String): String? = line.substringBefore('#').trim().lowercase()
+        .takeIf { it.matches(Regex("[0-9a-f]{32}")) }
+
+    private fun keys(file: File): Set<String> =
+        if (file.isFile) file.readLines().mapNotNull(::key).toSet() else emptySet()
+
+    override fun validate(directory: File): Boolean = keys(File(directory, "keys.txt")).isNotEmpty()
+
+    private fun copies(directories: DirectoriesManager) =
+        listOf(File(directories.getSystemDirectory(), "Cemu/keys.txt"), File(directories.getSystemDirectory(), "keys.txt"))
+
+    override fun publish(directory: File, directories: DirectoriesManager, preferences: SharedPreferences) {
+        val source = File(directory, "keys.txt")
+        val managed = keys(source)
+        val destinations = copies(directories)
+        val additional = destinations.filter { it.isFile }.flatMap { it.readLines() }
+            .filter { key(it)?.let { value -> value !in managed } == true }.distinctBy(::key)
+        val merged = if (additional.isEmpty()) source else File.createTempFile("cemu-user-keys", ".txt", directory.parentFile).apply {
+            writeText(source.readText().trimEnd() + "\n" + additional.joinToString("\n", postfix = "\n"))
+        }
+        try {
+            destinations.forEach { destination ->
+                if (!destination.isFile || !destination.readBytes().contentEquals(merged.readBytes())) {
+                    AssetInstallation.copyAtomically(merged, destination)
+                }
+            }
+        } finally {
+            if (merged != source) merged.delete()
         }
     }
+
+    override suspend fun isReady(directoriesManager: DirectoriesManager): Boolean =
+        withContext(Dispatchers.IO) {
+            val managed = keys(File(directory(directoriesManager), "keys.txt"))
+            if (!directory(directoriesManager).exists()) copies(directoriesManager).all { keys(it).isNotEmpty() }
+            else super.isReady(directoriesManager) && managed.isNotEmpty() &&
+                copies(directoriesManager).all { keys(it).containsAll(managed) }
+        }
 
     override suspend fun retrieveAssetsIfNeeded(
         coreUpdaterApi: CoreUpdater.CoreManagerApi,
         directoriesManager: DirectoriesManager,
         sharedPreferences: SharedPreferences,
+        force: Boolean,
     ) {
+        if (!force && !directory(directoriesManager).exists() &&
+            sharedPreferences.getString(versionKey, null) == version && isReady(directoriesManager)
+        ) return
+        super.retrieveAssetsIfNeeded(coreUpdaterApi, directoriesManager, sharedPreferences, force)
+    }
+
+    override suspend fun clearAssets(directoriesManager: DirectoriesManager, sharedPreferences: SharedPreferences) {
         withContext(Dispatchers.IO) {
-            if (!updatedRequested(directoriesManager, sharedPreferences)) {
-                return@withContext
-            }
-
-            try {
-                val response = coreUpdaterApi.downloadZip(CEMU_ASSETS_URL.toString())
-                handleSuccess(directoriesManager, response, sharedPreferences)
-            } catch (e: Throwable) {
-                Timber.w(e, "CemuAssetsManager: Could not download assets from remote")
-            }
-        }
-    }
-
-    private fun handleSuccess(
-        directoriesManager: DirectoriesManager,
-        response: Response<ResponseBody>,
-        sharedPreferences: SharedPreferences,
-    ) {
-        if (!response.isSuccessful) {
-            throw Exception(response.errorBody()?.use { it.string() } ?: "Cemu assets download failed")
-        }
-
-        val keysBytes =
-            response.body()?.use { responseBody ->
-                readKeys(responseBody)
-            } ?: throw Exception("Empty Cemu assets body")
-
-        keysFiles(directoriesManager).forEach { destFile ->
-            destFile.parentFile?.mkdirs()
-            destFile.writeBytes(keysBytes)
-        }
-
-        sharedPreferences.edit()
-            .putString(CEMU_ASSETS_VERSION_KEY, CEMU_ASSETS_VERSION)
-            .commit()
-    }
-
-    private fun readKeys(responseBody: ResponseBody): ByteArray {
-        ZipInputStream(responseBody.byteStream()).use { zipInputStream ->
-            while (true) {
-                val entry = zipInputStream.nextEntry ?: break
-                val entryName = entry.name.replace('\\', '/')
-                if (entry.isDirectory || entryName.endsWith("/")) {
-                    continue
-                }
-                if (entryName.split('/').any { it == ".." }) {
-                    continue
-                }
-                if (!entryName.substringAfterLast('/').equals(KEYS_FILE_NAME, ignoreCase = true)) {
-                    continue
-                }
-                val bytes = zipInputStream.readBytes()
-                if (bytes.isNotEmpty()) {
-                    Timber.d("CemuAssetsManager: Read $KEYS_FILE_NAME (${bytes.size} bytes)")
-                    return bytes
+            val managed = keys(File(directory(directoriesManager), "keys.txt"))
+            if (managed.isNotEmpty()) copies(directoriesManager).filter { it.isFile }.forEach { destination ->
+                val remaining = destination.readLines().filter { key(it) !in managed }
+                if (remaining.none { key(it) != null }) AssetInstallation.remove(destination)
+                else {
+                    val temp = File.createTempFile("cemu-user-keys", ".txt", directory(directoriesManager).parentFile)
+                    try {
+                        temp.writeText(remaining.joinToString("\n", postfix = "\n"))
+                        AssetInstallation.copyAtomically(temp, destination)
+                    } finally { temp.delete() }
                 }
             }
+            super.clearAssets(directoriesManager, sharedPreferences)
         }
-        throw Exception("keys.txt missing from Cemu assets")
-    }
-
-    private fun updatedRequested(
-        directoriesManager: DirectoriesManager,
-        sharedPreferences: SharedPreferences,
-    ): Boolean {
-        val keysPresent = keysFiles(directoriesManager).all { it.exists() && it.length() > 0L }
-        val currentVersion = sharedPreferences.getString(CEMU_ASSETS_VERSION_KEY, "none")
-        val hasCurrentVersion = currentVersion == CEMU_ASSETS_VERSION
-        return !keysPresent || !hasCurrentVersion
-    }
-
-    private fun keysFiles(directoriesManager: DirectoriesManager): List<File> {
-        val systemDir = directoriesManager.getSystemDirectory()
-        return listOf(
-            File(systemDir, "Cemu/$KEYS_FILE_NAME"),
-            File(systemDir, KEYS_FILE_NAME),
-        )
     }
 
     companion object {
         const val CEMU_ASSETS_VERSION = "omnidroid-2"
-
-        // Keep path tag in sync with GithubCoreDownloader.CORES_VERSION / OmnidroidCores tags.
-        val CEMU_ASSETS_URL: Uri =
-            Uri.parse("https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/")
-                .buildUpon()
-                .appendEncodedPath("${GithubCoreDownloader.CORES_VERSION}/assets/cemu.zip")
-                .build()
-
         const val CEMU_ASSETS_VERSION_KEY = "cemu_assets_version_key"
-
-        private const val KEYS_FILE_NAME = "keys.txt"
+        val CEMU_ASSETS_URL: Uri = Uri.parse(
+            "https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/${GithubCoreDownloader.CORES_VERSION}/assets/cemu.zip",
+        )
     }
 }

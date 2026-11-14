@@ -20,16 +20,17 @@
 package com.omnidroid.ext.feature.core
 
 import android.content.Context
-import android.content.SharedPreferences
 import com.omnidroid.lib.core.CoreLibraryLocator
+import com.omnidroid.lib.core.CoreAssets
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.GithubCoreDownloader
 import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.core.SyncProgressTracker
 import com.omnidroid.lib.library.CoreID
-import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.storage.DirectoriesManager
 import retrofit2.Retrofit
+import kotlinx.coroutines.CancellationException
+import timber.log.Timber
 
 class CoreUpdaterImpl(
     private val directoriesManager: DirectoriesManager,
@@ -43,7 +44,6 @@ class CoreUpdaterImpl(
         context: Context,
         coreIDs: List<CoreID>,
     ) {
-        val sharedPreferences = SharedPreferencesHelper.getSharedPreferences(context.applicationContext)
         val missing = coreIDs.filter { CoreLibraryLocator.findBundled(context, it) == null }
         val total = missing.size
         missing.forEachIndexed { index, coreID ->
@@ -53,10 +53,16 @@ class CoreUpdaterImpl(
                 total = total,
                 isIndeterminate = false,
             )
-            retrieveAssets(coreID, sharedPreferences)
             retrieveFile(context, coreID)
         }
-        sliceInstaller.ensureSlices(context, coreIDs)
+        CoreAssets.install(context, coreIDs, api, directoriesManager)
+        try {
+            sliceInstaller.ensureSlices(context, coreIDs)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Timber.w(error, "The optional title database can be retried from Consoles")
+        }
     }
 
     override suspend fun uninstallCores(
@@ -66,14 +72,23 @@ class CoreUpdaterImpl(
         coreIDs.distinct().forEach { coreID ->
             if (CoreLibraryLocator.findBundled(context, coreID) != null) return@forEach
             CoreLibraryLocator.findDownloaded(context, coreID)?.let { file ->
-                runCatching { file.delete() }
+                check(file.delete() || !file.exists()) { "Could not uninstall ${coreID.coreDisplayName}" }
             }
             // Also clear versioned cores directory copies if present under files/cores.
             directoriesManager.getCoresDirectory()
                 .walkTopDown()
                 .filter { it.isFile && it.name == coreID.libretroFileName }
-                .forEach { runCatching { it.delete() } }
+                .forEach { check(it.delete() || !it.exists()) { "Could not uninstall ${coreID.coreDisplayName}" } }
         }
+        CoreAssets.remove(context, coreIDs, directoriesManager)
+    }
+
+    override suspend fun refreshAssets(context: Context, coreIDs: List<CoreID>) {
+        CoreAssets.install(context, coreIDs, api, directoriesManager, force = true)
+    }
+
+    override suspend fun removeAssets(context: Context, coreIDs: List<CoreID>) {
+        CoreAssets.remove(context, coreIDs, directoriesManager)
     }
 
     private suspend fun retrieveFile(
@@ -85,11 +100,4 @@ class CoreUpdaterImpl(
         CoreLibraryLocator.findBundled(context, coreID) ?: githubCoreDownloader.retrieve(coreID)
     }
 
-    private suspend fun retrieveAssets(
-        coreID: CoreID,
-        sharedPreferences: SharedPreferences,
-    ) {
-        CoreID.getAssetManager(coreID)
-            .retrieveAssetsIfNeeded(api, directoriesManager, sharedPreferences)
-    }
 }

@@ -158,9 +158,12 @@ enum class CoreID(
             coreUpdaterApi: CoreUpdater.CoreManagerApi,
             directoriesManager: DirectoriesManager,
             sharedPreferences: SharedPreferences,
+            force: Boolean = false,
         )
 
-        suspend fun clearAssets(directoriesManager: DirectoriesManager)
+        suspend fun isReady(directoriesManager: DirectoriesManager): Boolean
+
+        suspend fun clearAssets(directoriesManager: DirectoriesManager, sharedPreferences: SharedPreferences)
     }
 }
 

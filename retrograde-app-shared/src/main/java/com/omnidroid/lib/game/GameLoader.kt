@@ -24,6 +24,8 @@ import android.content.SharedPreferences
 import android.os.Build
 import com.omnidroid.lib.bios.BiosManager
 import com.omnidroid.lib.core.CoreLibraryLocator
+import com.omnidroid.lib.core.ConsoleInstallPreferences
+import com.omnidroid.lib.core.CoreAssetsException
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.CoreVariable
 import com.omnidroid.lib.core.CoreVariablesManager
@@ -32,6 +34,7 @@ import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.OmnidroidLibrary
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.SystemID
+import com.omnidroid.lib.library.metaSystemID
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.saves.SaveState
@@ -79,6 +82,9 @@ class GameLoader(
                 emit(LoadingState.LoadingCore)
 
                 val system = GameSystem.findById(game.systemId)
+                if (system.metaSystemID() in ConsoleInstallPreferences(appContext).uninstalled()) {
+                    throw GameLoaderException(GameLoaderError.CoreUninstalled)
+                }
 
                 if (!isArchitectureSupported(systemCoreConfig)) {
                     throw GameLoaderException(GameLoaderError.UnsupportedArchitecture)
@@ -87,13 +93,17 @@ class GameLoader(
                 val coreLibrary =
                     runCatching {
                         resolveCoreLibrary(appContext, systemCoreConfig.coreID)
-                    }.getOrElse { throw GameLoaderException(GameLoaderError.LoadCore) }
+                    }.getOrElse {
+                        when (it) {
+                            is CancellationException -> throw it
+                            is CoreAssetsException -> throw GameLoaderException(GameLoaderError.MissingAssets(it.coreID))
+                            else -> throw GameLoaderException(GameLoaderError.LoadCore)
+                        }
+                    }
 
                 emit(LoadingState.LoadingGame)
 
                 if (system.id == SystemID.PS2) {
-                    CoreID.getAssetManager(CoreID.ARMSX2)
-                        .retrieveAssetsIfNeeded(coreApi, directoriesManager, sharedPreferences)
                     biosManager.stageActivePs2Bios(game)
                 }
 
@@ -154,6 +164,8 @@ class GameLoader(
                         ),
                     ),
                 )
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: GameLoaderException) {
                 Timber.e(e, "Error while preparing game")
                 throw e

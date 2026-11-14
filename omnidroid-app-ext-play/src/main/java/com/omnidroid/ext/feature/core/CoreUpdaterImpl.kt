@@ -13,23 +13,23 @@ import com.google.android.play.core.splitinstall.SplitInstallManager
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.omnidroid.common.coroutines.retry
 import com.omnidroid.lib.core.CoreLibraryLocator
+import com.omnidroid.lib.core.CoreAssets
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.GithubCoreDownloader
 import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.core.SyncProgressTracker
 import com.omnidroid.lib.library.CoreID
-import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.storage.DirectoriesManager
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.takeWhile
 import retrofit2.Retrofit
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CancellationException
 
 class CoreUpdaterImpl(
     private val directoriesManager: DirectoriesManager,
@@ -65,7 +65,7 @@ class CoreUpdaterImpl(
             }
         }
 
-        missing.forEachIndexed { index, coreID ->
+        missing.filter { CoreLibraryLocator.findBundled(context, it) == null }.forEachIndexed { index, coreID ->
             SyncProgressTracker.update(
                 stepText = "Downloading core: ${coreID.coreDisplayName}",
                 current = index + 1,
@@ -76,15 +76,13 @@ class CoreUpdaterImpl(
             githubCoreDownloader.retrieve(coreID)
         }
 
-        try {
-            installAssets(context, coreIDs)
-        } catch (e: Throwable) {
-            log("Error while installing assets: ${e.message}")
-        }
+        CoreAssets.install(context, coreIDs, api, directoriesManager)
 
         try {
             sliceInstaller.ensureSlices(context, coreIDs)
-        } catch (e: Throwable) {
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
             log("Error while installing metadata slices: ${e.message}")
         }
 
@@ -98,13 +96,22 @@ class CoreUpdaterImpl(
         coreIDs.distinct().forEach { coreID ->
             if (CoreLibraryLocator.findBundled(context, coreID) != null) return@forEach
             CoreLibraryLocator.findDownloaded(context, coreID)?.let { file ->
-                runCatching { file.delete() }
+                check(file.delete() || !file.exists()) { "Could not uninstall ${coreID.coreDisplayName}" }
             }
             directoriesManager.getCoresDirectory()
                 .walkTopDown()
                 .filter { it.isFile && it.name == coreID.libretroFileName }
-                .forEach { runCatching { it.delete() } }
+                .forEach { check(it.delete() || !it.exists()) { "Could not uninstall ${coreID.coreDisplayName}" } }
         }
+        CoreAssets.remove(context, coreIDs, directoriesManager)
+    }
+
+    override suspend fun refreshAssets(context: Context, coreIDs: List<CoreID>) {
+        CoreAssets.install(context, coreIDs, api, directoriesManager, force = true)
+    }
+
+    override suspend fun removeAssets(context: Context, coreIDs: List<CoreID>) {
+        CoreAssets.remove(context, coreIDs, directoriesManager)
     }
 
     private suspend fun installCores(
@@ -158,17 +165,6 @@ class CoreUpdaterImpl(
             }
 
         return result.getOrNull()
-    }
-
-    private suspend fun installAssets(
-        context: Context,
-        coreIDs: List<CoreID>,
-    ) {
-        val sharedPreferences = SharedPreferencesHelper.getSharedPreferences(context.applicationContext)
-        coreIDs.asFlow()
-            .map { CoreID.getAssetManager(it) }
-            .onEach { it.retrieveAssetsIfNeeded(api, directoriesManager, sharedPreferences) }
-            .collect()
     }
 
     private suspend fun cancelPendingInstalls(

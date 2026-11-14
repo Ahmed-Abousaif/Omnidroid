@@ -108,6 +108,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.omnidroid.BuildConfig
 import com.omnidroid.R
+import com.omnidroid.app.shared.settings.StorageFrameworkPickerLauncher
 import com.omnidroid.app.utils.android.benchmarkTag
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidEmptyView
@@ -735,7 +736,7 @@ private fun LibraryGames(
                     LibrarySyncEmpty(
                         modifier = Modifier,
                         scanning = state.operationInProgress,
-                        onSync = { onSync(context) },
+                        onSync = { StorageFrameworkPickerLauncher.pickFolder(context) },
                     )
                 }
                 isEmpty -> {
@@ -1116,7 +1117,7 @@ private fun ZoomTrack(
 }
 
 @Composable
-private fun LibrarySyncEmpty(
+internal fun LibrarySyncEmpty(
     modifier: Modifier,
     scanning: Boolean,
     onSync: () -> Unit,
@@ -1127,6 +1128,7 @@ private fun LibrarySyncEmpty(
     ) {
         FilledTonalButton(
             onClick = { if (!scanning) onSync() },
+            enabled = !scanning,
             modifier = Modifier.controllerFocusGlow(),
         ) {
             RescanIcon(
@@ -1136,7 +1138,7 @@ private fun LibrarySyncEmpty(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = stringResource(
-                    if (scanning) R.string.library_scanning else R.string.rescan,
+                    if (scanning) R.string.library_scanning else R.string.library_pick_games_folder,
                 ),
             )
         }

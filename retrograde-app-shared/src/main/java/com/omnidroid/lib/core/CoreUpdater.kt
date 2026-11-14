@@ -23,6 +23,10 @@ interface CoreUpdater {
         coreIDs: List<CoreID>,
     )
 
+    suspend fun refreshAssets(context: Context, coreIDs: List<CoreID>)
+
+    suspend fun removeAssets(context: Context, coreIDs: List<CoreID>)
+
     interface CoreManagerApi {
         @GET
         @Streaming

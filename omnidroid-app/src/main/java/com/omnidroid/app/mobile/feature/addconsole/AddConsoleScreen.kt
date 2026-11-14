@@ -1,6 +1,8 @@
 package com.omnidroid.app.mobile.feature.addconsole
 
 import androidx.activity.compose.BackHandler
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -73,7 +75,7 @@ import kotlinx.coroutines.launch
 
 internal val ConsoleControlShape = RoundedCornerShape(12.dp)
 
-private enum class ConfirmAction { DELETE_DATABASE, REMOVE_CONSOLE }
+private enum class ConfirmAction { DELETE_DATABASE, REMOVE_CONSOLE, UNINSTALL_CORE }
 
 private data class ConsoleConfirmation(val console: ConsoleItem, val action: ConfirmAction)
 
@@ -81,8 +83,12 @@ private data class ConsoleConfirmation(val console: ConsoleItem, val action: Con
 fun AddConsoleScreen(
     modifier: Modifier = Modifier,
     viewModel: AddConsoleViewModel,
+    initialConsole: MetaSystemID? = null,
+    selectionRequest: Int = 0,
+    onSelectionConsumed: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshStatus() }
     ConsoleManagementContent(
         state = state,
         onInstall = viewModel::install,
@@ -91,6 +97,11 @@ fun AddConsoleScreen(
         onRemoveConsole = viewModel::removeConsole,
         onConsumeError = viewModel::consumeError,
         modifier = modifier,
+        onRefreshAssets = viewModel::refreshAssets,
+        onUninstallCore = viewModel::uninstallCore,
+        initialConsole = initialConsole,
+        selectionRequest = selectionRequest,
+        onSelectionConsumed = onSelectionConsumed,
     )
 }
 
@@ -103,10 +114,16 @@ internal fun ConsoleManagementContent(
     onRemoveConsole: (MetaSystemID) -> Unit,
     onConsumeError: () -> Unit,
     modifier: Modifier = Modifier,
+    onRefreshAssets: (MetaSystemID) -> Unit = {},
+    onUninstallCore: (MetaSystemID) -> Unit = {},
+    initialConsole: MetaSystemID? = null,
+    selectionRequest: Int = 0,
+    onSelectionConsumed: () -> Unit = {},
 ) {
     var query by rememberSaveable { mutableStateOf("") }
-    var selectedId by rememberSaveable { mutableStateOf<MetaSystemID?>(null) }
-    var detailOpen by rememberSaveable { mutableStateOf(false) }
+    var selectedId by rememberSaveable { mutableStateOf(initialConsole) }
+    var detailOpen by rememberSaveable { mutableStateOf(initialConsole != null) }
+    var recoveryConsole by rememberSaveable { mutableStateOf(initialConsole) }
     var confirmation by remember { mutableStateOf<ConsoleConfirmation?>(null) }
     val context = LocalContext.current
     val catalogue =
@@ -126,7 +143,16 @@ internal fun ConsoleManagementContent(
     val detailFocus = remember { FocusRequester() }
     val busy = state.busyMetaSystemID != null
 
-    LaunchedEffect(resolvedId) { selectedId = resolvedId }
+    LaunchedEffect(resolvedId) { if (resolvedId != null) selectedId = resolvedId }
+    LaunchedEffect(initialConsole, selectionRequest) {
+        if (initialConsole != null) {
+            selectedId = initialConsole
+            recoveryConsole = initialConsole
+            detailOpen = true
+            query = ""
+            onSelectionConsumed()
+        }
+    }
     LaunchedEffect(query) {
         navigationJob?.cancel()
         listState.scrollToItem(0)
@@ -278,6 +304,9 @@ internal fun ConsoleManagementContent(
                     onRefetch = { onRefetchDatabase(selected.metaSystemID) },
                     onDelete = { confirmation = ConsoleConfirmation(selected, ConfirmAction.DELETE_DATABASE) },
                     onRemove = { confirmation = ConsoleConfirmation(selected, ConfirmAction.REMOVE_CONSOLE) },
+                    onRefreshAssets = { onRefreshAssets(selected.metaSystemID) },
+                    recoveryRequested = selected.metaSystemID == recoveryConsole,
+                    onUninstallCore = { confirmation = ConsoleConfirmation(selected, ConfirmAction.UNINSTALL_CORE) },
                     modifier = Modifier.weight(1f).fillMaxHeight().testTag("console-detail"),
                     focusRequester = detailFocus,
                 )
@@ -287,13 +316,18 @@ internal fun ConsoleManagementContent(
     }
     confirmation?.let { pending ->
         val delete = pending.action == ConfirmAction.DELETE_DATABASE
+        val uninstall = pending.action == ConfirmAction.UNINSTALL_CORE
         OmnidroidDialog(
             destructive = true,
             onDismissRequest = { confirmation = null },
             title = {
                 Text(
                     stringResource(
-                        if (delete) R.string.consoles_delete_database_title else R.string.consoles_remove_console_title,
+                        when {
+                            delete -> R.string.consoles_delete_database_title
+                            uninstall -> R.string.consoles_uninstall_core_title
+                            else -> R.string.consoles_remove_console_title
+                        },
                     ),
                 )
             },
@@ -302,6 +336,7 @@ internal fun ConsoleManagementContent(
                     stringResource(
                         when {
                             delete -> R.string.consoles_delete_database_message
+                            uninstall -> R.string.consoles_uninstall_core_message
                             pending.console.coreBundled -> R.string.consoles_remove_console_bundled_message
                             else -> R.string.consoles_remove_console_message
                         },
@@ -318,6 +353,8 @@ internal fun ConsoleManagementContent(
                             onDeleteDatabase(
                                 pending.console.metaSystemID,
                             )
+                        } else if (uninstall) {
+                            onUninstallCore(pending.console.metaSystemID)
                         } else {
                             onRemoveConsole(pending.console.metaSystemID)
                         }
@@ -325,7 +362,11 @@ internal fun ConsoleManagementContent(
                 ) {
                     Text(
                         stringResource(
-                            if (delete) R.string.consoles_confirm_delete else R.string.consoles_confirm_remove,
+                            when {
+                                delete -> R.string.consoles_confirm_delete
+                                uninstall -> R.string.consoles_uninstall_core
+                                else -> R.string.consoles_confirm_remove
+                            },
                         ),
                     )
                 }

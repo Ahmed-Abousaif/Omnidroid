@@ -122,6 +122,8 @@ import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.CoresSelection
 import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.library.SystemID
+import com.omnidroid.lib.library.MetaSystemID
+import android.content.Context
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
@@ -136,6 +138,25 @@ import retrofit2.Retrofit
 
 @AndroidEntryPoint
 class MainActivity : RetrogradeComponentActivity(), BusyActivity {
+    private var consoleRequest by mutableStateOf<Pair<MetaSystemID, Int>?>(null)
+    private var consoleRequestSequence = 0
+
+    companion object {
+        private const val EXTRA_CONSOLE = "console_setup_meta_system"
+
+        fun consoleIntent(context: Context, console: MetaSystemID): Intent =
+            Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                .putExtra(EXTRA_CONSOLE, console.name)
+    }
+
+    private fun readConsoleRequest(intent: Intent) {
+        val console = intent.getStringExtra(EXTRA_CONSOLE)?.let {
+            runCatching { MetaSystemID.valueOf(it) }.getOrNull()
+        } ?: return
+        consoleRequest = console to ++consoleRequestSequence
+        intent.removeExtra(EXTRA_CONSOLE)
+    }
     @Inject
     lateinit var gameLaunchTaskHandler: GameLaunchTaskHandler
 
@@ -219,6 +240,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
             SystemBarStyle.dark(Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
+        readConsoleRequest(intent)
         hideSystemBars()
         ensureLegacyStoragePermissionsIfNeeded()
 
@@ -240,6 +262,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
     @Composable
     private fun MainScreen(navController: NavHostController) {
         AppTheme {
+            LaunchedEffect(consoleRequest) {
+                if (consoleRequest != null) {
+                    navController.navigate(MainRoute.ADD_CONSOLES.route) { launchSingleTop = true }
+                }
+            }
             val controllerNav = remember { ControllerNavigationState() }
             val focusManager = LocalFocusManager.current
             val navBackStackEntry = navController.currentBackStackEntryAsState()
@@ -618,6 +645,9 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         }
                     composable(MainRoute.ADD_CONSOLES) {
                         AddConsoleScreen(
+                            initialConsole = consoleRequest?.first,
+                            selectionRequest = consoleRequest?.second ?: 0,
+                            onSelectionConsumed = { consoleRequest = null },
                             modifier =
                                 Modifier
                                     .fillMaxSize()
@@ -942,6 +972,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        readConsoleRequest(intent)
     }
 
     private fun predictiveFadeMillis(entry: NavBackStackEntry): Int {

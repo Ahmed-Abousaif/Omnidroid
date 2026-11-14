@@ -219,7 +219,10 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
                     file.copyTo(dest)
                 }
             }
-            return known.filter { File(library, it.libretroFileName).isFile }
+            return known.filter { bios ->
+                val file = File(library, bios.libretroFileName)
+                file.isFile && ps2ByCrc(crc32Hex(file))?.libretroFileName == bios.libretroFileName
+            }
         }
 
         fun adoptPs2File(
@@ -229,7 +232,9 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
             val match = ps2ByCrc(crc32Hex(source)) ?: return false
             val dest = File(ps2Library(systemDir), match.libretroFileName)
             dest.parentFile?.mkdirs()
-            if (!dest.exists()) source.copyTo(dest)
+            if (!dest.exists() || ps2ByCrc(crc32Hex(dest))?.libretroFileName != match.libretroFileName) {
+                source.copyTo(dest, overwrite = true)
+            }
             return true
         }
 

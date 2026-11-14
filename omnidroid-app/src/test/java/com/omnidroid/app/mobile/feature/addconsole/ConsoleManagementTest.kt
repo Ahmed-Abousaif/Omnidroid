@@ -9,6 +9,26 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ConsoleManagementTest {
+    @Test
+    fun installIsOnlyOfferedAfterAnExplicitUninstallForThatConsole() {
+        val fresh = console()
+        assertFalse(fresh.showInstall)
+        assertFalse(fresh.copy(registeredOrHasGames = true, libraryGameCount = 3).showInstall)
+        assertTrue(fresh.copy(manuallyUninstalled = true).showInstall)
+        assertFalse(fresh.copy(manuallyUninstalled = true, coreInstalled = true).showInstall)
+        assertFalse(console(MetaSystemID.SNES).showInstall)
+    }
+
+    @Test
+    fun incompleteSupportFilesFlagAnOtherwiseInstalledConsole() {
+        val installed = console().copy(
+            registeredOrHasGames = true, coreInstalled = true, databaseInstalled = true,
+            hasAssets = true, assetsInstalled = false,
+        )
+        assertTrue(installed.needsAttention)
+        assertFalse(installed.copy(assetsInstalled = true).needsAttention)
+    }
+
     private fun console(id: MetaSystemID = MetaSystemID.NES) =
         ConsoleItem(
             metaSystemID = id,

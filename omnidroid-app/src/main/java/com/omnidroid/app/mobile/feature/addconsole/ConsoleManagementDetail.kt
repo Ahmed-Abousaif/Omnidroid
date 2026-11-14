@@ -65,6 +65,9 @@ internal fun ConsoleManagementDetail(
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester,
+    onRefreshAssets: () -> Unit = {},
+    onUninstallCore: () -> Unit = {},
+    recoveryRequested: Boolean = false,
 ) {
     val accent = Color(console.metaSystemID.color())
     val actionColor = lerp(chromeColors.panel, accent, 0.22f)
@@ -127,13 +130,15 @@ internal fun ConsoleManagementDetail(
                                 when {
                                     console.coreBundled -> R.string.consoles_emulator_builtin_short
                                     console.coreInstalled -> R.string.consoles_emulator_installed_short
-                                    else -> R.string.consoles_emulator_missing_short
+                                    console.manuallyUninstalled -> R.string.consoles_emulator_missing_short
+                                    console.registeredOrHasGames -> R.string.consoles_emulator_pending
+                                    else -> R.string.consoles_emulator_auto
                                 },
                             ),
                         )
                     } ?: stringResource(R.string.consoles_emulator_unavailable),
                 actions = {
-                    if (!console.coreInstalled || !console.registeredOrHasGames) {
+                    if (console.showInstall) {
                         FilledTonalButton(
                             onClick = onInstall,
                             enabled = actionsEnabled && console.coreDisplayName != null,
@@ -147,17 +152,47 @@ internal fun ConsoleManagementDetail(
                         ) {
                             Text(
                                 stringResource(
-                                    when {
-                                        console.coreInstalled -> R.string.consoles_add_library
-                                        console.registeredOrHasGames -> R.string.consoles_repair_emulator
-                                        else -> R.string.consoles_install_console
-                                    },
+                                    R.string.consoles_install_console,
                                 ),
                             )
                         }
                     }
+                    if (console.canUninstallCore) {
+                        DetailIconAction(
+                            icon = Icons.Outlined.DeleteOutline,
+                            label = stringResource(R.string.consoles_uninstall_core),
+                            enabled = actionsEnabled,
+                            onClick = onUninstallCore,
+                            containerColor = ConsoleDangerRed,
+                        )
+                    }
                 },
             )
+            if (console.hasAssets) {
+                HorizontalDivider(color = chromeColors.divider)
+                DetailRow(
+                    icon = Icons.Outlined.Download,
+                    title = stringResource(R.string.consoles_assets_section),
+                    value = stringResource(
+                        when {
+                            console.assetsInstalled -> R.string.consoles_assets_ready
+                            recoveryRequested || console.registeredOrHasGames || console.manuallyUninstalled ||
+                                console.hasDownloadedCore -> R.string.consoles_assets_missing
+                            else -> R.string.consoles_assets_auto
+                        },
+                    ),
+                    actions = {
+                        if (recoveryRequested || console.registeredOrHasGames || console.assetsInstalled || console.hasDownloadedCore) {
+                            FilledTonalButton(
+                                onClick = onRefreshAssets,
+                                enabled = actionsEnabled && !console.manuallyUninstalled,
+                                modifier = Modifier.controllerFocusGlow(ConsoleControlShape),
+                                shape = ConsoleControlShape,
+                            ) { Text(stringResource(R.string.consoles_assets_refresh)) }
+                        }
+                    },
+                )
+            }
             HorizontalDivider(color = chromeColors.divider)
             DetailRow(
                 icon = Icons.Outlined.Storage,
@@ -277,4 +312,6 @@ private fun BusyAction.label(): Int =
         BusyAction.REFETCH_DATABASE -> R.string.consoles_refreshing
         BusyAction.DELETE_DATABASE -> R.string.consoles_deleting
         BusyAction.REMOVE_CONSOLE -> R.string.consoles_removing
+        BusyAction.UNINSTALL_CORE -> R.string.consoles_uninstalling
+        BusyAction.REFRESH_ASSETS -> R.string.consoles_assets_installing
     }

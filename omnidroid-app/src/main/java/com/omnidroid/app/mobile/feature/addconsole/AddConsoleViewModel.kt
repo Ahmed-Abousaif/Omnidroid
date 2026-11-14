@@ -8,6 +8,8 @@ import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.library.RegisteredSystemsStore
 import com.omnidroid.app.shared.covers.CustomCoverManager
 import com.omnidroid.lib.core.ConsoleManager
+import com.omnidroid.lib.core.ConsoleInstallPreferences
+import com.omnidroid.lib.core.CoreAssets
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.CoresSelection
 import com.omnidroid.lib.core.MetadataSliceInstaller
@@ -74,13 +76,18 @@ class AddConsoleViewModel(
         val installedDatabaseCount: Int = if (databaseInstalled) 1 else 0,
         val expectedDatabaseCount: Int = 1,
         val hasDownloadedCore: Boolean = coreInstalled && !coreBundled,
+        val manuallyUninstalled: Boolean = false,
+        val hasAssets: Boolean = false,
+        val assetsInstalled: Boolean = true,
+        val canUninstallCore: Boolean = coreInstalled && !coreBundled && registeredOrHasGames,
     ) {
         val hasDatabase: Boolean get() = installedDatabaseCount > 0
         val databaseAvailable: Boolean get() = expectedDatabaseCount > 0
         val needsAttention: Boolean
             get() =
                 (registeredOrHasGames || hasDatabase || hasDownloadedCore) &&
-                    (!coreInstalled || (databaseAvailable && !databaseInstalled))
+                    (!coreInstalled || !assetsInstalled || (databaseAvailable && !databaseInstalled))
+        val showInstall: Boolean get() = manuallyUninstalled && !coreInstalled
         val canRemove: Boolean get() = registeredOrHasGames || hasDatabase || hasDownloadedCore
     }
 
@@ -89,6 +96,8 @@ class AddConsoleViewModel(
         REFETCH_DATABASE,
         DELETE_DATABASE,
         REMOVE_CONSOLE,
+        UNINSTALL_CORE,
+        REFRESH_ASSETS,
     }
 
     data class UiState(
@@ -113,16 +122,20 @@ class AddConsoleViewModel(
     )
 
     private val applicationContext = appContext.applicationContext
+    private val installPreferences = ConsoleInstallPreferences(applicationContext)
     private val busyMetaFlow = MutableStateFlow<MetaSystemID?>(null)
     private val busyActionFlow = MutableStateFlow<BusyAction?>(null)
     private val errorFlow = MutableStateFlow<String?>(null)
     private val corePresenceRevision = MutableStateFlow(0)
+    private val presenceChanges = combine(corePresenceRevision, installPreferences.observe(), CoreAssets.revision) {
+        revision, _, assetRevision -> revision + assetRevision
+    }
 
     private val librarySnapshot =
         combine(
             registeredSystemsStore.observe(),
             retrogradeDb.gameDao().selectSystemsWithCount(),
-            corePresenceRevision,
+            presenceChanges,
             coresSelection.getSelectedCores(),
             libretroDb.dbInstance.sliceDao().observeAll(),
         ) { registered, counts, revision, _, dbSlices ->
@@ -152,6 +165,7 @@ class AddConsoleViewModel(
                     runCatching { GameSystem.findById(count.systemId).metaSystemID() }.getOrNull()
                 }.toSet()
             val installedMeta = library.registered + withGames
+            val manuallyUninstalled = installPreferences.uninstalled()
             val slicesById = library.slices.associateBy { it.sliceId }
 
             UiState(
@@ -168,7 +182,7 @@ class AddConsoleViewModel(
                             val selectedCores = ConsoleManager.coresFor(meta, coresSelection)
                             val catalogCores = (selectedCores + ConsoleManager.catalogCoresFor(meta)).distinct()
                             val coreInstalled =
-                                selectedCores.isNotEmpty() &&
+                                meta !in manuallyUninstalled && selectedCores.isNotEmpty() &&
                                     selectedCores.all {
                                         ConsoleManager.isCorePresent(applicationContext, it)
                                     }
@@ -188,6 +202,12 @@ class AddConsoleViewModel(
                                 libraryGameCount = libraryGameCount,
                                 installedDatabaseCount = installedRelated.size,
                                 expectedDatabaseCount = relatedSlices.size,
+                                manuallyUninstalled = meta in manuallyUninstalled,
+                                hasAssets = selectedCores.any(CoreAssets::hasAssets),
+                                assetsInstalled = selectedCores.filter(CoreAssets::hasAssets).all {
+                                    CoreAssets.isReady(applicationContext, it)
+                                },
+                                canUninstallCore = coreInstalled && !coreBundled,
                                 hasDownloadedCore =
                                     catalogCores.any {
                                         ConsoleManager.isCorePresent(applicationContext, it) &&
@@ -210,14 +230,44 @@ class AddConsoleViewModel(
         runExclusive(metaSystemID, BusyAction.INSTALL) {
             val cores = ConsoleManager.coresFor(metaSystemID, coresSelection)
             check(cores.isNotEmpty()) { applicationContext.getString(R.string.consoles_emulator_unavailable) }
-            val missing = cores.filterNot { ConsoleManager.isCorePresent(applicationContext, it) }
-            if (missing.isNotEmpty()) coreUpdater.downloadCores(applicationContext, missing)
+            coreUpdater.downloadCores(applicationContext, cores)
             check(cores.all { ConsoleManager.isCorePresent(applicationContext, it) }) {
                 applicationContext.getString(R.string.consoles_install_failed)
             }
             registeredSystemsStore.register(metaSystemID)
+            installPreferences.setUninstalled(metaSystemID, false)
             corePresenceRevision.value = corePresenceRevision.value + 1
             runCatching { sliceInstaller.ensureSlices(applicationContext, cores) }
+        }
+    }
+
+    fun refreshAssets(metaSystemID: MetaSystemID) {
+        runExclusive(metaSystemID, BusyAction.REFRESH_ASSETS) {
+            val cores = ConsoleManager.coresFor(metaSystemID, coresSelection).filter(CoreAssets::hasAssets)
+            coreUpdater.refreshAssets(applicationContext, cores)
+            check(cores.all { CoreAssets.isReady(applicationContext, it) }) {
+                applicationContext.getString(R.string.consoles_assets_failed)
+            }
+        }
+    }
+
+    fun uninstallCore(metaSystemID: MetaSystemID) {
+        runExclusive(metaSystemID, BusyAction.UNINSTALL_CORE) {
+            val console = state.value.consoles.first { it.metaSystemID == metaSystemID }
+            check(console.canUninstallCore) { applicationContext.getString(R.string.consoles_core_shared) }
+            val cores = ConsoleManager.coresFor(metaSystemID, coresSelection)
+            val remaining = state.value.consoles
+                .filter { it.registeredOrHasGames && !it.manuallyUninstalled }.map { it.metaSystemID }.toSet()
+            val exclusive = ConsoleManager.coresSafeToUninstall(applicationContext, metaSystemID, cores, remaining)
+            installPreferences.setUninstalled(metaSystemID, true)
+            try {
+                if (exclusive.isNotEmpty()) coreUpdater.uninstallCores(applicationContext, exclusive)
+            } catch (error: Exception) {
+                if (exclusive.all { ConsoleManager.isCorePresent(applicationContext, it) }) {
+                    installPreferences.setUninstalled(metaSystemID, false)
+                }
+                throw error
+            }
         }
     }
 
@@ -248,7 +298,7 @@ class AddConsoleViewModel(
                 retrogradeDb.gameDao().selectSystemsWithCount().first()
                     .filter { it.count > 0 }
                     .mapNotNull { runCatching { GameSystem.findById(it.systemId).metaSystemID() }.getOrNull() }
-            val remaining = registeredSystemsStore.get() + systemsWithGames
+            val remaining = (registeredSystemsStore.get() + systemsWithGames) - installPreferences.uninstalled()
             val safeToDelete =
                 ConsoleManager.coresSafeToUninstall(
                     applicationContext,
@@ -256,6 +306,21 @@ class AddConsoleViewModel(
                     cores,
                     remaining,
                 )
+
+            val wasUninstalled = metaSystemID in installPreferences.uninstalled()
+            val removable = ConsoleManager.coresFor(metaSystemID, coresSelection)
+                .any { !ConsoleManager.isCoreBundled(applicationContext, it) }
+            if (removable) installPreferences.setUninstalled(metaSystemID, true)
+            try {
+                if (safeToDelete.isNotEmpty()) coreUpdater.uninstallCores(applicationContext, safeToDelete)
+                val exclusiveAssets = cores.filter { !ConsoleManager.isCoreStillNeeded(it, metaSystemID, remaining) }
+                coreUpdater.removeAssets(applicationContext, exclusiveAssets)
+            } catch (error: Exception) {
+                if (removable && safeToDelete.all { ConsoleManager.isCorePresent(applicationContext, it) }) {
+                    installPreferences.setUninstalled(metaSystemID, wasUninstalled)
+                }
+                throw error
+            }
 
             sliceInstaller.removeSlices(ConsoleManager.sliceIdsFor(metaSystemID))
 
@@ -271,15 +336,16 @@ class AddConsoleViewModel(
 
             registeredSystemsStore.unregister(metaSystemID)
 
-            if (safeToDelete.isNotEmpty()) {
-                coreUpdater.uninstallCores(applicationContext, safeToDelete)
-            }
             corePresenceRevision.value = corePresenceRevision.value + 1
         }
     }
 
     fun consumeError() {
         errorFlow.value = null
+    }
+
+    fun refreshStatus() {
+        corePresenceRevision.value = corePresenceRevision.value + 1
     }
 
     private suspend fun checkDatabase(metaSystemID: MetaSystemID) {
