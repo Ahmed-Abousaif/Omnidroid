@@ -32,8 +32,13 @@ on:
         required: false
         type: boolean
         default: true
+      reuse_update_run:
+        description: 'Reuse the cores-database-update artifact from a prior run instead of regenerating updates'
+        required: false
+        default: ''
 
 permissions:
+  actions: read
   contents: write
   pull-requests: write
 
@@ -76,13 +81,27 @@ jobs:
         run: git submodule update --init -- omnidroid-chd/src/main/cpp/libchdr
 
       - name: Checkout Eden Source
-        if: inputs.cores == '' || contains(inputs.cores, 'switch')
+        if: inputs.reuse_update_run == '' && (inputs.cores == '' || contains(inputs.cores, 'switch'))
         run: git submodule update --init -- modules/switch/upstream/eden
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Verify Bundled LibretroDroid Revision
+        run: |
+          python - <<'PY'
+          import hashlib, json, pathlib, subprocess
+          aar = pathlib.Path('omnidroid-app/libs/omni-libretrodroid-release.aar')
+          metadata = json.loads(aar.with_suffix('.json').read_text())
+          pinned = subprocess.check_output(['git', 'rev-parse', 'HEAD:omni-libretrodroid'], text=True).strip()
+          if metadata['commit'] != pinned:
+              raise SystemExit('LibretroDroid source pin changed: rebuild the bundled release AAR and its metadata first.')
+          if hashlib.sha256(aar.read_bytes()).hexdigest() != metadata['sha256']:
+              raise SystemExit('Bundled LibretroDroid AAR checksum does not match its metadata.')
+          print(f'Bundled LibretroDroid matches pinned source {pinned}')
+          PY
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -92,19 +111,44 @@ jobs:
           cache: gradle
 
       - name: Resolve Eden Source Commit
-        if: inputs.cores == '' || contains(inputs.cores, 'switch')
+        if: inputs.reuse_update_run == '' && (inputs.cores == '' || contains(inputs.cores, 'switch'))
         env:
           EDEN_REF: ${{ inputs.eden_ref || 'master' }}
         run: python omnidroid-cores/build_eden.py --update-only --ref "$EDEN_REF"
+
+      - name: Download Previous Update Results
+        if: inputs.reuse_update_run != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: cores-database-update
+          path: ${{ runner.temp }}/reused-update
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.reuse_update_run }}
+
+      - name: Restore Previous Update Results
+        if: inputs.reuse_update_run != ''
+        run: |
+          RESULTS="$RUNNER_TEMP/reused-update"
+          if [ -f "$RESULTS/cores-update.bundle" ]; then
+            git -C omnidroid-cores bundle verify "$RESULTS/cores-update.bundle"
+            git -C omnidroid-cores fetch "$RESULTS/cores-update.bundle" HEAD
+            git -C omnidroid-cores checkout --detach FETCH_HEAD
+          fi
+          test "$(git -C omnidroid-cores rev-parse HEAD)" = "$(cat "$RESULTS/cores-commit.txt")"
+          if [ -s "$RESULTS/database-update.patch" ]; then
+            git apply --check "$RESULTS/database-update.patch"
+            git apply "$RESULTS/database-update.patch"
+          fi
 
       - name: Test Core Updater
         run: python -m unittest discover -s omnidroid-cores -p 'test_*.py'
 
       - name: Set up Eden Native Build
-        if: inputs.cores == '' || contains(inputs.cores, 'switch')
+        if: inputs.reuse_update_run == '' && (inputs.cores == '' || contains(inputs.cores, 'switch'))
         uses: ./.github/actions/setup-eden
 
       - name: Run Omnidroid Core Updater
+        if: inputs.reuse_update_run == ''
         env:
           CORES: ${{ inputs.cores }}
           ABIS: ${{ inputs.abis }}
@@ -141,6 +185,7 @@ jobs:
           python omnidroid-cores/update_cores.py --verify
 
       - name: Sync Libretro Database Slices
+        if: inputs.reuse_update_run == ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -156,6 +201,8 @@ jobs:
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git commit -m 'chore(cores): refresh selected cores and database slices'
+          fi
+          if [ "$(git rev-parse HEAD)" != "${{ steps.cores_ref.outputs.sha }}" ]; then
             git bundle create "$RUNNER_TEMP/cores-update.bundle" HEAD ^${{ steps.cores_ref.outputs.sha }}
             echo 'changed=true' >> "$GITHUB_OUTPUT"
           else
