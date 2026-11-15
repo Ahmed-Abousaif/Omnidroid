@@ -26,7 +26,6 @@ object deps {
         const val libretrodroid   = "0.13.2"
         const val composeBom      = "2026.08.00"
         const val ksp             = "2.2.10-2.0.2"
-        const val padkit          = "1.0.0-beta1"
 
         // Make sure this is compatible with current bom versions:
         // https://developer.android.com/jetpack/compose/bom/bom-mapping
@@ -162,7 +161,6 @@ object deps {
         const val startup                  = "androidx.startup:startup-runtime:1.2.0"
         const val composeHtmlText          = "de.charlex.compose.material3:material3-html-text:2.0.0-beta01"
         const val collectionsImmutable     = "org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.8"
-        const val padkit                   = "io.github.swordfish90:padkit:${versions.padkit}"
         const val libretrodroid            = "com.github.Ahmed-Abousaif:omni-libretrodroid:${versions.libretrodroid}"
 //        const val libretrodroid            = "com.omnidroid:omni-libretrodroid:unspecified"
     }

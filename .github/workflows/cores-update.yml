@@ -80,6 +80,9 @@ jobs:
       - name: Checkout CHD Dependency
         run: git submodule update --init -- omnidroid-chd/src/main/cpp/libchdr
 
+      - name: Checkout PadKit Fork
+        run: git submodule update --init --recursive -- modules/padkit/upstream/omnidroid-padkit
+
       - name: Checkout Eden Source
         if: inputs.reuse_update_run == '' && (inputs.cores == '' || contains(inputs.cores, 'switch'))
         run: git submodule update --init -- modules/switch/upstream/eden
