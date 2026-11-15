@@ -28,7 +28,7 @@ on:
         type: boolean
         default: false
       create_pr:
-        description: 'Create a pull request if changes are detected'
+        description: 'Create an update PR when publishing access is configured (results are always uploaded)'
         required: false
         type: boolean
         default: true
@@ -37,17 +37,47 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: cores-database-update
+  cancel-in-progress: false
+
 jobs:
   update-cores:
     name: Sync Cores & Database Slices
     runs-on: ubuntu-latest
+    env:
+      CAN_PUBLISH_CORES: ${{ secrets.CORES_UPDATE_DEPLOY_KEY != '' }}
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: false
           fetch-depth: 0
+
+      - name: Resolve Cores Submodule Commit
+        id: cores_ref
+        run: |
+          echo "sha=$(git rev-parse HEAD:omnidroid-cores)" >> "$GITHUB_OUTPUT"
+          git submodule init -- omnidroid-cores
+
+      - name: Checkout Cores
+        uses: actions/checkout@v4
+        with:
+          repository: Ahmed-Abousaif/OmnidroidCores
+          ref: ${{ steps.cores_ref.outputs.sha }}
+          path: omnidroid-cores
+          # A repository-scoped deploy key lets this job publish the submodule
+          # commit without granting access to private standalone source repos.
+          ssh-key: ${{ secrets.CORES_UPDATE_DEPLOY_KEY }}
+          fetch-depth: 0
+
+      - name: Checkout CHD Dependency
+        run: git submodule update --init -- omnidroid-chd/src/main/cpp/libchdr
+
+      - name: Checkout Eden Source
+        if: inputs.cores == '' || contains(inputs.cores, 'switch')
+        run: git submodule update --init -- modules/switch/upstream/eden
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -119,6 +149,40 @@ jobs:
         run: |
           ./gradlew :omnidroid-app:compilePlayDynamicDebugKotlin --no-daemon
 
+      - name: Commit Cores Submodule Updates
+        id: cores_commit
+        working-directory: omnidroid-cores
+        run: |
+          git add --all
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'chore(cores): refresh selected cores and database slices'
+            git bundle create "$RUNNER_TEMP/cores-update.bundle" HEAD ^${{ steps.cores_ref.outputs.sha }}
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Export Update Results
+        run: |
+          git diff --binary --full-index --ignore-submodules=all HEAD > "$RUNNER_TEMP/database-update.patch"
+          git -C omnidroid-cores rev-parse HEAD > "$RUNNER_TEMP/cores-commit.txt"
+
+      - name: Upload Update Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: cores-database-update
+          path: |
+            ${{ runner.temp }}/cores-update.bundle
+            ${{ runner.temp }}/database-update.patch
+            ${{ runner.temp }}/cores-commit.txt
+
+      - name: Publish Cores Submodule Commit
+        if: steps.cores_commit.outputs.changed == 'true' && env.CAN_PUBLISH_CORES == 'true' && (github.event_name == 'schedule' || inputs.create_pr == true)
+        working-directory: omnidroid-cores
+        run: git push origin HEAD:refs/heads/automation/cores-sync-${{ github.run_id }}-${{ github.run_attempt }}
+
       - name: Check for Changes
         id: git_status
         run: |
@@ -132,10 +196,11 @@ jobs:
           fi
 
       - name: Create Pull Request
-        if: steps.git_status.outputs.has_changes == 'true' && (github.event_name == 'schedule' || inputs.create_pr == true)
+        if: steps.git_status.outputs.has_changes == 'true' && env.CAN_PUBLISH_CORES == 'true' && (github.event_name == 'schedule' || inputs.create_pr == true)
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          base: master
           commit-message: "chore(cores): update libretro & standalone cores and database slices"
           branch: "automation/cores-weekly-sync"
           delete-branch: true
@@ -147,8 +212,7 @@ jobs:
 
             ### Summary of Updates:
             - **Libretro Cores**: Refreshed from nightly Libretro buildbot.
-            - **Switch Core (Eden)**: Built from the latest `master` commit; the resolved source commit is pinned in this repository. Native libraries and SDL Java sources are available in the `eden-native` workflow artifact.
-            - **Wii U Core (Cemu)**: Synced from `Ahmed-Abousaif/cemu-libretro-android` releases.
+            - **Core Selection**: `${{ inputs.cores || 'all registered cores' }}`. Cemu and Eden are updated only when selected.
             - **Multi-ABI Compatibility**: Verified 0-byte dummy fallback `.so` libraries for Google Play App Bundle compliance.
             - **Database Slices**: Re-generated with `:libretro-db-builder:run`.
             - **Build Verification**: Verified `:omnidroid-app:compilePlayDynamicDebugKotlin` succeeds.
@@ -158,10 +222,18 @@ jobs:
             cores
 
       - name: Summary
+        env:
+          HAS_CHANGES: ${{ steps.git_status.outputs.has_changes }}
+          CREATE_PR: ${{ github.event_name == 'schedule' || inputs.create_pr == true }}
         run: |
-          if [ "${{ steps.git_status.outputs.has_changes }}" = "true" ]; then
+          if [ "$HAS_CHANGES" = "true" ]; then
             echo "### Core Updates Detected 🚀" >> $GITHUB_STEP_SUMMARY
-            echo "Emulation cores or database slices were updated. Pull request created." >> $GITHUB_STEP_SUMMARY
+            echo "Updated core commits and database changes are in the cores-database-update artifact." >> "$GITHUB_STEP_SUMMARY"
+            if [ "$CAN_PUBLISH_CORES" = "true" ] && [ "$CREATE_PR" = "true" ]; then
+              echo "An update pull request was created or refreshed." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "Automatic publication was skipped. Import the Git bundle and database patch to review and publish these results." >> "$GITHUB_STEP_SUMMARY"
+            fi
           else
             echo "### All Cores & Databases are Up to Date ✅" >> $GITHUB_STEP_SUMMARY
             echo "No changes found across registered cores and slices." >> $GITHUB_STEP_SUMMARY
