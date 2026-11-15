@@ -11,6 +11,7 @@ include(
     ":omnidroid-chd",
     ":retrograde-util",
     ":retrograde-app-shared",
+    ":omnidroid-padkit",
     ":omnidroid-touchinput",
     ":omnidroid-app",
     ":omnidroid-metadata-libretro-db",
