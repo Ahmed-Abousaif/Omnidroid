@@ -1,14 +1,12 @@
 package com.omnidroid.touchinput.radial.utils
 
 import androidx.compose.ui.geometry.Offset
-import com.omnidroid.common.graphics.GraphicsUtils.rotatePoint
 import com.omnidroid.common.math.computeSizeOfItemsAroundCircumference
 import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
 import gg.padkit.anchors.Anchor
+import gg.padkit.anchors.buildGridAnchors
 import gg.padkit.ids.Id
 import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentSetOf
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.tan
@@ -29,18 +27,13 @@ fun buildCentral6ButtonsAnchors(
     val topLeftLine = Offset(0f, -1f - distance)
     val topRightLine = Offset(sin(Math.toRadians(30.0)).toFloat(), -cos(Math.toRadians(30.0)).toFloat())
 
-    val pointA = rotatePoint(topLeftLine + delta * 1.0f, rotationAngle)
-    val pointB = rotatePoint(topLeftLine + delta * 2.0f, rotationAngle)
-    val pointC = rotatePoint(topRightLine * (1f + distance) + delta * 1.0f, rotationAngle)
-    val pointD = rotatePoint(topRightLine * (1f + distance) + delta * 2.0f, rotationAngle)
-
-    val result =
-        persistentListOf(
-            Anchor(pointA, persistentSetOf(Id.Key(id0)), buttonSize),
-            Anchor(pointB, persistentSetOf(Id.Key(id1)), buttonSize),
-            Anchor(pointC, persistentSetOf(Id.Key(id2)), buttonSize),
-            Anchor(pointD, persistentSetOf(Id.Key(id3)), buttonSize),
-        )
-
-    return result
+    // Console-specific spacing stays here; PadKit owns anchor generation and rotation.
+    return buildGridAnchors(
+        rows = listOf(listOf(Id.Key(id0), Id.Key(id1)), listOf(Id.Key(id2), Id.Key(id3))),
+        buttonSize = buttonSize,
+        origin = topLeftLine + delta,
+        columnStep = delta,
+        rowStep = topRightLine * (1f + distance) - topLeftLine,
+        rotationDegrees = rotationAngle.toFloat(),
+    )
 }

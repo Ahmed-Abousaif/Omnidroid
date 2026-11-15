@@ -40,7 +40,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -72,6 +71,7 @@ import com.omnidroid.app.mobile.shared.compose.dialog.DialogWidth
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.mobile.shared.compose.ui.CutoutClearance
 import com.omnidroid.app.mobile.shared.compose.ui.rememberHuggingCutoutInsets
+import com.omnidroid.app.shared.settings.HapticFeedbackMode
 import com.omnidroid.app.shared.game.BaseGameScreenViewModel
 import com.omnidroid.app.shared.game.view.IRetroGameView
 import com.omnidroid.app.shared.game.viewmodel.GameViewModelTouchControls.Companion.MENU_LOADING_ANIMATION_MILLIS
@@ -86,7 +86,11 @@ import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
 import com.omnidroid.touchinput.radial.ui.GlassSurface
 import com.omnidroid.touchinput.radial.ui.OmnidroidButtonPressFeedback
 import gg.padkit.PadKit
+import com.omnidroid.touchinput.radial.layouts.shared.ComposeTouchLayouts
+import gg.padkit.config.DirectionHapticFeedback
+import gg.padkit.config.HapticFeedbackSettings
 import gg.padkit.config.HapticFeedbackType
+import gg.padkit.ids.Id
 import gg.padkit.inputstate.InputState
 import kotlin.math.roundToInt
 
@@ -113,11 +117,18 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 .getTouchControlsSettings()
                 .collectAsState(null)
 
+        val hapticMode = viewModel.getTouchHapticFeedbackMode().collectAsState(HapticFeedbackMode.NONE).value
+        val hapticIntensity = viewModel.getTouchVibrationIntensity().collectAsState(0f).value
+        val hostFeedbackIds = remember {
+            setOf<Id>(
+                Id.Key(ComposeTouchLayouts.HOST_KEY_SCREEN_LAYOUT),
+                Id.Key(ComposeTouchLayouts.HOST_KEY_HIDE_PADS),
+                Id.Key(ComposeTouchLayouts.HOST_KEY_CLOSE_LID),
+            )
+        }
         val padOpacity = viewModel.getVirtualPadOpacity().collectAsState(1f).value
 
         val touchControllerSettings = touchControllerSettingsState.value
-        val allowDpadDiagonals = touchControllerSettings?.allowDiagonals ?: true
-        SideEffect { viewModel.updateVirtualDpadPolicy(allowDpadDiagonals) }
         val currentControllerConfig = controllerConfigState.value
 
         val tiltConfiguration = viewModel.getTiltConfiguration().collectAsState(TiltConfiguration.Disabled)
@@ -175,13 +186,23 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             gameView.viewport = viewport
         }
 
-        // PadKit has no intensity API; touch haptics are played in GameViewModelTouchControls.
         // Touchscreen overlay is a sibling (not nested) so its pointerInput cannot break
         // PadKit multi-touch for virtual buttons.
         PadKit(
             modifier = Modifier.fillMaxSize(),
-            onInputEvents = { viewModel.handleVirtualInputEvent(it, allowDpadDiagonals) },
-            hapticFeedbackType = HapticFeedbackType.NONE,
+            onInputEvents = viewModel::handleVirtualInputEvent,
+            hapticFeedbackType = when (hapticMode) {
+                HapticFeedbackMode.NONE -> HapticFeedbackType.NONE
+                HapticFeedbackMode.PRESS -> HapticFeedbackType.PRESS
+                HapticFeedbackMode.PRESS_RELEASE -> HapticFeedbackType.PRESS_RELEASE
+            },
+            hapticFeedbackSettings = HapticFeedbackSettings(
+                intensity = hapticIntensity,
+                discreteDirections = DirectionHapticFeedback.ACTIVATION,
+                continuousDirections = false,
+                coalesceEffects = false,
+                excludedControlIds = hostFeedbackIds,
+            ),
             simulatedState = tiltSimulatedStates,
             simulatedControlIds = tiltSimulatedControls,
         ) {
