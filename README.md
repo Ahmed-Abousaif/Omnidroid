@@ -272,6 +272,7 @@ Omnidroid/
 ├── omnidroid-app-ext-free/      # Free distribution flavor configuration
 ├── omnidroid-app-ext-play/      # Google Play flavor (Cloud services, Drive/Dropbox/OneDrive)
 ├── omnidroid-touchinput/        # Virtual touch controller overlay and input routing
+├── omnidroid-padkit/            # Android build of the Omnidroid PadKit fork
 ├── omnidroid-chd/               # CHD compressed disc image decompression library
 ├── omnidroid-metadata-libretro/ # Libretro DB offline game title identification
 ├── omni-libretrodroid/          # (Submodule) Custom native Vulkan/GLES C++ emulation runtime
@@ -301,7 +302,7 @@ Settings uses feature-owned sections, shared row components, typed preference bi
    - **NDK & CMake:** Installed via Android Studio SDK Manager.
 
 2. **Cloning the Repository:**
-   Omnidroid uses Git submodules for native engines and emulation cores. Clone recursively:
+   Omnidroid uses Git submodules for PadKit, native engines, and emulation cores. Clone recursively:
 
    ```bash
    git clone --recurse-submodules https://github.com/Ahmed-Abousaif/Omnidroid.git
@@ -329,6 +330,34 @@ Settings uses feature-owned sections, shared row components, typed preference bi
    # Run code analysis & checkstyle
    ./gradlew checkstyle
    ```
+
+### Developing PadKit gamepads
+
+Omnidroid builds [Omnidroid-padkit](https://github.com/Ahmed-Abousaif/Omnidroid-padkit) from the Git submodule at `modules/padkit/upstream/omnidroid-padkit`. The `omnidroid-padkit` Gradle module compiles those sources with the app's Kotlin, Compose, and Android toolchain. The parent repository records an exact PadKit commit, and submodule updates check out that pin.
+
+The submodule uses a public, absolute HTTPS URL, so forks of Omnidroid can initialize it unchanged. Clone your Omnidroid fork with `--recurse-submodules`, or initialize PadKit in an existing clone:
+
+```bash
+git submodule sync -- modules/padkit/upstream/omnidroid-padkit
+git submodule update --init --recursive -- modules/padkit/upstream/omnidroid-padkit
+```
+
+Edit PadKit directly inside that submodule. App builds include those edits immediately. Verify the integration with:
+
+```bash
+./gradlew :omnidroid-touchinput:compileDebugKotlin
+```
+
+Commit and push PadKit changes to its repository before updating Omnidroid's pin. To select a published PadKit commit:
+
+```bash
+git -C modules/padkit/upstream/omnidroid-padkit fetch origin
+git -C modules/padkit/upstream/omnidroid-padkit checkout --detach <published-padkit-commit>
+git add modules/padkit/upstream/omnidroid-padkit
+git commit -m "Update PadKit submodule"
+```
+
+If you maintain your own PadKit fork, change the submodule URL with `git submodule set-url modules/padkit/upstream/omnidroid-padkit https://github.com/<your-user>/Omnidroid-padkit.git` and commit both `.gitmodules` and the new pin. The selected commit must be available from that URL for other clones to reproduce it.
 
 ### App updates (Play vs GitHub)
 
