@@ -136,8 +136,8 @@ jobs:
           fi
           test "$(git -C omnidroid-cores rev-parse HEAD)" = "$(cat "$RESULTS/cores-commit.txt")"
           if [ -s "$RESULTS/database-update.patch" ]; then
-            git apply --check "$RESULTS/database-update.patch"
-            git apply "$RESULTS/database-update.patch"
+            git apply --index --check "$RESULTS/database-update.patch"
+            git apply --index "$RESULTS/database-update.patch"
           fi
 
       - name: Test Core Updater
@@ -211,7 +211,7 @@ jobs:
 
       - name: Export Update Results
         run: |
-          git diff --binary --full-index --ignore-submodules=all HEAD > "$RUNNER_TEMP/database-update.patch"
+          git diff --binary --full-index --ignore-submodules=none HEAD -- . ':(exclude)omnidroid-cores' > "$RUNNER_TEMP/database-update.patch"
           git -C omnidroid-cores rev-parse HEAD > "$RUNNER_TEMP/cores-commit.txt"
 
       - name: Upload Update Results
@@ -243,6 +243,14 @@ jobs:
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
             echo "No changes detected; all cores and databases are up to date."
           fi
+
+      - name: Prepare Changes Against Pull Request Base
+        if: steps.git_status.outputs.has_changes == 'true' && env.CAN_PUBLISH_CORES == 'true' && (github.event_name == 'schedule' || inputs.create_pr == true)
+        run: |
+          # Preserve the validated tree, including workflow fixes when manually
+          # dispatched from another branch, as changes against the PR base.
+          git reset --soft origin/master
+          git switch -C master
 
       - name: Create Pull Request
         if: steps.git_status.outputs.has_changes == 'true' && env.CAN_PUBLISH_CORES == 'true' && (github.event_name == 'schedule' || inputs.create_pr == true)
