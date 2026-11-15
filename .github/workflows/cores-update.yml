@@ -141,13 +141,11 @@ jobs:
           python omnidroid-cores/update_cores.py --verify
 
       - name: Sync Libretro Database Slices
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x gradlew
-          ./gradlew :libretro-db-builder:run --no-daemon
-
-      - name: Validate Dynamic Feature Compilation
-        run: |
-          ./gradlew :omnidroid-app:compilePlayDynamicDebugKotlin --no-daemon
+          ./gradlew :libretro-db-builder:test :libretro-db-builder:run --no-daemon
 
       - name: Commit Cores Submodule Updates
         id: cores_commit
@@ -177,6 +175,10 @@ jobs:
             ${{ runner.temp }}/cores-update.bundle
             ${{ runner.temp }}/database-update.patch
             ${{ runner.temp }}/cores-commit.txt
+
+      - name: Validate Dynamic Feature Compilation
+        run: |
+          ./gradlew :omnidroid-app:compilePlayDynamicDebugKotlin --no-daemon
 
       - name: Publish Cores Submodule Commit
         if: steps.cores_commit.outputs.changed == 'true' && env.CAN_PUBLISH_CORES == 'true' && (github.event_name == 'schedule' || inputs.create_pr == true)
