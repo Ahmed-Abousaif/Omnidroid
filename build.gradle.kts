@@ -5,6 +5,7 @@ plugins {
     id("com.android.library") version "9.0.0" apply false
     id("com.android.test") version "9.0.0" apply false
     id("org.jetbrains.kotlin.android") version deps.versions.kotlin apply false
+    id("org.jetbrains.kotlin.multiplatform") version deps.versions.kotlin apply false
     id("org.jetbrains.kotlin.plugin.compose") version deps.versions.kotlin apply false
     id("org.jetbrains.kotlin.plugin.serialization") version deps.versions.kotlin apply false
     id("com.google.devtools.ksp") version deps.versions.ksp apply false

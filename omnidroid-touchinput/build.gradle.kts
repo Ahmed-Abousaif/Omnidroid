@@ -40,7 +40,7 @@ dependencies {
     implementation(deps.libs.kotlin.serialization)
     implementation(deps.libs.kotlin.serializationJson)
 
-    api(deps.libs.padkit)
+    api(project(":omnidroid-padkit"))
     api(deps.libs.collectionsImmutable)
 
     implementation(kotlin(deps.libs.kotlin.stdlib))
