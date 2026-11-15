@@ -1,0 +1,13 @@
+{
+  "repository": "Ahmed-Abousaif/omni-libretrodroid",
+  "commit": "5f56c822c0e9184c4cdf937774b2391ec89472be",
+  "version": "3.0.0",
+  "variant": "release",
+  "abis": [
+    "arm64-v8a",
+    "armeabi-v7a",
+    "x86",
+    "x86_64"
+  ],
+  "sha256": "48470f920e2f60a318e27d9059bdca1e23fe55966af84af52d2d539490f4a10f"
+}

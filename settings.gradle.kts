@@ -29,9 +29,9 @@ if (hasCoresSubmodule) {
     project(":libretro-db-builder").projectDir = File("omnidroid-cores/tools/libretro-db-builder")
 }
 
-if (file("omni-libretrodroid").exists()) {
+if (file("omni-libretrodroid/build.gradle.kts").isFile) {
     include(":omni-libretrodroid")
-} else if (file("libretrodroid").exists()) {
+} else if (file("libretrodroid/build.gradle.kts").isFile) {
     include(":libretrodroid")
 }
 
