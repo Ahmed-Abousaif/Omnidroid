@@ -697,9 +697,13 @@ class BaseGameScreenViewModel(
         if (!loadingState.value) sideEffects.requestSuccessfulFinish()
     }
 
-    fun handleVirtualInputEvent(events: List<InputEvent>) {
+    fun updateVirtualDpadPolicy(allowDiagonals: Boolean) {
+        touchControls.updateVirtualDpadPolicy(allowDiagonals)
+    }
 
-        touchControls.handleVirtualInputEvent(events)
+    fun handleVirtualInputEvent(events: List<InputEvent>, allowDiagonals: Boolean) {
+
+        touchControls.handleVirtualInputEvent(events, allowDiagonals)
 
     }
 
