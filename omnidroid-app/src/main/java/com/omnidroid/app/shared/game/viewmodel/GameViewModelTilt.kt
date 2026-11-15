@@ -6,19 +6,13 @@ import androidx.lifecycle.LifecycleOwner
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.touchinput.radial.sensors.TiltConfiguration
 import com.omnidroid.touchinput.radial.sensors.TiltSensor
+import com.omnidroid.touchinput.radial.sensors.toSimulatedInputStates
 import gg.padkit.inputstate.InputState
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class GameViewModelTilt(
     appContext: Context,
     private val settingsManager: SettingsManager,
@@ -46,17 +40,11 @@ class GameViewModelTilt(
 
     fun getSimulatedTiltEvents(): Flow<InputState> {
         return tiltConfiguration
-            .flatMapLatest { config ->
-                if (config is TiltConfiguration.Disabled) {
-                    return@flatMapLatest flow { awaitCancellation() }
-                }
-
+            .toSimulatedInputStates {
                 tiltSensor.setSensitivity(settingsManager.tiltSensitivity())
                 tiltSensor.getTiltEvents()
                     .onStart { tiltSensor.shouldRun = true }
                     .onCompletion { tiltSensor.shouldRun = false }
-                    .map { config.process(it) }
-                    .distinctUntilChanged()
             }
     }
 }

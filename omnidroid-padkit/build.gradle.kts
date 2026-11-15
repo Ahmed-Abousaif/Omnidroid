@@ -35,6 +35,20 @@ kotlin {
             kotlin.srcDir(padkitDir.resolve("lib/src/androidMain/kotlin"))
             resources.srcDir(padkitDir.resolve("lib/src/androidMain/resources"))
         }
+        commonTest {
+            kotlin.srcDir(padkitDir.resolve("lib/src/commonTest/kotlin"))
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+        androidUnitTest {
+            dependencies {
+                implementation(kotlin("test-junit"))
+                implementation(project.dependencies.platform(deps.libs.androidx.compose.composeBom))
+                implementation("androidx.compose.ui:ui-test-junit4")
+                implementation("org.robolectric:robolectric:4.14.1")
+            }
+        }
     }
 }
 
@@ -50,4 +64,12 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+}
+
+dependencies {
+    add("debugImplementation", platform(deps.libs.androidx.compose.composeBom))
+    add("debugImplementation", "androidx.compose.ui:ui-test-manifest")
 }

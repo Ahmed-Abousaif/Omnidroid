@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -115,6 +116,8 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
         val padOpacity = viewModel.getVirtualPadOpacity().collectAsState(1f).value
 
         val touchControllerSettings = touchControllerSettingsState.value
+        val allowDpadDiagonals = touchControllerSettings?.allowDiagonals ?: true
+        SideEffect { viewModel.updateVirtualDpadPolicy(allowDpadDiagonals) }
         val currentControllerConfig = controllerConfigState.value
 
         val tiltConfiguration = viewModel.getTiltConfiguration().collectAsState(TiltConfiguration.Disabled)
@@ -177,7 +180,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
         // PadKit multi-touch for virtual buttons.
         PadKit(
             modifier = Modifier.fillMaxSize(),
-            onInputEvents = { viewModel.handleVirtualInputEvent(it) },
+            onInputEvents = { viewModel.handleVirtualInputEvent(it, allowDpadDiagonals) },
             hapticFeedbackType = HapticFeedbackType.NONE,
             simulatedState = tiltSimulatedStates,
             simulatedControlIds = tiltSimulatedControls,
