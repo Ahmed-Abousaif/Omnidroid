@@ -24,6 +24,8 @@ Implementation plan and acceptance criteria for the six input issues identified 
 
 All 39 regression tests passed: 17 shared engine/event tests, 12 Android Compose tests under Robolectric, and 10 host D-pad/tilt tests. The Free Dynamic debug app's Kotlin compilation also passed.
 
+The same 12 Compose tests were run against the original PadKit pin `90b3621`: 10 failed. All 12 pass against the fixed pin `13cfc0b`, confirming that the tests reproduce the original removal, disposal, mapping, override, and disabled-haptics issues.
+
 ```bash
 ./gradlew :omnidroid-padkit:testDebugUnitTest :omnidroid-touchinput:testDebugUnitTest
 ./gradlew :omnidroid-app:compileFreeDynamicDebugKotlin
