@@ -307,6 +307,8 @@ class BaseGameScreenViewModel(
 
     }
 
+    fun getTouchVibrationIntensity(): Flow<Float> = touchControls.getTouchVibrationIntensity()
+
     fun getVirtualPadOpacity(): Flow<Float> {
 
         return touchControls.getVirtualPadOpacity()
@@ -697,14 +699,8 @@ class BaseGameScreenViewModel(
         if (!loadingState.value) sideEffects.requestSuccessfulFinish()
     }
 
-    fun updateVirtualDpadPolicy(allowDiagonals: Boolean) {
-        touchControls.updateVirtualDpadPolicy(allowDiagonals)
-    }
-
-    fun handleVirtualInputEvent(events: List<InputEvent>, allowDiagonals: Boolean) {
-
-        touchControls.handleVirtualInputEvent(events, allowDiagonals)
-
+    fun handleVirtualInputEvent(events: List<InputEvent>) {
+        touchControls.handleVirtualInputEvent(events)
     }
 
     override fun onCreate(owner: LifecycleOwner) {
