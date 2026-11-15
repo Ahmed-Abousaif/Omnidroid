@@ -37,6 +37,6 @@ Run the checked-in common engine/feedback/geometry tests, Android Compose and ha
 
 Android feedback tests exercise API 25, 26, 28, and 35, including silent intensity, absent hardware, legacy/default-amplitude fallback, durations, and live amplitude changes. Compose coverage checks live settings/adapter changes, discrete-only output, held diagonal/dead-zone changes, smooth visuals, mapping changes, simulation, and cancellation/disposal. Shared tests cover feedback transition policy, filtering, batching, mute tracking, directional quantization, capture, and generic anchor geometry.
 
-Local verification passed all 67 tests: 33 shared engine/feedback/geometry tests, 16 Compose tests, 13 Android haptics cases, and five host tilt tests. `:omnidroid-app:compileFreeDynamicDebugKotlin` also passed.
+Local verification passed all 68 tests: 34 shared engine/feedback/geometry tests, 16 Compose tests, 13 Android haptics cases, and five host tilt tests. `:omnidroid-app:compileFreeDynamicDebugKotlin` also passed.
 
 Physical vibration feel still needs an Android device smoke test. Windows verification does not compile the iOS target.
