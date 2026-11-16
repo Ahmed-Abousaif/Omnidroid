@@ -10,7 +10,8 @@ internal object LibraryPaging {
     fun config() = PagingConfig(
         pageSize = PAGE_SIZE,
         initialLoadSize = PAGE_SIZE * 2,
-        prefetchDistance = PAGE_SIZE / 2,
+        // A full page ahead so fast flings reach loaded rows instead of empty placeholders.
+        prefetchDistance = PAGE_SIZE,
         enablePlaceholders = true,
         maxSize = MAX_LOADED_GAMES,
         jumpThreshold = PAGE_SIZE * 3,

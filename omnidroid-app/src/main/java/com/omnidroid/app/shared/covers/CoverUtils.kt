@@ -168,8 +168,9 @@ object CoverUtils {
                     .build(),
             )
             .memoryCache {
+                // Coil's default share; room for the visible grid plus the prefetched rows ahead.
                 MemoryCache.Builder(applicationContext)
-                    .maxSizePercent(0.15)
+                    .maxSizePercent(0.25)
                     .build()
             }
             .okHttpClient {

@@ -89,19 +89,30 @@ class CoverCacheStore(
         sourceUrl: String,
         tier: Tier,
     ): File? {
+        // Grid cells look their cover up while composing on the main thread; remember files already
+        // found so scrolling back over them skips the hash and the stat calls.
+        val memoKey = "${tier.name}|$gameId|$sourceUrl"
+        knownFiles[memoKey]?.let {
+            touch(it)
+            return it
+        }
         val base = cacheBase(gameId, sourceUrl, tier)
         val webp = File("$base.webp")
         if (webp.isFile && webp.length() > 0L) {
+            knownFiles[memoKey] = webp
             touch(webp)
             return webp
         }
         val jpeg = File("$base.jpg")
         if (jpeg.isFile && jpeg.length() > 0L) {
+            knownFiles[memoKey] = jpeg
             touch(jpeg)
             return jpeg
         }
         return null
     }
+
+    private val knownFiles = java.util.concurrent.ConcurrentHashMap<String, File>()
 
     private suspend fun ensure(
         gameId: Int,
@@ -286,6 +297,7 @@ class CoverCacheStore(
             }
         }
         if (evictedFiles > 0) {
+            knownFiles.clear()
             val stats = EvictionStats(evictedFiles, evictedBytes, total)
             lastEviction = stats
             prefs.edit()
