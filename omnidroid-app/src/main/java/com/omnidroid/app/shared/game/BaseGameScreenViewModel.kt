@@ -502,6 +502,8 @@ class BaseGameScreenViewModel(
 
     }
 
+    fun isSingleScreenLayout() = touchControls.isSingleScreenLayout()
+
     fun getGameAspectRatio(): Flow<Float> {
 
         return touchControls.getGameAspectRatio()

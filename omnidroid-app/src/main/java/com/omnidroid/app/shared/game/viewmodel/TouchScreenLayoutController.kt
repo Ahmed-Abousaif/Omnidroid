@@ -234,6 +234,22 @@ class TouchScreenLayoutController(
         }
     }
 
+    /** True while a DS/3DS core shows only one screen (top or bottom). */
+    fun isSingleScreen(): Boolean {
+        return when (coreId) {
+            CoreID.MELONDS_DS -> {
+                val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDSDS_LAYOUT_KEY, systemId.dbname)
+                val current = sharedPreferences.getString(key, null)
+                current == MELONDSDS_SINGLE_TOP || current == MELONDSDS_SINGLE_BOTTOM
+            }
+            CoreID.CITRA, CoreID.AZAHAR -> {
+                val key = CoreVariablesManager.computeSharedPreferenceKey(CITRA_LAYOUT_KEY, systemId.dbname)
+                sharedPreferences.getString(key, null) == CITRA_SINGLE
+            }
+            else -> false
+        }
+    }
+
     fun getTouchScreenRegion(orientation: TouchControllerSettingsManager.Orientation): TouchScreenRegion? {
         if (coreId != CoreID.CEMU) return TouchScreenRegion.FULL
         val key = CoreVariablesManager.computeSharedPreferenceKey(CEMU_VIEW_KEY, systemId.dbname)

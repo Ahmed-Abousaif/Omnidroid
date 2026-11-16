@@ -162,6 +162,12 @@ class GameViewModelTouchControls(
         }.distinctUntilChanged()
     }
 
+    /** DS/3DS single-screen layouts fill the display with pads overlaid, like PSP. */
+    fun isSingleScreenLayout(): Flow<Boolean> =
+        screenLayoutRevision
+            .map { screenLayoutController.isSingleScreen() }
+            .distinctUntilChanged()
+
     fun getTouchScreenRegion(): Flow<TouchScreenRegion?> =
         combine(screenOrientation, screenLayoutRevision) { orientation, _ ->
             screenLayoutController.getTouchScreenRegion(orientation)
