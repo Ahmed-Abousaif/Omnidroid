@@ -8,6 +8,11 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ### v3.1.0
 
+- Switched on-screen controls to Omnidroid PadKit as a pinned in-repository submodule, making the same control-library sources available to clean checkouts and forks
+- Fixed stuck buttons and sticks when controls are removed, touch input is cancelled, or mappings change; simulated controls now update immediately and disabling tilt releases its input
+- Moved touch haptic intensity and feedback behavior into PadKit, with live vibration preferences, explicit mute, older-device fallbacks, and no background haptics dispatcher
+- Fixed analog-style D-pads to honor four-way/eight-way settings and dead zones immediately while held, while keeping smooth thumb movement
+- Added reusable button-layout geometry and 68 regression tests covering input capture, releases, simulation, remapping, cancellation, feedback transitions, and Android haptics
 - Redesigned the game launch loading screen with cover art, a rounded dark card, animated green loading bars, and the console name before "Loading…"
 - Fixed the core-download progress bar briefly flashing on rotation when cores were already installed; genuine download progress now survives rotation, and finished background checks no longer clear progress from an active download
 
