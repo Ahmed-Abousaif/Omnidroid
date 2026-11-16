@@ -3128,38 +3128,38 @@
         <error line="136" column="122" source="standard:function-signature" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/sidemenu/SideMenuScaffold.kt">
-        <error line="88" column="21" source="standard:chain-method-continuation" />
-        <error line="88" column="35" source="standard:chain-method-continuation" />
-        <error line="108" column="33" source="standard:chain-method-continuation" />
-        <error line="108" column="44" source="standard:chain-method-continuation" />
-        <error line="109" column="50" source="standard:argument-list-wrapping" />
-        <error line="109" column="74" source="standard:chain-method-continuation" />
-        <error line="109" column="80" source="standard:binary-expression-wrapping" />
-        <error line="109" column="80" source="standard:argument-list-wrapping" />
-        <error line="109" column="103" source="standard:binary-expression-wrapping" />
-        <error line="109" column="121" source="standard:max-line-length" />
-        <error line="109" column="125" source="standard:argument-list-wrapping" />
-        <error line="109" column="126" source="standard:argument-list-wrapping" />
-        <error line="110" column="38" source="standard:argument-list-wrapping" />
-        <error line="110" column="53" source="standard:argument-list-wrapping" />
-        <error line="110" column="69" source="standard:argument-list-wrapping" />
-        <error line="110" column="93" source="standard:chain-method-continuation" />
-        <error line="110" column="111" source="standard:chain-method-continuation" />
-        <error line="110" column="121" source="standard:max-line-length" />
-        <error line="110" column="136" source="standard:argument-list-wrapping" />
-        <error line="110" column="137" source="standard:argument-list-wrapping" />
-        <error line="127" column="28" source="standard:function-signature" />
-        <error line="127" column="43" source="standard:function-signature" />
-        <error line="127" column="63" source="standard:function-signature" />
-        <error line="127" column="82" source="standard:function-signature" />
-        <error line="128" column="9" source="standard:argument-list-wrapping" />
-        <error line="128" column="40" source="standard:argument-list-wrapping" />
-        <error line="128" column="45" source="standard:argument-list-wrapping" />
-        <error line="128" column="55" source="standard:argument-list-wrapping" />
-        <error line="128" column="72" source="standard:argument-list-wrapping" />
-        <error line="128" column="75" source="standard:argument-list-wrapping" />
-        <error line="128" column="121" source="standard:argument-list-wrapping" />
-        <error line="128" column="121" source="standard:max-line-length" />
+        <error line="89" column="21" source="standard:chain-method-continuation" />
+        <error line="89" column="35" source="standard:chain-method-continuation" />
+        <error line="112" column="33" source="standard:chain-method-continuation" />
+        <error line="112" column="44" source="standard:chain-method-continuation" />
+        <error line="113" column="50" source="standard:argument-list-wrapping" />
+        <error line="113" column="74" source="standard:chain-method-continuation" />
+        <error line="113" column="80" source="standard:binary-expression-wrapping" />
+        <error line="113" column="80" source="standard:argument-list-wrapping" />
+        <error line="113" column="103" source="standard:binary-expression-wrapping" />
+        <error line="113" column="121" source="standard:max-line-length" />
+        <error line="113" column="125" source="standard:argument-list-wrapping" />
+        <error line="113" column="126" source="standard:argument-list-wrapping" />
+        <error line="114" column="38" source="standard:argument-list-wrapping" />
+        <error line="114" column="53" source="standard:argument-list-wrapping" />
+        <error line="114" column="69" source="standard:argument-list-wrapping" />
+        <error line="114" column="93" source="standard:chain-method-continuation" />
+        <error line="114" column="111" source="standard:chain-method-continuation" />
+        <error line="114" column="121" source="standard:max-line-length" />
+        <error line="114" column="136" source="standard:argument-list-wrapping" />
+        <error line="114" column="137" source="standard:argument-list-wrapping" />
+        <error line="131" column="28" source="standard:function-signature" />
+        <error line="131" column="43" source="standard:function-signature" />
+        <error line="131" column="63" source="standard:function-signature" />
+        <error line="131" column="82" source="standard:function-signature" />
+        <error line="132" column="9" source="standard:argument-list-wrapping" />
+        <error line="132" column="40" source="standard:argument-list-wrapping" />
+        <error line="132" column="45" source="standard:argument-list-wrapping" />
+        <error line="132" column="55" source="standard:argument-list-wrapping" />
+        <error line="132" column="72" source="standard:argument-list-wrapping" />
+        <error line="132" column="75" source="standard:argument-list-wrapping" />
+        <error line="132" column="121" source="standard:argument-list-wrapping" />
+        <error line="132" column="121" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/ui/AdaptiveDimensions.kt">
         <error line="30" column="32" source="standard:multiline-expression-wrapping" />
@@ -4537,13 +4537,13 @@
         <error line="246" column="13" source="standard:function-expression-body" />
         <error line="290" column="27" source="standard:chain-method-continuation" />
         <error line="297" column="21" source="standard:chain-method-continuation" />
-        <error line="387" column="13" source="standard:chain-method-continuation" />
-        <error line="388" column="40" source="standard:chain-method-continuation" />
-        <error line="388" column="56" source="standard:chain-method-continuation" />
-        <error line="388" column="69" source="standard:chain-method-continuation" />
-        <error line="390" column="21" source="standard:chain-method-continuation" />
-        <error line="400" column="13" source="standard:chain-method-continuation" />
-        <error line="406" column="13" source="standard:chain-method-continuation" />
+        <error line="394" column="13" source="standard:chain-method-continuation" />
+        <error line="395" column="40" source="standard:chain-method-continuation" />
+        <error line="395" column="56" source="standard:chain-method-continuation" />
+        <error line="395" column="69" source="standard:chain-method-continuation" />
+        <error line="397" column="21" source="standard:chain-method-continuation" />
+        <error line="407" column="13" source="standard:chain-method-continuation" />
+        <error line="413" column="13" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/app/shared/game/viewmodel/GameViewModelRetroGameView.kt">
         <error line="3" column="1" source="standard:import-ordering" />
