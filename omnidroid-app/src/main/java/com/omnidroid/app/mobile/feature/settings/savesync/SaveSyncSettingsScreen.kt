@@ -314,6 +314,7 @@ fun SaveSyncSettingsScreen(
 
     signOutProvider?.let { provider ->
         OmnidroidDialog(
+            destructive = true,
             onDismissRequest = { signOutProvider = null },
             title = { Text(stringResource(R.string.settings_save_sync_sign_out)) },
             text = { Text(stringResource(R.string.settings_save_sync_sign_out_confirm, provider.displayName)) },
@@ -323,7 +324,8 @@ fun SaveSyncSettingsScreen(
                         viewModel.signOut(provider.id)
                         signOutProvider = null
                     },
-                ) { Text(stringResource(R.string.ok)) }
+                    role = DialogActionRole.Destructive,
+                ) { Text(stringResource(R.string.settings_save_sync_sign_out)) }
             },
             dismissButton = {
                 OmnidroidDialogButton(onClick = { signOutProvider = null }) {

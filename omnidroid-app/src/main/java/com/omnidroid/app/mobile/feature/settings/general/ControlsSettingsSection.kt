@@ -71,7 +71,7 @@ private fun ControlsOnScreenGroup(showTvHint: Boolean) {
                     key = stringResource(id = R.string.pref_key_virtual_pad_opacity),
                     default = 100,
                 ),
-            steps = 100,
+            steps = 99,
             valueRange = 0f..100f,
             enabled = true,
             titleRes = R.string.settings_title_virtual_pad_opacity,
@@ -89,10 +89,16 @@ private fun ControlsOnScreenGroup(showTvHint: Boolean) {
                     key = stringResource(id = R.string.pref_key_tilt_sensitivity_index),
                     default = 6,
                 ),
-            steps = 10,
+            steps = 9,
             valueRange = 0f..10f,
             enabled = true,
             titleRes = R.string.settings_title_tilt_sensitivity,
+            valueText = { value ->
+                Text(
+                    text = value.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            },
         )
     }
 }
@@ -120,9 +126,10 @@ private fun ControlsRumbleGroup() {
                     key = stringResource(id = R.string.pref_key_vibration_intensity),
                     default = 50,
                 ),
-            steps = 100,
+            steps = 99,
             valueRange = 0f..100f,
-            enabled = true,
+            // Intensity only matters while rumble is on.
+            enabled = rumbleEnabled.value,
             titleRes = R.string.settings_title_vibration_intensity,
             subtitleRes = R.string.settings_description_vibration_intensity,
             valueText = { value ->

@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.omnidroid.R
+import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsList
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsPage
@@ -58,19 +59,39 @@ fun GraphicsApiSelectionScreen(
         OmnidroidSettingsGroup {
             configs.forEach { config ->
                 androidx.compose.runtime.key(config.system.id) {
-                    val currentIndex = config.options.indexOf(config.currentSelection).coerceAtLeast(0)
-                    val labels = config.options.map { graphicsApiLabel(it) }
+                    // Without Vulkan support the app runs OpenGL anyway, so don't offer Vulkan.
+                    val options =
+                        config.options.filter { isVulkanSupported || !it.equals("vulkan", ignoreCase = true) }
+                    val labels = options.map { graphicsApiLabel(it) }
 
-                    OmnidroidSettingsList(
-                        selectedIndex = currentIndex,
-                        title = { Text(text = stringResource(config.system.titleResId)) },
-                        subtitle = { Text(text = graphicsApiLabel(config.currentSelection)) },
-                        items = labels,
-                        onItemSelected = { index, _ ->
-                            val selectedOption = config.options[index]
-                            viewModel.setGraphicsApi(config.system.id, config.variableKey, selectedOption)
-                        },
-                    )
+                    if (options.size <= 1) {
+                        // A single choice (e.g. Wii U is Vulkan-only): show it, don't open a one-item picker.
+                        OmnidroidSettingsMenuLink(
+                            title = { Text(text = stringResource(config.system.titleResId)) },
+                            subtitle = {
+                                Text(
+                                    text =
+                                        stringResource(
+                                            R.string.settings_graphics_api_only_option,
+                                            labels.firstOrNull() ?: graphicsApiLabel(config.currentSelection),
+                                        ),
+                                )
+                            },
+                            onClick = {},
+                        )
+                    } else {
+                        val currentIndex =
+                            options.indexOfFirst { it.equals(config.currentSelection, ignoreCase = true) }.coerceAtLeast(0)
+                        OmnidroidSettingsList(
+                            selectedIndex = currentIndex,
+                            title = { Text(text = stringResource(config.system.titleResId)) },
+                            subtitle = { Text(text = labels[currentIndex]) },
+                            items = labels,
+                            onItemSelected = { index, _ ->
+                                viewModel.setGraphicsApi(config.system.id, config.variableKey, options[index])
+                            },
+                        )
+                    }
                 }
             }
         }

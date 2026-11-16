@@ -23,7 +23,8 @@ internal fun EmulationSettings(
         )
         OmnidroidSettingsMenuLink(
             titleRes = R.string.settings_title_display_bios_info,
-            subtitleRes = R.string.settings_description_display_bios_info,
+            // Say why it's greyed out instead of leaving the row silently disabled.
+            subtitleRes = if (indexingInProgress) R.string.settings_unavailable_while_indexing else R.string.settings_description_display_bios_info,
             enabled = !indexingInProgress,
             onClick = { onNavigateSubscreen(SettingsSubscreen.BIOS) },
         )

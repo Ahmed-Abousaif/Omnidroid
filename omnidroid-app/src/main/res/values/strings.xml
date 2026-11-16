@@ -130,6 +130,8 @@
     <string name="game_unavailable">This game is unavailable. Reconnect the folder or remove it from the library.</string>
     <string name="game_unavailable_badge">Unavailable</string>
     <string name="settings_title_clear_missing_games">Clear missing games</string>
+    <string name="settings_clear_missing_games_confirm">Clear</string>
+    <string name="settings_unavailable_while_indexing">Unavailable while the library is being scanned</string>
     <string name="settings_description_clear_missing_games">Permanently remove games whose files are no longer in the library folder.</string>
     <string name="settings_title_periodic_library_scan">Periodic library check</string>
     <string name="settings_description_periodic_library_scan">When charging and idle, occasionally rescan the games folder in the background. Off by default.</string>
@@ -201,6 +203,9 @@
     <string name="settings_description_hd_mode">Apply post-processing upscaling filter</string>
     <string name="settings_description_hd_mode_battery">HD mode is unavailable below 15% battery</string>
     <string name="settings_description_hd_quality">Adjust the quality of HD mode</string>
+    <string name="settings_hd_quality_low">Low</string>
+    <string name="settings_hd_quality_medium">Medium</string>
+    <string name="settings_hd_quality_high">High</string>
 
     <string name="settings_title_immersive_mode">Dynamic background</string>
     <string name="settings_description_immersive_mode">Colors the background from the game\'s visuals</string>
@@ -233,6 +238,7 @@
     <string name="settings_description_graphics_api_selection">Choose OpenGL or Vulkan rendering backend per system</string>
     <string name="settings_graphics_api_vulkan_available">Vulkan %1$s is supported by your device. Vulkan provides high-performance rendering with reduced CPU overhead and shader compilation stutter.</string>
     <string name="settings_graphics_api_vulkan_unavailable">Vulkan is not supported on this device. Cores will default to OpenGL ES.</string>
+    <string name="settings_graphics_api_only_option">%1$s (the only option on this device)</string>
 
     <string name="settings_title_display_bios_info">BIOS &amp; system files</string>
     <string name="settings_description_display_bios_info">PS2 BIOS, Switch keys/firmware, and other system files</string>
@@ -330,7 +336,9 @@
     <string name="settings_startup_dialog_body">Omnidroid will open straight into the %1$s library every time it starts.</string>
 
     <string name="reset_settings_warning_message_title">Are you sure?</string>
-    <string name="reset_settings_warning_message_description">This will reset Omnidroid to its factory settings. Saves and States will be preserved.</string>
+    <string name="reset_settings_warning_message_description">All settings go back to their defaults: your games folder, controller buttons and shortcuts, per-console options and display settings. Downloaded emulator cores are deleted and downloaded again when needed. Saves and save states are kept.</string>
+    <string name="reset_settings_confirm">Reset</string>
+    <string name="reset_settings_done">Settings reset</string>
 
     <string name="settings_title_save_sync">Cloud saves</string>
     <string name="settings_description_save_sync">Back up and Sync your saves on the cloud</string>
