@@ -269,27 +269,15 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
                 if (isVisible) {
                     CompositionLocalProvider(LocalOmnidroidPadTheme provides OmnidroidPadTheme()) {
+                        // Portrait pads sit on a glass panel. Landscape pads are drawn straight over
+                        // the background for every core, including DS/3DS dual screen whose pads sit
+                        // beside the game rather than over it.
                         if (!isLandscape) {
                             PadContainer(
                                 modifier =
                                     Modifier
                                         .layoutId(GameScreenLayout.CONSTRAINTS_BOTTOM_CONTAINER)
                                         .windowInsetsPadding(bottomPadCutoutInsets)
-                                        .alpha(padOpacity),
-                            )
-                        } else if (!currentControllerConfig.allowTouchOverlay) {
-                            PadContainer(
-                                modifier =
-                                    Modifier
-                                        .layoutId(GameScreenLayout.CONSTRAINTS_LEFT_CONTAINER)
-                                        .windowInsetsPadding(leftPadCutoutInsets)
-                                        .alpha(padOpacity),
-                            )
-                            PadContainer(
-                                modifier =
-                                    Modifier
-                                        .layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_CONTAINER)
-                                        .windowInsetsPadding(rightPadCutoutInsets)
                                         .alpha(padOpacity),
                             )
                         }
