@@ -685,32 +685,6 @@ class BaseGameScreenViewModel(
 
     }
 
-    /** Set once the game saved and is closing so the launcher can start it again. */
-    var relaunchAfterFinish = false
-        private set
-
-    /**
-     * Saves like [requestFinish], then closes the game so the launcher reopens it from that save.
-     * Used when a setting (the renderer) cannot change while the core runs. If saving fails the
-     * usual quit dialog shows instead and no relaunch is flagged.
-     */
-    fun requestRelaunch() {
-        if (loadingState.value) return
-        viewModelScope.launch {
-            withLoading {
-                if (activeSession is com.omnidroid.lib.backend.StateSaveableSession) {
-                    val snapshot = saves.captureSaveSnapshot(true)
-                    if (!saves.writeSaveSnapshot(snapshot, notifyFailure = false)) {
-                        sideEffects.requestSaveFailureOnQuit()
-                        return@withLoading
-                    }
-                }
-                relaunchAfterFinish = true
-                sideEffects.requestSuccessfulFinish()
-            }
-        }
-    }
-
     fun requestBackgroundSave() {
 
         if (loadingState.value || activeSession !is com.omnidroid.lib.backend.StateSaveableSession) return

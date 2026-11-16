@@ -544,11 +544,6 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
                     is GameViewModelSideEffects.UiEffect.SaveFailedOnQuit -> displaySaveFailureDialog()
 
-                    is GameViewModelSideEffects.UiEffect.RelaunchForRenderer -> {
-                        displayToast(R.string.game_toast_relaunch_for_renderer)
-                        baseGameScreenViewModel.requestRelaunch()
-                    }
-
                     is GameViewModelSideEffects.UiEffect.FailureFinish -> performErrorFinish(it.message)
                     is GameViewModelSideEffects.UiEffect.ConsoleSetupRequired -> displayConsoleSetupDialog(it.message)
 
@@ -694,9 +689,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
     private fun performSuccessfulActivityFinish() {
 
-        sessionCoordinator.performSuccessfulActivityFinish(
-            relaunch = baseGameScreenViewModel.relaunchAfterFinish,
-        )
+        sessionCoordinator.performSuccessfulActivityFinish()
 
     }
 
@@ -963,9 +956,6 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         const val PLAY_GAME_RESULT_LEANBACK = "PLAY_GAME_RESULT_LEANBACK"
 
         const val PLAY_GAME_RESULT_ERROR = "PLAY_GAME_RESULT_ERROR"
-
-        /** The game closed only to restart (e.g. renderer change); the launcher reopens it. */
-        const val PLAY_GAME_RESULT_RELAUNCH = "PLAY_GAME_RESULT_RELAUNCH"
 
         const val EXTRA_EXTERNAL_LAUNCH = "EXTRA_EXTERNAL_LAUNCH"
 

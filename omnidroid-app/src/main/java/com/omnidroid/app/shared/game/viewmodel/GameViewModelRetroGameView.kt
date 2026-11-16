@@ -81,10 +81,7 @@ class GameViewModelRetroGameView(
     private val retroGameViewFlow = MutableStateFlow<IRetroGameView?>(null)
     var retroGameView: IRetroGameView? by MutableStateProperty(retroGameViewFlow)
     private val frameSpeedPreferences = GameFrameSpeedPreferences(appContext)
-
-    /** Renderer the running view was created with (true = Vulkan); null until created. */
-    private var runningOnVulkan: Boolean? = null
-    private var rendererRelaunchRequested = false
+    private var rendererSettingsGuard: RendererSettingsGuard? = null
 
     fun getGameState(): Flow<GameState> {
         return gameState.debounce(200)
@@ -186,10 +183,10 @@ class GameViewModelRetroGameView(
         val currentState = gameState.value
         if (currentState !is GameState.Loaded) throw IllegalStateException("Game is not loaded.")
 
+        rendererSettingsGuard = RendererSettingsGuard(currentState.gameData.coreVariables.asList())
+
         val isVulkanPreferred =
-            isVulkanRequested(currentState.gameData.coreVariables.asList()) == true &&
-                VulkanDetector.isVulkanSupported(context)
-        runningOnVulkan = isVulkanPreferred
+            isVulkanRequested(currentState.gameData) && VulkanDetector.isVulkanSupported(context)
 
         val result: IRetroGameView =
             if (isVulkanPreferred) {
@@ -232,12 +229,8 @@ class GameViewModelRetroGameView(
         return currentState.gameData to result
     }
 
-    /** True/false when [variables] pick a renderer (any Vulkan wins); null when they set none. */
-    private fun isVulkanRequested(variables: List<CoreVariable>): Boolean? {
-        val rendererVariables = variables.filter { it.key in RENDERER_KEYS }
-        if (rendererVariables.isEmpty()) return null
-        return rendererVariables.any { it.value.equals("vulkan", ignoreCase = true) }
-    }
+    private fun isVulkanRequested(gameData: GameLoader.GameData): Boolean =
+        RendererSettingsGuard.requestsVulkan(gameData.coreVariables.asList())
 
     suspend fun retroGameViewFlow() =
         retroGameViewFlow
@@ -374,24 +367,12 @@ class GameViewModelRetroGameView(
     }
 
     private fun updateCoreVariables(options: List<CoreVariable>) {
-        // The renderer is fixed by the view type (GL vs Vulkan surface) chosen at launch. Handing a
-        // running core a different renderer crashes it, so hold that option back and relaunch the
-        // game on the new renderer instead (it is already saved in preferences).
-        val running = runningOnVulkan
-        val requested = isVulkanRequested(options)
-        val rendererChanged =
-            running != null && requested != null &&
-                (requested && VulkanDetector.isVulkanSupported(appContext)) != running
-        val applicable = if (rendererChanged) options.filterNot { it.key in RENDERER_KEYS } else options
-
-        if (rendererChanged && !rendererRelaunchRequested) {
-            rendererRelaunchRequested = true
-            Timber.i("Renderer changed from ${if (running == true) "Vulkan" else "OpenGL"}; relaunching game")
-            sideEffects.requestRendererRelaunch()
+        val update = rendererSettingsGuard?.filter(options)
+        if (update?.notifyDeferredChange == true) {
+            sideEffects.showToast(appContext.getString(R.string.game_toast_renderer_change_deferred))
         }
-
         val updatedVariables =
-            applicable.map { Variable(it.key, it.value) }
+            (update?.applicable ?: options).map { Variable(it.key, it.value) }
                 .toTypedArray()
 
         updatedVariables.forEach {
@@ -471,19 +452,5 @@ class GameViewModelRetroGameView(
             }
 
         return message
-    }
-
-    companion object {
-        /** Core options that pick the renderer, which decides the view type at launch. */
-        private val RENDERER_KEYS =
-            setOf(
-                "citra_graphics_api",
-                "dolphin_graphics_api",
-                "dolphin_renderer",
-                "ppsspp_rendering_backend",
-                "ppsspp_gpu_backend",
-                "armsx2_renderer",
-                "cemu_graphics_api",
-            )
     }
 }
