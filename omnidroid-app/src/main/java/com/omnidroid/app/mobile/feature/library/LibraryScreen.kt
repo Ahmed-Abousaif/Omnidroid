@@ -1,5 +1,6 @@
 package com.omnidroid.app.mobile.feature.library
 
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import android.content.Context
 import androidx.activity.compose.ReportDrawnWhen
 import androidx.compose.animation.AnimatedVisibilityScope
@@ -112,7 +113,6 @@ import com.omnidroid.app.shared.settings.StorageFrameworkPickerLauncher
 import com.omnidroid.app.utils.android.benchmarkTag
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidEmptyView
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.hugDisplayCutout
@@ -467,7 +467,7 @@ private fun SidebarIconButton(
         tonalElevation = 0.dp,
         border =
             if (selected) {
-                BorderStroke(2.dp, LibraryNeonGreen)
+                BorderStroke(2.dp, libraryAccentColor)
             } else {
                 BorderStroke(1.dp, chromeColors.panelBorder)
             },
@@ -477,7 +477,7 @@ private fun SidebarIconButton(
                 imageVector = icon,
                 contentDescription = contentDescription,
                 modifier = Modifier.size(adaptiveSpec.sidebarIconSize),
-                tint = if (selected) LibraryNeonGreen else chromeColors.muted,
+                tint = if (selected) libraryAccentColor else chromeColors.muted,
             )
             StartupBadge(visible = pinned)
         }
@@ -492,7 +492,7 @@ private fun BoxScope.StartupBadge(visible: Boolean) {
         imageVector = Icons.Filled.Star,
         contentDescription = null,
         modifier = Modifier.align(Alignment.TopEnd).size(14.dp * scale).padding(1.dp),
-        tint = LibraryNeonGreen,
+        tint = libraryAccentColor,
     )
 }
 
@@ -981,7 +981,7 @@ private fun LayoutToggleIcon(
             imageVector = icon,
             contentDescription = contentDescription,
             modifier = Modifier.size(iconSize),
-            tint = if (selected) LibraryNeonGreen else chromeColors.muted,
+            tint = if (selected) libraryAccentColor else chromeColors.muted,
         )
     }
 }
@@ -1073,7 +1073,7 @@ private fun ZoomTrack(
     onPositionChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val thumbColor = LibraryNeonGreen
+    val thumbColor = libraryAccentColor
     val trackColor = chromeColors.muted.copy(alpha = 0.45f)
     Box(
         modifier =

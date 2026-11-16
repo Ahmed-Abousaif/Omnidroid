@@ -1,5 +1,7 @@
 package com.omnidroid.app.mobile.feature.gamedetails
 
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
+import com.omnidroid.app.mobile.shared.compose.ui.OnLibraryNeonGreen
 import android.net.Uri
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -385,7 +387,7 @@ private fun GameCoverOrTrailer(
                         .then(coverSharedModifier),
                 shape = coverShape,
                 tonalElevation = 6.dp,
-                color = Color(0xFF161616),
+                color = chromeColors.listRow,
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -648,7 +650,7 @@ private fun GameDetailsTabs(
                     imageVector =
                         if (tab == GameDetailsTab.Info) Icons.Outlined.Info else Icons.Outlined.EmojiEvents,
                     contentDescription = null,
-                    tint = if (selected) LibraryNeonGreen else chromeMutedContentColor,
+                    tint = if (selected) libraryAccentColor else chromeMutedContentColor,
                     modifier = Modifier.size(16.dp),
                 )
                 Text(
@@ -731,14 +733,14 @@ private fun GameDetailsActions(
                     Icon(
                         imageVector = Icons.Filled.PlayArrow,
                         contentDescription = if (showLabel) null else stringResource(R.string.game_play),
-                        tint = Color.White,
+                        tint = OnLibraryNeonGreen,
                         modifier = Modifier.size(22.dp),
                     )
                     if (showLabel) {
                         Text(
                             text = stringResource(R.string.game_play),
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                            color = Color.White,
+                            color = OnLibraryNeonGreen,
                             textAlign = TextAlign.Center,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -763,8 +765,11 @@ private fun GameDetailsActions(
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = stringResource(R.string.favorites),
-                    tint = if (isFavorite) LibraryNeonGreen else chromeColors.muted,
+                    contentDescription =
+                        stringResource(
+                            if (isFavorite) R.string.game_context_menu_remove_from_favorites else R.string.game_context_menu_add_to_favorites,
+                        ),
+                    tint = if (isFavorite) libraryAccentColor else chromeColors.muted,
                     modifier = Modifier.size(20.dp),
                 )
             }
