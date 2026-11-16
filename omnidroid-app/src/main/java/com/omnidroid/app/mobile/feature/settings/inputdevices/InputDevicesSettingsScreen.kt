@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.input.GamePadBindingActivity
 import com.omnidroid.app.mobile.feature.input.GamePadShortcutBindingActivity
@@ -88,7 +89,9 @@ private fun DeviceShortcutBinding(
 ) {
     OmnidroidSettingsMenuLink(
         title = { Text(text = shortcut.type.displayName()) },
-        subtitle = { Text(text = shortcut.name) },
+        subtitle = {
+            Text(text = if (shortcut.isBound) shortcut.name else stringResource(R.string.shortcut_not_set))
+        },
         onClick = {
             val intent =
                 Intent(context, GamePadShortcutBindingActivity::class.java).apply {

@@ -162,6 +162,12 @@ class GameViewModelTouchControls(
         }.distinctUntilChanged()
     }
 
+    /** DS/3DS single-screen layouts fill the display with pads overlaid, like PSP. */
+    fun isSingleScreenLayout(): Flow<Boolean> =
+        screenLayoutRevision
+            .map { screenLayoutController.isSingleScreen() }
+            .distinctUntilChanged()
+
     fun getTouchScreenRegion(): Flow<TouchScreenRegion?> =
         combine(screenOrientation, screenLayoutRevision) { orientation, _ ->
             screenLayoutController.getTouchScreenRegion(orientation)
@@ -169,6 +175,19 @@ class GameViewModelTouchControls(
 
     fun refreshLayout() {
         screenLayoutRevision.value++
+    }
+
+    /**
+     * On-screen layout button and gamepad shortcut. DS/3DS: dual -> dual swapped -> top only ->
+     * bottom only. Wii U: TV <-> dual.
+     */
+    fun cycleScreenLayout() {
+        if (!screenLayoutController.supportsToggle()) return
+        val variables = screenLayoutController.cycle(screenOrientation.value)
+        screenLayoutRevision.value++
+        if (variables.isNotEmpty()) {
+            retroGameView.applyCoreVariables(variables)
+        }
     }
 
     fun updateScreenOrientation(orientation: TouchControllerSettingsManager.Orientation) {
@@ -250,9 +269,7 @@ class GameViewModelTouchControls(
             ComposeTouchLayouts.HOST_KEY_SCREEN_LAYOUT -> {
                 if (event.pressed && screenLayoutController.supportsToggle()) {
                     playTouchHapticForButton(true)
-                    val variables = screenLayoutController.toggle(screenOrientation.value)
-                    screenLayoutRevision.value++
-                    retroGameView.applyCoreVariables(variables)
+                    cycleScreenLayout()
                 }
                 true
             }
