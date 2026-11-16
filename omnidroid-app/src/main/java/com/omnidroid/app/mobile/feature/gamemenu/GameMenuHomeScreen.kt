@@ -35,6 +35,7 @@ fun GameMenuHomeScreen(
     val request = gameMenuRequest
     var audioEnabled by remember(request.audioEnabled) { mutableStateOf(request.audioEnabled) }
     var confirmRestart by remember { mutableStateOf(false) }
+    val askToConfirm = confirmGameMenuActionsEnabled()
     if (confirmRestart) {
         ConfirmProgressLossDialog(
             title = stringResource(R.string.game_menu_restart_confirm_title),
@@ -59,7 +60,7 @@ fun GameMenuHomeScreen(
                 }
             }
             MenuAction("restart", titleRes = R.string.game_menu_restart, icon = { MenuDrawableIcon(R.drawable.ic_menu_restart) }) {
-                confirmRestart = true
+                if (askToConfirm) confirmRestart = true else onCommand(InGameMenuCommand.Restart)
             }
             MenuAction("quit", titleRes = R.string.game_menu_quit, icon = { MenuDrawableIcon(R.drawable.ic_menu_quit) }) {
                 onCommand(InGameMenuCommand.Quit)

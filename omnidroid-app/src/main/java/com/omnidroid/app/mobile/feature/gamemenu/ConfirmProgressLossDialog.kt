@@ -7,6 +7,12 @@ import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.dialog.DialogActionRole
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
+import com.omnidroid.app.utils.android.settings.booleanPreferenceState
+
+/** Settings → Saves → "Confirm before losing progress" (on by default). */
+@Composable
+fun confirmGameMenuActionsEnabled(): Boolean =
+    booleanPreferenceState(R.string.pref_key_confirm_game_menu_actions, true).value
 
 /**
  * Confirmation for in-game menu actions that throw away progress (restart, load, overwrite a

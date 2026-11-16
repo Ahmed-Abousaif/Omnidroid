@@ -20,6 +20,11 @@ internal fun SavesSettings(
             titleRes = R.string.settings_title_enable_autosave,
             subtitleRes = R.string.settings_description_enable_autosave,
         )
+        OmnidroidSettingsSwitch(
+            state = booleanPreferenceState(R.string.pref_key_confirm_game_menu_actions, true),
+            titleRes = R.string.settings_title_confirm_game_menu_actions,
+            subtitleRes = R.string.settings_description_confirm_game_menu_actions,
+        )
         OmnidroidSettingsMenuLink(
             titleRes = R.string.settings_title_saves_backup,
             subtitle = {

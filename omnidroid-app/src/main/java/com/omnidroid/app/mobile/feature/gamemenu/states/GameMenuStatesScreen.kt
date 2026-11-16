@@ -16,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.gamemenu.ConfirmProgressLossDialog
+import com.omnidroid.app.mobile.feature.gamemenu.confirmGameMenuActionsEnabled
 import com.omnidroid.app.mobile.shared.compose.gamemenu.MenuDrawableIcon
 import com.omnidroid.app.mobile.shared.compose.sidemenu.MenuAction
 import com.omnidroid.app.mobile.shared.compose.sidemenu.MenuSection
@@ -44,6 +45,7 @@ fun GameMenuStatesScreen(
     val state = viewModel.uiStates.collectAsState()
     var pending by remember { mutableStateOf<PendingSlot?>(null) }
     val autoSaveTitle = stringResource(R.string.game_menu_autosave)
+    val askToConfirm = confirmGameMenuActionsEnabled()
 
     pending?.let { target ->
         val isLoad = mode == StatesMenuMode.LOAD
@@ -83,7 +85,9 @@ fun GameMenuStatesScreen(
                     titleRes = R.string.game_menu_autosave,
                     subtitle = { Text(autoSave.description) },
                     enabled = autoSave.enabled,
-                ) { pending = PendingSlot(null, autoSaveTitle, autoSave.description) }
+                ) {
+                    if (askToConfirm) pending = PendingSlot(null, autoSaveTitle, autoSave.description) else onAutoSaveClicked()
+                }
             }
         }
         MenuSection("slots", visible = state.value.entries.isNotEmpty()) {
@@ -108,7 +112,7 @@ fun GameMenuStatesScreen(
                         }
                     },
                 ) {
-                    val needsConfirm = mode == StatesMenuMode.LOAD || entry.exists
+                    val needsConfirm = askToConfirm && (mode == StatesMenuMode.LOAD || entry.exists)
                     if (needsConfirm) {
                         pending = PendingSlot(entry.slot, entry.title, entry.description)
                     } else {

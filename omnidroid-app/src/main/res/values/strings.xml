@@ -192,6 +192,8 @@
     <string name="url_developer_github" translatable="false">https://github.com/Ahmed-Abousaif</string>
     <string name="settings_title_enable_autosave">Autosave state</string>
     <string name="settings_description_enable_autosave">Save state when exiting or backgrounding a game, and resume it on launch</string>
+    <string name="settings_title_confirm_game_menu_actions">Confirm before losing progress</string>
+    <string name="settings_description_confirm_game_menu_actions">Ask before restarting, loading a state or overwriting a save from the in-game menu</string>
     <string name="settings_title_enable_touch_feedback">Vibrate on touch</string>
     <string name="settings_title_tilt_sensitivity">Tilt sensor sensitivity</string>
     <string name="settings_title_hd_quality">HD mode quality</string>
