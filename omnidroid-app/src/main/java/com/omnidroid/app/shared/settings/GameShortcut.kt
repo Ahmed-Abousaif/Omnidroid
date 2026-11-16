@@ -10,18 +10,25 @@ data class GameShortcut(
 ) {
     val name: String = keys.joinToString(" + ") { InputKey(it).displayName() }
 
+    val isBound: Boolean
+        get() = keys.isNotEmpty()
+
     companion object {
+        /**
+         * Default binding for [type]. Types without a default return an unbound shortcut (no keys)
+         * rather than null, so they are still listed in Settings and can be bound there.
+         */
         fun getDefault(
             inputDevice: InputDevice,
             type: GameShortcutType,
-        ): GameShortcut? {
-            if (type != GameShortcutType.MENU) return null
+        ): GameShortcut {
+            if (type != GameShortcutType.MENU) return GameShortcut(type = type, keys = emptySet())
             return if (inputDevice.hasKeys(KeyEvent.KEYCODE_BUTTON_THUMBL, KeyEvent.KEYCODE_BUTTON_THUMBR).all { it }) {
                 GameShortcut(keys = setOf(KeyEvent.KEYCODE_BUTTON_THUMBL, KeyEvent.KEYCODE_BUTTON_THUMBR), type = type)
             } else if (inputDevice.hasKeys(KeyEvent.KEYCODE_BUTTON_SELECT, KeyEvent.KEYCODE_BUTTON_START).all { it }) {
                 GameShortcut(keys = setOf(KeyEvent.KEYCODE_BUTTON_SELECT, KeyEvent.KEYCODE_BUTTON_START), type = type)
             } else {
-                null
+                GameShortcut(type = type, keys = emptySet())
             }
         }
     }
@@ -32,6 +39,9 @@ enum class GameShortcutType {
     QUICK_LOAD,
     QUICK_SAVE,
     TOGGLE_FAST_FORWARD,
+
+    /** Same as the on-screen layout button: DS/3DS dual -> swapped -> top -> bottom; Wii U TV <-> dual. */
+    CYCLE_SCREEN_LAYOUT,
     ;
 
     fun displayName() = name.split('_').joinToString(" ") { it.lowercase().replaceFirstChar { it.uppercase() } }

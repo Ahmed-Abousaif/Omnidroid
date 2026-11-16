@@ -16,16 +16,47 @@ class TouchScreenLayoutController(
     private val systemId: SystemID,
     private val coreId: CoreID,
 ) {
-    fun toggle(
+    /**
+     * Next screen layout, used by both the on-screen layout button and the gamepad shortcut.
+     * DS/3DS cycle four states: dual -> dual swapped -> top only -> bottom only -> dual.
+     * Cemu keeps its TV <-> dual toggle.
+     */
+    fun cycle(
         orientation: TouchControllerSettingsManager.Orientation,
     ): List<CoreVariable> {
         return when (coreId) {
-            CoreID.MELONDS_DS -> toggleMelonDsDs(orientation)
-            CoreID.CITRA, CoreID.AZAHAR -> toggleCitra(orientation)
+            CoreID.MELONDS_DS -> cycleMelonDsDs(orientation)
+            CoreID.CITRA, CoreID.AZAHAR -> cycleCitra(orientation)
             CoreID.CEMU -> toggleCemu(orientation)
             else -> emptyList()
         }
     }
+
+    private fun cycleMelonDsDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
+        val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDSDS_LAYOUT_KEY, systemId.dbname)
+        val next = ScreenLayoutCycle.nextMelonDsDs(sharedPreferences.getString(key, null), orientation.isLandscape())
+        sharedPreferences.edit { putString(key, next) }
+        return listOf(CoreVariable(MELONDSDS_LAYOUT_KEY, next))
+    }
+
+    private fun cycleCitra(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
+        val layoutKey = CoreVariablesManager.computeSharedPreferenceKey(CITRA_LAYOUT_KEY, systemId.dbname)
+        val swapKey = CoreVariablesManager.computeSharedPreferenceKey(CITRA_SWAP_KEY, systemId.dbname)
+        val (layout, swap) =
+            ScreenLayoutCycle.nextCitra(
+                layout = sharedPreferences.getString(layoutKey, null),
+                swap = sharedPreferences.getString(swapKey, null),
+                isLandscape = orientation.isLandscape(),
+            )
+        sharedPreferences.edit {
+            putString(layoutKey, layout)
+            putString(swapKey, swap)
+        }
+        return listOf(CoreVariable(CITRA_LAYOUT_KEY, layout), CoreVariable(CITRA_SWAP_KEY, swap))
+    }
+
+    private fun TouchControllerSettingsManager.Orientation.isLandscape() =
+        this == TouchControllerSettingsManager.Orientation.LANDSCAPE
 
     fun supportsToggle(): Boolean =
         coreId == CoreID.MELONDS_DS || coreId == CoreID.CITRA || coreId == CoreID.AZAHAR || coreId == CoreID.CEMU
@@ -38,8 +69,8 @@ class TouchScreenLayoutController(
                 val current = sharedPreferences.getString(key, null)
                 when (current) {
                     MELONDSDS_SINGLE_TOP, MELONDSDS_SINGLE_BOTTOM -> 4f / 3f
-                    MELONDSDS_DUAL_LANDSCAPE -> 8f / 3f
-                    MELONDSDS_DUAL_PORTRAIT -> 4f / 6f
+                    MELONDSDS_DUAL_LANDSCAPE, MELONDSDS_DUAL_LANDSCAPE_SWAPPED -> 8f / 3f
+                    MELONDSDS_DUAL_PORTRAIT, MELONDSDS_DUAL_PORTRAIT_SWAPPED -> 4f / 6f
                     else -> if (isLandscape) 8f / 3f else 4f / 6f
                 }
             }
@@ -151,39 +182,6 @@ class TouchScreenLayoutController(
         }
     }
 
-    private fun toggleMelonDsDs(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
-        val key = CoreVariablesManager.computeSharedPreferenceKey(MELONDSDS_LAYOUT_KEY, systemId.dbname)
-        val current = sharedPreferences.getString(key, null)
-        val next =
-            if (current == MELONDSDS_SINGLE_TOP || current == MELONDSDS_SINGLE_BOTTOM) {
-                melonDsDsDual(orientation)
-            } else {
-                MELONDSDS_SINGLE_TOP
-            }
-        sharedPreferences.edit { putString(key, next) }
-        return listOf(CoreVariable(MELONDSDS_LAYOUT_KEY, next))
-    }
-
-    private fun toggleCitra(orientation: TouchControllerSettingsManager.Orientation): List<CoreVariable> {
-        val layoutKey = CoreVariablesManager.computeSharedPreferenceKey(CITRA_LAYOUT_KEY, systemId.dbname)
-        val swapKey = CoreVariablesManager.computeSharedPreferenceKey(CITRA_SWAP_KEY, systemId.dbname)
-        val current = sharedPreferences.getString(layoutKey, null)
-        return if (current == CITRA_SINGLE) {
-            val dual = citraDual(orientation)
-            sharedPreferences.edit { putString(layoutKey, dual) }
-            listOf(CoreVariable(CITRA_LAYOUT_KEY, dual))
-        } else {
-            sharedPreferences.edit {
-                putString(layoutKey, CITRA_SINGLE)
-                putString(swapKey, CITRA_SWAP_TOP)
-            }
-            listOf(
-                CoreVariable(CITRA_LAYOUT_KEY, CITRA_SINGLE),
-                CoreVariable(CITRA_SWAP_KEY, CITRA_SWAP_TOP),
-            )
-        }
-    }
-
     fun onOrientationChanged(
         orientation: TouchControllerSettingsManager.Orientation,
     ): List<CoreVariable> {
@@ -215,20 +213,17 @@ class TouchScreenLayoutController(
         if (current == MELONDSDS_SINGLE_TOP || current == MELONDSDS_SINGLE_BOTTOM) {
             return emptyList()
         }
-        val target = melonDsDsDual(orientation)
+        // Keep a swapped dual layout swapped when rotating (bottom-top <-> right-left).
+        val target =
+            ScreenLayoutCycle.melonDsDsDual(
+                isLandscape = orientation.isLandscape(),
+                swapped = ScreenLayoutCycle.isMelonDsDsSwappedDual(current),
+            )
         if (current == target) {
             return emptyList()
         }
         sharedPreferences.edit { putString(key, target) }
         return listOf(CoreVariable(MELONDSDS_LAYOUT_KEY, target))
-    }
-
-    private fun melonDsDsDual(orientation: TouchControllerSettingsManager.Orientation): String {
-        return if (orientation == TouchControllerSettingsManager.Orientation.LANDSCAPE) {
-            MELONDSDS_DUAL_LANDSCAPE
-        } else {
-            MELONDSDS_DUAL_PORTRAIT
-        }
     }
 
     private fun citraDual(orientation: TouchControllerSettingsManager.Orientation): String {
@@ -285,6 +280,8 @@ class TouchScreenLayoutController(
         const val MELONDSDS_LAYOUT_KEY = "melonds_screen_layout1"
         const val MELONDSDS_DUAL_PORTRAIT = "top-bottom"
         const val MELONDSDS_DUAL_LANDSCAPE = "left-right"
+        const val MELONDSDS_DUAL_PORTRAIT_SWAPPED = "bottom-top"
+        const val MELONDSDS_DUAL_LANDSCAPE_SWAPPED = "right-left"
         const val MELONDSDS_SINGLE_TOP = "top"
         const val MELONDSDS_SINGLE_BOTTOM = "bottom"
 

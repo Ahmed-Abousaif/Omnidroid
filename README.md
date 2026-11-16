@@ -262,143 +262,168 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 
 ## 🛠️ For Contributors & Developers
 
-We welcome contributions of all kinds — whether you are optimizing emulation cores, refining Jetpack Compose UI, improving controller support, or improving documentation!
+Start with a public fork and the Free debug variant. UI, input, metadata, documentation, and native-engine changes can be developed separately.
 
-### Architecture & Repository Modules
+### Repository map
 
 ```text
 Omnidroid/
-├── omnidroid-app/               # Main application module (Compose UI, ViewModels, Room DB)
-├── omnidroid-app-ext-free/      # Free distribution flavor configuration
-├── omnidroid-app-ext-play/      # Google Play flavor (Cloud services, Drive/Dropbox/OneDrive)
-├── omnidroid-touchinput/        # Virtual touch controller overlay and input routing
-├── omnidroid-padkit/            # Android build of the Omnidroid PadKit fork
-├── omnidroid-chd/               # CHD compressed disc image decompression library
-├── omnidroid-metadata-libretro/ # Libretro DB offline game title identification
-├── omni-libretrodroid/          # (Submodule) Custom native Vulkan/GLES C++ emulation runtime
-├── omnidroid-cores/             # (Submodule) Prebuilt Libretro emulation core binaries
-├── retrograde-app-shared/       # Shared UI components and emulation lifecycle utilities
-└── retrograde-util/             # File system, archive, and platform utility routines
+├── omnidroid-app/                  # Compose UI, game screens, settings, and app lifecycle
+├── omnidroid-app-ext-free/         # GitHub/free distribution services
+├── omnidroid-app-ext-play/         # Google Play and cloud-service integrations
+├── omnidroid-touchinput/           # Omnidroid control skins, layouts, tilt, and backend routing
+├── omnidroid-padkit/               # Builds the pinned PadKit sources with Omnidroid's toolchain
+├── modules/padkit/upstream/omnidroid-padkit/   # PadKit submodule
+├── modules/switch/upstream/eden/   # Eden source submodule
+├── modules/cemu/upstream/cemu-libretro-android/ # Cemu Android/libretro source submodule
+├── omni-libretrodroid/             # Native Vulkan/GLES runtime submodule
+├── omnidroid-cores/                # Core binaries, build/update tools, and SDL Java sources
+├── omnidroid-chd/                  # CHD wrapper; libchdr submodule is under src/main/cpp/
+├── omnidroid-metadata-libretro-db/ # Offline identification database and title matching
+├── retrograde-app-shared/          # Shared game, database, storage, and lifecycle code
+└── retrograde-util/                # Common utilities
 ```
 
-### Library Screen
+### Fork and clone
 
-The [Library Screen Technical Guide](docs/LIBRARY_SCREEN_TECHNICAL_GUIDE.md) covers Console, Grid, and List rendering, state, paging, controller behavior, and regression-test commands.
+All six direct source submodules and their 13 nested dependencies were checked for anonymous Git access on **16 November 2026**. They use public HTTPS URLs; no private-repository access or maintainer credentials are needed to check out the recorded sources. Forking Omnidroid does not require forking every dependency.
 
-### Settings & Side-Menu Components
-
-Settings uses feature-owned sections, shared row components, typed preference bindings, and one navigation host for nested pages. The in-game and library side menus share a panel shell and composable pages, sections, and actions while retaining their own game/session behavior.
-
-- [Settings technical guide](docs/SETTINGS_TECHNICAL_GUIDE.md): file map, navigation and preference ownership, component APIs, and how to add sections or deeper pages.
-- [Side menus technical guide](docs/SIDE_MENUS_TECHNICAL_GUIDE.md): shared shell and page APIs, host actions, controller focus, lifecycle, and extension examples.
-- [Save states reference guide](docs/SAVE_STATES_TECHNICAL_GUIDE.md): save slots, autosave, error recovery, core support settings, and checks for future changes.
-
-### Development Setup
-
-1. **Prerequisites:**
-   - **Android Studio:** Ladybug (2024.2+) or Meerkat recommended.
-   - **JDK:** Java 17 (e.g. Eclipse Temurin 17 or OpenJDK 17).
-   - **Android SDK:** `compileSdk` / `targetSdk` **36**, `minSdk` **24**, Build Tools **36.0.0**.
-   - **NDK & CMake:** Installed via Android Studio SDK Manager.
-
-2. **Cloning the Repository:**
-   Omnidroid uses Git submodules for PadKit, native engines, and emulation cores. Clone recursively:
-
-   ```bash
-   git clone --recurse-submodules https://github.com/Ahmed-Abousaif/Omnidroid.git
-   cd Omnidroid
-   ```
-
-   If already cloned without `--recurse-submodules`:
-
-   ```bash
-   git submodule update --init --recursive
-   ```
-
-3. **Building the Project:**
-
-   ```bash
-   # Build debug APK (Play flavor)
-   ./gradlew assemblePlayDebug
-
-   # Build release APK (Free / GitHub flavor)
-   ./gradlew assembleFreeRelease
-
-   # Play Store App Bundle (dynamic feature delivery)
-   ./gradlew bundlePlayDynamicRelease
-
-   # Run code analysis & checkstyle
-   ./gradlew checkstyle
-   ```
-
-### Developing PadKit gamepads
-
-Omnidroid builds [Omnidroid-padkit](https://github.com/Ahmed-Abousaif/Omnidroid-padkit) from the Git submodule at `modules/padkit/upstream/omnidroid-padkit`. The `omnidroid-padkit` Gradle module compiles those sources with the app's Kotlin, Compose, and Android toolchain. The parent repository records an exact PadKit commit, and submodule updates check out that pin.
-
-The submodule uses a public, absolute HTTPS URL, so forks of Omnidroid can initialize it unchanged. Clone your Omnidroid fork with `--recurse-submodules`, or initialize PadKit in an existing clone:
+Fork this repository on GitHub, then:
 
 ```bash
-git submodule sync -- modules/padkit/upstream/omnidroid-padkit
-git submodule update --init --recursive -- modules/padkit/upstream/omnidroid-padkit
+git clone --recurse-submodules https://github.com/YOUR-USER/Omnidroid.git
+cd Omnidroid
+git remote add upstream https://github.com/Ahmed-Abousaif/Omnidroid.git
+git switch -c fix/your-change
 ```
 
-Edit PadKit directly inside that submodule. App builds include those edits immediately. Verify the integration with:
+For an existing clone, or after switching branches/pulling changes:
 
 ```bash
-./gradlew :omnidroid-touchinput:compileDebugKotlin
+git submodule sync --recursive
+git submodule update --init --recursive
+git submodule status --recursive
 ```
 
-Commit and push PadKit changes to its repository before updating Omnidroid's pin. To select a published PadKit commit:
+A leading `-` in submodule status means a dependency is uninitialized; `+` means its checkout differs from the parent pin. Initial clones include large core binaries and native source trees.
+
+The direct dependencies are:
+
+- `modules/padkit/upstream/omnidroid-padkit`: [Omnidroid-padkit](https://github.com/Ahmed-Abousaif/Omnidroid-padkit).
+- `omnidroid-cores`: [OmnidroidCores](https://github.com/Ahmed-Abousaif/OmnidroidCores).
+- `omni-libretrodroid`: [omni-libretrodroid](https://github.com/Ahmed-Abousaif/omni-libretrodroid).
+- `modules/cemu/upstream/cemu-libretro-android`: [cemu-libretro-android](https://github.com/Ahmed-Abousaif/cemu-libretro-android).
+- `modules/switch/upstream/eden`: [Eden](https://git.eden-emu.dev/eden-emu/eden), hosted outside GitHub.
+- `omnidroid-chd/src/main/cpp/libchdr`: [libchdr](https://github.com/rtissera/libchdr).
+
+[.gitmodules](.gitmodules) is the authoritative list of URLs and tracked branches. Normal setup checks out committed pins; `--remote` intentionally changes dependency versions and is not part of everyday setup.
+
+### Tools and Android SDK
+
+Use the checked-in Gradle wrapper instead of a system Gradle installation.
+
+- **JDK 17** is the compilation baseline; set `JAVA_HOME` and use a compatible Gradle JDK in Android Studio.
+- **Gradle 9.1.0** is selected by [gradle-wrapper.properties](gradle/wrapper/gradle-wrapper.properties).
+- Install **Android SDK Platform 36**, **Build Tools 36.0.0**, and **Platform Tools**. The app supports Android API 24 and above.
+- Set `ANDROID_HOME` to your SDK directory, or let Android Studio create an ignored `local.properties` containing `sdk.dir`.
+- APK/native builds also need the NDK, CMake, and host build tools requested by the selected native modules. Kotlin compilation and the input unit tests below do not rebuild emulator engines.
+
+For command-line SDK installation:
+
+```bash
+sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+```
+
+The current Android Gradle Plugin is **9.0.0**; Kotlin is **2.2.10**, Compose BOM **2026.08.00**, KSP **2.2.10-2.0.2**, and Dagger/Hilt **2.60.1**. Check [build.gradle.kts](build.gradle.kts) and [deps.kt](buildSrc/src/main/java/deps.kt) before changing tool versions.
+
+### First build and useful checks
+
+From the repository root:
+
+```bash
+# Fast app source check; no release signing or Play credentials required
+./gradlew :omnidroid-app:compileFreeDynamicDebugKotlin
+
+# Input engine, Compose lifecycle, haptics, and tilt regression tests
+./gradlew :omnidroid-padkit:testDebugUnitTest :omnidroid-touchinput:testDebugUnitTest
+
+# Build a debug APK, or install it on a connected device
+./gradlew :omnidroid-app:assembleFreeDynamicDebug
+./gradlew :omnidroid-app:installFreeDynamicDebug
+
+# Formatting checks for the modules changed by your PR
+./gradlew :omnidroid-app:ktlintCheck :omnidroid-touchinput:ktlintCheck
+```
+
+On Windows, replace `./gradlew` with `.\gradlew.bat`. Debug APKs are written under `omnidroid-app/build/outputs/apk/`. Use `adb devices` to check the device connection.
+
+There are two flavor dimensions: distribution (`free` / `play`) and core packaging (`dynamic` / `bundle`). Specify a complete variant rather than relying on ambiguous tasks such as `assembleDebug`. Start with `FreeDynamicDebug`; bundled-core and Play release builds have additional packaging/distribution requirements.
+
+Tests under a module's `src/test` or `src/androidUnitTest` run on the host. Tests under `src/androidTest` require a device or emulator. For input changes, also check multi-finger touch, cancellation/backgrounding, tilt transitions, and vibration on hardware.
+
+### Native engines and core updates
+
+Most frontend work uses the recorded native sources and existing core binaries. Native engine development belongs in its submodule:
+
+- **Eden:** use the source selected by the parent pin. Its Android Gradle file specifies the NDK/CMake versions; the CI recipe is [.github/actions/setup-eden/action.yml](.github/actions/setup-eden/action.yml). The pinned-source builder is `python3 omnidroid-cores/update_cores.py --cores switch --eden-ref pinned --eden-jobs 2`; follow that tool's prerequisites before running it.
+- **Cemu:** follow the Android/libretro build instructions and workflow in the Cemu fork.
+- **Native runtime / CHD:** their Gradle modules invoke the CMake projects under `src/main/cpp`.
+- **Other cores / databases:** see the update tools in `omnidroid-cores` and [.github/workflows/cores-update.yml](.github/workflows/cores-update.yml).
+
+A full APK/native build is a separate check from Kotlin compilation. Include the engine, ABI, toolchain, and device details when reporting native-build failures.
+
+### Editing PadKit or another submodule
+
+PadKit sources live at `modules/padkit/upstream/omnidroid-padkit`; `omnidroid-padkit/` is the Android source wrapper, not a second copy of the library. Editing the submodule is immediately reflected in Omnidroid's builds.
+
+Submodules normally have detached HEADs. Create a branch before editing:
+
+```bash
+git -C modules/padkit/upstream/omnidroid-padkit switch -c fix/control-behavior
+```
+
+Keep reusable capture, simulation, directional output, and feedback behavior in PadKit. Keep Omnidroid skins, saved preferences, console layouts, host actions, and emulator routing in the app. See [the capability migration](docs/padkit-capability-migration.md) and [input lifecycle coverage](docs/padkit-input-lifecycle.md).
+
+To contribute shared changes, fork the relevant submodule repository, add your fork as a remote inside that submodule, and push a topic branch there. Open its PR against that repository's default branch. Publish/merge the dependency change before updating Omnidroid's pin.
+
+To select a published revision:
 
 ```bash
 git -C modules/padkit/upstream/omnidroid-padkit fetch origin
-git -C modules/padkit/upstream/omnidroid-padkit checkout --detach <published-padkit-commit>
+git -C modules/padkit/upstream/omnidroid-padkit checkout --detach PUBLISHED-COMMIT
 git add modules/padkit/upstream/omnidroid-padkit
-git commit -m "Update PadKit submodule"
+git commit -m "build: update PadKit pin"
 ```
 
-If you maintain your own PadKit fork, change the submodule URL with `git submodule set-url modules/padkit/upstream/omnidroid-padkit https://github.com/<your-user>/Omnidroid-padkit.git` and commit both `.gitmodules` and the new pin. The selected commit must be available from that URL for other clones to reproduce it.
+For an intentional branch-head refresh, use `git submodule update --remote -- PATH`, review the upstream changes, synchronize its nested dependencies, run relevant checks, and commit the changed parent pin. Avoid independently upgrading nested dependencies owned by another upstream project.
 
-### App updates (Play vs GitHub)
+For your own distribution, `git submodule set-url PATH https://github.com/YOUR-USER/YOUR-FORK.git` changes the source. Commit both `.gitmodules` and the pin, then run `git submodule sync --recursive`. The selected commit must be publicly fetchable from the recorded URL. Untracked local sources, sibling-directory overrides, and unpushed dependency commits cannot reproduce a build for another contributor.
 
-Omnidroid ships two distribution flavors on the existing `opensource` dimension:
+### Contributor workflow and technical guides
 
-| Flavor | Distribution | Update mechanism |
-| :----- | :----------- | :--------------- |
-| **`play`** | Google Play | [Play In-App Updates](https://developer.android.com/guide/playcore/in-app-updates) (flexible) via `app-update-ktx` |
-| **`free`** | GitHub Releases | Checks `GET /repos/{owner}/{repo}/releases/latest`, downloads the `.apk` asset, installs with `PackageInstaller` |
+Before opening a PR, read [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md), run the checks relevant to your change, and include reproduction/validation details. UI changes should include screenshots or a recording. Target `master` in Omnidroid; shared-library/engine PRs target their own repositories.
 
-Build examples:
+Use the issue forms for bugs and feature requests; use Discussions for questions and design proposals. Maintainers review PRs before merging. Do not attach ROMs, firmware, BIOS files, console keys, signing keys, or account credentials.
+
+- [Library screen](docs/LIBRARY_SCREEN_TECHNICAL_GUIDE.md): paging, covers, state, controller input, and tests.
+- [Settings](docs/SETTINGS_TECHNICAL_GUIDE.md): feature sections, typed preferences, and navigation.
+- [Side menus](docs/SIDE_MENUS_TECHNICAL_GUIDE.md): shared panels, composable pages, and host actions.
+- [Save states](docs/SAVE_STATES_TECHNICAL_GUIDE.md): slots, autosave, errors, and backend support.
+
+### Distribution and app updates
+
+The `free` flavor checks GitHub Releases; `play` uses Play In-App Updates. For your own GitHub distribution, set `GITHUB_OWNER` and `GITHUB_REPO` in [omnidroid-app/build.gradle.kts](omnidroid-app/build.gradle.kts); they currently point to `Ahmed-Abousaif/Omnidroid`.
+
+Maintainer release examples:
 
 ```bash
-./gradlew assembleFreeBundleRelease   # GitHub APK (self-update enabled)
-./gradlew bundlePlayDynamicRelease    # Play App Bundle (Play updates only)
+./gradlew :omnidroid-app:assembleFreeBundleRelease
+./gradlew :omnidroid-app:bundlePlayDynamicRelease
 ```
 
-**GitHub release publishing checklist**
+Publish a non-draft, non-prerelease tag such as `v3.1.0` with one signed APK asset for GitHub self-updates; an optional matching SHA-256 asset documents integrity. Updates must use the same signing key as the installed app. Play and GitHub signing keys may differ, so switching distributions can require reinstalling. Debug builds use debug signing; production signing and cloud-service credentials are maintainer setup, not prerequisites for the first source checks.
 
-1. Tag the release like `v1.2.3` (leading `v` is stripped for comparison against `versionName`).
-2. Attach **one signed APK** asset (`.apk`). Optionally attach a matching `*.sha256` asset (or put a 64-char hex SHA-256 in the release body) for integrity verification.
-3. Do **not** mark the release as draft or prerelease if you want the in-app checker to see it.
-4. Sign the APK with the **same key** as the installed build. Users cannot update across different signing keys without uninstalling.
 
-**Configure the GitHub repo** used by the free flavor in `omnidroid-app/build.gradle.kts` (`GITHUB_OWNER` / `GITHUB_REPO` BuildConfig fields — currently `TODO_OWNER` / `TODO_REPO`).
-
-**Play App Signing note:** Play-distributed and GitHub-distributed builds use different signing keys (Play App Signing vs your upload/release keystore). Users cannot switch between Play and GitHub sources without uninstalling and reinstalling.
-
-### Modern Toolchain Baseline
-
-| Component                 | Baseline Version      | Notes                                      |
-| :------------------------ | :-------------------- | :----------------------------------------- |
-| **Android Gradle Plugin** | `9.0.0`               | Modernized build system                    |
-| **Kotlin**                | `2.2.10`              | Full Kotlin 2.x support                    |
-| **Jetpack Compose BOM**   | `2026.08.00`          | Modern declarative UI & Material 3         |
-| **Annotation Processing** | KSP `2.2.10-2.0.2`    | Clean KSP migration (`kapt` removed)       |
-| **Dependency Injection**  | Hilt `2.60.1`         | Modern Dagger/Hilt setup                   |
-| **Memory Alignment**      | `16KB Page Alignment` | Android 15+ native runtime ready           |
-| **Native Runtime**        | `omni-libretrodroid`  | Vulkan hardware acceleration & `-O3` flags |
-
-For coding conventions, Compose navigation guidelines, and pull request procedures, please read our [Contributing Guidelines](.github/CONTRIBUTING.md).
 
 ---
 

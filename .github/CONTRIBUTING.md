@@ -69,54 +69,18 @@ Have an idea for an enhancement or new capability?
 
 ## Development Setup
 
-### Prerequisites
+Use the [README contributor guide](../README.md#-for-contributors--developers) as the canonical setup reference. It documents the public submodules, fork/clone workflow, SDK and native prerequisites, complete build variants, focused tests, and dependency-pin workflow.
 
-- **Android Studio:** Android Studio Ladybug / Meerkat or newer recommended.
-- **JDK:** Java Development Kit (JDK) 17 (e.g., Eclipse Temurin 17 or OpenJDK 17).
-- **Android SDK:**
-  - `compileSdk` & `targetSdk`: 36
-  - `minSdk`: 24
-  - Build Tools: 36.0.0
-  - NDK & CMake (for C++/native modules and submodules).
-- **Git:** Git 2.30+ with submodule support.
-
-### Cloning the Repository
-
-Omnidroid relies on Git submodules for core packages (such as `omnidroid-cores` and `libchdr`). Make sure to clone with submodules initialized:
+For a first contribution, initialize the recorded pins and run:
 
 ```bash
-# Clone with submodules
-git clone --recurse-submodules https://github.com/Ahmed-Abousaif/Omnidroid.git
-cd Omnidroid
-```
-
-If you already cloned without `--recurse-submodules`, initialize and update them:
-
-```bash
+git submodule sync --recursive
 git submodule update --init --recursive
+./gradlew :omnidroid-app:compileFreeDynamicDebugKotlin
+./gradlew :omnidroid-padkit:testDebugUnitTest :omnidroid-touchinput:testDebugUnitTest
 ```
 
-### Building the Project
-
-You can build the project from the command line or using Android Studio:
-
-```bash
-# Linux / macOS
-./gradlew assembleDebug
-
-# Windows (PowerShell / Command Prompt)
-.\gradlew.bat assembleDebug
-```
-
-To run ktlint verification and unit tests:
-
-```bash
-# Run ktlint check
-./gradlew ktlintCheck
-
-# Run unit tests
-./gradlew test
-```
+On Windows, use `.\gradlew.bat`. Use `:omnidroid-app:assembleFreeDynamicDebug` for an APK after installing the required native tools. Release signing and Play/cloud-service credentials are not needed for the source checks above. Prefer module-specific checks over building every distribution/core variant.
 
 ---
 
@@ -196,8 +160,8 @@ Use clear, descriptive commit messages adhering to the [Conventional Commits](ht
 When you are ready to submit your changes:
 
 1. **Test your code:**
-   - Verify that `./gradlew assembleDebug` compiles without errors.
-   - Verify that `./gradlew ktlintCheck` passes.
+   - Verify that the complete variant relevant to your change compiles; start with `./gradlew :omnidroid-app:compileFreeDynamicDebugKotlin`.
+   - Run formatting checks for the changed modules, for example `./gradlew :omnidroid-app:ktlintCheck :omnidroid-touchinput:ktlintCheck`, and run the relevant tests.
    - Test on an emulator or physical Android device (touch and gamepad navigation if applicable).
 
 2. **Push to your fork:**
