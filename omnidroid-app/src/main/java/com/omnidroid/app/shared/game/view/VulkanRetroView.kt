@@ -42,6 +42,7 @@ class VulkanRetroView(
 
     private var lifecycle: Lifecycle? = null
     private var emulationThread: EmulationThread? = null
+    private val pendingVariableUpdates = CoreVariableUpdateQueue()
 
     private val isEmulationReady = AtomicBoolean(false)
     private val isGameLoaded = AtomicBoolean(false)
@@ -338,25 +339,9 @@ class VulkanRetroView(
     }
 
     override fun updateVariables(vararg variables: Variable) {
-        val apply = {
-            for (variable in variables) {
-                runCatching { LibretroDroid.updateVariable(variable) }
-            }
-        }
-        // Apply the whole batch between two frames on the emulation thread. Updating from the UI
-        // thread let the core pick up related options (e.g. 3DS layout + screen swap) in different
-        // frames, which showed glitched mixed layouts while switching.
-        val thread = emulationThread
-        // Options such as a 3DS screen layout change the core's output geometry a frame or two
-        // later. The GL view gets a native refreshAspectRatio callback through step(view); Vulkan
-        // steps with a null view, so it never does. Refresh for the next few frames instead, and
-        // clear the renderer's image bindings once the core has rebuilt its output image.
-        thread?.refreshAspectRatioForFrames(ASPECT_REFRESH_FRAMES)
-        if (thread != null && isEmulationReady.get() && Thread.currentThread() != thread) {
-            thread.postAction(apply)
-        } else {
-            apply()
-        }
+        // Retain updates even before the surface/thread exists. Only the emulation loop
+        // drains them, so a batch cannot reach the core half way through retro_run.
+        pendingVariableUpdates.enqueue(variables.toList())
     }
 
     override fun getAvailableDisks(useEmulationThread: Boolean): Int {
@@ -431,23 +416,6 @@ class VulkanRetroView(
         private val isRunning = AtomicBoolean(true)
         private val isPaused = AtomicBoolean(false)
         private val pendingActions = java.util.concurrent.ConcurrentLinkedQueue<() -> Unit>()
-        private val aspectRefreshFrames = java.util.concurrent.atomic.AtomicInteger(0)
-
-        /** Re-read the core's geometry after each of the next [frames] frames. */
-        fun refreshAspectRatioForFrames(frames: Int) {
-            aspectRefreshFrames.set(frames)
-        }
-
-        /**
-         * When a core rebuilds its output image for new options (e.g. Azahar recreating its frame
-         * 400x240 -> 320x240 on a 3DS layout switch), the new image view can reuse the old view's
-         * handle. LibretroDroid's Vulkan renderer keys its descriptor binding cache on that handle,
-         * so it keeps sampling the destroyed image: flicker and garbage colours. A
-         * TRIM_MEMORY_RUNNING_LOW trim clears that cache (verified on device), forcing a rebind.
-         */
-        private fun clearStaleImageBindings() {
-            runCatching { LibretroDroid.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) }
-        }
 
         fun requestStop() {
             isRunning.set(false)
@@ -530,16 +498,15 @@ class VulkanRetroView(
                     runCatching { action() }
                 }
 
+                pendingVariableUpdates.drain { batch ->
+                    batch.forEach { variable ->
+                        runCatching { LibretroDroid.updateVariable(variable) }
+                            .onFailure { Timber.e(it, "Failed to update core variable %s", variable.key) }
+                    }
+                }
                 if (!isPaused.get()) {
                     try {
                         LibretroDroid.step(null)
-                        if (aspectRefreshFrames.get() > 0) {
-                            val remaining = aspectRefreshFrames.decrementAndGet()
-                            runCatching { LibretroDroid.refreshAspectRatio() }
-                            if (remaining == ASPECT_REFRESH_FRAMES - 2 || remaining == 0) {
-                                clearStaleImageBindings()
-                            }
-                        }
                         retroEventsSubject.tryEmit(GLRetroView.GLRetroEvents.FrameRendered)
                     } catch (t: Throwable) {
                         Timber.e(t, "Error in Vulkan LibretroDroid step")
@@ -559,8 +526,5 @@ class VulkanRetroView(
 
     companion object {
         private val TOUCH_EVENT_OUTSIDE = PointF(-10f, 10f)
-
-        /** Frames to keep re-reading geometry after an option change; cores apply it within a few. */
-        private const val ASPECT_REFRESH_FRAMES = 10
     }
 }
