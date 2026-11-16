@@ -1,6 +1,5 @@
 package com.omnidroid.app.mobile.feature.game
 
-import androidx.compose.ui.geometry.Rect
 import androidx.constraintlayout.compose.ChainStyle
 import androidx.constraintlayout.compose.ConstraintSet
 import androidx.constraintlayout.compose.Dimension
@@ -25,20 +24,6 @@ object GameScreenLayout {
             allowTouchOverlay -> buildConstraintSetLandscape()
             else -> buildConstraintSetLandscapeNoOverlay()
         }
-    }
-
-    /**
-     * Horizontal slice of [bounds] between the right edge of [leftPad] and the left edge of
-     * [rightPad] (all in root coordinates), or null when the pads leave no gap.
-     */
-    fun clipBetweenPads(
-        bounds: Rect,
-        leftPad: Rect?,
-        rightPad: Rect?,
-    ): Rect? {
-        val left = maxOf(bounds.left, leftPad?.right ?: bounds.left)
-        val right = minOf(bounds.right, rightPad?.left ?: bounds.right)
-        return if (right > left) Rect(left, bounds.top, right, bounds.bottom) else null
     }
 
     private fun buildConstraintSetFullscreen(): ConstraintSet {

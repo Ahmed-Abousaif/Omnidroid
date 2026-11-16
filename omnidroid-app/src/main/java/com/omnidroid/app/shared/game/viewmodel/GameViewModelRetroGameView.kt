@@ -203,7 +203,7 @@ class GameViewModelRetroGameView(
             }
 
         // Framework touch is disabled for all systems. Touchscreen consoles (NDS/3DS) receive
-        // stylus input via TouchScreenPointerOverlay, which supports a second finger while
+        // stylus input via GameTouchInput, which supports a second finger while
         // virtual buttons are held. GLRetroView.onTouchEvent only handles the primary pointer.
         result.disableTouchEvents()
 
