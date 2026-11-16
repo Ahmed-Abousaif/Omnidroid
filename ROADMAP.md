@@ -15,6 +15,13 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Added reusable button-layout geometry and 68 regression tests covering input capture, releases, simulation, remapping, cancellation, feedback transitions, and Android haptics
 - Redesigned the game launch loading screen with cover art, a rounded dark card, animated green loading bars, and the console name before "Loading…"
 - Fixed the core-download progress bar briefly flashing on rotation when cores were already installed; genuine download progress now survives rotation, and finished background checks no longer clear progress from an active download
+- Made unbound gamepad shortcuts visible in Settings so Quick Save, Quick Load, and Toggle Fast Forward can be configured ([#40](https://github.com/Ahmed-Abousaif/Omnidroid/pull/40))
+- Added a four-state DS/3DS screen layout cycle (dual, swapped dual, top only, bottom only), a configurable gamepad shortcut, and preservation of swapped layouts across rotation ([#41](https://github.com/Ahmed-Abousaif/Omnidroid/pull/41))
+- Expanded DS/3DS single-screen layouts to fill the available landscape viewport, with PadKit routing individual fingers so unobstructed parts of the touchscreen remain usable while virtual buttons are held ([#42](https://github.com/Ahmed-Abousaif/Omnidroid/pull/42))
+- Removed the translucent panels behind DS/3DS landscape controls while retaining the portrait panel ([#43](https://github.com/Ahmed-Abousaif/Omnidroid/pull/43))
+- Fixed Vulkan garbage frames after layout or resolution changes in LibretroDroid 3.0.1 by rebinding image descriptors safely, handling geometry notifications natively, and applying related core options together between frames; updated the source pin and bundled AAR ([#44](https://github.com/Ahmed-Abousaif/Omnidroid/pull/44))
+- Prevented graphics backend changes from crashing or restarting an active game: the new backend applies on the next launch, with a notice, preserving the current session even when autosave is disabled or save states are unsupported ([#45](https://github.com/Ahmed-Abousaif/Omnidroid/pull/45))
+- Fixed clean builds using the bundled LibretroDroid AAR or its source checkout by resolving duplicate shared C++ runtime packaging and restoring required SoundTouch build templates ([#39](https://github.com/Ahmed-Abousaif/Omnidroid/pull/39), [#44](https://github.com/Ahmed-Abousaif/Omnidroid/pull/44))
 
 ### v3.0.0
 
