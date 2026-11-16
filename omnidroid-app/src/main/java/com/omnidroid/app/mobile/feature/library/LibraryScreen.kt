@@ -17,8 +17,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.selected
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusGroup
@@ -462,15 +460,11 @@ private fun SidebarIconButton(
     pinned: Boolean = false,
 ) {
     val adaptiveSpec = LocalAdaptiveLayout.current
-    val isSelected = selected
     Surface(
+        // The selectable Surface tells screen readers which console or filter is showing.
+        selected = selected,
         onClick = onClick,
-        modifier =
-            Modifier
-                .size(adaptiveSpec.sidebarButtonSize)
-                .controllerFocusGlow(CircleShape)
-                // Screen readers say which console or filter is showing.
-                .semantics { this.selected = isSelected },
+        modifier = Modifier.size(adaptiveSpec.sidebarButtonSize).controllerFocusGlow(CircleShape),
         shape = CircleShape,
         color = chromeColors.panel,
         tonalElevation = 0.dp,
