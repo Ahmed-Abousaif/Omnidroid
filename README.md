@@ -16,6 +16,7 @@
   <a href="#-screenshots"><b>Screenshots</b></a> •
   <a href="#-for-players-getting-started"><b>For Players</b></a> •
   <a href="#-supported-consoles--systems"><b>Supported Systems</b></a> •
+  <a href="#-omnidroid-padkit"><b>PadKit</b></a> •
   <a href="#-features-deep-dive"><b>Features</b></a> •
   <a href="#-for-contributors--developers"><b>For Contributors</b></a> •
   <a href="#star-history"><b>Star History</b></a>
@@ -148,6 +149,25 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 | **Neo Geo Pocket / Color**         | Handheld (5th/6th Gen)   | [mednafen_ngp](https://docs.libretro.com/library/beetle_neopop/)                                                                                                    |
 | **WonderSwan / Color**             | Handheld (5th/6th Gen)   | [beetle_cygne](https://docs.libretro.com/library/beetle_cygne/)                                                                                                     |
 | **Atari 2600 / 7800 / Lynx**       | Classic Atari Family     | [stella](https://docs.libretro.com/library/stella/) / [prosystem](https://docs.libretro.com/library/prosystem/) / [handy](https://docs.libretro.com/library/handy/) |
+
+---
+
+## 🎮 Omnidroid PadKit
+
+Our touch controls use [Omnidroid PadKit](https://github.com/Ahmed-Abousaif/Omnidroid-padkit/blob/0597c76737a5c335677d62288fe85420b88b3f77/README.md), an Android-only fork of PadKit compiled directly from the pinned submodule. It preserves Android **7.0 / API 24** support, customizable button/stick visuals, multi-touch, radial layouts, composite buttons, and double-tap stick clicks.
+
+The fork adds reliable releases during cancellation, removal, remapping, and disposal; immediate tilt/simulation overrides; adjustable Android haptics; grid-layout helpers; and analog-style D-pads that honor four/eight-way settings and dead zones while held.
+
+Performance work reduces allocation and repeated work in the touch path:
+
+- Pointer capture uses an owner index and reusable routing buffers; unchanged handlers, capture sets, and simulated state skip redundant processing.
+- Face controls reuse pressed-key storage and cache immutable contributions. Event and haptic generation share allocation-light state diffs.
+- Analog thumbs read movement state during placement, avoiding recomposition just to move the thumb. Face layouts remember their immutable anchor/key lists.
+- In the latest warmed host replay, held face-button updates allocated **65–68% fewer bytes**, changing three-finger selections allocated **37% fewer**, and mixed routing through 12 controls allocated **29% fewer**. An earlier, separate routing pass reduced allocations by **66–72%** in its two/five/ten-pointer replays.
+
+These measurements use different staged baselines and are not additive. They measure host allocations, not Android FPS, touch latency, battery life, or whole-app memory. The latest performance pass adds 890 bytes to the unshrunk library AAR in exchange for reusable storage and lower allocation churn. See the [full changes and measurement method](https://github.com/Ahmed-Abousaif/Omnidroid-padkit/blob/0597c76737a5c335677d62288fe85420b88b3f77/README.md#changes-from-the-original-padkit).
+
+The library has **104 passing tests**, including **22 API 24 cases**, plus five Omnidroid tilt tests. Its release packaging, Android API lint, and Omnidroid release R8 checks pass. Library mechanics live in PadKit; skins, preferences, sensors, console placement, and emulator routing remain in Omnidroid.
 
 ---
 
@@ -323,18 +343,18 @@ The direct dependencies are:
 Use the checked-in Gradle wrapper instead of a system Gradle installation.
 
 - **JDK 17** is the compilation baseline; set `JAVA_HOME` and use a compatible Gradle JDK in Android Studio.
-- **Gradle 9.1.0** is selected by [gradle-wrapper.properties](gradle/wrapper/gradle-wrapper.properties).
-- Install **Android SDK Platform 36**, **Build Tools 36.0.0**, and **Platform Tools**. The app supports Android API 24 and above.
+- **Gradle 9.3.1** is selected by [gradle-wrapper.properties](gradle/wrapper/gradle-wrapper.properties).
+- Install **Android SDK Platform 37.0**, **Build Tools 36.0.0**, and **Platform Tools**. The app supports Android API 24 and above.
 - Set `ANDROID_HOME` to your SDK directory, or let Android Studio create an ignored `local.properties` containing `sdk.dir`.
 - APK/native builds also need the NDK, CMake, and host build tools requested by the selected native modules. Kotlin compilation and the input unit tests below do not rebuild emulator engines.
 
 For command-line SDK installation:
 
 ```bash
-sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+sdkmanager "platforms;android-37.0" "build-tools;36.0.0" "platform-tools"
 ```
 
-The current Android Gradle Plugin is **9.0.0**; Kotlin is **2.2.10**, Compose BOM **2026.08.00**, KSP **2.2.10-2.0.2**, and Dagger/Hilt **2.60.1**. Check [build.gradle.kts](build.gradle.kts) and [deps.kt](buildSrc/src/main/java/deps.kt) before changing tool versions.
+The current Android Gradle Plugin is **9.1.1** with compile SDK **37**; target SDK remains **36** and minimum SDK remains **24 (Android 7.0)**. Kotlin is **2.2.10**, Compose BOM **2026.08.00**, KSP **2.2.10-2.0.2**, and Dagger/Hilt **2.60.1**. Check [build.gradle.kts](build.gradle.kts) and [deps.kt](buildSrc/src/main/java/deps.kt) before changing tool versions.
 
 ### First build and useful checks
 
@@ -344,8 +364,8 @@ From the repository root:
 # Fast app source check; no release signing or Play credentials required
 ./gradlew :omnidroid-app:compileFreeDynamicDebugKotlin
 
-# Input engine, Compose lifecycle, haptics, and tilt regression tests
-./gradlew :omnidroid-padkit:testDebugUnitTest :omnidroid-touchinput:testDebugUnitTest
+# PadKit release/lint/API 24 regression gate, plus host tilt tests
+./gradlew :omnidroid-padkit:verifyAndroid7Compatibility :omnidroid-touchinput:testDebugUnitTest
 
 # Build a debug APK, or install it on a connected device
 ./gradlew :omnidroid-app:assembleFreeDynamicDebug
@@ -359,7 +379,7 @@ On Windows, replace `./gradlew` with `.\gradlew.bat`. Debug APKs are written und
 
 There are two flavor dimensions: distribution (`free` / `play`) and core packaging (`dynamic` / `bundle`). Specify a complete variant rather than relying on ambiguous tasks such as `assembleDebug`. Start with `FreeDynamicDebug`; bundled-core and Play release builds have additional packaging/distribution requirements.
 
-Tests under a module's `src/test` or `src/androidUnitTest` run on the host. Tests under `src/androidTest` require a device or emulator. For input changes, also check multi-finger touch, cancellation/backgrounding, tilt transitions, and vibration on hardware.
+Tests under a module's `src/test` run on the host. Tests under `src/androidTest` require a device or emulator. For input changes, also check multi-finger touch, cancellation/backgrounding, tilt transitions, and vibration on hardware.
 
 ### Native engines and core updates
 
@@ -375,6 +395,8 @@ A full APK/native build is a separate check from Kotlin compilation. Include the
 ### Editing PadKit or another submodule
 
 PadKit sources live at `modules/padkit/upstream/omnidroid-padkit`; `omnidroid-padkit/` is the Android source wrapper, not a second copy of the library. Editing the submodule is immediately reflected in Omnidroid's builds.
+
+PadKit is an Android-only library with built-in Kotlin support. Its library tests live in the submodule, including Compose and haptic cases for API 24. Both its own `:lib:verifyAndroid7Compatibility` task and the parent wrapper's compatibility task build a release AAR, run lint, and execute those tests. See [the optimization implementation](docs/padkit-optimization.md) for the changes and measured limits.
 
 Submodules normally have detached HEADs. Create a branch before editing:
 
