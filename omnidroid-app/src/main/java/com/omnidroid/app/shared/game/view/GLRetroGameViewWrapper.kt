@@ -91,7 +91,9 @@ class GLRetroGameViewWrapper(
     }
 
     override fun updateVariables(vararg variables: Variable) {
-        glRetroView.updateVariables(*variables)
+        // Apply the whole batch on the GL (emulation) thread between frames, so related options
+        // such as 3DS layout + screen swap reach the core together.
+        glRetroView.queueEvent { glRetroView.updateVariables(*variables) }
     }
 
     override fun getAvailableDisks(useEmulationThread: Boolean): Int {
