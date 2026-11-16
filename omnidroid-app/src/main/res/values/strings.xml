@@ -238,7 +238,7 @@
     <string name="settings_description_graphics_api_selection">Choose OpenGL or Vulkan rendering backend per system</string>
     <string name="settings_graphics_api_vulkan_available">Vulkan %1$s is supported by your device. Vulkan provides high-performance rendering with reduced CPU overhead and shader compilation stutter.</string>
     <string name="settings_graphics_api_vulkan_unavailable">Vulkan is not supported on this device. Cores will default to OpenGL ES.</string>
-    <string name="settings_graphics_api_only_option">%1$s (the only option on this device)</string>
+    <string name="settings_graphics_api_only_option">%1$s (only option available)</string>
 
     <string name="settings_title_display_bios_info">BIOS &amp; system files</string>
     <string name="settings_description_display_bios_info">PS2 BIOS, Switch keys/firmware, and other system files</string>

@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.alorma.compose.settings.storage.base.SettingValueState
 import com.omnidroid.R
 import com.omnidroid.app.tv.shared.TVHelper
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
@@ -27,23 +28,35 @@ internal fun ControllerSettings(
     onNavigateSubscreen: (SettingsSubscreen) -> Unit,
 ) {
     val isTv = TVHelper.isTV(LocalContext.current)
+    // Shared so the intensity slider reacts as soon as touch vibration is switched on or off.
+    val touchFeedback =
+        indexPreferenceState(
+            R.string.pref_key_haptic_feedback_mode,
+            "press",
+            stringListResource(R.array.pref_key_haptic_feedback_mode_values),
+        )
+    // Index 0 is "none"; any other mode vibrates on touch at the configured intensity.
+    val touchFeedbackOn = touchFeedback.value != 0
     if (isTv) {
-        ControlsRumbleGroup()
+        ControlsRumbleGroup(touchFeedbackOn)
         SettingsHorizontalDivider()
         ControlsGamepadsGroup(onNavigateSubscreen = onNavigateSubscreen)
         SettingsHorizontalDivider()
-        ControlsOnScreenGroup(showTvHint = true)
+        ControlsOnScreenGroup(touchFeedback, showTvHint = true)
     } else {
-        ControlsOnScreenGroup(showTvHint = false)
+        ControlsOnScreenGroup(touchFeedback, showTvHint = false)
         SettingsHorizontalDivider()
-        ControlsRumbleGroup()
+        ControlsRumbleGroup(touchFeedbackOn)
         SettingsHorizontalDivider()
         ControlsGamepadsGroup(onNavigateSubscreen = onNavigateSubscreen)
     }
 }
 
 @Composable
-private fun ControlsOnScreenGroup(showTvHint: Boolean) {
+private fun ControlsOnScreenGroup(
+    touchFeedback: SettingValueState<Int>,
+    showTvHint: Boolean,
+) {
     OmnidroidSettingsGroup(
         titleRes = R.string.settings_section_on_screen,
     ) {
@@ -56,12 +69,7 @@ private fun ControlsOnScreenGroup(showTvHint: Boolean) {
             )
         }
         OmnidroidSettingsList(
-            state =
-                indexPreferenceState(
-                    R.string.pref_key_haptic_feedback_mode,
-                    "press",
-                    stringListResource(R.array.pref_key_haptic_feedback_mode_values),
-                ),
+            state = touchFeedback,
             titleRes = R.string.settings_title_enable_touch_feedback,
             items = stringListResource(R.array.pref_key_haptic_feedback_mode_display_names),
         )
@@ -104,7 +112,7 @@ private fun ControlsOnScreenGroup(showTvHint: Boolean) {
 }
 
 @Composable
-private fun ControlsRumbleGroup() {
+private fun ControlsRumbleGroup(touchFeedbackOn: Boolean) {
     OmnidroidSettingsGroup(
         titleRes = R.string.settings_section_rumble,
     ) {
@@ -128,8 +136,8 @@ private fun ControlsRumbleGroup() {
                 ),
             steps = 99,
             valueRange = 0f..100f,
-            // Intensity only matters while rumble is on.
-            enabled = rumbleEnabled.value,
+            // Sets the strength of both rumble and on-screen touch vibration.
+            enabled = rumbleEnabled.value || touchFeedbackOn,
             titleRes = R.string.settings_title_vibration_intensity,
             subtitleRes = R.string.settings_description_vibration_intensity,
             valueText = { value ->
