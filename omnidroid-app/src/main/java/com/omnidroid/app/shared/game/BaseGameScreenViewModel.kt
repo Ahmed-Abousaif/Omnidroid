@@ -307,6 +307,8 @@ class BaseGameScreenViewModel(
 
     }
 
+    fun getTouchVibrationIntensity(): Flow<Float> = touchControls.getTouchVibrationIntensity()
+
     fun getVirtualPadOpacity(): Flow<Float> {
 
         return touchControls.getVirtualPadOpacity()
@@ -698,9 +700,7 @@ class BaseGameScreenViewModel(
     }
 
     fun handleVirtualInputEvent(events: List<InputEvent>) {
-
         touchControls.handleVirtualInputEvent(events)
-
     }
 
     override fun onCreate(owner: LifecycleOwner) {

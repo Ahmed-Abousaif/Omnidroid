@@ -12,8 +12,10 @@ import com.omnidroid.touchinput.radial.LocalOmnidroidPadTheme
 import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
 import com.omnidroid.touchinput.radial.ui.OmnidroidControlBackground
 import com.omnidroid.touchinput.radial.ui.OmnidroidCrossForeground
+import com.omnidroid.touchinput.radial.ui.OmnidroidButtonForeground
 import gg.padkit.PadKitScope
 import gg.padkit.controls.ControlCross
+import gg.padkit.controls.ControlDirectionalAnalog
 import gg.padkit.ids.Id
 
 context(PadKitScope)
@@ -49,9 +51,16 @@ fun OmnidroidControlCross(
                 modifier = modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
-                OmnidroidControlAnalog(
-                    modifier = Modifier.fillMaxSize(0.85f),
-                    id = Id.ContinuousDirection(id.value),
+                ControlDirectionalAnalog(
+                    modifier = Modifier.fillMaxSize(0.85f).padding(theme.padding),
+                    id = id,
+                    allowDiagonals = allowDiagonals,
+                    background = {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            OmnidroidControlBackground(Modifier.fillMaxSize(0.8f))
+                        }
+                    },
+                    foreground = { OmnidroidButtonForeground(pressed = it) },
                 )
             }
         }

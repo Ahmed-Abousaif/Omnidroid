@@ -8,9 +8,9 @@ import androidx.compose.ui.geometry.isSpecified
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.app.shared.rumble.RumbleManager
-import com.omnidroid.app.shared.rumble.TouchHapticPlayer
 import com.omnidroid.app.shared.settings.HapticFeedbackMode
 import com.omnidroid.app.tv.shared.TVHelper
 import com.omnidroid.common.coroutines.launchOnState
@@ -26,9 +26,10 @@ import com.omnidroid.libretrodroid.GLRetroView.Companion.MOTION_SOURCE_DPAD
 import com.omnidroid.touchinput.radial.layouts.shared.ComposeTouchLayouts
 import com.omnidroid.touchinput.radial.settings.TouchControllerID
 import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
+import gg.padkit.haptics.HapticEffect
+import gg.padkit.haptics.createAndroidHapticFeedback
 import gg.padkit.inputevents.InputEvent
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -41,8 +42,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.math.abs
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GameViewModelTouchControls(
@@ -66,10 +65,8 @@ class GameViewModelTouchControls(
     private val hapticFeedbackMode = MutableStateFlow(HapticFeedbackMode.NONE)
     private val vibrationIntensity = MutableStateFlow(RumbleManager.DEFAULT_RUMBLE_STRENGTH)
     private val virtualPadOpacity = MutableStateFlow(DEFAULT_PAD_OPACITY)
-    private val touchHapticPlayer = TouchHapticPlayer(appContext)
-    private val activeDiscreteDirections = mutableSetOf<Int>()
+    private val hostHapticFeedback by lazy { createAndroidHapticFeedback(appContext) }
     private val forceHideTouchControls = MutableStateFlow(false)
-    private var lastQuantizedDpadDirection: Pair<Float, Float> = 0f to 0f
 
     private val screenLayoutController =
         TouchScreenLayoutController(
@@ -80,9 +77,16 @@ class GameViewModelTouchControls(
     private val screenLayoutRevision = MutableStateFlow(0)
 
     private var loadingMenuJob: Job? = null
+    private var touchPreferencesJob: Job? = null
+    private val touchPreferenceKeys = setOf(
+        appContext.getString(R.string.pref_key_haptic_feedback_mode),
+        appContext.getString(R.string.pref_key_vibration_intensity),
+        appContext.getString(R.string.pref_key_virtual_pad_opacity),
+    )
 
-    private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+    private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         screenLayoutRevision.value++
+        if (key == null || key in touchPreferenceKeys) refreshTouchPreferences()
     }
 
     override fun onCreate(owner: LifecycleOwner) {
@@ -92,17 +96,24 @@ class GameViewModelTouchControls(
                 touchControlId.value = it.touchControllerID
             }
         }
-        owner.launchOnState(Lifecycle.State.CREATED) {
-            withContext(Dispatchers.IO) {
-                hapticFeedbackMode.value = HapticFeedbackMode.parse(settingsManager.hapticFeedbackMode())
-                vibrationIntensity.value = settingsManager.vibrationIntensity()
-                virtualPadOpacity.value = settingsManager.virtualPadOpacity()
-            }
+        refreshTouchPreferences()
+    }
+
+    private fun refreshTouchPreferences() {
+        touchPreferencesJob?.cancel()
+        touchPreferencesJob = scope.launch {
+            val mode = HapticFeedbackMode.parse(settingsManager.hapticFeedbackMode())
+            val intensity = settingsManager.vibrationIntensity()
+            val opacity = settingsManager.virtualPadOpacity()
+            hapticFeedbackMode.value = mode
+            vibrationIntensity.value = if (intensity.isFinite()) intensity.coerceIn(0f, 1f) else 0f
+            virtualPadOpacity.value = opacity
         }
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
         sharedPreferences.unregisterOnSharedPreferenceChangeListener(prefListener)
+        touchPreferencesJob?.cancel()
         super.onDestroy(owner)
     }
 
@@ -119,6 +130,8 @@ class GameViewModelTouchControls(
     fun getTouchHapticFeedbackMode(): Flow<HapticFeedbackMode> {
         return hapticFeedbackMode
     }
+
+    fun getTouchVibrationIntensity(): Flow<Float> = vibrationIntensity
 
     fun getVirtualPadOpacity(): Flow<Float> {
         return virtualPadOpacity
@@ -210,31 +223,17 @@ class GameViewModelTouchControls(
                     if (handleHostButton(event)) {
                         return@forEach
                     }
-                    playTouchHapticForButton(event.pressed)
                     handleVirtualInputButton(event)
                 }
 
                 is InputEvent.DiscreteDirection -> {
                     val dir = if (event.direction.isSpecified) event.direction else Offset.Zero
-                    playTouchHapticForDirection(event.id, dir.x, dir.y)
                     handleVirtualInputDirection(event.id, dir.x, -dir.y)
                 }
 
                 is InputEvent.ContinuousDirection -> {
                     val dir = if (event.direction.isSpecified) event.direction else Offset.Zero
-                    if (event.id == ComposeTouchLayouts.MOTION_SOURCE_DPAD ||
-                        event.id == ComposeTouchLayouts.MOTION_SOURCE_DPAD_AND_LEFT_STICK
-                    ) {
-                        val (qX, qY) = translateAnalogToDpad(dir.x, dir.y)
-                        val prev = lastQuantizedDpadDirection
-                        if (prev != (qX to qY)) {
-                            lastQuantizedDpadDirection = qX to qY
-                            playTouchHapticForDirection(event.id, qX, qY)
-                        }
-                        handleVirtualInputDirection(event.id, qX, qY)
-                    } else {
-                        handleVirtualInputDirection(event.id, dir.x, -dir.y)
-                    }
+                    handleVirtualInputDirection(event.id, dir.x, -dir.y)
                 }
             }
         }
@@ -288,32 +287,10 @@ class GameViewModelTouchControls(
         val mode = hapticFeedbackMode.value
         if (mode == HapticFeedbackMode.NONE) return
         if (!pressed && mode != HapticFeedbackMode.PRESS_RELEASE) return
-        touchHapticPlayer.play(isPress = pressed, intensity = vibrationIntensity.value)
-    }
-
-    private fun playTouchHapticForDirection(
-        id: Int,
-        x: Float,
-        y: Float,
-    ) {
-        val mode = hapticFeedbackMode.value
-        if (mode == HapticFeedbackMode.NONE) return
-
-        val isActive = abs(x) > DIRECTION_ACTIVE_THRESHOLD || abs(y) > DIRECTION_ACTIVE_THRESHOLD
-        val wasActive = id in activeDiscreteDirections
-
-        when {
-            isActive && !wasActive -> {
-                activeDiscreteDirections.add(id)
-                touchHapticPlayer.play(isPress = true, intensity = vibrationIntensity.value)
-            }
-            !isActive && wasActive -> {
-                activeDiscreteDirections.remove(id)
-                if (mode == HapticFeedbackMode.PRESS_RELEASE) {
-                    touchHapticPlayer.play(isPress = false, intensity = vibrationIntensity.value)
-                }
-            }
-        }
+        hostHapticFeedback.generate(
+            if (pressed) HapticEffect.PRESS else HapticEffect.RELEASE,
+            vibrationIntensity.value,
+        )
     }
 
     private fun onMenuPressed(pressed: Boolean) {
@@ -394,33 +371,8 @@ class GameViewModelTouchControls(
         }
     }
 
-    private fun translateAnalogToDpad(x: Float, y: Float): Pair<Float, Float> {
-        if (x.isNaN() || y.isNaN()) {
-            return 0f to 0f
-        }
-        val magnitude = kotlin.math.hypot(x, y)
-        if (magnitude < ANALOG_DPAD_DEADZONE) {
-            return 0f to 0f
-        }
-
-        val angle = Math.toDegrees(kotlin.math.atan2(y.toDouble(), x.toDouble())).toFloat()
-
-        return when {
-            angle in -22.5f..22.5f -> 1f to 0f
-            angle in 22.5f..67.5f -> 1f to -1f
-            angle in 67.5f..112.5f -> 0f to -1f
-            angle in 112.5f..157.5f -> -1f to -1f
-            angle in -67.5f..-22.5f -> 1f to 1f
-            angle in -112.5f..-67.5f -> 0f to 1f
-            angle in -157.5f..-112.5f -> -1f to 1f
-            else -> -1f to 0f
-        }
-    }
-
     companion object {
         const val MENU_LOADING_ANIMATION_MILLIS = 500
-        private const val DIRECTION_ACTIVE_THRESHOLD = 0.01f
-        private const val ANALOG_DPAD_DEADZONE = 0.25f
         private const val DEFAULT_PAD_OPACITY = 1f
     }
 }
