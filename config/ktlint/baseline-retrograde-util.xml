@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<baseline version="1.0">
+    <file name="build.gradle.kts">
+        <error line="16" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="32" column="1" source="standard:no-blank-line-before-rbrace" />
+    </file>
+    <file name="src/main/java/com/omnidroid/common/Android.kt">
+        <error line="18" column="20" source="standard:chain-method-continuation" />
+        <error line="18" column="32" source="standard:chain-method-continuation" />
+        <error line="18" column="45" source="standard:chain-method-continuation" />
+        <error line="18" column="62" source="standard:chain-method-continuation" />
+        <error line="37" column="38" source="standard:function-expression-body" />
+        <error line="41" column="42" source="standard:function-expression-body" />
+    </file>
+    <file name="src/main/java/com/omnidroid/common/coroutines/FlowUtils.kt">
+        <error line="15" column="9" source="standard:chain-method-continuation" />
+    </file>
+    <file name="src/main/java/com/omnidroid/common/drawable/TextDrawable.kt">
+        <error line="12" column="20" source="standard:class-signature" />
+        <error line="12" column="46" source="standard:class-signature" />
+        <error line="12" column="68" source="standard:class-signature" />
+    </file>
+    <file name="src/main/java/com/omnidroid/common/graphics/ColorUtils.kt">
+        <error line="21" column="12" source="standard:function-expression-body" />
+    </file>
+    <file name="src/main/java/com/omnidroid/common/graphics/GLSurfaceViewUtils.kt">
+        <error line="47" column="31" source="standard:multiline-expression-wrapping" />
+        <error line="70" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/main/java/com/omnidroid/common/graphics/GraphicsUtils.kt">
+        <error line="13" column="14" source="standard:function-expression-body" />
+        <error line="14" column="65" source="standard:chain-method-continuation" />
+    </file>
+    <file name="src/main/java/com/omnidroid/common/kotlin/CollectionKt.kt">
+        <error line="27" column="85" source="standard:function-expression-body" />
+        <error line="28" column="16" source="standard:chain-method-continuation" />
+    </file>
+    <file name="src/main/java/com/omnidroid/common/kotlin/MapUtils.kt">
+        <error line="3" column="49" source="standard:function-expression-body" />
+    </file>
+    <file name="src/main/java/com/omnidroid/common/kotlin/Utils.kt">
+        <error line="3" column="28" source="standard:class-signature" />
+        <error line="3" column="40" source="standard:class-signature" />
+        <error line="3" column="50" source="standard:class-signature" />
+        <error line="4" column="93" source="standard:function-expression-body" />
+        <error line="9" column="32" source="standard:class-signature" />
+        <error line="9" column="44" source="standard:class-signature" />
+        <error line="9" column="56" source="standard:class-signature" />
+        <error line="9" column="66" source="standard:class-signature" />
+        <error line="11" column="36" source="standard:class-signature" />
+        <error line="11" column="48" source="standard:class-signature" />
+        <error line="11" column="60" source="standard:class-signature" />
+        <error line="11" column="72" source="standard:class-signature" />
+        <error line="11" column="82" source="standard:class-signature" />
+        <error line="13" column="40" source="standard:class-signature" />
+        <error line="13" column="52" source="standard:class-signature" />
+        <error line="13" column="64" source="standard:class-signature" />
+        <error line="13" column="76" source="standard:class-signature" />
+        <error line="13" column="88" source="standard:class-signature" />
+        <error line="13" column="98" source="standard:class-signature" />
+        <error line="15" column="34" source="standard:function-expression-body" />
+    </file>
+    <file name="src/main/java/com/omnidroid/common/math/Fraction.kt">
+        <error line="3" column="21" source="standard:class-signature" />
+        <error line="3" column="41" source="standard:class-signature" />
+        <error line="3" column="61" source="standard:class-signature" />
+    </file>
+    <file name="src/main/java/com/omnidroid/common/preferences/SharedPreferencesDataStore.kt">
+        <error line="54" column="16" source="standard:function-expression-body" />
+        <error line="61" column="27" source="standard:function-expression-body" />
+        <error line="68" column="12" source="standard:function-expression-body" />
+        <error line="75" column="13" source="standard:function-expression-body" />
+        <error line="82" column="14" source="standard:function-expression-body" />
+        <error line="89" column="16" source="standard:function-expression-body" />
+    </file>
+</baseline>

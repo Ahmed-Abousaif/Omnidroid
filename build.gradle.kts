@@ -57,6 +57,13 @@ subprojects {
         if (hasProperty("android")) {
             // BaseExtension is common parent for application, library and test modules
             apply(plugin = "org.jlleitschuh.gradle.ktlint")
+            extensions.configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
+                // Violations that predate Checkstyle running again are recorded per module; new ones
+                // still fail. Regenerate with ./gradlew ktlintGenerateBaseline after cleaning a module up.
+                baseline.set(
+                    rootProject.file("config/ktlint/baseline-${project.path.removePrefix(":").replace(':', '-')}.xml"),
+                )
+            }
 
             extensions.findByType(BaseExtension::class.java)?.apply {
                 compileSdkVersion(deps.android.compileSdkVersion)

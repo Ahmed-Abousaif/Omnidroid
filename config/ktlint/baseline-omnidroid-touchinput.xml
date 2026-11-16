@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<baseline version="1.0">
+    <file name="src/main/java/com/omnidroid/touchinput/radial/OmnidroidPadTheme.kt">
+        <error line="13" column="14" source="standard:function-expression-body" />
+        <error line="42" column="48" source="standard:function-expression-body" />
+        <error line="50" column="49" source="standard:function-expression-body" />
+        <error line="58" column="40" source="standard:function-expression-body" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/controls/OmnidroidControlCross.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="70" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/Arcade6.kt">
+        <error line="86" column="98" source="standard:function-expression-body" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/Atari2600.kt">
+        <error line="30" column="23" source="standard:function-literal" />
+        <error line="30" column="24" source="standard:wrapping" />
+        <error line="30" column="47" source="standard:argument-list-wrapping" />
+        <error line="30" column="73" source="standard:argument-list-wrapping" />
+        <error line="30" column="111" source="standard:argument-list-wrapping" />
+        <error line="30" column="114" source="standard:argument-list-wrapping" />
+        <error line="30" column="121" source="standard:max-line-length" />
+        <error line="30" column="156" source="standard:argument-list-wrapping" />
+        <error line="30" column="186" source="standard:argument-list-wrapping" />
+        <error line="30" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/Atari7800.kt">
+        <error line="29" column="23" source="standard:function-literal" />
+        <error line="29" column="24" source="standard:wrapping" />
+        <error line="29" column="47" source="standard:argument-list-wrapping" />
+        <error line="29" column="73" source="standard:argument-list-wrapping" />
+        <error line="29" column="111" source="standard:argument-list-wrapping" />
+        <error line="29" column="114" source="standard:argument-list-wrapping" />
+        <error line="29" column="121" source="standard:max-line-length" />
+        <error line="29" column="156" source="standard:argument-list-wrapping" />
+        <error line="29" column="186" source="standard:argument-list-wrapping" />
+        <error line="29" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/BaseLayout.kt">
+        <error line="51" column="17" source="standard:chain-method-continuation" />
+        <error line="83" column="17" source="standard:chain-method-continuation" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/DOS.kt">
+        <error line="36" column="23" source="standard:function-literal" />
+        <error line="36" column="24" source="standard:wrapping" />
+        <error line="36" column="47" source="standard:argument-list-wrapping" />
+        <error line="36" column="73" source="standard:argument-list-wrapping" />
+        <error line="36" column="111" source="standard:argument-list-wrapping" />
+        <error line="36" column="114" source="standard:argument-list-wrapping" />
+        <error line="36" column="121" source="standard:max-line-length" />
+        <error line="36" column="156" source="standard:argument-list-wrapping" />
+        <error line="36" column="186" source="standard:argument-list-wrapping" />
+        <error line="36" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/GB.kt">
+        <error line="29" column="23" source="standard:function-literal" />
+        <error line="29" column="24" source="standard:wrapping" />
+        <error line="29" column="47" source="standard:argument-list-wrapping" />
+        <error line="29" column="73" source="standard:argument-list-wrapping" />
+        <error line="29" column="111" source="standard:argument-list-wrapping" />
+        <error line="29" column="114" source="standard:argument-list-wrapping" />
+        <error line="29" column="121" source="standard:max-line-length" />
+        <error line="29" column="156" source="standard:argument-list-wrapping" />
+        <error line="29" column="186" source="standard:argument-list-wrapping" />
+        <error line="29" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/GBA.kt">
+        <error line="31" column="23" source="standard:function-literal" />
+        <error line="31" column="24" source="standard:wrapping" />
+        <error line="31" column="47" source="standard:argument-list-wrapping" />
+        <error line="31" column="73" source="standard:argument-list-wrapping" />
+        <error line="31" column="111" source="standard:argument-list-wrapping" />
+        <error line="31" column="114" source="standard:argument-list-wrapping" />
+        <error line="31" column="121" source="standard:max-line-length" />
+        <error line="31" column="156" source="standard:argument-list-wrapping" />
+        <error line="31" column="186" source="standard:argument-list-wrapping" />
+        <error line="31" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/GG.kt">
+        <error line="29" column="23" source="standard:function-literal" />
+        <error line="29" column="24" source="standard:wrapping" />
+        <error line="29" column="47" source="standard:argument-list-wrapping" />
+        <error line="29" column="73" source="standard:argument-list-wrapping" />
+        <error line="29" column="111" source="standard:argument-list-wrapping" />
+        <error line="29" column="114" source="standard:argument-list-wrapping" />
+        <error line="29" column="121" source="standard:max-line-length" />
+        <error line="29" column="156" source="standard:argument-list-wrapping" />
+        <error line="29" column="186" source="standard:argument-list-wrapping" />
+        <error line="29" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/Genesis3.kt">
+        <error line="29" column="23" source="standard:function-literal" />
+        <error line="29" column="24" source="standard:wrapping" />
+        <error line="29" column="47" source="standard:argument-list-wrapping" />
+        <error line="29" column="73" source="standard:argument-list-wrapping" />
+        <error line="29" column="111" source="standard:argument-list-wrapping" />
+        <error line="29" column="114" source="standard:argument-list-wrapping" />
+        <error line="29" column="121" source="standard:max-line-length" />
+        <error line="29" column="156" source="standard:argument-list-wrapping" />
+        <error line="29" column="186" source="standard:argument-list-wrapping" />
+        <error line="29" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/Genesis6.kt">
+        <error line="33" column="23" source="standard:function-literal" />
+        <error line="33" column="24" source="standard:wrapping" />
+        <error line="33" column="47" source="standard:argument-list-wrapping" />
+        <error line="33" column="73" source="standard:argument-list-wrapping" />
+        <error line="33" column="111" source="standard:argument-list-wrapping" />
+        <error line="33" column="114" source="standard:argument-list-wrapping" />
+        <error line="33" column="121" source="standard:max-line-length" />
+        <error line="33" column="156" source="standard:argument-list-wrapping" />
+        <error line="33" column="186" source="standard:argument-list-wrapping" />
+        <error line="33" column="188" source="standard:function-literal" />
+        <error line="59" column="32" source="standard:argument-list-wrapping" />
+        <error line="59" column="58" source="standard:argument-list-wrapping" />
+        <error line="59" column="63" source="standard:function-literal" />
+        <error line="59" column="88" source="standard:argument-list-wrapping" />
+        <error line="59" column="107" source="standard:argument-list-wrapping" />
+        <error line="59" column="118" source="standard:argument-list-wrapping" />
+        <error line="59" column="120" source="standard:function-literal" />
+        <error line="59" column="121" source="standard:max-line-length" />
+        <error line="82" column="98" source="standard:function-expression-body" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/Lynx.kt">
+        <error line="28" column="23" source="standard:function-literal" />
+        <error line="28" column="24" source="standard:wrapping" />
+        <error line="28" column="47" source="standard:argument-list-wrapping" />
+        <error line="28" column="73" source="standard:argument-list-wrapping" />
+        <error line="28" column="111" source="standard:argument-list-wrapping" />
+        <error line="28" column="114" source="standard:argument-list-wrapping" />
+        <error line="28" column="121" source="standard:max-line-length" />
+        <error line="28" column="156" source="standard:argument-list-wrapping" />
+        <error line="28" column="186" source="standard:argument-list-wrapping" />
+        <error line="28" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/MelonDS.kt">
+        <error line="37" column="23" source="standard:function-literal" />
+        <error line="37" column="24" source="standard:wrapping" />
+        <error line="37" column="47" source="standard:argument-list-wrapping" />
+        <error line="37" column="73" source="standard:argument-list-wrapping" />
+        <error line="37" column="111" source="standard:argument-list-wrapping" />
+        <error line="37" column="114" source="standard:argument-list-wrapping" />
+        <error line="37" column="121" source="standard:max-line-length" />
+        <error line="37" column="156" source="standard:argument-list-wrapping" />
+        <error line="37" column="186" source="standard:argument-list-wrapping" />
+        <error line="37" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/N64.kt">
+        <error line="33" column="23" source="standard:function-literal" />
+        <error line="33" column="24" source="standard:wrapping" />
+        <error line="33" column="47" source="standard:argument-list-wrapping" />
+        <error line="33" column="73" source="standard:argument-list-wrapping" />
+        <error line="33" column="111" source="standard:argument-list-wrapping" />
+        <error line="33" column="114" source="standard:argument-list-wrapping" />
+        <error line="33" column="121" source="standard:max-line-length" />
+        <error line="33" column="156" source="standard:argument-list-wrapping" />
+        <error line="33" column="186" source="standard:argument-list-wrapping" />
+        <error line="33" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/NES.kt">
+        <error line="29" column="23" source="standard:function-literal" />
+        <error line="29" column="24" source="standard:wrapping" />
+        <error line="29" column="47" source="standard:argument-list-wrapping" />
+        <error line="29" column="73" source="standard:argument-list-wrapping" />
+        <error line="29" column="111" source="standard:argument-list-wrapping" />
+        <error line="29" column="114" source="standard:argument-list-wrapping" />
+        <error line="29" column="121" source="standard:max-line-length" />
+        <error line="29" column="156" source="standard:argument-list-wrapping" />
+        <error line="29" column="186" source="standard:argument-list-wrapping" />
+        <error line="29" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/NGP.kt">
+        <error line="29" column="23" source="standard:function-literal" />
+        <error line="29" column="24" source="standard:wrapping" />
+        <error line="29" column="47" source="standard:argument-list-wrapping" />
+        <error line="29" column="73" source="standard:argument-list-wrapping" />
+        <error line="29" column="111" source="standard:argument-list-wrapping" />
+        <error line="29" column="114" source="standard:argument-list-wrapping" />
+        <error line="29" column="121" source="standard:max-line-length" />
+        <error line="29" column="156" source="standard:argument-list-wrapping" />
+        <error line="29" column="186" source="standard:argument-list-wrapping" />
+        <error line="29" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/Nintendo3DS.kt">
+        <error line="35" column="23" source="standard:function-literal" />
+        <error line="35" column="24" source="standard:wrapping" />
+        <error line="35" column="47" source="standard:argument-list-wrapping" />
+        <error line="35" column="73" source="standard:argument-list-wrapping" />
+        <error line="35" column="111" source="standard:argument-list-wrapping" />
+        <error line="35" column="114" source="standard:argument-list-wrapping" />
+        <error line="35" column="121" source="standard:max-line-length" />
+        <error line="35" column="156" source="standard:argument-list-wrapping" />
+        <error line="35" column="186" source="standard:argument-list-wrapping" />
+        <error line="35" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/PCE.kt">
+        <error line="29" column="23" source="standard:function-literal" />
+        <error line="29" column="24" source="standard:wrapping" />
+        <error line="29" column="47" source="standard:argument-list-wrapping" />
+        <error line="29" column="73" source="standard:argument-list-wrapping" />
+        <error line="29" column="111" source="standard:argument-list-wrapping" />
+        <error line="29" column="114" source="standard:argument-list-wrapping" />
+        <error line="29" column="121" source="standard:max-line-length" />
+        <error line="29" column="156" source="standard:argument-list-wrapping" />
+        <error line="29" column="186" source="standard:argument-list-wrapping" />
+        <error line="29" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/PS2.kt">
+        <error line="36" column="23" source="standard:function-literal" />
+        <error line="36" column="24" source="standard:wrapping" />
+        <error line="36" column="47" source="standard:argument-list-wrapping" />
+        <error line="36" column="73" source="standard:argument-list-wrapping" />
+        <error line="36" column="111" source="standard:argument-list-wrapping" />
+        <error line="36" column="114" source="standard:argument-list-wrapping" />
+        <error line="36" column="121" source="standard:max-line-length" />
+        <error line="36" column="156" source="standard:argument-list-wrapping" />
+        <error line="36" column="186" source="standard:argument-list-wrapping" />
+        <error line="36" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/PSP.kt">
+        <error line="34" column="23" source="standard:function-literal" />
+        <error line="34" column="24" source="standard:wrapping" />
+        <error line="34" column="47" source="standard:argument-list-wrapping" />
+        <error line="34" column="73" source="standard:argument-list-wrapping" />
+        <error line="34" column="111" source="standard:argument-list-wrapping" />
+        <error line="34" column="114" source="standard:argument-list-wrapping" />
+        <error line="34" column="121" source="standard:max-line-length" />
+        <error line="34" column="156" source="standard:argument-list-wrapping" />
+        <error line="34" column="186" source="standard:argument-list-wrapping" />
+        <error line="34" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/PSX.kt">
+        <error line="34" column="23" source="standard:function-literal" />
+        <error line="34" column="24" source="standard:wrapping" />
+        <error line="34" column="47" source="standard:argument-list-wrapping" />
+        <error line="34" column="73" source="standard:argument-list-wrapping" />
+        <error line="34" column="111" source="standard:argument-list-wrapping" />
+        <error line="34" column="114" source="standard:argument-list-wrapping" />
+        <error line="34" column="121" source="standard:max-line-length" />
+        <error line="34" column="156" source="standard:argument-list-wrapping" />
+        <error line="34" column="186" source="standard:argument-list-wrapping" />
+        <error line="34" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/PSXDualShock.kt">
+        <error line="36" column="23" source="standard:function-literal" />
+        <error line="36" column="24" source="standard:wrapping" />
+        <error line="36" column="47" source="standard:argument-list-wrapping" />
+        <error line="36" column="73" source="standard:argument-list-wrapping" />
+        <error line="36" column="111" source="standard:argument-list-wrapping" />
+        <error line="36" column="114" source="standard:argument-list-wrapping" />
+        <error line="36" column="121" source="standard:max-line-length" />
+        <error line="36" column="156" source="standard:argument-list-wrapping" />
+        <error line="36" column="186" source="standard:argument-list-wrapping" />
+        <error line="36" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/SMS.kt">
+        <error line="29" column="23" source="standard:function-literal" />
+        <error line="29" column="24" source="standard:wrapping" />
+        <error line="29" column="47" source="standard:argument-list-wrapping" />
+        <error line="29" column="73" source="standard:argument-list-wrapping" />
+        <error line="29" column="111" source="standard:argument-list-wrapping" />
+        <error line="29" column="114" source="standard:argument-list-wrapping" />
+        <error line="29" column="121" source="standard:max-line-length" />
+        <error line="29" column="156" source="standard:argument-list-wrapping" />
+        <error line="29" column="186" source="standard:argument-list-wrapping" />
+        <error line="29" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/SNES.kt">
+        <error line="31" column="23" source="standard:function-literal" />
+        <error line="31" column="24" source="standard:wrapping" />
+        <error line="31" column="47" source="standard:argument-list-wrapping" />
+        <error line="31" column="73" source="standard:argument-list-wrapping" />
+        <error line="31" column="111" source="standard:argument-list-wrapping" />
+        <error line="31" column="114" source="standard:argument-list-wrapping" />
+        <error line="31" column="121" source="standard:max-line-length" />
+        <error line="31" column="156" source="standard:argument-list-wrapping" />
+        <error line="31" column="186" source="standard:argument-list-wrapping" />
+        <error line="31" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/WS.kt">
+        <error line="29" column="23" source="standard:function-literal" />
+        <error line="29" column="24" source="standard:wrapping" />
+        <error line="29" column="47" source="standard:argument-list-wrapping" />
+        <error line="29" column="73" source="standard:argument-list-wrapping" />
+        <error line="29" column="111" source="standard:argument-list-wrapping" />
+        <error line="29" column="114" source="standard:argument-list-wrapping" />
+        <error line="29" column="121" source="standard:max-line-length" />
+        <error line="29" column="156" source="standard:argument-list-wrapping" />
+        <error line="29" column="186" source="standard:argument-list-wrapping" />
+        <error line="29" column="188" source="standard:function-literal" />
+        <error line="78" column="23" source="standard:function-literal" />
+        <error line="78" column="24" source="standard:wrapping" />
+        <error line="78" column="47" source="standard:argument-list-wrapping" />
+        <error line="78" column="73" source="standard:argument-list-wrapping" />
+        <error line="78" column="111" source="standard:argument-list-wrapping" />
+        <error line="78" column="114" source="standard:argument-list-wrapping" />
+        <error line="78" column="121" source="standard:max-line-length" />
+        <error line="78" column="156" source="standard:argument-list-wrapping" />
+        <error line="78" column="186" source="standard:argument-list-wrapping" />
+        <error line="78" column="188" source="standard:function-literal" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/layouts/Wii.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="174" column="32" source="standard:argument-list-wrapping" />
+        <error line="174" column="61" source="standard:argument-list-wrapping" />
+        <error line="174" column="65" source="standard:binary-expression-wrapping" />
+        <error line="174" column="66" source="standard:function-literal" />
+        <error line="174" column="94" source="standard:argument-list-wrapping" />
+        <error line="174" column="108" source="standard:argument-list-wrapping" />
+        <error line="174" column="119" source="standard:argument-list-wrapping" />
+        <error line="174" column="121" source="standard:function-literal" />
+        <error line="174" column="121" source="standard:max-line-length" />
+        <error line="175" column="32" source="standard:argument-list-wrapping" />
+        <error line="175" column="62" source="standard:argument-list-wrapping" />
+        <error line="175" column="66" source="standard:binary-expression-wrapping" />
+        <error line="175" column="67" source="standard:function-literal" />
+        <error line="175" column="95" source="standard:argument-list-wrapping" />
+        <error line="175" column="109" source="standard:argument-list-wrapping" />
+        <error line="175" column="120" source="standard:argument-list-wrapping" />
+        <error line="175" column="121" source="standard:max-line-length" />
+        <error line="175" column="122" source="standard:function-literal" />
+        <error line="253" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/sensors/TiltConfiguration.kt">
+        <error line="25" column="62" source="standard:function-expression-body" />
+        <error line="29" column="44" source="standard:function-expression-body" />
+        <error line="34" column="22" source="standard:class-signature" />
+        <error line="34" column="42" source="standard:class-signature" />
+        <error line="40" column="44" source="standard:function-expression-body" />
+        <error line="45" column="23" source="standard:class-signature" />
+        <error line="45" column="43" source="standard:class-signature" />
+        <error line="51" column="44" source="standard:function-expression-body" />
+        <error line="56" column="27" source="standard:class-signature" />
+        <error line="56" column="50" source="standard:class-signature" />
+        <error line="56" column="72" source="standard:class-signature" />
+        <error line="70" column="44" source="standard:function-expression-body" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/sensors/TiltSensor.kt">
+        <error line="19" column="18" source="standard:class-signature" />
+        <error line="19" column="34" source="standard:class-signature" />
+        <error line="79" column="32" source="standard:function-expression-body" />
+        <error line="127" column="66" source="standard:function-expression-body" />
+        <error line="140" column="14" source="standard:function-expression-body" />
+        <error line="147" column="14" source="standard:function-expression-body" />
+        <error line="155" column="40" source="standard:function-expression-body" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/settings/TouchControllerID.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="116" column="54" source="standard:function-expression-body" />
+    </file>
+    <file name="src/main/java/com/omnidroid/touchinput/radial/settings/TouchControllerSettingsManager.kt">
+        <error line="14" column="38" source="standard:class-signature" />
+        <error line="14" column="86" source="standard:class-signature" />
+        <error line="59" column="38" source="standard:chain-method-continuation" />
+        <error line="126" column="15" source="standard:function-expression-body" />
+    </file>
+    <file name="src/test/java/com/omnidroid/touchinput/radial/sensors/SimulatedTiltInputTest.kt">
+        <error line="33" column="35" source="standard:chain-method-continuation" />
+        <error line="62" column="35" source="standard:chain-method-continuation" />
+        <error line="82" column="35" source="standard:chain-method-continuation" />
+        <error line="108" column="35" source="standard:chain-method-continuation" />
+    </file>
+</baseline>
