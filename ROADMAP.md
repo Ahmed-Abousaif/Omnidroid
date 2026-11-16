@@ -12,8 +12,12 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Fixed stuck buttons and sticks when controls are removed, touch input is cancelled, or mappings change; simulated controls now update immediately and disabling tilt releases its input
 - Moved touch haptic intensity and feedback behavior into PadKit, with live vibration preferences, explicit mute, older-device fallbacks, and no background haptics dispatcher
 - Fixed analog-style D-pads to honor four-way/eight-way settings and dead zones immediately while held, while keeping smooth thumb movement
-- Added reusable button-layout geometry and 68 regression tests covering input capture, releases, simulation, remapping, cancellation, feedback transitions, and Android haptics
-- Redesigned the game launch loading screen with cover art, a rounded dark card, animated green loading bars, and the console name before "Loading…"
+- Made Omnidroid PadKit an Android-only library with standard source/test directories, built-in Kotlin support, and Android 7.0 / API 24 compatibility; removed unused desktop/iOS/browser targets, publishing machinery, hooks, and the bundled formatter executable
+- Optimized touch routing with indexed pointer capture, reusable buffers, cached bounds and input contributions, allocation-light event/haptic diffs, and analog thumb updates deferred to placement
+- Reduced face-button allocations by 65–68% while holding buttons, 37% while changing three-finger selections, and 29% in a mixed routing replay; these are warmed host allocation measurements, with workload details in the [PadKit README](https://github.com/Ahmed-Abousaif/Omnidroid-padkit/blob/da4a1c12a69eeb744217624c4ee7496b07a12700/README.md#performance-results)
+- Added reusable radial/grid button-layout geometry and fixed overlap hit priority, empty face-button layouts, invalid bounds, and non-finite geometry
+- Expanded input coverage to 114 PadKit tests plus five host tilt tests, including 24 explicit API 24 cases; added release AAR/lint/Android 7 compatibility gates and verified app release R8 processing
+- Redesigned the game launch loading screen with cover art, a compact rounded dark card, a green bar that repeatedly fills from left to right, and the console name before "Loading…"
 - Fixed the core-download progress bar briefly flashing on rotation when cores were already installed; genuine download progress now survives rotation, and finished background checks no longer clear progress from an active download
 - Made unbound gamepad shortcuts visible in Settings so Quick Save, Quick Load, and Toggle Fast Forward can be configured ([#40](https://github.com/Ahmed-Abousaif/Omnidroid/pull/40))
 - Added a four-state DS/3DS screen layout cycle (dual, swapped dual, top only, bottom only), a configurable gamepad shortcut, and preservation of swapped layouts across rotation ([#41](https://github.com/Ahmed-Abousaif/Omnidroid/pull/41))

@@ -1,6 +1,6 @@
 package com.omnidroid.app.shared.game
 
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -32,9 +32,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
@@ -67,11 +67,11 @@ internal fun GameLoadingScreen(
         contentAlignment = Alignment.Center,
     ) {
         BoxWithConstraints(
-            modifier = Modifier.widthIn(max = 560.dp).fillMaxWidth(),
+            modifier = Modifier.widthIn(max = 360.dp).fillMaxWidth(),
         ) {
-            val compact = maxWidth < 440.dp
-            val artworkWidth = (maxWidth * 0.355f).coerceAtMost(200.dp)
-            val shape = RoundedCornerShape(18.dp)
+            val compact = maxWidth < 320.dp
+            val artworkWidth = (maxWidth * 0.32f).coerceAtMost(112.dp)
+            val shape = RoundedCornerShape(12.dp)
 
             Row(
                 modifier =
@@ -102,31 +102,31 @@ internal fun GameLoadingScreen(
                     modifier =
                         Modifier
                             .weight(1f)
-                            .padding(horizontal = if (compact) 20.dp else 36.dp, vertical = 28.dp),
+                            .padding(horizontal = if (compact) 14.dp else 18.dp, vertical = 16.dp),
                 ) {
                     Text(
                         text = game.displayName,
                         color = Color.White,
-                        fontSize = if (compact) 18.sp else 24.sp,
-                        lineHeight = if (compact) 23.sp else 29.sp,
+                        fontSize = if (compact) 14.sp else 16.sp,
+                        lineHeight = if (compact) 18.sp else 20.sp,
                         fontWeight = FontWeight.Medium,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(6.dp))
                     Text(
                         text = loadingLabel,
                         color = Color.White,
-                        fontSize = if (compact) 16.sp else 20.sp,
-                        lineHeight = if (compact) 21.sp else 25.sp,
+                        fontSize = if (compact) 12.sp else 13.sp,
+                        lineHeight = if (compact) 16.sp else 18.sp,
                         fontWeight = FontWeight.Medium,
                     )
-                    Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(12.dp))
                     GameLoadingIndicator(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .height(6.dp)
+                                .height(4.dp)
                                 .progressSemantics()
                                 .semantics {
                                     stateDescription = loadingMessage?.takeIf { it.isNotBlank() } ?: loadingLabel
@@ -141,35 +141,27 @@ internal fun GameLoadingScreen(
 @Composable
 private fun GameLoadingIndicator(modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition(label = "Game loading")
-    val split by transition.animateFloat(
-        initialValue = 0.45f,
-        targetValue = 0.65f,
+    val progress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
         animationSpec =
             infiniteRepeatable(
-                animation = tween(1000, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse,
+                animation = tween(1600, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
             ),
-        label = "Loading bar split",
+        label = "Loading bar fill",
     )
 
     Canvas(modifier) {
-        val capRadius = size.height / 2f
-        val midpoint = size.width * split
-        // Include the rounded caps in the gap so the two segments stay separated.
-        val halfGap = 3.dp.toPx() + capRadius
-        drawLine(
-            color = LibraryNeonGreen,
-            start = Offset(capRadius, capRadius),
-            end = Offset(midpoint - halfGap, capRadius),
-            strokeWidth = size.height,
-            cap = StrokeCap.Round,
+        val cornerRadius = CornerRadius(size.height / 2f)
+        drawRoundRect(
+            color = LibraryNeonGreen.copy(alpha = 0.18f),
+            cornerRadius = cornerRadius,
         )
-        drawLine(
+        drawRoundRect(
             color = LibraryNeonGreen,
-            start = Offset(midpoint + halfGap, capRadius),
-            end = Offset(size.width - capRadius, capRadius),
-            strokeWidth = size.height,
-            cap = StrokeCap.Round,
+            size = Size(size.width * progress, size.height),
+            cornerRadius = cornerRadius,
         )
     }
 }

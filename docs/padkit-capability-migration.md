@@ -6,7 +6,7 @@ The migration builds on the input-lifecycle fixes. PadKit owns reusable control 
 
 `PadKit` now accepts `HapticFeedbackSettings` and an optional `HapticFeedback` output adapter. Settings include normalized intensity (0–1), discrete-direction activation/change policy, analog activation feedback, effect coalescing, and excluded typed control IDs. Mode and settings updates apply to subsequent transitions without replaying held presses. Muted transitions still update the tracker. Feedback follows merged logical input, including simulations.
 
-Android uses adjustable 30 ms press / 15 ms release one-shots, with press/release amplitudes matching Omnidroid's previous implementation. It checks amplitude capability from API 26 and falls back to the device's default amplitude when unsupported. Older Android versions retain the duration-only fallback. Zero intensity and `NONE` do not initialize a platform adapter in `PadKit`. iOS scales the existing press/release strengths by the normalized request. Desktop and browser adapters remain silent.
+Android uses adjustable 30 ms press / 15 ms release one-shots, with press/release amplitudes matching Omnidroid's previous implementation. It checks amplitude capability from API 26 and falls back to the device's default amplitude when unsupported. Android 7.0 / API 24 retains the duration-only fallback. Zero intensity and `NONE` do not initialize an Android adapter in `PadKit`. The active fork is Android-only.
 
 Omnidroid passes its saved mode and shared vibration intensity to PadKit. Its policy preserves activation-only D-pad feedback, silent ordinary analog sticks, and independent effects for simultaneous controls. Preference changes refresh the live values. The app's `TouchHapticPlayer` and generic event-feedback bookkeeping are removed.
 
@@ -28,7 +28,7 @@ PadKit's typed `buildGridAnchors` builds regular, staggered, or slanted layouts 
 
 ## Verification
 
-Run the checked-in common engine/feedback/geometry tests, Android Compose and haptics tests, and host tilt tests through the pinned source wrapper:
+Run the engine/feedback/geometry tests and Android Compose and haptics tests in the fork's `lib/src/test`, plus Omnidroid's tilt tests, through the pinned source wrapper:
 
 ```sh
 ./gradlew :omnidroid-padkit:testDebugUnitTest :omnidroid-touchinput:testDebugUnitTest

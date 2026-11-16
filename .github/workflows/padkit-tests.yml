@@ -28,8 +28,8 @@ jobs:
         with:
           packages: platform-tools
       - name: Install Android SDK packages
-        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+        run: sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
       - name: Test input engine, Compose lifecycle, and host mappings
         run: |
           chmod +x gradlew
-          ./gradlew :omnidroid-padkit:testDebugUnitTest :omnidroid-touchinput:testDebugUnitTest --no-daemon
+          ./gradlew :omnidroid-padkit:verifyAndroid7Compatibility :omnidroid-touchinput:testDebugUnitTest --no-daemon

@@ -1802,6 +1802,13 @@ gradle.projectsEvaluated {
         kotlinAndroid.sourceSets.findByName(name)?.kotlin?.apply {
             setSrcDirs(srcDirs.filterNot { it.name == "provider(?)" } + releaseSources)
         }
+        val sourceRoots = (android.sourceSets.getByName(name).java.srcDirs +
+            kotlinAndroid.sourceSets.getByName(name).kotlin.srcDirs).filterNot { it.name == "provider(?)" }
+        appProject.tasks.withType<org.jlleitschuh.gradle.ktlint.tasks.BaseKtLintCheckTask>().matching {
+            it.name.endsWith("Over${name.replaceFirstChar { it.uppercase() }}SourceSet")
+        }.configureEach {
+            setSource(sourceRoots.map { appProject.fileTree(it) })
+        }
     }
     appProject.tasks.withType<com.google.devtools.ksp.gradle.KspAATask>().configureEach {
         if (name.contains("BenchmarkRelease") || name.contains("NonMinifiedRelease")) {
