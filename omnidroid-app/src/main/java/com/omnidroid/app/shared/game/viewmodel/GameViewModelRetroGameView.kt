@@ -82,6 +82,10 @@ class GameViewModelRetroGameView(
     var retroGameView: IRetroGameView? by MutableStateProperty(retroGameViewFlow)
     private val frameSpeedPreferences = GameFrameSpeedPreferences(appContext)
 
+    /** Renderer the running view was created with (true = Vulkan); null until created. */
+    private var runningOnVulkan: Boolean? = null
+    private var rendererRelaunchRequested = false
+
     fun getGameState(): Flow<GameState> {
         return gameState.debounce(200)
     }
@@ -183,7 +187,9 @@ class GameViewModelRetroGameView(
         if (currentState !is GameState.Loaded) throw IllegalStateException("Game is not loaded.")
 
         val isVulkanPreferred =
-            isVulkanRequested(currentState.gameData) && VulkanDetector.isVulkanSupported(context)
+            isVulkanRequested(currentState.gameData.coreVariables.asList()) == true &&
+                VulkanDetector.isVulkanSupported(context)
+        runningOnVulkan = isVulkanPreferred
 
         val result: IRetroGameView =
             if (isVulkanPreferred) {
@@ -226,18 +232,11 @@ class GameViewModelRetroGameView(
         return currentState.gameData to result
     }
 
-    private fun isVulkanRequested(gameData: GameLoader.GameData): Boolean {
-        return gameData.coreVariables.any {
-            (
-                it.key == "citra_graphics_api" ||
-                    it.key == "dolphin_graphics_api" ||
-                    it.key == "dolphin_renderer" ||
-                    it.key == "ppsspp_rendering_backend" ||
-                    it.key == "ppsspp_gpu_backend" ||
-                    it.key == "armsx2_renderer" ||
-                    it.key == "cemu_graphics_api"
-            ) && it.value.equals("vulkan", ignoreCase = true)
-        }
+    /** True/false when [variables] pick a renderer (any Vulkan wins); null when they set none. */
+    private fun isVulkanRequested(variables: List<CoreVariable>): Boolean? {
+        val rendererVariables = variables.filter { it.key in RENDERER_KEYS }
+        if (rendererVariables.isEmpty()) return null
+        return rendererVariables.any { it.value.equals("vulkan", ignoreCase = true) }
     }
 
     suspend fun retroGameViewFlow() =
@@ -375,8 +374,24 @@ class GameViewModelRetroGameView(
     }
 
     private fun updateCoreVariables(options: List<CoreVariable>) {
+        // The renderer is fixed by the view type (GL vs Vulkan surface) chosen at launch. Handing a
+        // running core a different renderer crashes it, so hold that option back and relaunch the
+        // game on the new renderer instead (it is already saved in preferences).
+        val running = runningOnVulkan
+        val requested = isVulkanRequested(options)
+        val rendererChanged =
+            running != null && requested != null &&
+                (requested && VulkanDetector.isVulkanSupported(appContext)) != running
+        val applicable = if (rendererChanged) options.filterNot { it.key in RENDERER_KEYS } else options
+
+        if (rendererChanged && !rendererRelaunchRequested) {
+            rendererRelaunchRequested = true
+            Timber.i("Renderer changed from ${if (running == true) "Vulkan" else "OpenGL"}; relaunching game")
+            sideEffects.requestRendererRelaunch()
+        }
+
         val updatedVariables =
-            options.map { Variable(it.key, it.value) }
+            applicable.map { Variable(it.key, it.value) }
                 .toTypedArray()
 
         updatedVariables.forEach {
@@ -456,5 +471,19 @@ class GameViewModelRetroGameView(
             }
 
         return message
+    }
+
+    companion object {
+        /** Core options that pick the renderer, which decides the view type at launch. */
+        private val RENDERER_KEYS =
+            setOf(
+                "citra_graphics_api",
+                "dolphin_graphics_api",
+                "dolphin_renderer",
+                "ppsspp_rendering_backend",
+                "ppsspp_gpu_backend",
+                "armsx2_renderer",
+                "cemu_graphics_api",
+            )
     }
 }

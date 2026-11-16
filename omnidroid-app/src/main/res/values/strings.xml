@@ -437,6 +437,7 @@
     <string name="game_loading_preparing_game">Preparing game…</string>
 
     <string name="game_toast_settings_button_using_gamepad">Gamepad detected. Access settings menu with %1$s.</string>
+    <string name="game_toast_relaunch_for_renderer">Restarting game to switch graphics backend…</string>
     <string name="game_toast_load_state_failed">Cannot load this state</string>
     <string name="game_toast_quick_save_loaded">Quick loaded</string>
     <string name="game_toast_quick_save_saved">Quick saved</string>

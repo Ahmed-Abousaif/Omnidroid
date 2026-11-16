@@ -22,6 +22,9 @@ class GameViewModelSideEffects(private val scope: CoroutineScope) {
 
         data object SaveFailedOnQuit : UiEffect
 
+        /** A renderer change needs a fresh view: save, close and relaunch the game. */
+        data object RelaunchForRenderer : UiEffect
+
         data class FailureFinish(val message: String) : UiEffect
         data class ConsoleSetupRequired(val message: String) : UiEffect
 
@@ -48,6 +51,14 @@ class GameViewModelSideEffects(private val scope: CoroutineScope) {
 
     fun requestSaveFailureOnQuit() {
         scope.launch { uiEffects.emit(UiEffect.SaveFailedOnQuit) }
+    }
+
+    fun requestRendererRelaunch() {
+        scope.launch {
+            withContext(Dispatchers.Main) {
+                uiEffects.emit(UiEffect.RelaunchForRenderer)
+            }
+        }
     }
 
     fun showMenu(

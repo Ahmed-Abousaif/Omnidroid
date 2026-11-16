@@ -48,8 +48,12 @@ class GameSessionCoordinator(
         onFinishTriggered = onFinishTriggered,
     )
 
-    fun performSuccessfulActivityFinish(beforeExit: (suspend () -> Unit)? = null) {
+    fun performSuccessfulActivityFinish(
+        beforeExit: (suspend () -> Unit)? = null,
+        relaunch: Boolean = false,
+    ) {
         val resultIntent = Intent().apply {
+            putExtra(BaseGameActivity.PLAY_GAME_RESULT_RELAUNCH, relaunch)
             putExtra(BaseGameActivity.PLAY_GAME_RESULT_SESSION_DURATION, System.currentTimeMillis() - startGameTime)
             putExtra(BaseGameActivity.PLAY_GAME_RESULT_GAME, activity.intent.getSerializableExtra(BaseGameActivity.EXTRA_GAME))
             putExtra(BaseGameActivity.PLAY_GAME_RESULT_LEANBACK, activity.intent.getBooleanExtra(BaseGameActivity.EXTRA_LEANBACK, false))

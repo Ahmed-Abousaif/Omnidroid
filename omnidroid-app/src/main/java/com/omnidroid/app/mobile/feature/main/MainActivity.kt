@@ -4,6 +4,7 @@ import androidx.compose.material3.Text
 
 import android.Manifest
 import android.app.Activity
+import android.app.ActivityManager
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
@@ -132,7 +133,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import de.charlex.compose.material3.HtmlText
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import retrofit2.Retrofit
 
 @AndroidEntryPoint
@@ -142,6 +145,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
     companion object {
         private const val EXTRA_CONSOLE = "console_setup_meta_system"
+        private const val GAME_PROCESS_EXIT_TIMEOUT_MS = 5_000L
 
         fun consoleIntent(context: Context, console: MetaSystemID): Intent =
             Intent(context, MainActivity::class.java)
@@ -1045,8 +1049,33 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     if (TVHelper.isTV(applicationContext)) {
                         ChannelUpdateWork.enqueue(applicationContext)
                     }
+                    relaunchGameIfRequested(resultCode, data)
                 }
             }
         }
+    }
+
+    /**
+     * The game closed only to restart (e.g. its renderer changed). Wait for the old game process
+     * to exit — a new game activity would otherwise start inside the process that is shutting
+     * down — then resume the game from the save it just wrote.
+     */
+    private suspend fun relaunchGameIfRequested(
+        resultCode: Int,
+        data: Intent?,
+    ) {
+        if (resultCode != Activity.RESULT_OK) return
+        if (data?.getBooleanExtra(BaseGameActivity.PLAY_GAME_RESULT_RELAUNCH, false) != true) return
+        @Suppress("DEPRECATION")
+        val game = data.extras?.getSerializable(BaseGameActivity.PLAY_GAME_RESULT_GAME) as? Game ?: return
+
+        val gameProcessName = "$packageName:game"
+        val activityManager = getSystemService(ActivityManager::class.java)
+        withTimeoutOrNull(GAME_PROCESS_EXIT_TIMEOUT_MS) {
+            while (activityManager.runningAppProcesses.orEmpty().any { it.processName == gameProcessName }) {
+                delay(100)
+            }
+        }
+        gameInteractor.onGamePlay(game)
     }
 }
