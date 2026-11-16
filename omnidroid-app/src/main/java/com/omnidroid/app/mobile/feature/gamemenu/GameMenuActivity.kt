@@ -38,6 +38,7 @@ import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.gamemenu.coreoptions.GameMenuCoreOptionsScreen
 import com.omnidroid.app.mobile.feature.gamemenu.coreoptions.GameMenuCoreOptionsViewModel
 import com.omnidroid.app.mobile.feature.gamemenu.states.GameMenuStatesScreen
+import com.omnidroid.app.mobile.feature.gamemenu.states.StatesMenuMode
 import com.omnidroid.app.mobile.feature.gamemenu.states.GameMenuStatesViewModel
 import com.omnidroid.app.mobile.shared.compose.ui.AppTheme
 import com.omnidroid.app.mobile.shared.controller.ControllerHintBar
@@ -198,6 +199,7 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                                                 statesPreviewManager,
                                             ),
                                     ),
+                                    mode = StatesMenuMode.SAVE,
                                     onStateClicked = {
                                         requestClose(InGameMenuCommand.Save(it))
                                     },
@@ -216,6 +218,7 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                                                 statesPreviewManager,
                                             ),
                                     ),
+                                    mode = StatesMenuMode.LOAD,
                                     onStateClicked = {
                                         requestClose(InGameMenuCommand.Load(it))
                                     },

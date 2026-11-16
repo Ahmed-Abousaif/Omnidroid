@@ -51,6 +51,7 @@ class GameMenuStatesViewModel(
         val description: String,
         val enabled: Boolean,
         val preview: Bitmap?,
+        val exists: Boolean = false,
     )
 
     data class AutoSaveEntry(val description: String, val enabled: Boolean)
@@ -80,7 +81,12 @@ class GameMenuStatesViewModel(
                                 R.string.game_menu_state,
                                 (index + 1).toString(),
                             )
-                        val description = GameMenuHelper.getSaveStateDescription(slotInfo)
+                        val description =
+                            if (slotInfo.exists) {
+                                GameMenuHelper.getSaveStateDescription(slotInfo)
+                            } else {
+                                application.applicationContext.getString(R.string.game_menu_state_empty)
+                            }
                         val isEnabled = !disableMissingEntries || slotInfo.exists
                         val preview =
                             runCatching {
@@ -98,7 +104,7 @@ class GameMenuStatesViewModel(
                                 null
                             }
 
-                        StateEntry(index, title, description, isEnabled, preview)
+                        StateEntry(index, title, description, isEnabled, preview, slotInfo.exists)
                     }
 
                 val autoSave =

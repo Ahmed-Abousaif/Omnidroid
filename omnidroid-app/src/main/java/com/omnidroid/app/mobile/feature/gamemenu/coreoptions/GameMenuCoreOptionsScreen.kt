@@ -21,15 +21,20 @@ import com.omnidroid.app.shared.settings.ControllerConfigsManager
 import com.omnidroid.app.utils.android.settings.booleanPreferenceState
 import com.omnidroid.app.utils.android.settings.stringPreferenceState
 import com.omnidroid.lib.core.CoreVariablesManager
+import com.omnidroid.lib.library.GameSystem
 
 @Composable
 fun GameMenuCoreOptionsScreen(viewModel: GameMenuCoreOptionsViewModel, gameMenuRequest: GameMenuRequest) {
     val context = LocalContext.current
-    val connected by viewModel.connectedGamePads.collectAsState(0)
     val request = gameMenuRequest
     val options = remember(request) { (request.coreOptions + request.advancedCoreOptions).filter { it.getEntriesValues().isNotEmpty() && it.getEntries(context).isNotEmpty() } }
-    val ports = (0 until maxOf(1, connected)).mapNotNull { port ->
-        request.coreConfig.controllerConfigs[port]?.takeIf { it.size >= 2 }?.let { port to it }
+    // Every configurable port, not just connected pads, so player 2+ can be set up before plugging in.
+    val ports = request.coreConfig.controllerConfigs.toSortedMap().mapNotNull { (port, configs) ->
+        configs.takeIf { it.size >= 2 }?.let { port to it }
+    }
+    // Core options are stored per system (computeSharedPreferenceKey(key, systemId)), so say so.
+    val systemTitle = remember(request.game.systemId) {
+        runCatching { context.getString(GameSystem.findById(request.game.systemId).titleResId) }.getOrNull()
     }
     SideMenuPage("game-options") {
         MenuSection("controllers", visible = ports.isNotEmpty(), titleRes = R.string.core_settings_category_controllers) {
@@ -46,7 +51,11 @@ fun GameMenuCoreOptionsScreen(viewModel: GameMenuCoreOptionsViewModel, gameMenuR
                 }
             }
         }
-        MenuSection("core", visible = options.isNotEmpty()) {
+        MenuSection(
+            "core",
+            visible = options.isNotEmpty(),
+            title = systemTitle?.let { { Text(stringResource(R.string.core_settings_scope, it)) } },
+        ) {
             options.forEach { option ->
                 key(option.getKey()) {
                     val values = option.getEntriesValues()
@@ -58,10 +67,13 @@ fun GameMenuCoreOptionsScreen(viewModel: GameMenuCoreOptionsViewModel, gameMenuR
                             pref.value = it
                         }
                     } else {
-                        val pref = stringPreferenceState(prefKey, values.first())
+                        // Default to the value the core is running with, not the first entry.
+                        val pref = stringPreferenceState(prefKey, option.getCurrentValue())
                         MenuChoice(
                             id = "core-${option.getKey()}", title = { Text(option.getDisplayName(context)) },
                             options = values.zip(entries) { value, label -> MenuOption(value, label) }, value = pref.value,
+                            // Shown only when the stored value isn't one of the listed entries.
+                            subtitle = { Text(stringResource(R.string.core_option_current_value, pref.value)) },
                         ) { pref.value = it }
                     }
                 }
