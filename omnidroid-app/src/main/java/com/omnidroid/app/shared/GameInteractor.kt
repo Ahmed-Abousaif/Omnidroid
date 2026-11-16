@@ -86,6 +86,9 @@ class GameInteractor(
                 val path = manager.saveCustomCover(game.id, uri)
                 val current = retrogradeDb.gameDao().selectById(game.id) ?: game
                 retrogradeDb.gameDao().update(current.copy(customCoverPath = path))
+                withContext(Dispatchers.Main) {
+                    activity.activity().displayToast(R.string.game_cover_updated_success)
+                }
             } catch (_: Exception) {
                 withContext(Dispatchers.Main) {
                     activity.activity().displayToast(R.string.game_custom_thumbnail_error)
