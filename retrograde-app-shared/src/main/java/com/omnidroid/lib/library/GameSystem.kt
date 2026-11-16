@@ -1249,6 +1249,14 @@ data class GameSystem(
                                                 R.string.value_melonds_screen_layout_leftright,
                                             ),
                                             ExposedSetting.Value(
+                                                "bottom-top",
+                                                R.string.value_melonds_screen_layout_bottomtop,
+                                            ),
+                                            ExposedSetting.Value(
+                                                "right-left",
+                                                R.string.value_melonds_screen_layout_rightleft,
+                                            ),
+                                            ExposedSetting.Value(
                                                 "top",
                                                 R.string.value_melonds_screen_layout_toponly,
                                             ),

@@ -460,6 +460,8 @@ android {
                 "**/libgsl_alloc_hook.so",
                 "**/libhook_impl.so",
                 "**/libmain_hook.so",
+                // Shipped by both omnidroid-chd and the prebuilt omni-libretrodroid AAR (same NDK).
+                "**/libc++_shared.so",
             )
 
 

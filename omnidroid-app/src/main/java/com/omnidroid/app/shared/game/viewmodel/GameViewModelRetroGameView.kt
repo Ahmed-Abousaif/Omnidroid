@@ -81,6 +81,7 @@ class GameViewModelRetroGameView(
     private val retroGameViewFlow = MutableStateFlow<IRetroGameView?>(null)
     var retroGameView: IRetroGameView? by MutableStateProperty(retroGameViewFlow)
     private val frameSpeedPreferences = GameFrameSpeedPreferences(appContext)
+    private var rendererSettingsGuard: RendererSettingsGuard? = null
 
     fun getGameState(): Flow<GameState> {
         return gameState.debounce(200)
@@ -182,6 +183,8 @@ class GameViewModelRetroGameView(
         val currentState = gameState.value
         if (currentState !is GameState.Loaded) throw IllegalStateException("Game is not loaded.")
 
+        rendererSettingsGuard = RendererSettingsGuard(currentState.gameData.coreVariables.asList())
+
         val isVulkanPreferred =
             isVulkanRequested(currentState.gameData) && VulkanDetector.isVulkanSupported(context)
 
@@ -203,7 +206,7 @@ class GameViewModelRetroGameView(
             }
 
         // Framework touch is disabled for all systems. Touchscreen consoles (NDS/3DS) receive
-        // stylus input via TouchScreenPointerOverlay, which supports a second finger while
+        // stylus input via GameTouchInput, which supports a second finger while
         // virtual buttons are held. GLRetroView.onTouchEvent only handles the primary pointer.
         result.disableTouchEvents()
 
@@ -226,19 +229,8 @@ class GameViewModelRetroGameView(
         return currentState.gameData to result
     }
 
-    private fun isVulkanRequested(gameData: GameLoader.GameData): Boolean {
-        return gameData.coreVariables.any {
-            (
-                it.key == "citra_graphics_api" ||
-                    it.key == "dolphin_graphics_api" ||
-                    it.key == "dolphin_renderer" ||
-                    it.key == "ppsspp_rendering_backend" ||
-                    it.key == "ppsspp_gpu_backend" ||
-                    it.key == "armsx2_renderer" ||
-                    it.key == "cemu_graphics_api"
-            ) && it.value.equals("vulkan", ignoreCase = true)
-        }
-    }
+    private fun isVulkanRequested(gameData: GameLoader.GameData): Boolean =
+        RendererSettingsGuard.requestsVulkan(gameData.coreVariables.asList())
 
     suspend fun retroGameViewFlow() =
         retroGameViewFlow
@@ -375,8 +367,12 @@ class GameViewModelRetroGameView(
     }
 
     private fun updateCoreVariables(options: List<CoreVariable>) {
+        val update = rendererSettingsGuard?.filter(options)
+        if (update?.notifyDeferredChange == true) {
+            sideEffects.showToast(appContext.getString(R.string.game_toast_renderer_change_deferred))
+        }
         val updatedVariables =
-            options.map { Variable(it.key, it.value) }
+            (update?.applicable ?: options).map { Variable(it.key, it.value) }
                 .toTypedArray()
 
         updatedVariables.forEach {

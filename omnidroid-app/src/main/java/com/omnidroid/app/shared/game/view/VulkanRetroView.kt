@@ -42,6 +42,7 @@ class VulkanRetroView(
 
     private var lifecycle: Lifecycle? = null
     private var emulationThread: EmulationThread? = null
+    private val pendingVariableUpdates = CoreVariableUpdateQueue()
 
     private val isEmulationReady = AtomicBoolean(false)
     private val isGameLoaded = AtomicBoolean(false)
@@ -338,9 +339,9 @@ class VulkanRetroView(
     }
 
     override fun updateVariables(vararg variables: Variable) {
-        for (variable in variables) {
-            runCatching { LibretroDroid.updateVariable(variable) }
-        }
+        // Retain updates even before the surface/thread exists. Only the emulation loop
+        // drains them, so a batch cannot reach the core half way through retro_run.
+        pendingVariableUpdates.enqueue(variables.toList())
     }
 
     override fun getAvailableDisks(useEmulationThread: Boolean): Int {
@@ -497,6 +498,12 @@ class VulkanRetroView(
                     runCatching { action() }
                 }
 
+                pendingVariableUpdates.drain { batch ->
+                    batch.forEach { variable ->
+                        runCatching { LibretroDroid.updateVariable(variable) }
+                            .onFailure { Timber.e(it, "Failed to update core variable %s", variable.key) }
+                    }
+                }
                 if (!isPaused.get()) {
                     try {
                         LibretroDroid.step(null)

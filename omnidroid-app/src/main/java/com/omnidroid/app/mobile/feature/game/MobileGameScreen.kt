@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -58,10 +57,8 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -77,7 +74,6 @@ import com.omnidroid.app.shared.game.view.IRetroGameView
 import com.omnidroid.app.shared.game.viewmodel.GameViewModelTouchControls.Companion.MENU_LOADING_ANIMATION_MILLIS
 import com.omnidroid.app.shared.game.viewmodel.TouchScreenRegion
 import com.omnidroid.lib.controller.ControllerConfig
-import com.omnidroid.lib.library.CoreID
 import com.omnidroid.touchinput.R
 import com.omnidroid.touchinput.radial.LocalOmnidroidPadTheme
 import com.omnidroid.touchinput.radial.OmnidroidPadTheme
@@ -92,7 +88,6 @@ import gg.padkit.config.HapticFeedbackSettings
 import gg.padkit.config.HapticFeedbackType
 import gg.padkit.ids.Id
 import gg.padkit.inputstate.InputState
-import kotlin.math.roundToInt
 
 @Composable
 fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
@@ -131,6 +126,11 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
         val touchControllerSettings = touchControllerSettingsState.value
         val currentControllerConfig = controllerConfigState.value
 
+        // DS/3DS showing one screen fill the display with pads overlaid (like PSP) instead of
+        // squeezing the game between the side pad columns.
+        val isSingleScreenLayout = viewModel.isSingleScreenLayout().collectAsState(false).value
+        val allowTouchOverlay = (currentControllerConfig?.allowTouchOverlay ?: true) || isSingleScreenLayout
+
         val tiltConfiguration = viewModel.getTiltConfiguration().collectAsState(TiltConfiguration.Disabled)
         val tiltSimulatedStates = viewModel.getSimulatedTiltEvents().collectAsState(InputState())
         val tiltSimulatedControls = remember { derivedStateOf { tiltConfiguration.value.controlIds() } }
@@ -141,7 +141,6 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
         val localContext = LocalContext.current
         val lifecycle = LocalLifecycleOwner.current
-        val density = LocalDensity.current
 
         val fullScreenPosition = remember { mutableStateOf<Rect?>(null) }
         val viewportPosition = remember { mutableStateOf<Rect?>(null) }
@@ -186,11 +185,21 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             gameView.viewport = viewport
         }
 
-        // Touchscreen overlay is a sibling (not nested) so its pointerInput cannot break
-        // PadKit multi-touch for virtual buttons.
+        // Preserve the whole visible touchscreen. PadKit excludes individual control gestures.
+        val region = touchRegionState.value
+        val touchBounds = if (viewPos != null && region != null) {
+            Rect(
+                viewPos.left + viewPos.width * region.left,
+                viewPos.top + viewPos.height * region.top,
+                viewPos.left + viewPos.width * region.right,
+                viewPos.top + viewPos.height * region.bottom,
+            )
+        } else null
+        val gameTouchInput = rememberGameTouchInput(viewModel.hasTouchScreen, retroViewState.value, fullPos, touchBounds)
         PadKit(
             modifier = Modifier.fillMaxSize(),
             onInputEvents = viewModel::handleVirtualInputEvent,
+            onUnhandledPointers = gameTouchInput,
             hapticFeedbackType = when (hapticMode) {
                 HapticFeedbackMode.NONE -> HapticFeedbackType.NONE
                 HapticFeedbackMode.PRESS -> HapticFeedbackType.PRESS
@@ -227,7 +236,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 constraintSet =
                     GameScreenLayout.buildConstraintSet(
                         isLandscape = isLandscape,
-                        allowTouchOverlay = currentControllerConfig?.allowTouchOverlay ?: true,
+                        allowTouchOverlay = allowTouchOverlay,
                         padsVisible = isVisible,
                     ),
             ) {
@@ -240,7 +249,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 val gameViewInsets =
                     when {
                         !isLandscape -> noCutoutInsets
-                        !(currentControllerConfig?.allowTouchOverlay ?: true) && isVisible -> noCutoutInsets
+                        !allowTouchOverlay && isVisible -> noCutoutInsets
                         else -> horizontalCutoutInsets
                     }
 
@@ -269,27 +278,15 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
                 if (isVisible) {
                     CompositionLocalProvider(LocalOmnidroidPadTheme provides OmnidroidPadTheme()) {
+                        // Portrait pads sit on a glass panel. Landscape pads are drawn straight over
+                        // the background for every core, including DS/3DS dual screen whose pads sit
+                        // beside the game rather than over it.
                         if (!isLandscape) {
                             PadContainer(
                                 modifier =
                                     Modifier
                                         .layoutId(GameScreenLayout.CONSTRAINTS_BOTTOM_CONTAINER)
                                         .windowInsetsPadding(bottomPadCutoutInsets)
-                                        .alpha(padOpacity),
-                            )
-                        } else if (!currentControllerConfig.allowTouchOverlay) {
-                            PadContainer(
-                                modifier =
-                                    Modifier
-                                        .layoutId(GameScreenLayout.CONSTRAINTS_LEFT_CONTAINER)
-                                        .windowInsetsPadding(leftPadCutoutInsets)
-                                        .alpha(padOpacity),
-                            )
-                            PadContainer(
-                                modifier =
-                                    Modifier
-                                        .layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_CONTAINER)
-                                        .windowInsetsPadding(rightPadCutoutInsets)
                                         .alpha(padOpacity),
                             )
                         }
@@ -328,45 +325,6 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 controllerConfig = currentControllerConfig,
                 touchControllerSettings = touchControllerSettings,
                 isTouchControlsVisible = isVisible,
-            )
-        }
-
-        // Viewport-sized sibling above the game image only (NDS/3DS pads sit beside/below it).
-        // Kept outside PadKit so its pointerInput cannot collapse PadKit multi-touch.
-        // Landscape + allowTouchOverlay (e.g. Switch) draws pads over the fullscreen viewport;
-        // a top-layer stylus box would steal those presses. Skip it while overlapping pads are
-        // visible — stylus still works when pads are hidden, and for side-by-side layouts.
-        val padsCoverViewport =
-            isLandscape &&
-                (currentControllerConfig?.allowTouchOverlay ?: true) &&
-                isVisible
-        // Cemu gets a capture surface only over the visible GamePad. This leaves
-        // the TV, black margins, and surrounding PadKit controls out of its hit area.
-        val isCemu = viewModel.systemCoreConfig.coreID == CoreID.CEMU
-        val region = touchRegionState.value
-        val touchBounds = if (viewPos != null && region != null) {
-            Rect(
-                viewPos.left + viewPos.width * region.left,
-                viewPos.top + viewPos.height * region.top,
-                viewPos.left + viewPos.width * region.right,
-                viewPos.top + viewPos.height * region.bottom,
-            )
-        } else null
-        if (viewModel.hasTouchScreen && touchBounds != null && (isCemu || !padsCoverViewport)) {
-            TouchScreenPointerOverlay(
-                enabled = true,
-                retroView = retroViewState.value,
-                retroViewBoundsInRoot = fullPos,
-                touchScreenBoundsInRoot = touchBounds,
-                modifier =
-                    Modifier
-                        .offset {
-                            IntOffset(touchBounds.left.roundToInt(), touchBounds.top.roundToInt())
-                        }
-                        .size(
-                            width = with(density) { touchBounds.width.toDp() },
-                            height = with(density) { touchBounds.height.toDp() },
-                        ),
             )
         }
 

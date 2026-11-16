@@ -553,6 +553,8 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
                     is GameViewModelSideEffects.UiEffect.ToggleFastForward -> performToggleFastForward()
 
+                    is GameViewModelSideEffects.UiEffect.CycleScreenLayout -> baseGameScreenViewModel.cycleScreenLayout()
+
                 }
 
             }

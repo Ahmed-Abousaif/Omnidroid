@@ -154,7 +154,7 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 
 ## 🎮 Omnidroid PadKit
 
-Our touch controls use [Omnidroid PadKit](https://github.com/Ahmed-Abousaif/Omnidroid-padkit/blob/0597c76737a5c335677d62288fe85420b88b3f77/README.md), an Android-only fork of PadKit compiled directly from the pinned submodule. It preserves Android **7.0 / API 24** support, customizable button/stick visuals, multi-touch, radial layouts, composite buttons, and double-tap stick clicks.
+Our touch controls use [Omnidroid PadKit](https://github.com/Ahmed-Abousaif/Omnidroid-padkit/blob/da4a1c12a69eeb744217624c4ee7496b07a12700/README.md), an Android-only fork of PadKit compiled directly from the pinned submodule. It preserves Android **7.0 / API 24** support, customizable button/stick visuals, multi-touch, radial layouts, composite buttons, and double-tap stick clicks.
 
 The fork adds reliable releases during cancellation, removal, remapping, and disposal; immediate tilt/simulation overrides; adjustable Android haptics; grid-layout helpers; and analog-style D-pads that honor four/eight-way settings and dead zones while held.
 
@@ -165,9 +165,9 @@ Performance work reduces allocation and repeated work in the touch path:
 - Analog thumbs read movement state during placement, avoiding recomposition just to move the thumb. Face layouts remember their immutable anchor/key lists.
 - In the latest warmed host replay, held face-button updates allocated **65–68% fewer bytes**, changing three-finger selections allocated **37% fewer**, and mixed routing through 12 controls allocated **29% fewer**. An earlier, separate routing pass reduced allocations by **66–72%** in its two/five/ten-pointer replays.
 
-These measurements use different staged baselines and are not additive. They measure host allocations, not Android FPS, touch latency, battery life, or whole-app memory. The latest performance pass adds 890 bytes to the unshrunk library AAR in exchange for reusable storage and lower allocation churn. See the [full changes and measurement method](https://github.com/Ahmed-Abousaif/Omnidroid-padkit/blob/0597c76737a5c335677d62288fe85420b88b3f77/README.md#changes-from-the-original-padkit).
+These measurements use different staged baselines and are not additive. They measure host allocations, not Android FPS, touch latency, battery life, or whole-app memory. The latest performance pass adds 890 bytes to the unshrunk library AAR in exchange for reusable storage and lower allocation churn. See the [full changes and measurement method](https://github.com/Ahmed-Abousaif/Omnidroid-padkit/blob/da4a1c12a69eeb744217624c4ee7496b07a12700/README.md#changes-from-the-original-padkit).
 
-The library has **104 passing tests**, including **22 API 24 cases**, plus five Omnidroid tilt tests. Its release packaging, Android API lint, and Omnidroid release R8 checks pass. Library mechanics live in PadKit; skins, preferences, sensors, console placement, and emulator routing remain in Omnidroid.
+The library has **114 passing tests**, including **24 API 24 cases**, plus five Omnidroid tilt tests. Its release packaging, Android API lint, and Omnidroid release R8 checks pass. Library mechanics live in PadKit; skins, preferences, sensors, console placement, and emulator routing remain in Omnidroid.
 
 ---
 
