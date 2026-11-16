@@ -93,6 +93,7 @@ import com.omnidroid.app.mobile.shared.compose.ui.chromeMutedContentColor
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
+import com.omnidroid.app.shared.covers.CoverCacheStore
 import com.omnidroid.app.shared.covers.CoverUtils
 import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.lib.library.db.entity.Game
@@ -468,8 +469,10 @@ private fun OmnidroidPoster(
     val fallback = remember(game) { CoverUtils.getFallbackDrawable(game) }
     val fallbackPainter = rememberDrawablePainter(drawable = fallback)
     val request = remember(context, game.id, game.coverFrontUrl, game.customCoverPath, preferredCoverUrl) {
-        val cover = CoverUtils.coverRequest(context, game, preferredCoverUrl)
-        cover.newBuilder().placeholderMemoryCacheKey(cover.memoryCacheKey).build()
+        // Show the sharper detail-size cover; the grid cover (usually in memory) stands in while it loads.
+        val grid = CoverUtils.coverRequest(context, game, preferredCoverUrl)
+        val cover = CoverUtils.coverRequest(context, game, preferredCoverUrl, tier = CoverCacheStore.Tier.DETAIL)
+        cover.newBuilder().placeholderMemoryCacheKey(grid.memoryCacheKey).build()
     }
     AsyncImage(
         model = request,
