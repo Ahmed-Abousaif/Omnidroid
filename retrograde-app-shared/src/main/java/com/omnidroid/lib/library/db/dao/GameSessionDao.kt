@@ -70,7 +70,20 @@ interface GameSessionDao {
             "FROM game_sessions WHERE gameId = :gameId",
     )
     fun observeStatsForGame(gameId: Int): Flow<GamePlayStats>
+
+    /** Session count and total play duration for every played game, in one query. */
+    @Query(
+        "SELECT gameId, COUNT(*) as sessionCount, COALESCE(SUM(durationMs), 0) as totalDurationMs " +
+            "FROM game_sessions GROUP BY gameId",
+    )
+    fun observeAllStats(): Flow<List<GameStatsRow>>
 }
+
+data class GameStatsRow(
+    val gameId: Int,
+    val sessionCount: Int,
+    val totalDurationMs: Long,
+)
 
 data class GamePlayStats(
     val sessionCount: Int = 0,

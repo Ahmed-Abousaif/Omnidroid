@@ -247,12 +247,20 @@ class CoverCacheStore(
     }
 
     private fun touch(file: File) {
+        // Every cover lookup lands here while scrolling; LRU eviction only needs a coarse access
+        // time, so write the marker at most once per TOUCH_INTERVAL_MS per file.
+        val now = System.currentTimeMillis()
+        val last = lastTouched[file.path]
+        if (last != null && now - last < TOUCH_INTERVAL_MS) return
+        lastTouched[file.path] = now
         // The image timestamp is its content version in Coil's cache key, not its LRU age.
         val marker = accessMarker(file)
         runCatching {
-            if (!marker.setLastModified(System.currentTimeMillis())) marker.createNewFile()
+            if (!marker.setLastModified(now)) marker.createNewFile()
         }
     }
+
+    private val lastTouched = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
     private fun accessMarker(file: File): File = File("${file.path}.access")
 
@@ -302,6 +310,7 @@ class CoverCacheStore(
         const val COVER_CACHE_DIR = "cover_cache"
         const val SETTINGS_VERSION = 3
         const val GRID_MAX_EDGE = 480
+        private const val TOUCH_INTERVAL_MS = 10 * 60 * 1000L
         const val DETAIL_MAX_EDGE = 768
         const val WEBP_QUALITY = 85
         const val JPEG_QUALITY = 90
