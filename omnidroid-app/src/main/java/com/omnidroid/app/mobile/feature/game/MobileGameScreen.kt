@@ -131,6 +131,13 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
         val touchControllerSettings = touchControllerSettingsState.value
         val currentControllerConfig = controllerConfigState.value
 
+        // DS/3DS showing one screen fill the display with pads overlaid (like PSP) instead of
+        // squeezing the game between the side pad columns.
+        val isSingleScreenLayout = viewModel.isSingleScreenLayout().collectAsState(false).value
+        val allowTouchOverlay = (currentControllerConfig?.allowTouchOverlay ?: true) || isSingleScreenLayout
+        val leftPadBounds = remember { mutableStateOf<Rect?>(null) }
+        val rightPadBounds = remember { mutableStateOf<Rect?>(null) }
+
         val tiltConfiguration = viewModel.getTiltConfiguration().collectAsState(TiltConfiguration.Disabled)
         val tiltSimulatedStates = viewModel.getSimulatedTiltEvents().collectAsState(InputState())
         val tiltSimulatedControls = remember { derivedStateOf { tiltConfiguration.value.controlIds() } }
@@ -168,6 +175,16 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             touchControllerSettings != null &&
                 currentControllerConfig != null &&
                 touchControlsVisibleState.value
+
+        // Landscape + allowTouchOverlay (e.g. Switch, DS/3DS single screen) draws pads over the
+        // fullscreen viewport.
+        val padsCoverViewport =
+            isLandscape &&
+                allowTouchOverlay &&
+                isVisible
+        // A DS/3DS single screen filling the display sits under the pads. Only the strip between
+        // the two pads is touchable, so pad presses never double as touchscreen taps.
+        val clipToPads = padsCoverViewport && isSingleScreenLayout
 
         val gameAspectRatioState =
             viewModel.getGameAspectRatio().collectAsState(viewModel.system.aspectRatio)
@@ -227,7 +244,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 constraintSet =
                     GameScreenLayout.buildConstraintSet(
                         isLandscape = isLandscape,
-                        allowTouchOverlay = currentControllerConfig?.allowTouchOverlay ?: true,
+                        allowTouchOverlay = allowTouchOverlay,
                         padsVisible = isVisible,
                     ),
             ) {
@@ -240,7 +257,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 val gameViewInsets =
                     when {
                         !isLandscape -> noCutoutInsets
-                        !(currentControllerConfig?.allowTouchOverlay ?: true) && isVisible -> noCutoutInsets
+                        !allowTouchOverlay && isVisible -> noCutoutInsets
                         else -> horizontalCutoutInsets
                     }
 
@@ -300,6 +317,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                             Modifier
                                 .layoutId(GameScreenLayout.CONSTRAINTS_LEFT_PAD)
                                 .windowInsetsPadding(leftPadInsets)
+                                .onGloballyPositioned { leftPadBounds.value = it.boundsInRoot() }
                                 .alpha(padOpacity),
                             touchControllerSettings,
                         )
@@ -308,6 +326,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                             Modifier
                                 .layoutId(GameScreenLayout.CONSTRAINTS_RIGHT_PAD)
                                 .windowInsetsPadding(rightPadCutoutInsets)
+                                .onGloballyPositioned { rightPadBounds.value = it.boundsInRoot() }
                                 .alpha(padOpacity),
                             touchControllerSettings,
                         )
@@ -333,18 +352,14 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
         // Viewport-sized sibling above the game image only (NDS/3DS pads sit beside/below it).
         // Kept outside PadKit so its pointerInput cannot collapse PadKit multi-touch.
-        // Landscape + allowTouchOverlay (e.g. Switch) draws pads over the fullscreen viewport;
-        // a top-layer stylus box would steal those presses. Skip it while overlapping pads are
-        // visible — stylus still works when pads are hidden, and for side-by-side layouts.
-        val padsCoverViewport =
-            isLandscape &&
-                (currentControllerConfig?.allowTouchOverlay ?: true) &&
-                isVisible
+        // When pads cover the viewport a top-layer stylus box would steal their presses, so skip it
+        // while overlapping pads are visible — stylus still works when pads are hidden, and for
+        // side-by-side layouts. DS/3DS single screen keeps it, clipped to the gap between pads.
         // Cemu gets a capture surface only over the visible GamePad. This leaves
         // the TV, black margins, and surrounding PadKit controls out of its hit area.
         val isCemu = viewModel.systemCoreConfig.coreID == CoreID.CEMU
         val region = touchRegionState.value
-        val touchBounds = if (viewPos != null && region != null) {
+        val viewportTouchBounds = if (viewPos != null && region != null) {
             Rect(
                 viewPos.left + viewPos.width * region.left,
                 viewPos.top + viewPos.height * region.top,
@@ -352,7 +367,13 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 viewPos.top + viewPos.height * region.bottom,
             )
         } else null
-        if (viewModel.hasTouchScreen && touchBounds != null && (isCemu || !padsCoverViewport)) {
+        val touchBounds =
+            if (clipToPads && viewportTouchBounds != null) {
+                GameScreenLayout.clipBetweenPads(viewportTouchBounds, leftPadBounds.value, rightPadBounds.value)
+            } else {
+                viewportTouchBounds
+            }
+        if (viewModel.hasTouchScreen && touchBounds != null && (isCemu || clipToPads || !padsCoverViewport)) {
             TouchScreenPointerOverlay(
                 enabled = true,
                 retroView = retroViewState.value,
