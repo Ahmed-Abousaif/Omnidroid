@@ -39,6 +39,9 @@ enum class GameShortcutType {
     QUICK_LOAD,
     QUICK_SAVE,
     TOGGLE_FAST_FORWARD,
+
+    /** Same as the on-screen layout button: DS/3DS dual -> swapped -> top -> bottom; Wii U TV <-> dual. */
+    CYCLE_SCREEN_LAYOUT,
     ;
 
     fun displayName() = name.split('_').joinToString(" ") { it.lowercase().replaceFirstChar { it.uppercase() } }

@@ -258,6 +258,8 @@
 
     <string name="value_melonds_screen_layout_topbottom">Top - Bottom</string>
     <string name="value_melonds_screen_layout_leftright">Left - Right</string>
+    <string name="value_melonds_screen_layout_bottomtop">Bottom - Top</string>
+    <string name="value_melonds_screen_layout_rightleft">Right - Left</string>
     <string name="value_melonds_screen_layout_toponly">Top Only</string>
     <string name="value_melonds_screen_layout_bottomonly">Bottom Only</string>
     <string name="value_melonds_screen_layout_hybridtop">Hybrid Top</string>
