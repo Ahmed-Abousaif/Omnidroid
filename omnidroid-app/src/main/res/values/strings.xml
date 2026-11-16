@@ -33,6 +33,7 @@
     <string name="library_scanning">Scanning…</string>
     <string name="stop">Stop</string>
     <string name="none">None</string>
+    <string name="shortcut_not_set">Not set</string>
     <string name="directory">Directory</string>
     <string name="display_filter">Display filter</string>
     <string name="roms">ROMs</string>
@@ -435,6 +436,7 @@
     <string name="game_menu_tilt_sensor">Tilt Sensor</string>
 
     <string name="game_loading_preparing_game">Preparing game…</string>
+    <string name="game_loading_console">%1$s Loading…</string>
 
     <string name="game_toast_settings_button_using_gamepad">Gamepad detected. Access settings menu with %1$s.</string>
     <string name="game_toast_relaunch_for_renderer">Restarting game to switch graphics backend…</string>

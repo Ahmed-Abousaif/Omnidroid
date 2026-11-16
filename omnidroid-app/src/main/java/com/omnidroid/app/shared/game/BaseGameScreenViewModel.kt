@@ -502,6 +502,8 @@ class BaseGameScreenViewModel(
 
     }
 
+    fun isSingleScreenLayout() = touchControls.isSingleScreenLayout()
+
     fun getGameAspectRatio(): Flow<Float> {
 
         return touchControls.getGameAspectRatio()
@@ -509,6 +511,8 @@ class BaseGameScreenViewModel(
     }
 
     fun getTouchScreenRegion() = touchControls.getTouchScreenRegion()
+
+    fun cycleScreenLayout() = touchControls.cycleScreenLayout()
 
     fun refreshSettings() {
 

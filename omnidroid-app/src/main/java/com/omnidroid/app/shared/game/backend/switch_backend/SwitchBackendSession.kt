@@ -191,7 +191,7 @@ class SwitchBackendSession(
         val actionMasked = event.actionMasked
         val pointerIndex = event.actionIndex
         val fingerId = event.getPointerId(pointerIndex)
-        // TouchScreenPointerOverlay maps into [container] space (asView); Eden expects
+        // GameTouchInput maps into [container] space (asView); Eden expects
         // coordinates relative to the SurfaceView swapchain.
         val x = event.getX(pointerIndex) - surfaceView.left
         val y = event.getY(pointerIndex) - surfaceView.top
@@ -260,7 +260,7 @@ class SwitchBackendSession(
 
     override fun disableTouchEvents() {
         // Match libretro: keep raw View touches from competing with Compose pads /
-        // TouchScreenPointerOverlay. Stylus is forwarded via IRetroGameView.onTouchEvent.
+        // GameTouchInput. Stylus is forwarded via IRetroGameView.onTouchEvent.
         val sink = View.OnTouchListener { _, _ -> true }
         container.setOnTouchListener(sink)
         surfaceView.setOnTouchListener(sink)
