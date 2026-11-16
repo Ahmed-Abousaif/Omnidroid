@@ -355,6 +355,11 @@ class GameViewModelInput(
                                 GameShortcutType.QUICK_LOAD -> sideEffects.loadQuickSave()
                                 GameShortcutType.QUICK_SAVE -> sideEffects.saveQuickSave()
                                 GameShortcutType.TOGGLE_FAST_FORWARD -> sideEffects.toggleFastForward()
+                                GameShortcutType.CYCLE_SCREEN_LAYOUT -> {
+                                    // Clear so holding the combo cycles once, not on every later key.
+                                    pressedKeys.clear()
+                                    sideEffects.cycleScreenLayout()
+                                }
                             }
                             return@safeCollect
                         }

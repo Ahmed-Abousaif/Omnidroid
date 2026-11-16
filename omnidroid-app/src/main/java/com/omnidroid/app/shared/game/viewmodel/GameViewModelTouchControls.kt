@@ -171,6 +171,19 @@ class GameViewModelTouchControls(
         screenLayoutRevision.value++
     }
 
+    /**
+     * On-screen layout button and gamepad shortcut. DS/3DS: dual -> dual swapped -> top only ->
+     * bottom only. Wii U: TV <-> dual.
+     */
+    fun cycleScreenLayout() {
+        if (!screenLayoutController.supportsToggle()) return
+        val variables = screenLayoutController.cycle(screenOrientation.value)
+        screenLayoutRevision.value++
+        if (variables.isNotEmpty()) {
+            retroGameView.applyCoreVariables(variables)
+        }
+    }
+
     fun updateScreenOrientation(orientation: TouchControllerSettingsManager.Orientation) {
         screenOrientation.value = orientation
         screenLayoutRevision.value++
@@ -250,9 +263,7 @@ class GameViewModelTouchControls(
             ComposeTouchLayouts.HOST_KEY_SCREEN_LAYOUT -> {
                 if (event.pressed && screenLayoutController.supportsToggle()) {
                     playTouchHapticForButton(true)
-                    val variables = screenLayoutController.toggle(screenOrientation.value)
-                    screenLayoutRevision.value++
-                    retroGameView.applyCoreVariables(variables)
+                    cycleScreenLayout()
                 }
                 true
             }

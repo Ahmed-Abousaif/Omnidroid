@@ -510,6 +510,8 @@ class BaseGameScreenViewModel(
 
     fun getTouchScreenRegion() = touchControls.getTouchScreenRegion()
 
+    fun cycleScreenLayout() = touchControls.cycleScreenLayout()
+
     fun refreshSettings() {
 
         touchControls.refreshLayout()
