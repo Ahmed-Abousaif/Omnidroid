@@ -6,6 +6,11 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ## Completed
 
+### v3.1.0
+
+- Redesigned the game launch loading screen with cover art, a rounded dark card, animated green loading bars, and the console name before "Loading…"
+- Fixed the core-download progress bar briefly flashing on rotation when cores were already installed; genuine download progress now survives rotation, and finished background checks no longer clear progress from an active download
+
 ### v3.0.0
 
 - Rebuilt extra-display detection and output for dual-screen handhelds and compatible TVs, with an Omnidroid welcome screen, per-display controls, safe lifecycle handling, and a lightweight single-screen path that starts the display coordinator only when needed
