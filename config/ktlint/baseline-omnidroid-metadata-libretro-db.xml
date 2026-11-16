@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<baseline version="1.0">
+    <file name="src/main/java/com/omnidroid/metadata/libretrodb/CoverSearcher.kt">
+        <error line="13" column="21" source="standard:class-signature" />
+        <error line="13" column="61" source="standard:class-signature" />
+        <error line="30" column="13" source="standard:chain-method-continuation" />
+        <error line="73" column="52" source="standard:function-signature" />
+    </file>
+    <file name="src/main/java/com/omnidroid/metadata/libretrodb/LibretroDBMetadataProvider.kt">
+        <error line="40" column="23" source="standard:chain-method-continuation" />
+        <error line="50" column="35" source="standard:binary-expression-wrapping" />
+        <error line="50" column="58" source="standard:argument-list-wrapping" />
+        <error line="50" column="78" source="standard:argument-list-wrapping" />
+        <error line="50" column="86" source="standard:argument-list-wrapping" />
+        <error line="50" column="89" source="standard:argument-list-wrapping" />
+        <error line="50" column="101" source="standard:argument-list-wrapping" />
+        <error line="50" column="118" source="standard:argument-list-wrapping" />
+        <error line="50" column="121" source="standard:max-line-length" />
+        <error line="116" column="50" source="standard:chain-method-continuation" />
+        <error line="167" column="17" source="standard:chain-method-continuation" />
+        <error line="172" column="17" source="standard:chain-method-continuation" />
+        <error line="197" column="16" source="standard:chain-method-continuation" />
+    </file>
+    <file name="src/main/java/com/omnidroid/metadata/libretrodb/MetadataSliceInstallerImpl.kt">
+        <error line="43" column="35" source="standard:chain-method-continuation" />
+        <error line="43" column="49" source="standard:chain-method-continuation" />
+        <error line="43" column="58" source="standard:chain-method-continuation" />
+        <error line="43" column="70" source="standard:chain-method-continuation" />
+        <error line="43" column="89" source="standard:chain-method-continuation" />
+        <error line="82" column="28" source="standard:multiline-expression-wrapping" />
+        <error line="94" column="30" source="standard:multiline-expression-wrapping" />
+        <error line="255" column="26" source="standard:multiline-expression-wrapping" />
+        <error line="276" column="41" source="standard:chain-method-continuation" />
+        <error line="276" column="74" source="standard:chain-method-continuation" />
+        <error line="276" column="91" source="standard:chain-method-continuation" />
+        <error line="288" column="42" source="standard:chain-method-continuation" />
+        <error line="292" column="17" source="standard:chain-method-continuation" />
+        <error line="297" column="49" source="standard:chain-method-continuation" />
+        <error line="304" column="68" source="standard:function-expression-body" />
+        <error line="314" column="37" source="standard:chain-method-continuation" />
+        <error line="314" column="47" source="standard:chain-method-continuation" />
+        <error line="314" column="56" source="standard:chain-method-continuation" />
+        <error line="314" column="62" source="standard:chain-method-continuation" />
+        <error line="374" column="46" source="standard:function-expression-body" />
+    </file>
+    <file name="src/main/java/com/omnidroid/metadata/libretrodb/TokenMatcher.kt">
+        <error line="54" column="10" source="standard:chain-method-continuation" />
+        <error line="54" column="22" source="standard:chain-method-continuation" />
+        <error line="54" column="46" source="standard:chain-method-continuation" />
+        <error line="54" column="73" source="standard:chain-method-continuation" />
+    </file>
+    <file name="src/main/java/com/omnidroid/metadata/libretrodb/db/LibretroDBManager.kt">
+        <error line="7" column="25" source="standard:class-signature" />
+        <error line="7" column="53" source="standard:class-signature" />
+        <error line="14" column="13" source="standard:chain-method-continuation" />
+        <error line="20" column="13" source="standard:chain-method-continuation" />
+    </file>
+</baseline>

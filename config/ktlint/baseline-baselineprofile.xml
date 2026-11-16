@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<baseline version="1.0">
+    <file name="build.gradle.kts">
+        <error line="16" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/main/java/com/omnidroid/baselineprofile/BenchmarkJourneys.kt">
+        <error line="12" column="36" source="standard:chain-method-continuation" />
+        <error line="12" column="51" source="standard:chain-method-continuation" />
+        <error line="12" column="75" source="standard:chain-method-continuation" />
+        <error line="12" column="90" source="standard:chain-method-continuation" />
+        <error line="16" column="17" source="standard:chain-method-continuation" />
+        <error line="22" column="47" source="standard:function-signature" />
+        <error line="22" column="59" source="standard:function-signature" />
+        <error line="22" column="73" source="standard:function-signature" />
+        <error line="24" column="17" source="standard:chain-method-continuation" />
+        <error line="25" column="38" source="standard:chain-method-continuation" />
+        <error line="38" column="26" source="standard:wrapping" />
+        <error line="38" column="26" source="standard:argument-list-wrapping" />
+        <error line="38" column="37" source="standard:argument-list-wrapping" />
+        <error line="39" column="28" source="standard:argument-list-wrapping" />
+        <error line="39" column="67" source="standard:argument-list-wrapping" />
+        <error line="39" column="68" source="standard:wrapping" />
+        <error line="39" column="69" source="standard:argument-list-wrapping" />
+        <error line="39" column="69" source="standard:trailing-comma-on-call-site" />
+        <error line="41" column="26" source="standard:wrapping" />
+        <error line="41" column="26" source="standard:argument-list-wrapping" />
+        <error line="41" column="64" source="standard:argument-list-wrapping" />
+        <error line="42" column="55" source="standard:argument-list-wrapping" />
+        <error line="42" column="67" source="standard:argument-list-wrapping" />
+        <error line="42" column="68" source="standard:wrapping" />
+        <error line="42" column="69" source="standard:argument-list-wrapping" />
+        <error line="42" column="69" source="standard:trailing-comma-on-call-site" />
+        <error line="50" column="16" source="standard:multiline-expression-wrapping" />
+        <error line="50" column="23" source="standard:chain-method-continuation" />
+        <error line="50" column="67" source="standard:chain-method-continuation" />
+    </file>
+    <file name="src/main/java/com/omnidroid/baselineprofile/LibraryBenchmarks.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="20" column="1" source="standard:spacing-between-declarations-with-annotations" />
+        <error line="20" column="5" source="standard:blank-line-before-declaration" />
+        <error line="21" column="1" source="standard:spacing-between-declarations-with-annotations" />
+        <error line="21" column="5" source="standard:blank-line-before-declaration" />
+        <error line="22" column="1" source="standard:spacing-between-declarations-with-annotations" />
+        <error line="22" column="5" source="standard:blank-line-before-declaration" />
+        <error line="25" column="25" source="standard:multiline-expression-wrapping" />
+        <error line="25" column="25" source="standard:function-signature" />
+        <error line="30" column="24" source="standard:statement-wrapping" />
+        <error line="30" column="38" source="standard:statement-wrapping" />
+        <error line="30" column="54" source="standard:statement-wrapping" />
+        <error line="34" column="27" source="standard:function-signature" />
+        <error line="34" column="39" source="standard:function-signature" />
+        <error line="34" column="53" source="standard:function-signature" />
+        <error line="34" column="57" source="standard:multiline-expression-wrapping" />
+        <error line="34" column="57" source="standard:function-signature" />
+        <error line="39" column="24" source="standard:statement-wrapping" />
+        <error line="39" column="38" source="standard:statement-wrapping" />
+        <error line="39" column="67" source="standard:statement-wrapping" />
+        <error line="42" column="1" source="standard:no-blank-line-before-rbrace" />
+    </file>
+    <file name="src/main/java/com/omnidroid/baselineprofile/StartupBenchmarks.kt">
+        <error line="24" column="63" source="standard:multiline-expression-wrapping" />
+        <error line="24" column="63" source="standard:function-signature" />
+    </file>
+</baseline>

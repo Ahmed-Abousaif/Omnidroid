@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<baseline version="1.0">
+    <file name="src/main/java/com/omnidroid/ext/feature/core/CoreUpdaterImpl.kt">
+        <error line="84" column="31" source="standard:chain-method-continuation" />
+    </file>
+    <file name="src/main/java/com/omnidroid/ext/feature/savesync/SaveSyncManagerImpl.kt">
+        <error line="67" column="45" source="standard:chain-method-continuation" />
+    </file>
+</baseline>

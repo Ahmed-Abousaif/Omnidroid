@@ -32,4 +32,6 @@ jobs:
     - name: Build Pinned Eden Libraries
       run: python3 omnidroid-cores/update_cores.py --cores switch --eden-ref pinned --eden-jobs 2
     - name: Run ktlint tests
-      run: ./gradlew assembleDebug ktlintCheck
+      # The app only: root assembleDebug also packages every library as a standalone AAR, and
+      # :bundled-cores:bundleDebugAar fails because the root build disables its AarMetadata tasks.
+      run: ./gradlew :omnidroid-app:assembleDebug ktlintCheck
