@@ -8,6 +8,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogActionRole
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
+import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.omnidroid.R
@@ -40,8 +48,19 @@ fun InputDevicesSettingsScreen(
             EnabledDeviceCategory(state)
             SettingsHorizontalDivider()
         }
+        if (state.bindings.isEmpty()) {
+            // Buttons and shortcuts are per controller, so there's nothing to edit until one connects.
+            OmnidroidSettingsGroup {
+                OmnidroidSettingsMenuLink(
+                    titleRes = R.string.settings_gamepad_none_title,
+                    subtitleRes = R.string.settings_gamepad_none_description,
+                    onClick = {},
+                )
+            }
+            SettingsHorizontalDivider()
+        }
         state.bindings.forEach { (device, bindings) ->
-            DeviceBindingCategory(device, bindings)
+            DeviceBindingCategory(device, bindings, onReset = { viewModel.resetBindings(device) })
             SettingsHorizontalDivider()
         }
         GeneralOptionsCategory(viewModel)
@@ -52,7 +71,18 @@ fun InputDevicesSettingsScreen(
 private fun DeviceBindingCategory(
     device: InputDevice,
     bindings: InputDevicesSettingsViewModel.BindingsView,
+    onReset: () -> Unit,
 ) {
+    var confirmReset by remember { mutableStateOf(false) }
+    if (confirmReset) {
+        ConfirmResetDialog(
+            message = stringResource(R.string.settings_gamepad_reset_device_message, device.name),
+            onDismiss = { confirmReset = false },
+        ) {
+            confirmReset = false
+            onReset()
+        }
+    }
     val context = LocalContext.current
     val customizableKeys = device.getOmnidroidInputDevice().getCustomizableKeys()
 
@@ -77,6 +107,11 @@ private fun DeviceBindingCategory(
         bindings.shortcuts.forEach {
             DeviceShortcutBinding(context, device, it)
         }
+
+        OmnidroidSettingsMenuLink(
+            titleRes = R.string.settings_gamepad_title_reset_device,
+            onClick = { confirmReset = true },
+        )
     }
 }
 
@@ -114,10 +149,43 @@ private fun EnabledDeviceCategory(state: InputDevicesSettingsViewModel.State) {
 
 @Composable
 private fun GeneralOptionsCategory(viewModel: InputDevicesSettingsViewModel) {
+    var confirmReset by remember { mutableStateOf(false) }
+    if (confirmReset) {
+        ConfirmResetDialog(
+            message = stringResource(R.string.settings_gamepad_reset_all_message),
+            onDismiss = { confirmReset = false },
+        ) {
+            confirmReset = false
+            viewModel.resetAllBindings()
+        }
+    }
     OmnidroidSettingsGroup(titleRes = R.string.settings_gamepad_category_general) {
         OmnidroidSettingsMenuLink(
             titleRes = R.string.settings_gamepad_title_reset_bindings,
-            onClick = { viewModel.resetAllBindings() },
+            subtitleRes = R.string.settings_gamepad_description_reset_bindings,
+            onClick = { confirmReset = true },
         )
     }
+}
+
+@Composable
+private fun ConfirmResetDialog(
+    message: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    OmnidroidDialog(
+        destructive = true,
+        title = { Text(stringResource(R.string.settings_gamepad_reset_confirm_title)) },
+        text = { Text(message) },
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            OmnidroidDialogButton(onClick = onConfirm, role = DialogActionRole.Destructive) {
+                Text(stringResource(R.string.settings_gamepad_reset_confirm_button))
+            }
+        },
+        dismissButton = {
+            OmnidroidDialogButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        },
+    )
 }

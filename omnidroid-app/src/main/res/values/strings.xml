@@ -225,6 +225,14 @@
     <string name="settings_gamepad_category_enabled">Enabled devices</string>
     <string name="settings_gamepad_category_general">General</string>
     <string name="settings_gamepad_title_reset_bindings">Reset bindings</string>
+    <string name="settings_gamepad_description_reset_bindings">Restore default buttons and shortcuts for every controller</string>
+    <string name="settings_gamepad_title_reset_device">Reset this controller</string>
+    <string name="settings_gamepad_reset_confirm_title">Reset bindings?</string>
+    <string name="settings_gamepad_reset_confirm_button">Reset</string>
+    <string name="settings_gamepad_reset_all_message">All controllers go back to their default buttons and shortcuts.</string>
+    <string name="settings_gamepad_reset_device_message">\"%1$s\" goes back to its default buttons and shortcuts.</string>
+    <string name="settings_gamepad_none_title">No controller connected</string>
+    <string name="settings_gamepad_none_description">Connect a controller to set its buttons and shortcuts</string>
 
     <string name="settings_title_open_cores_selection">Change Cores</string>
     <string name="settings_description_open_cores_selection">Select which core is associated to a system</string>
@@ -494,7 +502,13 @@
     <string name="gamepad_binding_update_title">Associate \"RetroPad %1$s\"</string>
     <string name="gamepad_binding_update_description">Press a button on your \"%1$s\"</string>
     <string name="shortcut_binding_update_title">Associate \"Shortcut %1$s\"</string>
-    <string name="shortcut_binding_update_description">Press the first, then second button to bind a combo on your \"%1$s\"</string>
+    <string name="shortcut_binding_update_description">Press a button on your \"%1$s\", or two buttons one after the other for a combo (hold them together in game)</string>
+    <string name="shortcut_binding_conflict_message">%1$s is already the %2$s shortcut. Replace it?</string>
+    <string name="gamepad_binding_clear">Clear</string>
+    <string name="gamepad_binding_conflict_title">%1$s is already in use</string>
+    <string name="gamepad_binding_conflict_message">%1$s is assigned to %2$s. Swap the two buttons, or replace and leave %2$s unassigned?</string>
+    <string name="gamepad_binding_conflict_swap">Swap</string>
+    <string name="gamepad_binding_conflict_replace">Replace</string>
 
     <string name="tv_game_message_missing_gamepad">Gamepads are required to play. Please connect one.</string>
 

@@ -5,11 +5,11 @@ import android.content.Intent
 import android.view.InputDevice
 import android.view.KeyEvent
 import com.omnidroid.R
-import kotlinx.coroutines.runBlocking
-import timber.log.Timber
 
 class InputBindingUpdater(private val inputDeviceManager: InputDeviceManager, intent: Intent) {
     val extras = parseExtras(intent)
+
+    private val target get() = RetroKey(extras.retroKey)
 
     fun getTitle(context: Context): String {
         val keyName = InputKey(extras.retroKey).displayName()
@@ -20,28 +20,25 @@ class InputBindingUpdater(private val inputDeviceManager: InputDeviceManager, in
         return context.getString(R.string.gamepad_binding_update_description, extras.device.name)
     }
 
-    fun handleKeyEvent(event: KeyEvent): Boolean {
-        Timber.d("Received input binding event: $event ${event.device}")
-        return when (event.action) {
-            KeyEvent.ACTION_DOWN -> onKeyDown(event)
-            KeyEvent.ACTION_UP -> onKeyUp(event)
-            else -> false
-        }
+    /** The physical key released on the targeted device, or null if the event isn't for us. */
+    fun releasedKey(event: KeyEvent): InputKey? {
+        if (event.action != KeyEvent.ACTION_UP || !isTargetedDevice(event.device)) return null
+        return InputKey(event.keyCode)
     }
 
-    private fun onKeyDown(event: KeyEvent): Boolean {
-        return isTargetedDevice(event.device)
-    }
+    /** Whether the dialog should consume [event] (every key from the targeted device). */
+    fun consumes(event: KeyEvent): Boolean = isTargetedDevice(event.device)
 
-    private fun onKeyUp(event: KeyEvent): Boolean {
-        if (!isTargetedDevice(event.device)) return false
+    /** The other button [key] already drives on this device, if any. */
+    suspend fun conflictFor(key: InputKey): RetroKey? =
+        BindingEdits.conflictingButton(inputDeviceManager.getCurrentBindings(extras.device), target, key)
 
-        runBlocking {
-            inputDeviceManager.updateBinding(event.device, RetroKey(extras.retroKey), InputKey(event.keyCode))
-        }
+    suspend fun assign(
+        key: InputKey,
+        resolution: BindingEdits.ConflictResolution = BindingEdits.ConflictResolution.REPLACE,
+    ) = inputDeviceManager.updateBinding(extras.device, target, key, resolution)
 
-        return true
-    }
+    suspend fun clear() = inputDeviceManager.clearBinding(extras.device, target)
 
     private fun isTargetedDevice(device: InputDevice?): Boolean {
         return device != null && extras.device.name == device.name

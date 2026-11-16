@@ -93,6 +93,9 @@ class InputDeviceManager(
     ): GameShortcut? {
         return if (preference.isNullOrEmpty()) {
             GameShortcut.getDefault(device, type)
+        } else if (preference == SHORTCUT_CLEARED) {
+            // Explicitly cleared: unbound, and don't fall back to the default combo.
+            GameShortcut(type = type, keys = emptySet())
         } else {
             val decoded = runCatching { Json.decodeFromString(bindingsComboSerializer, preference) }
             val combo = decoded.getOrNull() ?: return GameShortcut.getDefault(device, type)
@@ -128,32 +131,69 @@ class InputDeviceManager(
         inputDevice: InputDevice,
         retroKey: RetroKey,
         inputKey: InputKey,
+        resolution: BindingEdits.ConflictResolution = BindingEdits.ConflictResolution.REPLACE,
+    ) = setBindings(inputDevice, BindingEdits.assign(getCurrentBindings(inputDevice), retroKey, inputKey, resolution))
+
+    suspend fun clearBinding(
+        inputDevice: InputDevice,
+        retroKey: RetroKey,
+    ) = setBindings(inputDevice, BindingEdits.clear(getCurrentBindings(inputDevice), retroKey))
+
+    private suspend fun setBindings(
+        inputDevice: InputDevice,
+        bindings: Map<InputKey, RetroKey>,
     ) = withContext(Dispatchers.IO) {
-        val prevBindings =
-            getCurrentBindings(inputDevice).entries
-                .map { it.key to it.value }
-                .filter { (_, value) -> value != retroKey }
-
-        val bindings = prevBindings + listOf(inputKey to retroKey)
-
-        val sharedPreferencesContent = Json.encodeToString(bindingsMapSerializer, bindings.toMap())
-
+        val sharedPreferencesContent = Json.encodeToString(bindingsMapSerializer, bindings)
         sharedPreferences.edit(commit = true) {
             putString(computeKeyBindingGamePadPreference(inputDevice), sharedPreferencesContent)
         }
     }
 
+    /** Stores a one- or two-key shortcut (a single key is saved as the same key twice). */
     suspend fun updateShortcutBinding(
         inputDevice: InputDevice,
         shortcutType: GameShortcutType,
-        inputKeys: Pair<InputKey, InputKey>,
+        inputKeys: List<InputKey>,
     ) = withContext(Dispatchers.IO) {
+        require(inputKeys.size in 1..2) { "Shortcuts take one or two keys" }
+        val combo = inputKeys.first() to inputKeys.last()
         sharedPreferences.edit(commit = true) {
             val key = computeGameShortcutPreference(inputDevice, shortcutType)
-            val value = Json.encodeToString(bindingsComboSerializer, inputKeys)
-            putString(key, value)
+            putString(key, Json.encodeToString(bindingsComboSerializer, combo))
         }
     }
+
+    suspend fun clearShortcutBinding(
+        inputDevice: InputDevice,
+        shortcutType: GameShortcutType,
+    ) = withContext(Dispatchers.IO) {
+        sharedPreferences.edit(commit = true) {
+            putString(computeGameShortcutPreference(inputDevice, shortcutType), SHORTCUT_CLEARED)
+        }
+    }
+
+    suspend fun getCurrentShortcuts(inputDevice: InputDevice): List<GameShortcut> =
+        withContext(Dispatchers.IO) {
+            GameShortcutType.entries.mapNotNull { type ->
+                parseShortcutPreference(
+                    sharedPreferences.getString(computeGameShortcutPreference(inputDevice, type), null),
+                    inputDevice,
+                    type,
+                )
+            }
+        }
+
+    /** Restores default buttons and shortcuts for one controller. */
+    suspend fun resetBindings(inputDevice: InputDevice) =
+        withContext(Dispatchers.IO) {
+            val bindingsKey = computeKeyBindingGamePadPreference(inputDevice)
+            val shortcutsPrefix = "${bindingsKey}_shortcut_"
+            sharedPreferences.edit(commit = true) {
+                sharedPreferences.all.keys
+                    .filter { it == bindingsKey || it.startsWith(shortcutsPrefix) }
+                    .forEach { remove(it) }
+            }
+        }
 
     suspend fun resetAllBindings() =
         withContext(Dispatchers.IO) {
@@ -243,6 +283,9 @@ class InputDeviceManager(
 
     companion object {
         private const val GAME_PAD_BINDING_PREFERENCE_BASE_KEY = "pref_key_gamepad_binding_key"
+
+        /** Stored instead of a combo when the user clears a shortcut. */
+        private const val SHORTCUT_CLEARED = "cleared"
         private const val GAME_PAD_ENABLED_PREFERENCE_BASE_KEY = "pref_key_gamepad_enabled"
 
         private val bindingsMapSerializer = MapSerializer(InputKey.serializer(), RetroKey.serializer())
