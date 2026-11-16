@@ -292,7 +292,7 @@ class GameViewModelInput(
             .safeCollect { allShortcuts ->
                 allShortcuts.values
                     .firstNotNullOfOrNull { shortcuts ->
-                        shortcuts.firstOrNull { it.type == GameShortcutType.MENU }
+                        shortcuts.firstOrNull { it.type == GameShortcutType.MENU && it.isBound }
                     }
                     ?.let {
                         val message =

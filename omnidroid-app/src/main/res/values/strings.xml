@@ -494,6 +494,7 @@
     <string name="gamepad_binding_update_title">Associate \"RetroPad %1$s\"</string>
     <string name="gamepad_binding_update_description">Press a button on your \"%1$s\"</string>
     <string name="shortcut_binding_update_title">Associate \"Shortcut %1$s\"</string>
+    <string name="shortcut_not_set">Not set</string>
     <string name="shortcut_binding_update_description">Press the first, then second button to bind a combo on your \"%1$s\"</string>
 
     <string name="tv_game_message_missing_gamepad">Gamepads are required to play. Please connect one.</string>
