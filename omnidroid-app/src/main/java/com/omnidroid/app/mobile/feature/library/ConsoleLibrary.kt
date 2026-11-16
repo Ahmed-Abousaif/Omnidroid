@@ -602,6 +602,8 @@ private fun ConsoleLandscapeCard(
         if (game == null) return@Box
         OmnidroidGameImage(
             modifier = Modifier.renderAtSize(renderWidth, renderHeight),
+            // The card's banner shows the title.
+            contentDescription = null,
             game = game,
             aspectRatio = null,
         )
@@ -857,6 +859,8 @@ private fun ConsolePortraitCard(
         if (game != null) {
             OmnidroidGameImage(
                 modifier = Modifier.fillMaxSize(),
+                // The card's caption shows the title.
+                contentDescription = null,
                 game = game,
                 aspectRatio = null,
             )

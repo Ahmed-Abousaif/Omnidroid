@@ -147,6 +147,8 @@ internal fun LibraryGameRow(
                 game = game,
                 aspectRatio = null,
                 decodeWidth = thumbWidth,
+                // The row's title text already names the game.
+                contentDescription = null,
             )
             Column(
                 modifier =

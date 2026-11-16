@@ -17,6 +17,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
@@ -459,9 +462,15 @@ private fun SidebarIconButton(
     pinned: Boolean = false,
 ) {
     val adaptiveSpec = LocalAdaptiveLayout.current
+    val isSelected = selected
     Surface(
         onClick = onClick,
-        modifier = Modifier.size(adaptiveSpec.sidebarButtonSize).controllerFocusGlow(CircleShape),
+        modifier =
+            Modifier
+                .size(adaptiveSpec.sidebarButtonSize)
+                .controllerFocusGlow(CircleShape)
+                // Screen readers say which console or filter is showing.
+                .semantics { this.selected = isSelected },
         shape = CircleShape,
         color = chromeColors.panel,
         tonalElevation = 0.dp,
@@ -974,7 +983,8 @@ private fun LayoutToggleIcon(
                     color = if (selected) chromeColors.panelSelected else Color.Transparent,
                     shape = CircleShape,
                 )
-                .clickable(onClick = onClick),
+                // One of console / grid / list: announced as tabs with the current one selected.
+                .selectable(selected = selected, onClick = onClick, role = Role.Tab),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

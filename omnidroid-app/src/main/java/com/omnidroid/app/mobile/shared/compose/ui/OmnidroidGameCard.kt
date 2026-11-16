@@ -107,6 +107,8 @@ fun OmnidroidGameCard(
                 game = game,
                 aspectRatio = if (fillCard) null else LibraryGameCardAspectRatio,
                 decodeWidth = decodeWidth,
+                contentDescription =
+                    if (infoStyle == GameCardInfoStyle.OVERLAY && showTitles && !continueAction) null else game.displayName,
             )
             CoverForeground(
                 game = game,
@@ -163,6 +165,7 @@ private fun CaptionBelowGameCard(
                     game = game,
                     aspectRatio = null,
                     decodeWidth = decodeWidth,
+                    contentDescription = if (continueAction) game.displayName else null,
                 )
                 Box(
                     modifier =
