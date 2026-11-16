@@ -295,6 +295,11 @@ class GameViewModelInput(
                         shortcuts.firstOrNull { it.type == GameShortcutType.MENU && it.isBound }
                     }
                     ?.let {
+                        // This collector restarts with the screen's lifecycle (rotation, returning
+                        // from the menu); this class lives in the ViewModel, so remember what was
+                        // already announced and only repeat it if the menu shortcut changes.
+                        if (it.name == announcedMenuShortcut) return@let
+                        announcedMenuShortcut = it.name
                         val message =
                             appContext.resources.getString(
                                 R.string.game_toast_settings_button_using_gamepad,
@@ -304,6 +309,8 @@ class GameViewModelInput(
                     }
             }
     }
+
+    private var announcedMenuShortcut: String? = null
 
     private suspend fun initializeGamePadKeysFlow() {
         val pressedKeys = mutableSetOf<Int>()
