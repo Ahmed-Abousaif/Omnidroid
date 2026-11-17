@@ -1,5 +1,8 @@
 package com.omnidroid.app.mobile.feature.settings.general
 
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogActionRole
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -78,13 +81,16 @@ private fun FactoryResetDialog(
         text = { Text(stringResource(id = R.string.reset_settings_warning_message_description)) },
         onDismissRequest = onDismiss,
         confirmButton = {
+            val context = LocalContext.current
             OmnidroidDialogButton(
                 onClick = {
                     viewModel.resetAllSettings()
                     factoryResetDialogState.value = false
+                    Toast.makeText(context, R.string.reset_settings_done, Toast.LENGTH_SHORT).show()
                 },
+                role = DialogActionRole.Destructive,
             ) {
-                Text(text = stringResource(id = R.string.ok))
+                Text(text = stringResource(id = R.string.reset_settings_confirm))
             }
         },
         dismissButton = {

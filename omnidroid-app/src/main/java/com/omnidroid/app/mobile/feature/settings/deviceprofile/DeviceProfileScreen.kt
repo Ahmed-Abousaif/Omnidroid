@@ -1,5 +1,6 @@
 package com.omnidroid.app.mobile.feature.settings.deviceprofile
 
+import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import android.text.format.Formatter
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -66,10 +67,11 @@ import com.omnidroid.app.shared.deviceprofile.DeviceProfile
 import com.omnidroid.app.shared.deviceprofile.GpuInfo
 import java.util.Locale
 
-private val PanelColor = Color(0xFF1A1A1A)
-private val PanelBorder = Color.White.copy(alpha = 0.08f)
-private val MutedText = Color.White.copy(alpha = 0.55f)
-private val ValueText = Color.White.copy(alpha = 0.92f)
+// Follow the app theme (these were hardcoded for dark mode and unreadable in light mode).
+private val PanelColor: Color @Composable get() = chromeColors.panel
+private val PanelBorder: Color @Composable get() = chromeColors.panelBorder
+private val MutedText: Color @Composable get() = chromeColors.muted
+private val ValueText: Color @Composable get() = chromeColors.content
 private val PanelShape = RoundedCornerShape(12.dp)
 private val ChipShape = RoundedCornerShape(6.dp)
 
@@ -208,7 +210,7 @@ private fun DeviceHeader(
                     text = device.model.ifBlank { stringResource(R.string.settings_title_device_profile) },
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.White,
+                    color = chromeColors.content,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -377,7 +379,7 @@ private fun BenchmarkPanel(
                 text = stringResource(R.string.settings_device_profile_category_benchmark),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
-                color = Color.White,
+                color = chromeColors.content,
             )
         }
 
@@ -452,7 +454,7 @@ private fun ScoreTile(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(10.dp),
-        color = Color.White.copy(alpha = 0.04f),
+        color = chromeColors.content.copy(alpha = 0.04f),
         border = BorderStroke(1.dp, PanelBorder),
     ) {
         Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
@@ -465,7 +467,7 @@ private fun ScoreTile(
                 text = score,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = if (score == "-") MutedText else Color.White,
+                color = if (score == "-") MutedText else chromeColors.content,
                 modifier = Modifier.padding(top = 4.dp),
             )
             Text(
@@ -498,7 +500,7 @@ private fun SpecPanel(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
-                color = Color.White,
+                color = chromeColors.content,
             )
         }
         Spacer(modifier = Modifier.height(12.dp))
@@ -579,12 +581,12 @@ private fun MetaChip(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelMedium,
-        color = Color.White.copy(alpha = 0.85f),
+        color = chromeColors.content.copy(alpha = 0.85f),
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         modifier =
             Modifier
-                .background(Color.White.copy(alpha = 0.07f), ChipShape)
+                .background(chromeColors.content.copy(alpha = 0.07f), ChipShape)
                 .border(1.dp, PanelBorder, ChipShape)
                 .padding(horizontal = 10.dp, vertical = 5.dp),
     )
@@ -631,7 +633,7 @@ fun ExtendedBenchmarkProgressDialog(progress: Float) {
                     progress = progress,
                     modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                     color = LibraryNeonGreen,
-                    trackColor = Color.White.copy(alpha = 0.12f),
+                    trackColor = chromeColors.content.copy(alpha = 0.12f),
                 )
                 Text(
                     text =

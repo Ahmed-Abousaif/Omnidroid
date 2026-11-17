@@ -1,5 +1,6 @@
 package com.omnidroid.app.mobile.feature.settings.general
 
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogActionRole
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.size
@@ -136,8 +137,9 @@ internal fun LibraryMaintenanceSettings(
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                         }
                     },
+                    role = DialogActionRole.Destructive,
                 ) {
-                    Text(text = stringResource(id = R.string.ok))
+                    Text(text = stringResource(id = R.string.settings_clear_missing_games_confirm))
                 }
             },
             dismissButton = {
@@ -174,7 +176,16 @@ internal fun RomsSettings(
     ) {
         OmnidroidSettingsMenuLink(
             titleRes = R.string.directory,
-            subtitle = { Text(text = currentDirectoryName) },
+            subtitle = {
+                Text(
+                    text =
+                        if (indexingInProgress) {
+                            stringResource(R.string.settings_unavailable_while_indexing)
+                        } else {
+                            currentDirectoryName
+                        },
+                )
+            },
             onClick = { onChangeFolder() },
             enabled = !indexingInProgress,
         )
@@ -186,6 +197,7 @@ internal fun RomsSettings(
         } else {
             OmnidroidSettingsMenuLink(
                 titleRes = R.string.rescan,
+                subtitleRes = if (indexingInProgress) R.string.settings_unavailable_while_indexing else null,
                 onClick = { LibraryIndexScheduler.scheduleLibrarySync(context) },
                 enabled = !indexingInProgress,
             )
