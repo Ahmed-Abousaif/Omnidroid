@@ -6,15 +6,32 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
-        submodules: recursive
+        submodules: false
+
+    - name: Initialize build dependencies
+      # Frontend source checks need these pins, not the Eden/Cemu source trees.
+      run: |
+        git submodule update --init --recursive -- \
+          omnidroid-cores \
+          omni-libretrodroid \
+          omnidroid-chd/src/main/cpp/libchdr \
+          modules/padkit/upstream/omnidroid-padkit
 
     - name: set up JDK 17
       uses: actions/setup-java@v4
@@ -25,13 +42,20 @@ jobs:
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-    - name: Set up Eden Native Build
-      uses: ./.github/actions/setup-eden
+
+    - uses: android-actions/setup-android@v3
+      with:
+        packages: platform-tools
+    - name: Install Android SDK packages
+      run: sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0'
+
     - name: Test Core Updater
       run: python3 -m unittest discover -s omnidroid-cores -p 'test_*.py'
-    - name: Build Pinned Eden Libraries
-      run: python3 omnidroid-cores/update_cores.py --cores switch --eden-ref pinned --eden-jobs 2
-    - name: Run ktlint tests
-      # The app only: root assembleDebug also packages every library as a standalone AAR, and
-      # :bundled-cores:bundleDebugAar fails because the root build disables its AarMetadata tasks.
-      run: ./gradlew :omnidroid-app:assembleDebug ktlintCheck
+
+    - name: Check Kotlin formatting
+      run: ./gradlew ktlintCheck --no-daemon
+
+    - name: Compile app sources
+      # One complete frontend variant checks Kotlin/resources without rebuilding native
+      # engines or packaging every debug APK. Full builds run in release/update workflows.
+      run: ./gradlew :omnidroid-app:compileFreeDynamicDebugKotlin --no-daemon

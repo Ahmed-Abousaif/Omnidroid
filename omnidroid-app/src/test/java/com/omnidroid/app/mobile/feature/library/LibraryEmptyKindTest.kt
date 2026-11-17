@@ -14,7 +14,10 @@ class LibraryEmptyKindTest {
     @Test
     fun folderWithoutGames() {
         assertEquals(LibraryEmptyKind.NO_GAMES, libraryEmptyKind(true, LibraryFilter.All, ""))
-        assertEquals(LibraryEmptyKind.NO_CONSOLE_GAMES, libraryEmptyKind(true, LibraryFilter.System(MetaSystemID.NES), ""))
+        assertEquals(
+            LibraryEmptyKind.NO_CONSOLE_GAMES,
+            libraryEmptyKind(true, LibraryFilter.System(MetaSystemID.NES), ""),
+        )
     }
 
     @Test

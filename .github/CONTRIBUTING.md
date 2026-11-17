@@ -179,6 +179,15 @@ When you are ready to submit your changes:
    - Address any reviewer feedback or CI check failures.
    - Keep commits organized (squashing or rebasing as requested).
 
+### Automatic pull request checks
+
+Pull requests targeting `master` and pushes to `master` run two workflows:
+
+- **Checkstyle:** core-updater unit tests, `ktlintCheck`, then `:omnidroid-app:compileFreeDynamicDebugKotlin`. Formatting failures are reported before compilation. Only the source dependencies used by these checks are initialized.
+- **PadKit input regression tests:** `:omnidroid-padkit:verifyAndroid7Compatibility` and `:omnidroid-touchinput:testDebugUnitTest`, including API 24 compatibility, release AAR validation, and input/lifecycle tests.
+
+New commits cancel older runs for the same pull request or branch. Routine checks do not rebuild Eden or assemble all debug APK variants. Full native builds remain in the tag-triggered Publish workflow and the scheduled/manual core-update and Switch-upstream workflows. Changes to native engines or distribution packaging should also be validated with their relevant full build before merging.
+
 ---
 
 ## Getting Help
