@@ -602,6 +602,8 @@ private fun ConsoleLandscapeCard(
             modifier = Modifier.renderAtSize(renderWidth, renderHeight),
             game = game,
             aspectRatio = null,
+            // Decode at the selected card's size, not the 160dp default (blurry when enlarged).
+            decodeWidth = renderWidth,
         )
         ConsoleSystemBanner(
             game = game,
@@ -853,11 +855,15 @@ private fun ConsolePortraitCard(
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
         if (game != null) {
-            OmnidroidGameImage(
-                modifier = Modifier.fillMaxSize(),
-                game = game,
-                aspectRatio = null,
-            )
+            BoxWithConstraints(Modifier.fillMaxSize()) {
+                OmnidroidGameImage(
+                    modifier = Modifier.fillMaxSize(),
+                    game = game,
+                    aspectRatio = null,
+                    // Decode at the card's real width, not the 160dp default (blurry on large cards).
+                    decodeWidth = maxWidth,
+                )
+            }
             ConsoleSystemChip(
                 game = game,
                 modifier =

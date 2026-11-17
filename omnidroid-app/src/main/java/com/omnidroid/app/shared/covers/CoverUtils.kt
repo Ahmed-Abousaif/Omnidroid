@@ -84,24 +84,36 @@ object CoverUtils {
         return "cover:${game.id}:$data"
     }
 
+    /**
+     * [tier] DETAIL prefers the larger cached cover (downloaded by game details) and falls back to
+     * the grid one until it exists; custom covers are always used as-is.
+     */
     fun coverRequest(
         context: Context,
         game: Game,
         preferredCoverUrl: String? = null,
         size: Size = Size.ORIGINAL,
+        tier: CoverCacheStore.Tier = CoverCacheStore.Tier.GRID,
     ): ImageRequest {
-        coverCache(context)
-        val processed =
-            resolveCustomCoverFile(game)
-                ?: coverCache(context).preferredCoverFile(
-                    game.id,
-                    preferredCoverUrl ?: game.coverFrontUrl,
-                    CoverCacheStore.Tier.GRID,
-                )
+        val cache = coverCache(context)
+        val url = preferredCoverUrl ?: game.coverFrontUrl
+        val custom = resolveCustomCoverFile(game)
+        val detail =
+            if (custom == null && tier == CoverCacheStore.Tier.DETAIL) {
+                cache.preferredCoverFile(game.id, url, CoverCacheStore.Tier.DETAIL)
+            } else {
+                null
+            }
+        val processed = custom ?: detail ?: cache.preferredCoverFile(game.id, url, CoverCacheStore.Tier.GRID)
         val data =
             processed
-                ?: (preferredCoverUrl ?: game.coverFrontUrl)?.takeIf(::isAllowedRemoteCoverUrl)
-        val key = coverCacheKey(game, preferredCoverUrl)
+                ?: url?.takeIf(::isAllowedRemoteCoverUrl)
+        val key =
+            if (detail != null) {
+                "processed-detail:${game.id}:${detail.absolutePath}:${detail.lastModified()}"
+            } else {
+                coverCacheKey(game, preferredCoverUrl)
+            }
         return ImageRequest.Builder(context)
             .data(data)
             .memoryCacheKey(key)
@@ -110,7 +122,6 @@ object CoverUtils {
             .precision(Precision.INEXACT)
             .listener(
                 onStart = {
-                    val url = preferredCoverUrl ?: game.coverFrontUrl
                     if (processed == null && !url.isNullOrBlank()) {
                         com.omnidroid.app.OmnidroidApplication.scope(context).launch(Dispatchers.IO) {
                             coverCache(context).ensureGrid(game.id, url)

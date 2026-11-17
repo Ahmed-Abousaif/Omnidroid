@@ -12,7 +12,8 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import kotlin.math.min
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 class CustomCoverManager(private val context: Context) {
     class UnreadableImageException : IOException("Unable to read image")
@@ -36,9 +37,14 @@ class CustomCoverManager(private val context: Context) {
             }
         }
 
+    /**
+     * Saves [bytes] as the custom cover. Box art keeps its shape (only the longest edge is capped);
+     * [cropToSquare] is for sources that are meant to be square, like Switch title icons.
+     */
     suspend fun saveFromBytes(
         gameId: Int,
         bytes: ByteArray,
+        cropToSquare: Boolean = false,
     ): String =
         withContext(Dispatchers.IO) {
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -49,7 +55,7 @@ class CustomCoverManager(private val context: Context) {
 
             val decodeOptions =
                 BitmapFactory.Options().apply {
-                    inSampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight, MAX_SIZE)
+                    inSampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight, MAX_EDGE)
                     inPreferredConfig = Bitmap.Config.ARGB_8888
                     inMutable = true
                 }
@@ -59,10 +65,10 @@ class CustomCoverManager(private val context: Context) {
 
             var processed = decoded
             try {
-                processed = replaceBitmap(processed, processed.cropToSquare())
-                if (processed.width > MAX_SIZE || processed.height > MAX_SIZE) {
-                    processed = replaceBitmap(processed, Bitmap.createScaledBitmap(processed, MAX_SIZE, MAX_SIZE, true))
+                if (cropToSquare) {
+                    processed = replaceBitmap(processed, processed.cropToSquare())
                 }
+                processed = replaceBitmap(processed, scaleToFit(processed, if (cropToSquare) SQUARE_MAX_EDGE else MAX_EDGE))
                 writeBitmapToFile(processed, gameId)
             } finally {
                 processed.recycle()
@@ -138,7 +144,7 @@ class CustomCoverManager(private val context: Context) {
 
         val decodeOptions =
             BitmapFactory.Options().apply {
-                inSampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight, MAX_SIZE)
+                inSampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight, MAX_EDGE)
                 inPreferredConfig = Bitmap.Config.ARGB_8888
                 inMutable = true
             }
@@ -148,10 +154,8 @@ class CustomCoverManager(private val context: Context) {
 
         var current = decoded
         current = replaceBitmap(current, applyExifOrientation(file, current))
-        current = replaceBitmap(current, current.cropToSquare())
-        if (current.width > MAX_SIZE || current.height > MAX_SIZE) {
-            current = replaceBitmap(current, Bitmap.createScaledBitmap(current, MAX_SIZE, MAX_SIZE, true))
-        }
+        // Keep the picked image's shape: cards and details fit it instead of losing its edges.
+        current = replaceBitmap(current, scaleToFit(current, MAX_EDGE))
         return current
     }
 
@@ -196,14 +200,24 @@ class CustomCoverManager(private val context: Context) {
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
+    private fun scaleToFit(
+        bitmap: Bitmap,
+        maxEdge: Int,
+    ): Bitmap {
+        val (width, height) = fitWithin(bitmap.width, bitmap.height, maxEdge)
+        if (width == bitmap.width && height == bitmap.height) return bitmap
+        return Bitmap.createScaledBitmap(bitmap, width, height, true)
+    }
+
+    /** Largest power-of-two subsample that keeps the longest edge at or above [maxEdge]. */
     private fun calculateInSampleSize(
         width: Int,
         height: Int,
-        maxSize: Int,
+        maxEdge: Int,
     ): Int {
-        val minDim = min(width, height)
+        val maxDim = max(width, height)
         var sample = 1
-        while (minDim / (sample * 2) >= maxSize) {
+        while (maxDim / (sample * 2) >= maxEdge) {
             sample *= 2
         }
         return sample
@@ -211,9 +225,25 @@ class CustomCoverManager(private val context: Context) {
 
     companion object {
         const val COVERS_DIR = "custom_covers"
-        const val MAX_SIZE = 512
+        /** Longest edge for box art (keeps aspect); 2:3 art ends up 683x1024. */
+        const val MAX_EDGE = 1024
+
+        /** Edge for square sources such as Switch icons. */
+        const val SQUARE_MAX_EDGE = 512
         const val JPEG_QUALITY = 90
 
         fun fileForStoredPath(storedPath: String): File = File(storedPath.substringBefore('?'))
+
+        /** [width]x[height] scaled down (never up) so the longest edge is at most [maxEdge]. */
+        fun fitWithin(
+            width: Int,
+            height: Int,
+            maxEdge: Int,
+        ): Pair<Int, Int> {
+            val longest = max(width, height)
+            if (longest <= maxEdge) return width to height
+            val scale = maxEdge.toDouble() / longest
+            return max(1, (width * scale).roundToInt()) to max(1, (height * scale).roundToInt())
+        }
     }
 }
