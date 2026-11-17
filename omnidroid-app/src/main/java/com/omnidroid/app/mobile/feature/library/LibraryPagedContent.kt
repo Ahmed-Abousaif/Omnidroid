@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -42,8 +43,10 @@ import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.shared.library.LibraryCoverPrefetcher
 import com.omnidroid.lib.library.db.entity.Game
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
+import coil.size.Size
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.onEach
+import java.util.concurrent.atomic.AtomicReference
 
 @Stable
 internal class LibraryPagedScrollState(val list: LazyGridState, val grid: LazyGridState)
@@ -152,7 +155,13 @@ internal fun LibraryPagedContent(
                 content = content,
             )
         }
-        PrefetchViewportCovers(items, state, lanes)
+        // Grid cells request covers at this size (OmnidroidGameImage); list rows use small thumbs.
+        val decodePx = with(LocalDensity.current) { coverWidth.roundToPx() }
+        val decodeSize =
+            remember(isList, decodePx) {
+                if (isList) null else Size(decodePx, (decodePx / LibraryGameCardAspectRatio).toInt())
+            }
+        PrefetchViewportCovers(items, state, lanes, decodeSize)
     }
 }
 
@@ -204,24 +213,38 @@ private fun LazyGridScope.libraryCells(
 }
 
 @Composable
-private fun PrefetchViewportCovers(items: LibraryPagedItems, state: LazyGridState, lanes: Int) {
+private fun PrefetchViewportCovers(items: LibraryPagedItems, state: LazyGridState, lanes: Int, decodeSize: Size?) {
     val context = LocalContext.current
-    LaunchedEffect(items, state, lanes, context) {
+    LaunchedEffect(items, state, lanes, context, decodeSize) {
         var previousFirst = 0
+        val window = AtomicReference(IntRange.EMPTY)
+        val margin = libraryCoverPrefetchAhead(lanes)
         snapshotFlow {
             val visible = state.layoutInfo.visibleItemsInfo
             Triple(visible.minOfOrNull { it.index } ?: 0, visible.maxOfOrNull { it.index } ?: -1, items.count)
-        }.collectLatest { (first, last, count) ->
-            val forward = first >= previousFirst
-            previousFirst = first
-            // Coalesce fling updates and cancel obsolete work instead of launching more jobs.
-            delay(100)
-            val range = libraryCoverPrefetchRange(first, last, count, lanes, forward)
-            val candidates = if (forward) range.mapNotNull(items::peek) else range.reversed().mapNotNull(items::peek)
-            LibraryCoverPrefetcher.prefetch(context, candidates)
         }
+            .onEach { (first, last, _) -> window.set(first..last) }
+            // Finish the current batch, then jump to the newest viewport. collectLatest restarted on
+            // every fling frame, so nothing was prepared until the scroll stopped.
+            .conflate()
+            .collect { (first, last, count) ->
+                val forward = first >= previousFirst
+                previousFirst = first
+                val range = libraryCoverPrefetchRange(first, last, count, lanes, forward)
+                val ordered = if (forward) range else range.reversed()
+                val indexById = HashMap<Int, Int>()
+                val candidates = ordered.mapNotNull { index -> items.peek(index)?.also { indexById[it.id] = index } }
+                LibraryCoverPrefetcher.prefetch(context, candidates, decodeSize) { game ->
+                    val index = indexById[game.id] ?: return@prefetch false
+                    val now = window.get()
+                    index in (now.first - margin)..(now.last + margin)
+                }
+            }
     }
 }
+
+/** Cells prepared beyond the viewport: about two screens of rows, within the memory cache. */
+internal fun libraryCoverPrefetchAhead(lanes: Int): Int = (lanes * 6).coerceIn(12, 36)
 
 internal fun libraryCoverPrefetchRange(
     first: Int,
@@ -231,7 +254,7 @@ internal fun libraryCoverPrefetchRange(
     forward: Boolean,
 ): IntRange {
     if (count <= 0 || last < first) return IntRange.EMPTY
-    val ahead = (lanes * 2).coerceIn(4, 24)
+    val ahead = libraryCoverPrefetchAhead(lanes)
     return if (forward) {
         (last + 1).coerceAtMost(count)..(last + ahead).coerceAtMost(count - 1)
     } else {

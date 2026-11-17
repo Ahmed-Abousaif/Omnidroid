@@ -6,6 +6,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animate
@@ -129,6 +130,7 @@ import com.omnidroid.app.mobile.shared.compose.ui.gameCoverSharedBounds
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.app.shared.covers.backdropRequest
+import com.omnidroid.app.shared.library.GameStatsCache
 import coil.compose.AsyncImage
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.db.dao.GamePlayStats
@@ -291,13 +293,16 @@ internal fun ConsoleLibrary(
     val scope = rememberCoroutineScope()
     val selectedIndex by remember(state) { derivedStateOf { state.selectedIndex } }
     val selectedGame = items.gameAt(selectedIndex)
-    val pulse =
-        rememberInfiniteTransition(label = "consoleGlow").animateFloat(
-            initialValue = 0.8f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(tween(2400, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-            label = "consoleGlowPulse",
-        )
+    // Pulse the selection glow a few times after the selection changes, then settle, instead of
+    // redrawing the glow every frame forever on an idle screen.
+    val pulseAnim = remember { Animatable(1f) }
+    LaunchedEffect(selectedIndex) {
+        repeat(GLOW_PULSES) {
+            pulseAnim.animateTo(0.8f, tween(2400, easing = FastOutSlowInEasing))
+            pulseAnim.animateTo(1f, tween(2400, easing = FastOutSlowInEasing))
+        }
+    }
+    val pulse = pulseAnim.asState()
 
     val navigation = LocalControllerNavigation.current
     var hasFocus by remember { mutableStateOf(false) }
@@ -966,13 +971,11 @@ internal fun ConsoleGameStats(
     horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(10.dp),
 ) {
     val context = LocalContext.current
-    val db = remember(context) { (context.applicationContext as? OmnidroidApplication)?.retrogradeDb }
     val playTimeStore = remember(context) { PlayTimeStore(context) }
     val initialPlayTime = remember(game.id) { playTimeStore.get(game.id) }
-    val stats by remember(game.id, db) {
-        db?.gameSessionDao()?.observeStatsForGame(game.id)
-            ?: flowOf(GamePlayStats(totalDurationMs = initialPlayTime))
-    }.collectAsState(initial = GamePlayStats(totalDurationMs = initialPlayTime))
+    // One shared query for all rows instead of a Room observer per visible row.
+    val allStats by remember(context) { GameStatsCache.observe(context) }.collectAsState()
+    val stats = allStats[game.id] ?: GamePlayStats(totalDurationMs = initialPlayTime)
 
     val totalPlayTimeMs = maxOf(stats.totalDurationMs, initialPlayTime)
     val sessionCount = maxOf(stats.sessionCount, if (totalPlayTimeMs > 0L) 1 else 0)
@@ -1399,3 +1402,6 @@ private fun consoleCoverSharedBounds(
     }
     return Modifier.gameCoverSharedBounds(sharedTransitionScope, animatedVisibilityScope, game.id, cornerAnim, origin)
 }
+
+/** Glow pulses after a selection change before it settles. */
+private const val GLOW_PULSES = 3
