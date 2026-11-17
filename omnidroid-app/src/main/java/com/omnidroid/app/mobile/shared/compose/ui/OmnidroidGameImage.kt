@@ -22,6 +22,8 @@ fun OmnidroidGameImage(
     aspectRatio: Float? = LibraryGameCardAspectRatio,
     contentScale: ContentScale = ContentScale.Crop,
     decodeWidth: Dp = 160.dp,
+    // Null when the title is already shown next to the cover, so TalkBack doesn't read it twice.
+    contentDescription: String? = game.displayName,
     onAspectRatio: ((Float) -> Unit)? = null,
 ) {
     val context = LocalContext.current
@@ -44,7 +46,7 @@ fun OmnidroidGameImage(
 
     AsyncImage(
         model = request,
-        contentDescription = game.displayName,
+        contentDescription = contentDescription,
         modifier =
             modifier
                 .then(

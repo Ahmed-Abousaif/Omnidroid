@@ -95,7 +95,8 @@ fun OmnidroidGameCard(
                     onLongClickLabel = stringResource(R.string.game_card_options_label),
                 ),
         shape = cardShape,
-        color = Color(0xFF161616),
+        // Was hardcoded #161616 (black boxes in light mode); listRow is that color in dark mode.
+        color = chromeColors.listRow,
         shadowElevation = 4.dp,
         tonalElevation = 0.dp,
     ) {
@@ -107,6 +108,8 @@ fun OmnidroidGameCard(
                 game = game,
                 aspectRatio = if (fillCard) null else LibraryGameCardAspectRatio,
                 decodeWidth = decodeWidth,
+                contentDescription =
+                    if (infoStyle == GameCardInfoStyle.OVERLAY && showTitles && !continueAction) null else game.displayName,
             )
             CoverForeground(
                 game = game,
@@ -164,6 +167,7 @@ private fun CaptionBelowGameCard(
                     game = game,
                     aspectRatio = null,
                     decodeWidth = decodeWidth,
+                    contentDescription = if (continueAction) game.displayName else null,
                 )
                 Box(
                     modifier =
@@ -298,7 +302,7 @@ private fun ContinueButton() {
                         .fillMaxWidth()
                         .padding(horizontal = fit.second, vertical = fit.third),
                 style = textStyle,
-                color = Color.White,
+                color = OnLibraryNeonGreen,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 softWrap = false,

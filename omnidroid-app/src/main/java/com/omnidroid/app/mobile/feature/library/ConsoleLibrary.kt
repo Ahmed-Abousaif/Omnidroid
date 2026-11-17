@@ -1,5 +1,7 @@
 package com.omnidroid.app.mobile.feature.library
 
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
+import com.omnidroid.app.mobile.shared.compose.ui.OnLibraryNeonGreen
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -600,6 +602,8 @@ private fun ConsoleLandscapeCard(
         if (game == null) return@Box
         OmnidroidGameImage(
             modifier = Modifier.renderAtSize(renderWidth, renderHeight),
+            // The card's banner shows the title.
+            contentDescription = null,
             game = game,
             aspectRatio = null,
             // Decode at the selected card's size, not the 160dp default (blurry when enlarged).
@@ -858,6 +862,8 @@ private fun ConsolePortraitCard(
             BoxWithConstraints(Modifier.fillMaxSize()) {
                 OmnidroidGameImage(
                     modifier = Modifier.fillMaxSize(),
+                    // The card's caption shows the title.
+                    contentDescription = null,
                     game = game,
                     aspectRatio = null,
                     // Decode at the card's real width, not the 160dp default (blurry on large cards).
@@ -1149,8 +1155,12 @@ private fun ConsoleActions(
         Spacer(modifier = Modifier.width(8.dp))
         ConsoleIconButton(
             imageVector = if (favorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-            contentDescription = stringResource(R.string.favorites),
-            tint = if (favorite) LibraryNeonGreen else chromeColors.muted,
+            // Toggle: announce what tapping does, not just "Favorites".
+            contentDescription =
+                stringResource(
+                    if (favorite) R.string.game_context_menu_remove_from_favorites else R.string.game_context_menu_add_to_favorites,
+                ),
+            tint = if (favorite) libraryAccentColor else chromeColors.muted,
             onClick = {
                 game?.let {
                     favorite = !favorite
@@ -1224,13 +1234,13 @@ private fun ConsoleStartButton(
                     modifier =
                         Modifier
                             .size(20.dp)
-                            .border(1.5.dp, Color.White, CircleShape),
+                            .border(1.5.dp, OnLibraryNeonGreen, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = "A",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = Color.White,
+                        color = OnLibraryNeonGreen,
                         textAlign = TextAlign.Center,
                     )
                 }
@@ -1239,14 +1249,14 @@ private fun ConsoleStartButton(
                     imageVector = Icons.Filled.PlayArrow,
                     contentDescription = null,
                     modifier = Modifier.size(22.dp),
-                    tint = Color.White,
+                    tint = OnLibraryNeonGreen,
                 )
             }
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = Color.White,
+                color = OnLibraryNeonGreen,
                 maxLines = 1,
             )
         }

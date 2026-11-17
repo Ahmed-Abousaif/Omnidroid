@@ -1,5 +1,6 @@
 package com.omnidroid.app.mobile.feature.library
 
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -109,7 +110,6 @@ import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.AppTopBar
 import com.omnidroid.app.mobile.shared.compose.ui.FloatingChromeButton
 import com.omnidroid.app.mobile.shared.compose.ui.chromeButtonSize
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
@@ -326,7 +326,7 @@ private fun LibraryUtilityButtons(
             Icon(
                 imageVector = if (hasSecondaryOutput) Icons.Filled.CastConnected else Icons.Filled.Cast,
                 contentDescription = stringResource(R.string.displays_title),
-                tint = if (hasSecondaryOutput) LibraryNeonGreen else LocalContentColor.current,
+                tint = if (hasSecondaryOutput) libraryAccentColor else LocalContentColor.current,
                 modifier = Modifier.size(iconSize),
             )
         }
@@ -372,7 +372,7 @@ private fun ProfileChromeButton(
         Icon(
             painter = painterResource(R.drawable.ic_profile_robot),
             contentDescription = stringResource(R.string.title_profile),
-            tint = LibraryNeonGreen,
+            tint = libraryAccentColor,
             modifier = Modifier.size(iconSize + 2.dp * LocalAdaptiveLayout.current.uiScale),
         )
     }
@@ -403,7 +403,7 @@ private fun LibrarySortButton(
         Icon(
             imageVector = Icons.AutoMirrored.Filled.Sort,
             contentDescription = stringResource(R.string.library_sort),
-            tint = if (sort != LibrarySort.TITLE) LibraryNeonGreen else chromeColors.muted,
+            tint = if (sort != LibrarySort.TITLE) libraryAccentColor else chromeColors.muted,
             modifier = Modifier.size(16.dp * scale),
         )
     }
@@ -507,14 +507,14 @@ private fun LibrarySortMenuItem(
         text = {
             Text(
                 text = stringResource(option.labelRes()),
-                color = if (selected) LibraryNeonGreen else chromeColors.content,
+                color = if (selected) libraryAccentColor else chromeColors.content,
             )
         },
         leadingIcon = {
             Icon(
                 imageVector = option.icon(),
                 contentDescription = null,
-                tint = if (selected) LibraryNeonGreen else chromeColors.muted,
+                tint = if (selected) libraryAccentColor else chromeColors.muted,
                 modifier = Modifier.size(18.dp),
             )
         },
@@ -523,7 +523,7 @@ private fun LibrarySortMenuItem(
                 Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = null,
-                    tint = LibraryNeonGreen,
+                    tint = libraryAccentColor,
                     modifier = Modifier.size(18.dp),
                 )
             }
@@ -585,7 +585,7 @@ internal fun LibrarySearchField(
         tonalElevation = 0.dp,
         border =
             if (active) {
-                BorderStroke(1.5.dp, LibraryNeonGreen)
+                BorderStroke(1.5.dp, libraryAccentColor)
             } else {
                 BorderStroke(1.dp, chromeColors.panelBorder)
             },

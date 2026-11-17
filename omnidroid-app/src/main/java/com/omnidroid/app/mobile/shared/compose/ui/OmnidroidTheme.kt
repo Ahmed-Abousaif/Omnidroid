@@ -109,6 +109,17 @@ private val DarkColorScheme =
     )
 
 val LibraryNeonGreen = Color(0xFF00B33C)
+
+/** Text and icons on a [LibraryNeonGreen] fill: near-black reads at ~7:1, white only ~2.8:1. */
+val OnLibraryNeonGreen = Color(0xFF0A0A0A)
+
+/** Brand green for icons/text on chrome backgrounds; darker in light mode to keep >= 3:1 contrast. */
+val libraryAccentColor: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = if (LocalAppDarkTheme.current) LibraryNeonGreen else LibraryAccentLight
+
+private val LibraryAccentLight = Color(0xFF00702A)
 val BatteryLowRed = Color(0xFFFF3B30)
 
 @Immutable

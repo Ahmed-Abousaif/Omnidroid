@@ -1,5 +1,6 @@
 package com.omnidroid.app.mobile.feature.library
 
+import com.omnidroid.app.mobile.shared.compose.ui.OnLibraryNeonGreen
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -147,6 +148,8 @@ internal fun LibraryGameRow(
                 game = game,
                 aspectRatio = null,
                 decodeWidth = thumbWidth,
+                // The row's title text already names the game.
+                contentDescription = null,
             )
             Column(
                 modifier =
@@ -186,7 +189,7 @@ internal fun LibraryGameRow(
                             imageVector = Icons.Filled.PlayArrow,
                             contentDescription = null,
                             modifier = Modifier.size(22.dp),
-                            tint = Color.White,
+                            tint = OnLibraryNeonGreen,
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
@@ -195,7 +198,7 @@ internal fun LibraryGameRow(
                                 MaterialTheme.typography.labelLarge.copy(
                                     fontWeight = FontWeight.Bold,
                                 ),
-                            color = Color.White,
+                            color = OnLibraryNeonGreen,
                             maxLines = 1,
                         )
                     }

@@ -1,5 +1,9 @@
 package com.omnidroid.app.mobile.feature.library
 
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -294,6 +298,11 @@ fun SyncProgressNotch(
         modifier =
             modifier
                 .height(notchHeight)
+                // Announce the scan phase when it changes, not every file count.
+                .clearAndSetSemantics {
+                    contentDescription = displayText
+                    liveRegion = LiveRegionMode.Polite
+                }
                 .clip(shape)
                 .drawBehind {
                     val rf = flareRadius.toPx()
