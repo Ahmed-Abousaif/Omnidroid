@@ -29,6 +29,13 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Fixed controller navigation in game and library side menus ([#50](https://github.com/Ahmed-Abousaif/Omnidroid/pull/50)) ([@mlnchlc](https://github.com/mlnchlc))
 - Stopped gamepad shortcut hints repeating after rotation ([#51](https://github.com/Ahmed-Abousaif/Omnidroid/pull/51)) ([@mlnchlc](https://github.com/mlnchlc))
 - Restored Checkstyle CI builds ([#48](https://github.com/Ahmed-Abousaif/Omnidroid/pull/48)) ([@mlnchlc](https://github.com/mlnchlc))
+- Added confirmation dialogs before losing progress on restart, load, or save overwrite, with real active core options values, empty save slot indicators, and an opt-out toggle in Saves settings ([#53](https://github.com/Ahmed-Abousaif/Omnidroid/pull/53)) ([@mlnchlc](https://github.com/mlnchlc))
+- Added conflict prompts (Swap, Replace, Cancel) when binding gamepad controls, support for single-key shortcuts, binding clear buttons, reset confirmations, and disconnected controller states ([#54](https://github.com/Ahmed-Abousaif/Omnidroid/pull/54)) ([@mlnchlc](https://github.com/mlnchlc))
+- Preserved custom cover aspect ratios up to 1024px without double-cropping, sharper carousel cover decoding at rendered card widths, and high-resolution detail covers ([#55](https://github.com/Ahmed-Abousaif/Omnidroid/pull/55)) ([@mlnchlc](https://github.com/mlnchlc))
+- Added contextual library empty states (no folder, no games, no favorites, no search results) with direct rescan actions, and integrated cover management options into Game Details ([#56](https://github.com/Ahmed-Abousaif/Omnidroid/pull/56)) ([@mlnchlc](https://github.com/mlnchlc))
+- Clarified destructive actions for factory reset and missing games, corrected Material 3 slider discrete steps, added value labels for tilt and HD quality, kept vibration intensity usable for touch feedback, and fixed Device Profile in light mode ([#57](https://github.com/Ahmed-Abousaif/Omnidroid/pull/57)) ([@mlnchlc](https://github.com/mlnchlc))
+- Improved visual contrast with WCAG-compliant high-contrast button text, adaptive light-mode accents, TalkBack accessibility labels, and dynamic controller hint bar sizing ([#58](https://github.com/Ahmed-Abousaif/Omnidroid/pull/58)) ([@mlnchlc](https://github.com/mlnchlc))
+- Accelerated library scrolling with parallel memory-cache cover prefetching, throttled cache access disk writes, unified game play stats queries, and an idle-settling carousel glow ([#59](https://github.com/Ahmed-Abousaif/Omnidroid/pull/59)) ([@mlnchlc](https://github.com/mlnchlc))
 
 ### v3.0.0
 
