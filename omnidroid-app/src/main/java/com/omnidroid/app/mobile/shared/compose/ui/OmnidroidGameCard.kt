@@ -92,6 +92,7 @@ fun OmnidroidGameCard(
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick,
+                    onLongClickLabel = stringResource(R.string.game_card_options_label),
                 ),
         shape = cardShape,
         color = Color(0xFF161616),
@@ -146,6 +147,7 @@ private fun CaptionBelowGameCard(
                     .combinedClickable(
                         onClick = onClick,
                         onLongClick = onLongClick,
+                        onLongClickLabel = stringResource(R.string.game_card_options_label),
                     ),
             shape = cardShape,
             color = chromeColors.panel,

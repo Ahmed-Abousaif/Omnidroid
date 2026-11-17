@@ -121,6 +121,7 @@ internal fun LibraryGameRow(
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick,
+                    onLongClickLabel = stringResource(R.string.game_card_options_label),
                 ),
         shape = shape,
         color = chromeColors.listRow,

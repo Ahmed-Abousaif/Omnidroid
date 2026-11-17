@@ -48,6 +48,8 @@ import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -118,6 +120,8 @@ fun GameDetailsScreen(
     onOpenSettings: (Game) -> Unit,
     onSetCustomName: (Game, String) -> Unit = { _, _ -> },
     onSetCustomThumbnail: (Game, Uri) -> Unit = { _, _ -> },
+    onSearchCover: ((Game) -> Unit)? = null,
+    onRemoveCover: (Game) -> Unit = {},
     backdropTopBleed: Dp = 0.dp,
     coverOrigin: GameCoverOrigin = GameCoverOrigin.Library,
 ) {
@@ -239,6 +243,8 @@ fun GameDetailsScreen(
                         pendingCoverGame = game
                         coverPicker.launch("image/*")
                     },
+                    onSearchCover = onSearchCover?.let { search -> { search(game) } },
+                    onRemoveCover = { onRemoveCover(game) },
                 )
             }
             val artwork: @Composable (Modifier) -> Unit = { artworkModifier ->
@@ -358,8 +364,11 @@ private fun GameCoverOrTrailer(
     onToggleTrailer: () -> Unit,
     onStopTrailer: () -> Unit,
     onEditCover: () -> Unit,
+    onSearchCover: (() -> Unit)? = null,
+    onRemoveCover: () -> Unit = {},
 ) {
     val hasTrailer = !trailerUrl.isNullOrBlank()
+    var coverMenuOpen by remember { mutableStateOf(false) }
     val coverShape = RoundedCornerShape(cornerRadius)
     val coverSharedModifier = Modifier.gameCoverSharedBounds(
         sharedTransitionScope, animatedVisibilityScope, game.id, cornerRadius, coverOrigin,
@@ -442,18 +451,54 @@ private fun GameCoverOrTrailer(
                     }
                 }
             }
-            Icon(
-                imageVector = Icons.Outlined.Edit,
-                contentDescription = stringResource(R.string.game_context_menu_change_thumbnail),
-                tint = Color.White.copy(alpha = 0.55f),
-                modifier =
-                    Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .size(18.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .clickable(onClick = onEditCover),
-            )
+            Box(modifier = Modifier.align(Alignment.TopEnd)) {
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = stringResource(R.string.game_context_menu_change_thumbnail),
+                    tint = Color.White.copy(alpha = 0.55f),
+                    modifier =
+                        Modifier
+                            .padding(8.dp)
+                            .size(18.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .clickable { coverMenuOpen = true },
+                )
+                // Same cover options as the library game menu's Appearance page.
+                DropdownMenu(expanded = coverMenuOpen, onDismissRequest = { coverMenuOpen = false }) {
+                    val customCover = game.customCoverPath != null
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                stringResource(
+                                    if (customCover) R.string.game_context_menu_change_thumbnail else R.string.game_context_menu_set_custom_thumbnail,
+                                ),
+                            )
+                        },
+                        onClick = {
+                            coverMenuOpen = false
+                            onEditCover()
+                        },
+                    )
+                    onSearchCover?.let { search ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.game_context_menu_search_cover)) },
+                            onClick = {
+                                coverMenuOpen = false
+                                search()
+                            },
+                        )
+                    }
+                    if (customCover) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.game_context_menu_remove_thumbnail)) },
+                            onClick = {
+                                coverMenuOpen = false
+                                onRemoveCover()
+                            },
+                        )
+                    }
+                }
+            }
         }
     }
 }

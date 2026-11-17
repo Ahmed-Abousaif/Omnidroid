@@ -61,6 +61,7 @@ fun CoverSearchDialog(
     var query by remember { mutableStateOf(game.displayName) }
     var results by remember { mutableStateOf<List<CoverSearchResult>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var searchFailed by remember { mutableStateOf(false) }
     var selectedCandidate by remember { mutableStateOf<CoverSearchResult?>(null) }
     val gridState = rememberLazyGridState()
     val gridLayout = gridState.layoutInfo
@@ -86,13 +87,16 @@ fun CoverSearchDialog(
             return@LaunchedEffect
         }
         isLoading = true
+        searchFailed = false
         delay(350)
         try {
             results = coverSearcher.search(game.systemId, trimmed)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
+            // Usually no connection; say so instead of "no matching covers".
             results = emptyList()
+            searchFailed = true
         } finally {
             isLoading = false
         }
@@ -129,7 +133,10 @@ fun CoverSearchDialog(
                         }
                         results.isEmpty() -> {
                             Text(
-                                text = stringResource(R.string.game_search_cover_no_results),
+                                text =
+                                    stringResource(
+                                        if (searchFailed) R.string.game_search_cover_failed else R.string.game_search_cover_no_results,
+                                    ),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
