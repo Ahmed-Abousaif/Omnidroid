@@ -1,9 +1,13 @@
 package com.omnidroid.app.mobile.shared.controller
 
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.ViewConfiguration
 import kotlin.math.abs
 
 class ControllerInputBridge {
@@ -11,9 +15,14 @@ class ControllerInputBridge {
 
     private val activeNavigation get() = navigation?.modalNavigation ?: navigation
 
-    private var lastX = 0
-    private var lastY = 0
-    private var lastRepeatAt = 0L
+    // Holding the stick repeats at the same pace as holding the D-pad: Android's key repeat timing.
+    private val stick =
+        StickPressFilter(
+            holdDelayMs = keyRepeatTimeout(),
+            holdRepeatMs = keyRepeatDelay(),
+        )
+    private var lastHatX = 0f
+    private var lastHatY = 0f
     private var lastL2Pressed = false
     private var lastR2Pressed = false
     private var lastZoomAt = 0L
@@ -79,15 +88,11 @@ class ControllerInputBridge {
                 true
             }
             KeyEvent.KEYCODE_BUTTON_L1 -> {
-                if (event.action == KeyEvent.ACTION_UP) {
-                    activeNavigation?.onPrevConsole?.invoke()
-                }
+                shoulder(event) { activeNavigation?.onPrevConsole?.invoke() }
                 true
             }
             KeyEvent.KEYCODE_BUTTON_R1 -> {
-                if (event.action == KeyEvent.ACTION_UP) {
-                    activeNavigation?.onNextConsole?.invoke()
-                }
+                shoulder(event) { activeNavigation?.onNextConsole?.invoke() }
                 true
             }
             else -> dispatch(event)
@@ -108,8 +113,11 @@ class ControllerInputBridge {
         val hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X)
         val hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y)
         val hatActive = abs(hatX) > HAT_DEADZONE || abs(hatY) > HAT_DEADZONE
-        val x = if (hatActive) 0 else axisDirection(0f, event.getAxisValue(MotionEvent.AXIS_X))
-        val y = if (hatActive) 0 else axisDirection(0f, event.getAxisValue(MotionEvent.AXIS_Y))
+        // The D-pad (hat) is left to Android, which turns it into D-pad keys; that includes the
+        // event where it returns to the centre, or the synthesized key would stay down.
+        val hatChanged = hatX != lastHatX || hatY != lastHatY
+        lastHatX = hatX
+        lastHatY = hatY
 
         val l2 =
             maxOf(
@@ -132,26 +140,98 @@ class ControllerInputBridge {
         lastL2Pressed = l2Pressed
         lastR2Pressed = r2Pressed
 
-        val now = SystemClock.uptimeMillis()
-        val changed = x != lastX || y != lastY
-        val shouldRepeat =
-            (x != 0 || y != 0) && now - lastRepeatAt >= STICK_REPEAT_MS
-
-        if (!changed && !shouldRepeat) {
-            return l2Pressed || r2Pressed
+        if (hatActive || hatChanged) {
+            stick.reset()
+            return false
         }
 
-        if (changed) {
-            if (lastX != 0) dispatchDirectional(lastX, 0, KeyEvent.ACTION_UP, event, dispatch)
-            if (lastY != 0) dispatchDirectional(0, lastY, KeyEvent.ACTION_UP, event, dispatch)
-            lastX = x
-            lastY = y
-        }
-
-        if (x != 0) dispatchDirectional(x, 0, KeyEvent.ACTION_DOWN, event, dispatch)
-        if (y != 0) dispatchDirectional(0, y, KeyEvent.ACTION_DOWN, event, dispatch)
-        lastRepeatAt = now
+        // Left stick: one press per tilt (see StickPressFilter). Every stick event is consumed, so
+        // Android doesn't also turn the stick into D-pad keys with its own repeat (extra jumps).
+        val press =
+            stick.update(
+                event.getAxisValue(MotionEvent.AXIS_X),
+                event.getAxisValue(MotionEvent.AXIS_Y),
+                SystemClock.uptimeMillis(),
+            )
+        if (press != null) dispatchPress(press, event.deviceId, event.source, dispatch)
+        scheduleStickTick(event.deviceId, event.source, dispatch)
         return true
+    }
+
+    private fun dispatchPress(
+        press: StickPressFilter.Press,
+        deviceId: Int,
+        source: Int,
+        dispatch: (KeyEvent) -> Boolean,
+    ) {
+        val now = SystemClock.uptimeMillis()
+        dispatchDirectional(press.x, press.y, KeyEvent.ACTION_DOWN, now, deviceId, source, dispatch)
+        dispatchDirectional(press.x, press.y, KeyEvent.ACTION_UP, now, deviceId, source, dispatch)
+    }
+
+    private var stickTick: Runnable? = null
+
+    /**
+     * A held stick or a waiting reverse needs time to pass, but a stick held still sends no events:
+     * keep ticking the filter until it has nothing left to do.
+     */
+    private fun scheduleStickTick(
+        deviceId: Int,
+        source: Int,
+        dispatch: (KeyEvent) -> Boolean,
+    ) {
+        stickTick?.let(shoulderHandler::removeCallbacks)
+        stickTick = null
+        val delay = stick.nextTickIn(SystemClock.uptimeMillis()) ?: return
+        val tick =
+            Runnable {
+                stickTick = null
+                stick.tick(SystemClock.uptimeMillis())?.let { dispatchPress(it, deviceId, source, dispatch) }
+                scheduleStickTick(deviceId, source, dispatch)
+            }
+        stickTick = tick
+        shoulderHandler.postDelayed(tick, delay)
+    }
+
+    private val shoulderHandler = Handler(Looper.getMainLooper())
+    private var shoulderRepeat: Runnable? = null
+
+    /**
+     * L1 / R1: act on press, then keep cycling while held (after [SHOULDER_HOLD_MS], every
+     * [SHOULDER_REPEAT_MS]). Android's own key repeats are ignored in favour of this timing.
+     */
+    private fun shoulder(
+        event: KeyEvent,
+        action: () -> Unit,
+    ) {
+        when (event.action) {
+            KeyEvent.ACTION_DOWN -> {
+                if (event.repeatCount > 0) return
+                stopShoulderRepeat()
+                action()
+                val pressedAt = SystemClock.uptimeMillis()
+                val repeat =
+                    object : Runnable {
+                        override fun run() {
+                            // Safety cap in case the key-up never arrives (focus moved away).
+                            if (SystemClock.uptimeMillis() - pressedAt > SHOULDER_MAX_HOLD_MS) {
+                                stopShoulderRepeat()
+                                return
+                            }
+                            action()
+                            shoulderHandler.postDelayed(this, SHOULDER_REPEAT_MS)
+                        }
+                    }
+                shoulderRepeat = repeat
+                shoulderHandler.postDelayed(repeat, SHOULDER_HOLD_MS)
+            }
+            KeyEvent.ACTION_UP -> stopShoulderRepeat()
+        }
+    }
+
+    private fun stopShoulderRepeat() {
+        shoulderRepeat?.let(shoulderHandler::removeCallbacks)
+        shoulderRepeat = null
     }
 
     private fun zoomIn() {
@@ -175,7 +255,9 @@ class ControllerInputBridge {
         x: Int,
         y: Int,
         action: Int,
-        source: MotionEvent,
+        time: Long,
+        deviceId: Int,
+        source: Int,
         dispatch: (KeyEvent) -> Boolean,
     ) {
         val keyCode =
@@ -188,30 +270,18 @@ class ControllerInputBridge {
             }
         dispatch(
             KeyEvent(
-                source.downTime,
-                source.eventTime,
+                time,
+                time,
                 action,
                 keyCode,
                 0,
                 0,
-                source.deviceId,
+                deviceId,
                 0,
                 0,
-                source.source,
+                source,
             ),
         )
-    }
-
-    private fun axisDirection(
-        hat: Float,
-        stick: Float,
-    ): Int {
-        val value = if (abs(hat) > HAT_DEADZONE) hat else stick
-        return when {
-            value <= -STICK_DEADZONE -> -1
-            value >= STICK_DEADZONE -> 1
-            else -> 0
-        }
     }
 
     private fun isFromController(event: KeyEvent): Boolean {
@@ -221,16 +291,15 @@ class ControllerInputBridge {
             source and InputDevice.SOURCE_DPAD == InputDevice.SOURCE_DPAD
     }
 
-    private fun isBackOrShoulder(keyCode: Int): Boolean {
-        return keyCode == KeyEvent.KEYCODE_BUTTON_B ||
+    private fun isBackOrShoulder(keyCode: Int): Boolean =
+        keyCode == KeyEvent.KEYCODE_BUTTON_B ||
             keyCode == KeyEvent.KEYCODE_BUTTON_2 ||
             keyCode == KeyEvent.KEYCODE_BACK ||
             keyCode == KeyEvent.KEYCODE_BUTTON_L1 ||
             keyCode == KeyEvent.KEYCODE_BUTTON_R1
-    }
 
-    private fun KeyEvent.remap(keyCode: Int): KeyEvent {
-        return KeyEvent(
+    private fun KeyEvent.remap(keyCode: Int): KeyEvent =
+        KeyEvent(
             downTime,
             eventTime,
             action,
@@ -242,12 +311,25 @@ class ControllerInputBridge {
             flags,
             source,
         )
-    }
 
     companion object {
+        /** Before the D-pad starts repeating; the system long-press time before Android 9. */
+        private fun keyRepeatTimeout(): Long =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                ViewConfiguration.getKeyRepeatTimeout().toLong()
+            } else {
+                ViewConfiguration.getLongPressTimeout().toLong()
+            }
+
+        /** Between D-pad repeats. */
+        private fun keyRepeatDelay(): Long =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) ViewConfiguration.getKeyRepeatDelay().toLong() else 50L
+
         private const val HAT_DEADZONE = 0.5f
         private const val STICK_DEADZONE = 0.6f
-        private const val STICK_REPEAT_MS = 220L
+        private const val SHOULDER_HOLD_MS = 350L
+        private const val SHOULDER_REPEAT_MS = 140L
+        private const val SHOULDER_MAX_HOLD_MS = 10_000L
         private const val ZOOM_COOLDOWN_MS = 280L
     }
 }
