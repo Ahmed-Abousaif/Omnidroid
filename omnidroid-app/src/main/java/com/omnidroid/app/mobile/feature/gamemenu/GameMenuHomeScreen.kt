@@ -34,6 +34,18 @@ fun GameMenuHomeScreen(
 ) {
     val request = gameMenuRequest
     var audioEnabled by remember(request.audioEnabled) { mutableStateOf(request.audioEnabled) }
+    var confirmRestart by remember { mutableStateOf(false) }
+    val askToConfirm = confirmGameMenuActionsEnabled()
+    if (confirmRestart) {
+        ConfirmProgressLossDialog(
+            title = stringResource(R.string.game_menu_restart_confirm_title),
+            confirmLabel = stringResource(R.string.game_menu_restart),
+            onDismiss = { confirmRestart = false },
+        ) {
+            confirmRestart = false
+            onCommand(InGameMenuCommand.Restart)
+        }
+    }
     val hasSettings = request.advancedCoreOptions.isNotEmpty() || request.coreOptions.isNotEmpty() ||
         request.coreConfig.controllerConfigs.values.any { it.size >= 2 }
     val hasControls = request.editTouchControlsSupported || saveSyncSupported || hasSettings || request.allTiltConfigurations.isNotEmpty()
@@ -48,7 +60,7 @@ fun GameMenuHomeScreen(
                 }
             }
             MenuAction("restart", titleRes = R.string.game_menu_restart, icon = { MenuDrawableIcon(R.drawable.ic_menu_restart) }) {
-                onCommand(InGameMenuCommand.Restart)
+                if (askToConfirm) confirmRestart = true else onCommand(InGameMenuCommand.Restart)
             }
             MenuAction("quit", titleRes = R.string.game_menu_quit, icon = { MenuDrawableIcon(R.drawable.ic_menu_quit) }) {
                 onCommand(InGameMenuCommand.Quit)
@@ -65,7 +77,7 @@ fun GameMenuHomeScreen(
                 MenuChoice(
                     id = "disc", titleRes = R.string.game_menu_change_disk_button,
                     options = (0 until request.numDisks).map { MenuOption(it, stringResource(R.string.game_menu_change_disk_disk, it + 1)) },
-                    value = request.currentDisk, useSelectedValueAsSubtitle = false,
+                    value = request.currentDisk,
                     icon = { MenuDrawableIcon(R.drawable.ic_menu_disk) },
                 ) { onCommand(InGameMenuCommand.Disc(it)) }
             }
@@ -93,7 +105,7 @@ fun GameMenuHomeScreen(
                 MenuChoice(
                     id = "tilt", titleRes = R.string.game_menu_tilt_sensor,
                     options = entries.map { MenuOption(it.configuration, stringResource(it.descriptionId)) },
-                    value = request.currentTiltConfiguration, useSelectedValueAsSubtitle = false,
+                    value = request.currentTiltConfiguration,
                     icon = { Icon(Icons.Default.Sensors, contentDescription = null) },
                 ) { onCommand(InGameMenuCommand.Tilt(it)) }
             }

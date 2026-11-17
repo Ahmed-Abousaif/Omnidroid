@@ -16,6 +16,7 @@
     <string name="pref_key_virtual_pad_opacity" translatable="false">virtual_pad_opacity</string>
     <string name="pref_key_hd_mode_quality" translatable="false">hd_mode_quality</string>
     <string name="pref_key_autosave" translatable="false">autosave</string>
+    <string name="pref_key_confirm_game_menu_actions" translatable="false">confirm_game_menu_actions</string>
     <string name="pref_key_reset_settings" translatable="false">reset_settings</string>
     <string name="pref_key_low_latency_audio" translatable="false">low_latency_audio</string>
     <string name="pref_key_enable_rumble" translatable="false">enable_rumble</string>

@@ -73,12 +73,13 @@ fun SideMenuPageScope.MenuSection(
     id: String,
     visible: Boolean = true,
     @StringRes titleRes: Int? = null,
+    title: (@Composable () -> Unit)? = titleRes?.let { { Text(stringResource(it)) } },
     content: @Composable SideMenuPageScope.() -> Unit,
 ) {
     if (!visible) return
     key(id) {
         if (sectionCount++ > 0) SettingsHorizontalDivider()
-        OmnidroidSettingsGroup(titleRes = titleRes) { content() }
+        OmnidroidSettingsGroup(title = title) { content() }
     }
 }
 
@@ -99,6 +100,16 @@ fun SideMenuPageScope.MenuAction(
 
 data class MenuOption<T>(val value: T, val label: String)
 
+/**
+ * Index of [value] among [this] options; String values match ignoring case, because cores and
+ * stored preferences don't always agree on capitalisation ("enabled" vs "Enabled"). -1 if absent.
+ */
+fun <T> List<MenuOption<T>>.indexOfMenuValue(value: T): Int {
+    val exact = indexOfFirst { it.value == value }
+    if (exact >= 0 || value !is String) return exact
+    return indexOfFirst { (it.value as? String)?.equals(value, ignoreCase = true) == true }
+}
+
 @Composable
 fun <T> SideMenuPageScope.MenuChoice(
     id: String,
@@ -113,7 +124,7 @@ fun <T> SideMenuPageScope.MenuChoice(
     onSelected: (T) -> Unit,
 ) = OmnidroidSettingsList(
     modifier = itemModifier(id, enabled && options.isNotEmpty(), Modifier),
-    title = title, items = options.map { it.label }, selectedIndex = options.indexOfFirst { it.value == value },
+    title = title, items = options.map { it.label }, selectedIndex = options.indexOfMenuValue(value),
     enabled = enabled, subtitle = subtitle, icon = icon, useSelectedValueAsSubtitle = useSelectedValueAsSubtitle,
     onItemSelected = { index, _ -> onSelected(options[index].value) },
 )

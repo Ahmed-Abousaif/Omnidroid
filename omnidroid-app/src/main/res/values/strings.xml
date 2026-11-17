@@ -193,6 +193,8 @@
     <string name="url_developer_github" translatable="false">https://github.com/Ahmed-Abousaif</string>
     <string name="settings_title_enable_autosave">Autosave state</string>
     <string name="settings_description_enable_autosave">Save state when exiting or backgrounding a game, and resume it on launch</string>
+    <string name="settings_title_confirm_game_menu_actions">Confirm before losing progress</string>
+    <string name="settings_description_confirm_game_menu_actions">Ask before restarting, loading a state or overwriting a save from the in-game menu</string>
     <string name="settings_title_enable_touch_feedback">Vibrate on touch</string>
     <string name="settings_title_tilt_sensitivity">Tilt sensor sensitivity</string>
     <string name="settings_title_hd_quality">HD mode quality</string>
@@ -427,6 +429,15 @@
     <string name="game_menu_quit">Quit</string>
     <string name="game_menu_settings">Settings</string>
     <string name="game_menu_state">State %1$s</string>
+    <string name="game_menu_state_empty">Empty slot</string>
+    <string name="game_menu_overwrite">Overwrite</string>
+    <string name="game_menu_confirm_progress_loss">Progress since your last save will be lost.</string>
+    <string name="game_menu_restart_confirm_title">Restart game?</string>
+    <string name="game_menu_load_confirm_title">Load %1$s?</string>
+    <string name="game_menu_save_overwrite_title">Overwrite %1$s?</string>
+    <string name="game_menu_save_overwrite_message">The save from %1$s will be replaced.</string>
+    <string name="core_settings_scope">Applies to all %1$s games</string>
+    <string name="core_option_current_value">Current: %1$s</string>
     <string name="game_menu_change_disk_button">Change Disk</string>
     <string name="game_menu_edit_touch_controls">Edit Controls</string>
     <string name="game_menu_mute_audio">Mute</string>
