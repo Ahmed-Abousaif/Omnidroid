@@ -6,14 +6,9 @@ import android.view.InputDevice
 import android.view.KeyEvent
 import com.omnidroid.R
 import com.omnidroid.app.shared.settings.GameShortcutType
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.runBlocking
 
-@OptIn(DelicateCoroutinesApi::class)
 class ShortcutBindingUpdater(private val inputDeviceManager: InputDeviceManager, intent: Intent) {
     val extras = parseExtras(intent)
-
-    private var firstKeyCodeInCombo: Int? = null
 
     fun getTitle(context: Context): String {
         return context.getString(R.string.shortcut_binding_update_title, extras.shortcutType.displayName())
@@ -23,34 +18,32 @@ class ShortcutBindingUpdater(private val inputDeviceManager: InputDeviceManager,
         return context.getString(R.string.shortcut_binding_update_description, extras.device.name)
     }
 
-    fun handleKeyEvent(event: KeyEvent): Boolean {
-        return when (event.action) {
-            KeyEvent.ACTION_DOWN -> onKeyDown(event)
-            KeyEvent.ACTION_UP -> onKeyUp(event)
-            else -> false
-        }
+    /** The physical key released on the targeted device, or null if the event isn't for us. */
+    fun releasedKey(event: KeyEvent): InputKey? {
+        if (event.action != KeyEvent.ACTION_UP || !isTargetedDevice(event.device)) return null
+        return InputKey(event.keyCode)
     }
 
-    private fun onKeyDown(event: KeyEvent): Boolean {
-        return isTargetedDevice(event.device)
+    fun consumes(event: KeyEvent): Boolean = isTargetedDevice(event.device)
+
+    /** Another shortcut on this device already using exactly [keys], if any. */
+    suspend fun conflictFor(keys: List<InputKey>): GameShortcutType? {
+        val codes = keys.map { it.keyCode }.toSet()
+        return inputDeviceManager.getCurrentShortcuts(extras.device)
+            .firstOrNull { it.type != extras.shortcutType && it.keys.isNotEmpty() && it.keys == codes }
+            ?.type
     }
 
-    private fun onKeyUp(event: KeyEvent): Boolean {
-        if (!isTargetedDevice(event.device)) return false
-
-        if (firstKeyCodeInCombo == null) {
-            firstKeyCodeInCombo = event.keyCode
-            return false // wait for second key
-        } else {
-            if (firstKeyCodeInCombo == event.keyCode) return false // ignore same key press
-            val combo = Pair(InputKey(firstKeyCodeInCombo!!), InputKey(event.keyCode))
-            // TODO runBlocking here should go away.
-            runBlocking {
-                inputDeviceManager.updateShortcutBinding(event.device, extras.shortcutType, combo)
-            }
-            return true
-        }
+    /** Saves [keys] for this shortcut; [replacing] is a conflicting shortcut to clear first. */
+    suspend fun assign(
+        keys: List<InputKey>,
+        replacing: GameShortcutType? = null,
+    ) {
+        replacing?.let { inputDeviceManager.clearShortcutBinding(extras.device, it) }
+        inputDeviceManager.updateShortcutBinding(extras.device, extras.shortcutType, keys)
     }
+
+    suspend fun clear() = inputDeviceManager.clearShortcutBinding(extras.device, extras.shortcutType)
 
     private fun isTargetedDevice(device: InputDevice?): Boolean {
         return device != null && extras.device.name == device.name
@@ -73,5 +66,8 @@ class ShortcutBindingUpdater(private val inputDeviceManager: InputDeviceManager,
     companion object {
         const val REQUEST_DEVICE = "REQUEST_DEVICE"
         const val REQUEST_SHORTCUT_TYPE = "REQUEST_SHORTCUT_TYPE"
+
+        /** After the first key, wait this long for a second one before saving a single-key shortcut. */
+        const val COMBO_WINDOW_MS = 1500L
     }
 }

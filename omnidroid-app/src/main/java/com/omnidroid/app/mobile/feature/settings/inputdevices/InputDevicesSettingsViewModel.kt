@@ -57,6 +57,12 @@ class InputDevicesSettingsViewModel(
         }
     }
 
+    fun resetBindings(device: InputDevice) {
+        viewModelScope.launch {
+            inputDeviceManager.resetBindings(device)
+        }
+    }
+
     private fun initializeState(context: Context): Flow<State> {
         val devicesViews = getEnabledDevicesViews(context)
         val bindingsViews = getDevicesBindingViews()
