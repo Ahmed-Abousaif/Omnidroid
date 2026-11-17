@@ -148,13 +148,18 @@ class ControllerInputBridge {
 
         // Left stick: one press per tilt (see StickPressFilter). Every stick event is consumed, so
         // Android doesn't also turn the stick into D-pad keys with its own repeat (extra jumps).
-        val press =
-            stick.update(
-                event.getAxisValue(MotionEvent.AXIS_X),
-                event.getAxisValue(MotionEvent.AXIS_Y),
-                SystemClock.uptimeMillis(),
-            )
-        if (press != null) dispatchPress(press, event.deviceId, event.source, dispatch)
+        // Joystick events are batched per frame: feed the older samples too, with their own times.
+        for (i in 0 until event.historySize) {
+            stick
+                .update(
+                    event.getHistoricalAxisValue(MotionEvent.AXIS_X, i),
+                    event.getHistoricalAxisValue(MotionEvent.AXIS_Y, i),
+                    event.getHistoricalEventTime(i),
+                )?.let { dispatchPress(it, event.deviceId, event.source, dispatch) }
+        }
+        stick
+            .update(event.getAxisValue(MotionEvent.AXIS_X), event.getAxisValue(MotionEvent.AXIS_Y), event.eventTime)
+            ?.let { dispatchPress(it, event.deviceId, event.source, dispatch) }
         scheduleStickTick(event.deviceId, event.source, dispatch)
         return true
     }

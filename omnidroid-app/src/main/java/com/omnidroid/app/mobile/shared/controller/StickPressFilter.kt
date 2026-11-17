@@ -68,15 +68,14 @@ class StickPressFilter(
         if (engaged) {
             // How far the stick still leans the way it was pressed.
             val lean = if (heldX != 0) x * heldX else y * heldY
-            if (lean < releaseThreshold) {
-                releasedX = heldX
-                releasedY = heldY
-                releasedAt = now
-                heldX = 0
-                heldY = 0
-                return null
-            }
-            return holdRepeat(now)
+            if (lean >= releaseThreshold) return holdRepeat(now)
+            releasedX = heldX
+            releasedY = heldY
+            releasedAt = now
+            heldX = 0
+            heldY = 0
+            // Fall through: one report can already be past the centre (a fast flick back, or events
+            // batched per frame), and a stick then held still sends nothing more.
         }
         if (pending) {
             val lean = if (pendingX != 0) x * pendingX else y * pendingY
