@@ -454,17 +454,17 @@ private fun GameCoverOrTrailer(
                 }
             }
             Box(modifier = Modifier.align(Alignment.TopEnd)) {
-                Icon(
-                    imageVector = Icons.Outlined.Edit,
-                    contentDescription = stringResource(R.string.game_context_menu_change_thumbnail),
-                    tint = Color.White.copy(alpha = 0.55f),
-                    modifier =
-                        Modifier
-                            .padding(8.dp)
-                            .size(18.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .clickable { coverMenuOpen = true },
-                )
+                IconButton(
+                    onClick = { coverMenuOpen = true },
+                    modifier = Modifier.size(48.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Edit,
+                        contentDescription = stringResource(R.string.game_context_menu_change_thumbnail),
+                        tint = Color.White.copy(alpha = 0.55f),
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
                 // Same cover options as the library game menu's Appearance page.
                 DropdownMenu(expanded = coverMenuOpen, onDismissRequest = { coverMenuOpen = false }) {
                     val customCover = game.customCoverPath != null

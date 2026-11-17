@@ -9,6 +9,7 @@ import com.omnidroid.lib.graphics.VulkanDetector
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemID
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,15 +45,22 @@ class GraphicsApiSelectionViewModel(
     private val _systemConfigs = MutableStateFlow<List<SystemGraphicsApiConfig>>(emptyList())
     val systemConfigs: StateFlow<List<SystemGraphicsApiConfig>> = _systemConfigs.asStateFlow()
 
-    val isVulkanSupported: Boolean = VulkanDetector.isVulkanSupported(context)
-    val vulkanVersion: String? = VulkanDetector.getVulkanVersionString(context)
+    private val _isVulkanSupported = MutableStateFlow(false)
+    val isVulkanSupported: StateFlow<Boolean> = _isVulkanSupported.asStateFlow()
+
+    private val _vulkanVersion = MutableStateFlow<String?>(null)
+    val vulkanVersion: StateFlow<String?> = _vulkanVersion.asStateFlow()
 
     init {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isVulkanSupported.value = VulkanDetector.isVulkanSupported(context)
+            _vulkanVersion.value = VulkanDetector.getVulkanVersionString(context)
+        }
         loadConfigurations()
     }
 
     fun loadConfigurations() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val supportedSystems = listOf(
                 GraphicsApiSystem(SystemID.NINTENDO_3DS, "citra_graphics_api", listOf("OpenGL", "Vulkan"), "OpenGL"),
                 GraphicsApiSystem(SystemID.GAMECUBE, "dolphin_graphics_api", listOf("OpenGL", "Vulkan"), "OpenGL"),
@@ -85,9 +93,11 @@ class GraphicsApiSelectionViewModel(
     }
 
     fun setGraphicsApi(systemId: SystemID, variableKey: String, value: String) {
-        val prefs = SharedPreferencesHelper.getSharedPreferences(context)
-        val prefKey = CoreVariablesManager.computeSharedPreferenceKey(variableKey, systemId.dbname)
-        prefs.edit().putString(prefKey, value).apply()
-        loadConfigurations()
+        viewModelScope.launch(Dispatchers.IO) {
+            val prefs = SharedPreferencesHelper.getSharedPreferences(context)
+            val prefKey = CoreVariablesManager.computeSharedPreferenceKey(variableKey, systemId.dbname)
+            prefs.edit().putString(prefKey, value).apply()
+            loadConfigurations()
+        }
     }
 }

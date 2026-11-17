@@ -25,8 +25,8 @@ fun GraphicsApiSelectionScreen(
     viewModel: GraphicsApiSelectionViewModel,
 ) {
     val configs by viewModel.systemConfigs.collectAsState()
-    val isVulkanSupported = viewModel.isVulkanSupported
-    val vulkanVersion = viewModel.vulkanVersion
+    val isVulkanSupported by viewModel.isVulkanSupported.collectAsState()
+    val vulkanVersion by viewModel.vulkanVersion.collectAsState()
 
     OmnidroidSettingsPage(modifier = modifier.fillMaxWidth()) {
         ElevatedCard(
