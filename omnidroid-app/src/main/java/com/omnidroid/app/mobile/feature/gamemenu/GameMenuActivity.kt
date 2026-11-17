@@ -266,7 +266,7 @@ class GameMenuActivity : RetrogradeComponentActivity() {
     }
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
-        runCatching { controllerBridge.navigation?.contentFocusRequester?.requestFocus() }
+        // No focus grab here: a stick streams motion events and would pull focus back mid-move.
         if (controllerBridge.dispatchMotion(event) { super.dispatchKeyEvent(it) }) {
             return true
         }
