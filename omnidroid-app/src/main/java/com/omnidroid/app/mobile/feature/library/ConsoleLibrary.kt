@@ -751,6 +751,7 @@ private fun ConsolePortraitCarousel(
                         val game = items.gameAt(index)
                         ConsolePortraitCard(
                             game = game,
+                            cardWidth = metrics.cardWidth,
                             focus = {
                                 if (coverTransitioning) 0f else state.focusOf(index)
                             },
@@ -829,6 +830,7 @@ private fun ConsolePortraitCarousel(
 @Composable
 private fun ConsolePortraitCard(
     game: Game?,
+    cardWidth: Dp,
     focus: () -> Float,
     pulse: State<Float>,
     sharedModifier: Modifier,
@@ -855,15 +857,14 @@ private fun ConsolePortraitCard(
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
         if (game != null) {
-            BoxWithConstraints(Modifier.fillMaxSize()) {
-                OmnidroidGameImage(
-                    modifier = Modifier.fillMaxSize(),
-                    game = game,
-                    aspectRatio = null,
-                    // Decode at the card's real width, not the 160dp default (blurry on large cards).
-                    decodeWidth = maxWidth,
-                )
-            }
+            OmnidroidGameImage(
+                modifier = Modifier.fillMaxSize(),
+                game = game,
+                aspectRatio = null,
+                // Decode at the card's real width (from the carousel's metrics, so no extra
+                // subcomposition per card), not the 160dp default that is blurry on large cards.
+                decodeWidth = cardWidth,
+            )
             ConsoleSystemChip(
                 game = game,
                 modifier =
