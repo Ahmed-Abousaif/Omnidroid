@@ -934,7 +934,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
     }
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
-        if (controllerBridge.dispatchMotion(event) { super.dispatchKeyEvent(it) }) {
+        if (controllerBridge.dispatchMotion(event, controllerBridge.keyed(this) { super.dispatchKeyEvent(it) })) {
             return true
         }
         return super.dispatchGenericMotionEvent(event)

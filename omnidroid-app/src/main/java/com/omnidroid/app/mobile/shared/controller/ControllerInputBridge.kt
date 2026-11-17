@@ -1,5 +1,6 @@
 package com.omnidroid.app.mobile.shared.controller
 
+import android.app.Activity
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -332,4 +333,20 @@ class ControllerInputBridge {
         private const val SHOULDER_MAX_HOLD_MS = 10_000L
         private const val ZOOM_COOLDOWN_MS = 280L
     }
+
+    /**
+     * Wraps [dispatch] for keys made from stick movement so they first leave touch mode. After the
+     * screen is touched the window is in touch mode, where buttons can't take focus. Real D-pad
+     * keys leave it on their way in; keys made from the stick go straight to the window and don't,
+     * so focus got stuck on the one item still allowed it (the carousel) until a D-pad press.
+     */
+    fun keyed(
+        activity: Activity,
+        dispatch: (KeyEvent) -> Boolean,
+    ): (KeyEvent) -> Boolean =
+        { key ->
+            val view = activity.currentFocus ?: activity.window.decorView
+            if (view.isInTouchMode) view.requestFocusFromTouch()
+            dispatch(key)
+        }
 }

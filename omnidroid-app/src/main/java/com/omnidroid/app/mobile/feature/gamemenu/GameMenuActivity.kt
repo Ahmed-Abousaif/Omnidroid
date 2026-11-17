@@ -267,7 +267,7 @@ class GameMenuActivity : RetrogradeComponentActivity() {
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
         // No focus grab here: a stick streams motion events and would pull focus back mid-move.
-        if (controllerBridge.dispatchMotion(event) { super.dispatchKeyEvent(it) }) {
+        if (controllerBridge.dispatchMotion(event, controllerBridge.keyed(this) { super.dispatchKeyEvent(it) })) {
             return true
         }
         return super.dispatchGenericMotionEvent(event)
