@@ -36,6 +36,7 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Clarified destructive actions for factory reset and missing games, corrected Material 3 slider discrete steps, added value labels for tilt and HD quality, kept vibration intensity usable for touch feedback, and fixed Device Profile in light mode ([#57](https://github.com/Ahmed-Abousaif/Omnidroid/pull/57)) ([@mlnchlc](https://github.com/mlnchlc))
 - Improved visual contrast with WCAG-compliant high-contrast button text, adaptive light-mode accents, TalkBack accessibility labels, and dynamic controller hint bar sizing ([#58](https://github.com/Ahmed-Abousaif/Omnidroid/pull/58)) ([@mlnchlc](https://github.com/mlnchlc))
 - Accelerated library scrolling with parallel memory-cache cover prefetching, throttled cache access disk writes, unified game play stats queries, and an idle-settling carousel glow ([#59](https://github.com/Ahmed-Abousaif/Omnidroid/pull/59)) ([@mlnchlc](https://github.com/mlnchlc))
+- Added custom save directory support in Saves settings to choose any local or network folder for in-game saves and save states, with on-demand permissions, zero replication, transactional migration, and offline stash sync ([#61](https://github.com/Ahmed-Abousaif/Omnidroid/issues/61))
 
 ### v3.0.0
 

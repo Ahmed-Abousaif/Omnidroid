@@ -11,7 +11,10 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 
-class StatesPreviewManager(private val directoriesManager: DirectoriesManager) {
+class StatesPreviewManager(
+    private val directoriesManager: DirectoriesManager,
+    private val customSaveStorage: CustomSaveStorage = CustomSaveStorage(directoriesManager.context),
+) {
     suspend fun getPreviewForSlot(
         game: Game,
         coreID: CoreID,
@@ -20,15 +23,16 @@ class StatesPreviewManager(private val directoriesManager: DirectoriesManager) {
     ): Bitmap? =
         withContext(Dispatchers.IO) {
             val screenshotName = getSlotScreenshotName(game, index)
-            val file = getPreviewFile(screenshotName, coreID.coreName)
+            val customPath = "state-previews/${coreID.coreName}/$screenshotName"
+            val bytes = customSaveStorage.readSave(customPath) ?: return@withContext null
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            BitmapFactory.decodeFile(file.absolutePath, bounds)
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
             val options = BitmapFactory.Options().apply {
                 var sample = 1
                 while (minOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= size) sample *= 2
                 inSampleSize = sample
             }
-            val bitmap = BitmapFactory.decodeFile(file.absolutePath, options) ?: return@withContext null
+            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options) ?: return@withContext null
             ThumbnailUtils.extractThumbnail(bitmap, size, size, ThumbnailUtils.OPTIONS_RECYCLE_INPUT)
         }
 
@@ -39,19 +43,13 @@ class StatesPreviewManager(private val directoriesManager: DirectoriesManager) {
         index: Int,
     ) = withContext(Dispatchers.IO) {
         val screenshotName = getSlotScreenshotName(game, index)
-        val file = getPreviewFile(screenshotName, coreID.coreName)
-        FileOutputStream(file).use {
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it)
-        }
-    }
-
-    private fun getPreviewFile(
-        fileName: String,
-        coreName: String,
-    ): File {
-        val statesDirectories = File(directoriesManager.getStatesPreviewDirectory(), coreName)
-        statesDirectories.mkdirs()
-        return File(statesDirectories, fileName)
+        val stream = java.io.ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+        val bytes = stream.toByteArray()
+        customSaveStorage.writeSave(
+            "state-previews/${coreID.coreName}/$screenshotName",
+            bytes,
+        )
     }
 
     private fun getSlotScreenshotName(

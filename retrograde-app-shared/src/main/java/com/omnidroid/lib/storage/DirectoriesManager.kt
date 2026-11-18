@@ -4,6 +4,9 @@ import android.content.Context
 import java.io.File
 
 class DirectoriesManager(private val appContext: Context) {
+    val context: Context
+        get() = appContext
+
     @Deprecated("Use the external states directory")
     fun getInternalStatesDirectory(): File =
         File(appContext.filesDir, "states").apply {

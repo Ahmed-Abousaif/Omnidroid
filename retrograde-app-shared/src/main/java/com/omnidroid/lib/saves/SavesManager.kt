@@ -1,87 +1,88 @@
 package com.omnidroid.lib.saves
 
 import com.omnidroid.common.kotlin.runCatchingWithRetry
-import com.omnidroid.common.kotlin.writeBytesAtomic
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.saves.migrators.getSavesMigrator
 import com.omnidroid.lib.storage.DirectoriesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
+import timber.log.Timber
 
-class SavesManager(private val directoriesManager: DirectoriesManager) {
+class SavesManager(
+    private val directoriesManager: DirectoriesManager,
+    private val customSaveStorage: CustomSaveStorage = CustomSaveStorage(directoriesManager.context, directoriesManager),
+) {
     suspend fun getSaveRAM(
         game: Game,
         systemCoreConfig: SystemCoreConfig,
-    ): ByteArray? {
-        return withContext(Dispatchers.IO) {
+    ): ByteArray? =
+        withContext(Dispatchers.IO) {
             val result =
                 runCatchingWithRetry(FILE_ACCESS_RETRIES) {
-                    val saveFile = getSaveFile(getSaveRAMFileName(game))
-                    if (saveFile.exists() && saveFile.length() > 0) {
-                        saveFile.readBytes()
-                    } else {
-                        // Standalone emulators (PizzaBoy, My Boy!, mGBA, …) often use .sav for
-                        // the same SRAM payload RetroArch/Omnidroid store as .srm. Promote on
-                        // first load so cloud sync and later launches use the canonical name.
-                        val legacySav = getSaveFile(getLegacySaveRAMFileName(game))
-                        if (legacySav.exists() && legacySav.length() > 0) {
-                            val bytes = legacySav.readBytes()
-                            saveFile.writeBytesAtomic(bytes)
-                            bytes
-                        } else {
-                            val savesMigrator = systemCoreConfig.getSavesMigrator()
-                            savesMigrator?.loadPreviousSaveForGame(game, directoriesManager)
-                        }
+                    val srmFileName = getSaveRAMFileName(game)
+                    val savFileName = getLegacySaveRAMFileName(game)
+
+                    // 1. Sync any stashed offline saves if custom storage is now accessible
+                    customSaveStorage.syncOfflineStash()
+
+                    // 2. Try reading .srm or .sav from active storage
+                    val data =
+                        customSaveStorage.readSave("saves/$srmFileName")
+                            ?: customSaveStorage.readSave(srmFileName)
+                            ?: customSaveStorage.readSave("saves/$savFileName")
+                            ?: customSaveStorage.readSave(savFileName)
+
+                    if (data != null && data.isNotEmpty()) {
+                        return@runCatchingWithRetry data
                     }
+
+                    // 3. Check legacy migrators if available
+                    val savesMigrator = systemCoreConfig.getSavesMigrator()
+                    val migrated = savesMigrator?.loadPreviousSaveForGame(game, directoriesManager)
+                    if (migrated != null) {
+                        customSaveStorage.writeSave("saves/$srmFileName", migrated)
+                    }
+                    migrated
                 }
             result.getOrThrow()
         }
-    }
 
     suspend fun setSaveRAM(
         game: Game,
         data: ByteArray,
-    ) {
-        withContext(Dispatchers.IO) {
-            val result =
-                runCatchingWithRetry(FILE_ACCESS_RETRIES) {
-                    if (data.isEmpty()) {
-                        return@runCatchingWithRetry
-                    }
-
-                    val saveFile = getSaveFile(getSaveRAMFileName(game))
-                    saveFile.writeBytesAtomic(data)
+    ) = withContext(Dispatchers.IO) {
+        if (data.isEmpty()) return@withContext
+        val result =
+            runCatchingWithRetry(FILE_ACCESS_RETRIES) {
+                val srmFileName = getSaveRAMFileName(game)
+                val success = customSaveStorage.writeSave("saves/$srmFileName", data)
+                if (!success) {
+                    throw java.io.IOException("Failed to write save $srmFileName to storage")
                 }
-            result.getOrThrow()
-        }
-    }
-
-    suspend fun getSaveRAMInfo(game: Game): SaveInfo {
-        return withContext(Dispatchers.IO) {
-            val saveFile = getSaveFile(getSaveRAMFileName(game))
-            if (saveFile.exists() && saveFile.length() > 0) {
-                SaveInfo(true, saveFile.lastModified())
-            } else {
-                val legacySav = getSaveFile(getLegacySaveRAMFileName(game))
-                val fileExists = legacySav.exists() && legacySav.length() > 0
-                SaveInfo(fileExists, legacySav.lastModified())
+                customSaveStorage.syncOfflineStash()
             }
-        }
+        result.getOrThrow()
     }
 
-    private suspend fun getSaveFile(fileName: String): File {
-        return withContext(Dispatchers.IO) {
-            val savesDirectory = directoriesManager.getSavesDirectory()
-            File(savesDirectory, fileName)
-        }
-    }
+    suspend fun getSaveRAMInfo(game: Game): SaveInfo =
+        withContext(Dispatchers.IO) {
+            val srmFileName = getSaveRAMFileName(game)
+            val savFileName = getLegacySaveRAMFileName(game)
 
-    /** This name should make it compatible with RetroArch so that users can freely sync saves across the two application. */
+            val info =
+                customSaveStorage.getSaveInfo("saves/$srmFileName")
+                    ?: customSaveStorage.getSaveInfo(srmFileName)
+                    ?: customSaveStorage.getSaveInfo("saves/$savFileName")
+                    ?: customSaveStorage.getSaveInfo(savFileName)
+
+            info ?: SaveInfo(false, 0L)
+        }
+
+    /** RetroArch-compatible save file naming */
     private fun getSaveRAMFileName(game: Game) = "${game.fileName.substringBeforeLast(".")}.srm"
 
-    /** Battery-save naming used by many standalone GBA/GB emulators. */
+    /** Battery-save naming used by standalone emulators */
     private fun getLegacySaveRAMFileName(game: Game) = "${game.fileName.substringBeforeLast(".")}.sav"
 
     companion object {

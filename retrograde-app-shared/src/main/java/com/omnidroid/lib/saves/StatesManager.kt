@@ -1,10 +1,6 @@
 package com.omnidroid.lib.saves
 
-import com.omnidroid.common.kotlin.readBytesUncompressedAtomic
-import com.omnidroid.common.kotlin.readTextAtomic
 import com.omnidroid.common.kotlin.runCatchingWithRetry
-import com.omnidroid.common.kotlin.writeBytesCompressedAtomic
-import com.omnidroid.common.kotlin.writeTextAtomic
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.storage.DirectoriesManager
@@ -13,10 +9,16 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import java.io.File
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
-class StatesManager(private val directoriesManager: DirectoriesManager) {
+class StatesManager(
+    private val directoriesManager: DirectoriesManager,
+    private val customSaveStorage: CustomSaveStorage = CustomSaveStorage(directoriesManager.context, directoriesManager),
+) {
     private val writes = Mutex()
 
     data class SlotInfo(val index: Int, val saveInfo: SaveInfo)
@@ -63,9 +65,8 @@ class StatesManager(private val directoriesManager: DirectoriesManager) {
         coreID: CoreID,
     ): SaveInfo =
         withContext(Dispatchers.IO) {
-            val autoSaveFile = getStateFile(getAutoSaveFileName(game), coreID.coreName)
-            val autoSaveHasData = autoSaveFile.length() > 0
-            SaveInfo(autoSaveFile.exists() && autoSaveHasData, autoSaveFile.lastModified())
+            val autoSaveFileName = getAutoSaveFileName(game)
+            findStateInfo(autoSaveFileName, coreID.coreName)
         }
 
     suspend fun getAutoSave(
@@ -92,8 +93,9 @@ class StatesManager(private val directoriesManager: DirectoriesManager) {
         withContext(Dispatchers.IO) {
             writes.withLock {
                 getSlotIndices(game, coreID.coreName).map { index ->
-                    val file = getStateFile(getSlotSaveFileName(game, index), coreID.coreName)
-                    SlotInfo(index, SaveInfo(file.isFile && file.length() > 0, file.lastModified()))
+                    val slotFileName = getSlotSaveFileName(game, index)
+                    val info = findStateInfo(slotFileName, coreID.coreName)
+                    SlotInfo(index, info)
                 }
             }
         }
@@ -102,14 +104,19 @@ class StatesManager(private val directoriesManager: DirectoriesManager) {
         game: Game,
         coreName: String,
     ): List<Int> {
-        val directory = getStateFile(getAutoSaveFileName(game), coreName).parentFile!!
-        val files = directory.listFiles() ?: throw IOException("Cannot list save states")
         val pattern = Regex("${Regex.escape(game.fileName)}\\.slot([1-9][0-9]*)")
-        val savedIndices =
-            files.mapNotNull { file ->
-                val number = pattern.matchEntire(file.name)?.groupValues?.get(1)?.toIntOrNull()
-                if (file.isFile && number != null) number - 1 else null
+        val savedIndices = mutableListOf<Int>()
+
+        val files =
+            customSaveStorage.listSaveFiles("states/$coreName") +
+                customSaveStorage.listSaveFiles("states") +
+                customSaveStorage.listSaveFiles()
+        files.forEach { name ->
+            val number = pattern.matchEntire(name)?.groupValues?.get(1)?.toIntOrNull()
+            if (number != null) {
+                savedIndices.add(number - 1)
             }
+        }
         return ((0 until DEFAULT_STATES) + savedIndices).distinct().sorted()
     }
 
@@ -118,25 +125,39 @@ class StatesManager(private val directoriesManager: DirectoriesManager) {
         coreName: String,
     ): SaveState? {
         return runCatchingWithRetry(FILE_ACCESS_RETRIES) {
-            val saveFile = getStateFile(fileName, coreName)
-            val metadataFile = getMetadataStateFile(fileName, coreName)
-            if (saveFile.exists()) {
-                val byteArray = saveFile.readBytesUncompressedAtomic()
-                if (byteArray.isEmpty()) throw IOException("Save state is empty")
-                val stateMetadata =
-                    if (metadataFile.exists()) {
-                        Json.decodeFromString(
-                            SaveState.Metadata.serializer(),
-                            metadataFile.readTextAtomic(),
-                        )
-                    } else {
-                        // Older states did not include metadata.
-                        SaveState.Metadata()
-                    }
-                SaveState(byteArray, stateMetadata)
-            } else {
-                null
+            customSaveStorage.syncOfflineStash()
+
+            val paths =
+                listOf(
+                    "states/$coreName/$fileName",
+                    "states/$fileName",
+                    fileName,
+                )
+            var foundPath: String? = null
+            var rawBytes: ByteArray? = null
+            for (path in paths) {
+                val bytes = customSaveStorage.readSave(path)
+                if (bytes != null && bytes.isNotEmpty()) {
+                    foundPath = path
+                    rawBytes = bytes
+                    break
+                }
             }
+            if (rawBytes == null) return@runCatchingWithRetry null
+
+            val uncompressed = rawBytes.decompressGzipIfNeeded()
+            if (uncompressed.isEmpty()) throw IOException("Save state is empty")
+
+            val metaBytes =
+                customSaveStorage.readSave("$foundPath.metadata")
+                    ?: customSaveStorage.readSave("states/$coreName/$fileName.metadata")
+            val metadata =
+                if (metaBytes != null && metaBytes.isNotEmpty()) {
+                    Json.decodeFromString(SaveState.Metadata.serializer(), metaBytes.decodeToString())
+                } else {
+                    SaveState.Metadata()
+                }
+            SaveState(uncompressed, metadata)
         }.getOrThrow()
     }
 
@@ -147,47 +168,48 @@ class StatesManager(private val directoriesManager: DirectoriesManager) {
     ) {
         require(saveState.state.isNotEmpty()) { "Cannot write an empty save state" }
         runCatchingWithRetry(FILE_ACCESS_RETRIES) {
-            writeStateToDisk(fileName, coreName, saveState.state)
-            writeMetadataToDisk(fileName, coreName, saveState.metadata)
+            val compressed = saveState.state.compressGzip()
+            val metadataJson = Json.encodeToString(SaveState.Metadata.serializer(), saveState.metadata)
+            val statePath = "states/$coreName/$fileName"
+            val stateOk = customSaveStorage.writeSave(statePath, compressed)
+            val metaOk = customSaveStorage.writeSave("$statePath.metadata", metadataJson.encodeToByteArray())
+            if (!stateOk || !metaOk) {
+                throw IOException("Failed to write save state $fileName")
+            }
+            customSaveStorage.syncOfflineStash()
         }.getOrThrow()
     }
 
-    private fun writeMetadataToDisk(
+    private fun findStateInfo(
         fileName: String,
         coreName: String,
-        metadata: SaveState.Metadata,
-    ) {
-        val metadataFile = getMetadataStateFile(fileName, coreName)
-        metadataFile.writeTextAtomic(Json.encodeToString(SaveState.Metadata.serializer(), metadata))
+    ): SaveInfo {
+        val paths =
+            listOf(
+                "states/$coreName/$fileName",
+                "states/$fileName",
+                fileName,
+            )
+        for (path in paths) {
+            val info = customSaveStorage.getSaveInfo(path)
+            if (info != null && info.exists) {
+                return info
+            }
+        }
+        return SaveInfo(false, 0L)
     }
 
-    private fun writeStateToDisk(
-        fileName: String,
-        coreName: String,
-        stateArray: ByteArray,
-    ) {
-        val saveFile = getStateFile(fileName, coreName)
-        saveFile.writeBytesCompressedAtomic(stateArray)
-    }
+    private fun ByteArray.compressGzip(): ByteArray =
+        ByteArrayOutputStream().use { baos ->
+            GZIPOutputStream(baos).use { it.write(this) }
+            baos.toByteArray()
+        }
 
-    private fun getStateFile(
-        fileName: String,
-        coreName: String,
-    ): File {
-        return File(getCoreStatesDirectory(coreName), fileName)
-    }
-
-    private fun getMetadataStateFile(
-        stateFileName: String,
-        coreName: String,
-    ): File {
-        return File(getCoreStatesDirectory(coreName), "$stateFileName.metadata")
-    }
-
-    private fun getCoreStatesDirectory(coreName: String): File {
-        val directory = File(directoriesManager.getStatesDirectory(), coreName)
-        if (!directory.isDirectory && !directory.mkdirs()) throw IOException("Cannot access save state directory")
-        return directory
+    private fun ByteArray.decompressGzipIfNeeded(): ByteArray {
+        if (size >= 2 && this[0] == 0x1f.toByte() && this[1] == 0x8b.toByte()) {
+            return GZIPInputStream(ByteArrayInputStream(this)).use { it.readBytes() }
+        }
+        return this
     }
 
     private fun getAutoSaveFileName(game: Game) = "${game.fileName}.state"

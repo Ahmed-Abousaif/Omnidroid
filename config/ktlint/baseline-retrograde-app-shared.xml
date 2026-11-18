@@ -564,20 +564,20 @@
         <error line="153" column="60" source="standard:function-expression-body" />
     </file>
     <file name="src/main/java/com/omnidroid/lib/library/OmnidroidLibrary.kt">
-        <error line="187" column="105" source="standard:chain-method-continuation" />
-        <error line="254" column="83" source="standard:chain-method-continuation" />
-        <error line="310" column="17" source="standard:chain-method-continuation" />
-        <error line="332" column="16" source="standard:function-expression-body" />
-        <error line="646" column="43" source="standard:condition-wrapping" />
-        <error line="646" column="77" source="standard:condition-wrapping" />
-        <error line="648" column="57" source="standard:condition-wrapping" />
-        <error line="692" column="28" source="standard:chain-method-continuation" />
-        <error line="692" column="38" source="standard:chain-method-continuation" />
-        <error line="692" column="59" source="standard:chain-method-continuation" />
-        <error line="692" column="67" source="standard:chain-method-continuation" />
-        <error line="731" column="58" source="standard:function-expression-body" />
-        <error line="796" column="19" source="standard:chain-method-continuation" />
-        <error line="796" column="34" source="standard:chain-method-continuation" />
+        <error line="188" column="105" source="standard:chain-method-continuation" />
+        <error line="255" column="83" source="standard:chain-method-continuation" />
+        <error line="312" column="17" source="standard:chain-method-continuation" />
+        <error line="334" column="16" source="standard:function-expression-body" />
+        <error line="648" column="43" source="standard:condition-wrapping" />
+        <error line="648" column="77" source="standard:condition-wrapping" />
+        <error line="650" column="57" source="standard:condition-wrapping" />
+        <error line="694" column="28" source="standard:chain-method-continuation" />
+        <error line="694" column="38" source="standard:chain-method-continuation" />
+        <error line="694" column="59" source="standard:chain-method-continuation" />
+        <error line="694" column="67" source="standard:chain-method-continuation" />
+        <error line="733" column="58" source="standard:function-expression-body" />
+        <error line="798" column="19" source="standard:chain-method-continuation" />
+        <error line="798" column="34" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/lib/library/StorageFilesMerger.kt">
         <error line="44" column="40" source="standard:chain-method-continuation" />
@@ -803,13 +803,6 @@
         <error line="15" column="28" source="standard:class-signature" />
         <error line="15" column="60" source="standard:class-signature" />
         <error line="15" column="92" source="standard:class-signature" />
-    </file>
-    <file name="src/main/java/com/omnidroid/lib/saves/SavesManager.kt">
-        <error line="13" column="20" source="standard:class-signature" />
-        <error line="13" column="70" source="standard:class-signature" />
-        <error line="17" column="19" source="standard:function-expression-body" />
-        <error line="61" column="54" source="standard:function-expression-body" />
-        <error line="74" column="61" source="standard:function-expression-body" />
     </file>
     <file name="src/main/java/com/omnidroid/lib/saves/StatesManager.kt">
         <error line="19" column="21" source="standard:class-signature" />

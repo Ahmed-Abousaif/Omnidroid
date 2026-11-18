@@ -20,6 +20,7 @@ import com.omnidroid.lib.library.scan.MetadataKeyType
 import com.omnidroid.lib.library.scan.PartialContentHasher
 import com.omnidroid.lib.library.scan.ScanInput
 import com.omnidroid.lib.library.scan.SkippedSubtreeTracker
+import com.omnidroid.lib.saves.CustomSaveStorage
 import com.omnidroid.lib.saves.SaveFileRenamer
 import com.omnidroid.lib.storage.BaseStorageFile
 import com.omnidroid.lib.storage.DirectoriesManager
@@ -270,6 +271,7 @@ class OmnidroidLibrary(
                     directoriesManager.getStatesPreviewDirectory(),
                     game.fileName,
                     newFileName,
+                    CustomSaveStorage(directoriesManager.context),
                 )
             if (!renamedOk) {
                 Timber.w("Save rename collision for ${game.fileName}; keeping URIs but marking conflict")

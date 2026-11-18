@@ -19,6 +19,10 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29"
+        tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -286,6 +290,10 @@
 
         <activity
             android:name="com.omnidroid.app.shared.settings.StorageFrameworkPickerLauncher"
+            android:theme="@style/OmnidroidMaterialTheme.Invisible" />
+
+        <activity
+            android:name="com.omnidroid.app.shared.settings.SaveFrameworkPickerLauncher"
             android:theme="@style/OmnidroidMaterialTheme.Invisible" />
 
         <activity
