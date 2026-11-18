@@ -43,3 +43,7 @@ fun rememberSideMenuState(): SideMenuState = remember { SideMenuState() }
 
 internal fun sideMenuWidth(available: Float): Float =
     (available * 0.42f).coerceIn(320f, 440f).coerceAtMost(available.coerceAtLeast(0f))
+
+/** Portrait sheet height: about two thirds of the screen, leaving the game visible above. */
+internal fun sideMenuSheetHeight(available: Float): Float =
+    (available * 0.66f).coerceIn(360f, 620f).coerceAtMost(available.coerceAtLeast(0f))
