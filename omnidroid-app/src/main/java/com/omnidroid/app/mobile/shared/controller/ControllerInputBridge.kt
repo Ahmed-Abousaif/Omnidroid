@@ -1,5 +1,6 @@
 package com.omnidroid.app.mobile.shared.controller
 
+import android.app.Activity
 import android.os.SystemClock
 import android.view.InputDevice
 import android.view.KeyEvent
@@ -11,9 +12,9 @@ class ControllerInputBridge {
 
     private val activeNavigation get() = navigation?.modalNavigation ?: navigation
 
-    private var lastX = 0
-    private var lastY = 0
-    private var lastRepeatAt = 0L
+    private val stick = StickPressFilter()
+    private var lastHatX = 0f
+    private var lastHatY = 0f
     private var lastL2Pressed = false
     private var lastR2Pressed = false
     private var lastZoomAt = 0L
@@ -78,14 +79,15 @@ class ControllerInputBridge {
                 }
                 true
             }
+            // L1 / R1: one console per press, on the way down.
             KeyEvent.KEYCODE_BUTTON_L1 -> {
-                if (event.action == KeyEvent.ACTION_UP) {
+                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
                     activeNavigation?.onPrevConsole?.invoke()
                 }
                 true
             }
             KeyEvent.KEYCODE_BUTTON_R1 -> {
-                if (event.action == KeyEvent.ACTION_UP) {
+                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
                     activeNavigation?.onNextConsole?.invoke()
                 }
                 true
@@ -108,8 +110,11 @@ class ControllerInputBridge {
         val hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X)
         val hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y)
         val hatActive = abs(hatX) > HAT_DEADZONE || abs(hatY) > HAT_DEADZONE
-        val x = if (hatActive) 0 else axisDirection(0f, event.getAxisValue(MotionEvent.AXIS_X))
-        val y = if (hatActive) 0 else axisDirection(0f, event.getAxisValue(MotionEvent.AXIS_Y))
+        // The D-pad (hat) is left to Android, which turns it into D-pad keys; that includes the
+        // event where it returns to the centre, or the synthesized key would stay down.
+        val hatChanged = hatX != lastHatX || hatY != lastHatY
+        lastHatX = hatX
+        lastHatY = hatY
 
         val l2 =
             maxOf(
@@ -132,26 +137,37 @@ class ControllerInputBridge {
         lastL2Pressed = l2Pressed
         lastR2Pressed = r2Pressed
 
-        val now = SystemClock.uptimeMillis()
-        val changed = x != lastX || y != lastY
-        val shouldRepeat =
-            (x != 0 || y != 0) && now - lastRepeatAt >= STICK_REPEAT_MS
-
-        if (!changed && !shouldRepeat) {
-            return l2Pressed || r2Pressed
+        if (hatActive || hatChanged) {
+            stick.reset()
+            return false
         }
 
-        if (changed) {
-            if (lastX != 0) dispatchDirectional(lastX, 0, KeyEvent.ACTION_UP, event, dispatch)
-            if (lastY != 0) dispatchDirectional(0, lastY, KeyEvent.ACTION_UP, event, dispatch)
-            lastX = x
-            lastY = y
+        // Left stick: one press per tilt (see StickPressFilter), no timers. Every stick event is
+        // consumed, so Android doesn't also turn the stick into D-pad keys with its own repeat.
+        // Joystick events are batched per frame: feed the older samples too, with their own times.
+        for (i in 0 until event.historySize) {
+            stick
+                .update(
+                    event.getHistoricalAxisValue(MotionEvent.AXIS_X, i),
+                    event.getHistoricalAxisValue(MotionEvent.AXIS_Y, i),
+                    event.getHistoricalEventTime(i),
+                )?.let { dispatchPress(it, event.deviceId, event.source, dispatch) }
         }
-
-        if (x != 0) dispatchDirectional(x, 0, KeyEvent.ACTION_DOWN, event, dispatch)
-        if (y != 0) dispatchDirectional(0, y, KeyEvent.ACTION_DOWN, event, dispatch)
-        lastRepeatAt = now
+        stick
+            .update(event.getAxisValue(MotionEvent.AXIS_X), event.getAxisValue(MotionEvent.AXIS_Y), event.eventTime)
+            ?.let { dispatchPress(it, event.deviceId, event.source, dispatch) }
         return true
+    }
+
+    private fun dispatchPress(
+        press: StickPressFilter.Press,
+        deviceId: Int,
+        source: Int,
+        dispatch: (KeyEvent) -> Boolean,
+    ) {
+        val now = SystemClock.uptimeMillis()
+        dispatchDirectional(press.x, press.y, KeyEvent.ACTION_DOWN, now, deviceId, source, dispatch)
+        dispatchDirectional(press.x, press.y, KeyEvent.ACTION_UP, now, deviceId, source, dispatch)
     }
 
     private fun zoomIn() {
@@ -175,7 +191,9 @@ class ControllerInputBridge {
         x: Int,
         y: Int,
         action: Int,
-        source: MotionEvent,
+        time: Long,
+        deviceId: Int,
+        source: Int,
         dispatch: (KeyEvent) -> Boolean,
     ) {
         val keyCode =
@@ -188,30 +206,18 @@ class ControllerInputBridge {
             }
         dispatch(
             KeyEvent(
-                source.downTime,
-                source.eventTime,
+                time,
+                time,
                 action,
                 keyCode,
                 0,
                 0,
-                source.deviceId,
+                deviceId,
                 0,
                 0,
-                source.source,
+                source,
             ),
         )
-    }
-
-    private fun axisDirection(
-        hat: Float,
-        stick: Float,
-    ): Int {
-        val value = if (abs(hat) > HAT_DEADZONE) hat else stick
-        return when {
-            value <= -STICK_DEADZONE -> -1
-            value >= STICK_DEADZONE -> 1
-            else -> 0
-        }
     }
 
     private fun isFromController(event: KeyEvent): Boolean {
@@ -221,16 +227,15 @@ class ControllerInputBridge {
             source and InputDevice.SOURCE_DPAD == InputDevice.SOURCE_DPAD
     }
 
-    private fun isBackOrShoulder(keyCode: Int): Boolean {
-        return keyCode == KeyEvent.KEYCODE_BUTTON_B ||
+    private fun isBackOrShoulder(keyCode: Int): Boolean =
+        keyCode == KeyEvent.KEYCODE_BUTTON_B ||
             keyCode == KeyEvent.KEYCODE_BUTTON_2 ||
             keyCode == KeyEvent.KEYCODE_BACK ||
             keyCode == KeyEvent.KEYCODE_BUTTON_L1 ||
             keyCode == KeyEvent.KEYCODE_BUTTON_R1
-    }
 
-    private fun KeyEvent.remap(keyCode: Int): KeyEvent {
-        return KeyEvent(
+    private fun KeyEvent.remap(keyCode: Int): KeyEvent =
+        KeyEvent(
             downTime,
             eventTime,
             action,
@@ -242,12 +247,27 @@ class ControllerInputBridge {
             flags,
             source,
         )
-    }
 
     companion object {
         private const val HAT_DEADZONE = 0.5f
         private const val STICK_DEADZONE = 0.6f
-        private const val STICK_REPEAT_MS = 220L
         private const val ZOOM_COOLDOWN_MS = 280L
     }
+
+    /**
+     * Wraps [dispatch] for keys made from stick movement so they first leave touch mode. After the
+     * screen is touched the window is in touch mode, where buttons can't take focus. Real D-pad
+     * keys leave it on their way in; keys made from the stick go straight to the window and don't,
+     * so focus got stuck on the one item still allowed it (the carousel) until a D-pad press.
+     * Build it once per activity and reuse it: motion events stream at up to 250 Hz.
+     */
+    fun keyed(
+        activity: Activity,
+        dispatch: (KeyEvent) -> Boolean,
+    ): (KeyEvent) -> Boolean =
+        { key ->
+            val view = activity.currentFocus ?: activity.window.decorView
+            if (view.isInTouchMode) view.requestFocusFromTouch()
+            dispatch(key)
+        }
 }

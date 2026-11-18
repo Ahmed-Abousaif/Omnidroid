@@ -80,6 +80,9 @@ class GameMenuActivity : RetrogradeComponentActivity() {
 
     private val controllerBridge = ControllerInputBridge()
 
+    // Built once: dispatchGenericMotionEvent runs for every stick, trigger and mouse event.
+    private val stickKeyDispatch: (KeyEvent) -> Boolean by lazy { controllerBridge.keyed(this) { super.dispatchKeyEvent(it) } }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(
             SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
@@ -266,8 +269,8 @@ class GameMenuActivity : RetrogradeComponentActivity() {
     }
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
-        runCatching { controllerBridge.navigation?.contentFocusRequester?.requestFocus() }
-        if (controllerBridge.dispatchMotion(event) { super.dispatchKeyEvent(it) }) {
+        // No focus grab here: a stick streams motion events and would pull focus back mid-move.
+        if (controllerBridge.dispatchMotion(event, stickKeyDispatch)) {
             return true
         }
         return super.dispatchGenericMotionEvent(event)
