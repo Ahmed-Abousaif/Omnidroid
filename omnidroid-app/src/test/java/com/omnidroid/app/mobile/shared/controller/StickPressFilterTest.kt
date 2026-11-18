@@ -37,7 +37,7 @@ class StickPressFilterTest {
         val result =
             presses(
                 filter,
-                listOf(0.62f, 0.58f, 0.61f, 0.55f, 0.63f).mapIndexed { i, x -> Triple(x, 0f, i * 16L) },
+                listOf(0.67f, 0.6f, 0.66f, 0.55f, 0.68f).mapIndexed { i, x -> Triple(x, 0f, i * 16L) },
             )
         assertEquals(1, result.size)
     }
@@ -91,24 +91,30 @@ class StickPressFilterTest {
     }
 
     @Test
-    fun `a reverse that stays out counts once it has held`() {
+    fun `a shallow reverse right after letting go is the spring`() {
         val filter = StickPressFilter()
         assertEquals(StickPressFilter.Press(1, 0), filter.update(1f, 0f, 0L))
         assertNull(filter.update(0.1f, 0f, 30L))
-        // Opposite, not deep: waits to see whether it is the spring.
         assertNull(filter.update(-0.7f, 0f, 50L))
-        assertNull(filter.tick(70L))
-        // Still out 40 ms later: a deliberate reverse.
-        assertEquals(StickPressFilter.Press(-1, 0), filter.tick(95L))
+        assertNull(filter.update(-0.8f, 0f, 120L))
+        assertNull(filter.update(-0.1f, 0f, 140L))
     }
 
     @Test
-    fun `a reverse that stays out is confirmed by the next stick event too`() {
+    fun `a deep reverse right after letting go counts`() {
+        val filter = StickPressFilter()
+        filter.update(0f, 1f, 0L)
+        filter.update(0f, 0.1f, 30L)
+        assertEquals(StickPressFilter.Press(0, -1), filter.update(0f, -0.9f, 50L))
+    }
+
+    @Test
+    fun `a reverse still out after the rebound window counts on the next report`() {
         val filter = StickPressFilter()
         filter.update(0f, 1f, 0L)
         filter.update(0f, 0.1f, 30L)
         assertNull(filter.update(0f, -0.7f, 50L))
-        assertEquals(StickPressFilter.Press(0, -1), filter.update(0f, -0.75f, 92L))
+        assertEquals(StickPressFilter.Press(0, -1), filter.update(0f, -0.72f, 190L))
     }
 
     @Test
@@ -119,24 +125,9 @@ class StickPressFilterTest {
     }
 
     @Test
-    fun `holding repeats only after the hold delay`() {
+    fun `holding never presses again`() {
         val filter = StickPressFilter()
-        val result = presses(filter, (0..50).map { Triple(1f, 0f, it * 20L) })
-        // First press at 0 ms, then from 400 ms every >= 110 ms up to 1000 ms: 400, 520, 640, 760, 880, 1000.
-        assertEquals(7, result.size)
-    }
-
-    @Test
-    fun `a stick held still repeats through tick`() {
-        val filter = StickPressFilter()
-        assertEquals(StickPressFilter.Press(0, 1), filter.update(0f, 1f, 0L))
-        assertEquals(400L, filter.nextTickIn(0L))
-        assertNull(filter.tick(399L))
-        assertEquals(StickPressFilter.Press(0, 1), filter.tick(400L))
-        assertEquals(110L, filter.nextTickIn(400L))
-        assertEquals(StickPressFilter.Press(0, 1), filter.tick(510L))
-        // Let go: nothing more to tick.
-        assertNull(filter.update(0f, 0f, 520L))
-        assertNull(filter.nextTickIn(520L))
+        val result = presses(filter, (0..100).map { Triple(1f, 0f, it * 20L) })
+        assertEquals(listOf(StickPressFilter.Press(1, 0)), result)
     }
 }

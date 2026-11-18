@@ -215,6 +215,9 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
     private val reviewManager = ReviewManager()
     private val controllerBridge = ControllerInputBridge()
+
+    // Built once: dispatchGenericMotionEvent runs for every stick, trigger and mouse event.
+    private val stickKeyDispatch: (KeyEvent) -> Boolean by lazy { controllerBridge.keyed(this) { super.dispatchKeyEvent(it) } }
     private var notificationPermissionCallback: ((Boolean) -> Unit)? = null
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -934,7 +937,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
     }
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
-        if (controllerBridge.dispatchMotion(event, controllerBridge.keyed(this) { super.dispatchKeyEvent(it) })) {
+        if (controllerBridge.dispatchMotion(event, stickKeyDispatch)) {
             return true
         }
         return super.dispatchGenericMotionEvent(event)

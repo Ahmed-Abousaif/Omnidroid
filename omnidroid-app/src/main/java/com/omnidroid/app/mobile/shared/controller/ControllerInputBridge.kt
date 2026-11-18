@@ -1,14 +1,10 @@
 package com.omnidroid.app.mobile.shared.controller
 
 import android.app.Activity
-import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.os.SystemClock
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
-import android.view.ViewConfiguration
 import kotlin.math.abs
 
 class ControllerInputBridge {
@@ -16,12 +12,7 @@ class ControllerInputBridge {
 
     private val activeNavigation get() = navigation?.modalNavigation ?: navigation
 
-    // Holding the stick repeats at the same pace as holding the D-pad: Android's key repeat timing.
-    private val stick =
-        StickPressFilter(
-            holdDelayMs = keyRepeatTimeout(),
-            holdRepeatMs = keyRepeatDelay(),
-        )
+    private val stick = StickPressFilter()
     private var lastHatX = 0f
     private var lastHatY = 0f
     private var lastL2Pressed = false
@@ -88,12 +79,17 @@ class ControllerInputBridge {
                 }
                 true
             }
+            // L1 / R1: one console per press, on the way down.
             KeyEvent.KEYCODE_BUTTON_L1 -> {
-                shoulder(event) { activeNavigation?.onPrevConsole?.invoke() }
+                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                    activeNavigation?.onPrevConsole?.invoke()
+                }
                 true
             }
             KeyEvent.KEYCODE_BUTTON_R1 -> {
-                shoulder(event) { activeNavigation?.onNextConsole?.invoke() }
+                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                    activeNavigation?.onNextConsole?.invoke()
+                }
                 true
             }
             else -> dispatch(event)
@@ -146,8 +142,8 @@ class ControllerInputBridge {
             return false
         }
 
-        // Left stick: one press per tilt (see StickPressFilter). Every stick event is consumed, so
-        // Android doesn't also turn the stick into D-pad keys with its own repeat (extra jumps).
+        // Left stick: one press per tilt (see StickPressFilter), no timers. Every stick event is
+        // consumed, so Android doesn't also turn the stick into D-pad keys with its own repeat.
         // Joystick events are batched per frame: feed the older samples too, with their own times.
         for (i in 0 until event.historySize) {
             stick
@@ -160,7 +156,6 @@ class ControllerInputBridge {
         stick
             .update(event.getAxisValue(MotionEvent.AXIS_X), event.getAxisValue(MotionEvent.AXIS_Y), event.eventTime)
             ?.let { dispatchPress(it, event.deviceId, event.source, dispatch) }
-        scheduleStickTick(event.deviceId, event.source, dispatch)
         return true
     }
 
@@ -173,71 +168,6 @@ class ControllerInputBridge {
         val now = SystemClock.uptimeMillis()
         dispatchDirectional(press.x, press.y, KeyEvent.ACTION_DOWN, now, deviceId, source, dispatch)
         dispatchDirectional(press.x, press.y, KeyEvent.ACTION_UP, now, deviceId, source, dispatch)
-    }
-
-    private var stickTick: Runnable? = null
-
-    /**
-     * A held stick or a waiting reverse needs time to pass, but a stick held still sends no events:
-     * keep ticking the filter until it has nothing left to do.
-     */
-    private fun scheduleStickTick(
-        deviceId: Int,
-        source: Int,
-        dispatch: (KeyEvent) -> Boolean,
-    ) {
-        stickTick?.let(shoulderHandler::removeCallbacks)
-        stickTick = null
-        val delay = stick.nextTickIn(SystemClock.uptimeMillis()) ?: return
-        val tick =
-            Runnable {
-                stickTick = null
-                stick.tick(SystemClock.uptimeMillis())?.let { dispatchPress(it, deviceId, source, dispatch) }
-                scheduleStickTick(deviceId, source, dispatch)
-            }
-        stickTick = tick
-        shoulderHandler.postDelayed(tick, delay)
-    }
-
-    private val shoulderHandler = Handler(Looper.getMainLooper())
-    private var shoulderRepeat: Runnable? = null
-
-    /**
-     * L1 / R1: act on press, then keep cycling while held (after [SHOULDER_HOLD_MS], every
-     * [SHOULDER_REPEAT_MS]). Android's own key repeats are ignored in favour of this timing.
-     */
-    private fun shoulder(
-        event: KeyEvent,
-        action: () -> Unit,
-    ) {
-        when (event.action) {
-            KeyEvent.ACTION_DOWN -> {
-                if (event.repeatCount > 0) return
-                stopShoulderRepeat()
-                action()
-                val pressedAt = SystemClock.uptimeMillis()
-                val repeat =
-                    object : Runnable {
-                        override fun run() {
-                            // Safety cap in case the key-up never arrives (focus moved away).
-                            if (SystemClock.uptimeMillis() - pressedAt > SHOULDER_MAX_HOLD_MS) {
-                                stopShoulderRepeat()
-                                return
-                            }
-                            action()
-                            shoulderHandler.postDelayed(this, SHOULDER_REPEAT_MS)
-                        }
-                    }
-                shoulderRepeat = repeat
-                shoulderHandler.postDelayed(repeat, SHOULDER_HOLD_MS)
-            }
-            KeyEvent.ACTION_UP -> stopShoulderRepeat()
-        }
-    }
-
-    private fun stopShoulderRepeat() {
-        shoulderRepeat?.let(shoulderHandler::removeCallbacks)
-        shoulderRepeat = null
     }
 
     private fun zoomIn() {
@@ -319,23 +249,8 @@ class ControllerInputBridge {
         )
 
     companion object {
-        /** Before the D-pad starts repeating; the system long-press time before Android 9. */
-        private fun keyRepeatTimeout(): Long =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                ViewConfiguration.getKeyRepeatTimeout().toLong()
-            } else {
-                ViewConfiguration.getLongPressTimeout().toLong()
-            }
-
-        /** Between D-pad repeats. */
-        private fun keyRepeatDelay(): Long =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) ViewConfiguration.getKeyRepeatDelay().toLong() else 50L
-
         private const val HAT_DEADZONE = 0.5f
         private const val STICK_DEADZONE = 0.6f
-        private const val SHOULDER_HOLD_MS = 350L
-        private const val SHOULDER_REPEAT_MS = 140L
-        private const val SHOULDER_MAX_HOLD_MS = 10_000L
         private const val ZOOM_COOLDOWN_MS = 280L
     }
 
@@ -344,6 +259,7 @@ class ControllerInputBridge {
      * screen is touched the window is in touch mode, where buttons can't take focus. Real D-pad
      * keys leave it on their way in; keys made from the stick go straight to the window and don't,
      * so focus got stuck on the one item still allowed it (the carousel) until a D-pad press.
+     * Build it once per activity and reuse it: motion events stream at up to 250 Hz.
      */
     fun keyed(
         activity: Activity,

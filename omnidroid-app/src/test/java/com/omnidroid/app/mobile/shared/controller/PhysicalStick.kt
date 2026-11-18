@@ -134,28 +134,11 @@ internal class PhysicalStick(
         val time: Long,
     )
 
-    /**
-     * Runs [filter] the way ControllerInputBridge does: an update per sample, and between samples
-     * a tick whenever the filter asks for one.
-     */
-    fun drive(filter: StickPressFilter = StickPressFilter()): List<TimedPress> {
-        val presses = mutableListOf<TimedPress>()
-        var tickAt: Long? = null
-        fun tickUntil(end: Long) {
-            while (tickAt != null && tickAt!! <= end) {
-                val now = tickAt!!
-                filter.tick(now)?.let { presses += TimedPress(it, now) }
-                tickAt = filter.nextTickIn(now)?.let { now + it }
-            }
+    /** Runs [filter] the way ControllerInputBridge does: one update per stick report, nothing between. */
+    fun drive(filter: StickPressFilter = StickPressFilter()): List<TimedPress> =
+        samples().mapNotNull { sample ->
+            filter.update(sample.x, sample.y, sample.time)?.let { TimedPress(it, sample.time) }
         }
-        for (sample in samples()) {
-            tickUntil(sample.time)
-            filter.update(sample.x, sample.y, sample.time)?.let { presses += TimedPress(it, sample.time) }
-            tickAt = filter.nextTickIn(sample.time)?.let { sample.time + it }
-        }
-        tickUntil(elapsedMs)
-        return presses
-    }
 
     companion object {
         const val STEP_MS = 0.5

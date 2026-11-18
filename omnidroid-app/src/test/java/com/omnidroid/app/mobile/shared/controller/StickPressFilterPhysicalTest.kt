@@ -84,15 +84,11 @@ class StickPressFilterPhysicalTest {
     }
 
     @Test
-    fun `holding against the gate repeats at the hold pace`() {
+    fun `holding against the gate is one press`() {
         everyStick { name, stick ->
             for (dir in directions) {
                 val presses = stick().pushTo(dir, 30).hold(1000).letGo().drive()
-                assertTrue("$name, $dir: ${presses.directions()}", presses.all { it.press == dir })
-                val gaps = presses.zipWithNext { a, b -> b.time - a.time }
-                assertEquals("$name, $dir", 400L, gaps.first())
-                assertTrue("$name, $dir: $gaps", gaps.drop(1).all { it == 110L })
-                assertTrue("$name, $dir: ${presses.size} presses", presses.size in 6..8)
+                assertEquals(name, listOf(dir), presses.directions())
             }
         }
     }
@@ -110,7 +106,7 @@ class StickPressFilterPhysicalTest {
         for (spring in Spring.ALL) {
             for (seed in 1L..10L) {
                 val stick = PhysicalStick(spring = spring, noise = 0.05f, seed = seed)
-                val presses = stick.push(0.62, 0.0, 60).hold(300).letGo().drive()
+                val presses = stick.push(0.68, 0.0, 60).hold(300).letGo().drive()
                 assertEquals("$spring, seed $seed", listOf(Press(1, 0)), presses.directions())
             }
         }
