@@ -3,6 +3,7 @@
 <p align="center">
   <a href="https://github.com/Ahmed-Abousaif/Omnidroid/releases"><img src="https://img.shields.io/github/v/release/Ahmed-Abousaif/Omnidroid?style=for-the-badge&logo=android&color=3DDC84" alt="Release"></a>
   <a href="https://github.com/Ahmed-Abousaif/Omnidroid/stargazers"><img src="https://img.shields.io/github/stars/Ahmed-Abousaif/Omnidroid?style=for-the-badge&logo=github&color=FFD700" alt="Stars"></a>
+  <a href="https://discord.gg/vzRWmbB5Z4"><img src="https://img.shields.io/badge/Discord-Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://github.com/Ahmed-Abousaif/Omnidroid/blob/master/COPYING"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge" alt="License: GPLv3"></a>
   <a href="https://github.com/Ahmed-Abousaif/omni-libretrodroid"><img src="https://img.shields.io/badge/Graphics-Vulkan%20%7C%20OpenGL%20ES-E63946.svg?style=for-the-badge&logo=vulkan" alt="Vulkan Hardware Acceleration"></a>
 </p>
@@ -12,6 +13,7 @@
 </p>
 
 <p align="center">
+  <a href="#-community"><b>Community</b></a> •
   <a href="#-support-omnidroid"><b>Support</b></a> •
   <a href="#-screenshots"><b>Screenshots</b></a> •
   <a href="#-for-players-getting-started"><b>For Players</b></a> •
@@ -20,6 +22,16 @@
   <a href="#-features-deep-dive"><b>Features</b></a> •
   <a href="#-for-contributors--developers"><b>For Contributors</b></a> •
   <a href="#star-history"><b>Star History</b></a>
+</p>
+
+---
+
+## 💬 Community
+
+Join our official [Discord Community](https://discord.gg/vzRWmbB5Z4) to chat with players, get setup help, suggest features, and follow development announcements!
+
+<p align="center">
+  <a href="https://discord.gg/vzRWmbB5Z4"><img src="https://img.shields.io/badge/Discord-Join%20our%20Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" height="40" /></a>
 </p>
 
 ---
@@ -425,7 +437,7 @@ For your own distribution, `git submodule set-url PATH https://github.com/YOUR-U
 
 Before opening a PR, read [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md), run the checks relevant to your change, and include reproduction/validation details. UI changes should include screenshots or a recording. Target `master` in Omnidroid; shared-library/engine PRs target their own repositories.
 
-Use the issue forms for bugs and feature requests; use Discussions for questions and design proposals. Maintainers review PRs before merging. Do not attach ROMs, firmware, BIOS files, console keys, signing keys, or account credentials.
+Use the issue forms for bugs and feature requests; use Discussions or our [Discord server](https://discord.gg/vzRWmbB5Z4) for questions and design proposals. Maintainers review PRs before merging. Do not attach ROMs, firmware, BIOS files, console keys, signing keys, or account credentials.
 
 - [Library screen](docs/LIBRARY_SCREEN_TECHNICAL_GUIDE.md): paging, covers, state, controller input, and tests.
 - [Settings](docs/SETTINGS_TECHNICAL_GUIDE.md): feature sections, typed preferences, and navigation.

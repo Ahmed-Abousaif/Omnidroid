@@ -52,6 +52,17 @@ internal fun AboutSettings() {
     SettingsHorizontalDivider()
 
     OmnidroidSettingsGroup(
+        titleRes = R.string.settings_section_community,
+    ) {
+        OmnidroidSettingsMenuLink(
+            titleRes = R.string.settings_title_discord,
+            subtitleRes = R.string.settings_description_discord,
+            onClick = { openExternalUrl(context, context.getString(R.string.url_discord)) },
+        )
+    }
+    SettingsHorizontalDivider()
+
+    OmnidroidSettingsGroup(
         titleRes = R.string.settings_section_privacy,
     ) {
         OmnidroidSettingsMenuLink(
@@ -126,10 +137,12 @@ private fun UpdateSettings() {
 private fun rememberAppUpdater(): AppUpdater {
     val context = LocalContext.current
     return remember(context) {
-        EntryPointAccessors.fromApplication(
-            context.applicationContext,
-            AppUpdaterEntryPoint::class.java,
-        ).appUpdater()
+        EntryPointAccessors
+            .fromApplication(
+                context.applicationContext,
+                AppUpdaterEntryPoint::class.java,
+            )
+            .appUpdater()
     }
 }
 

@@ -171,6 +171,9 @@
     <string name="settings_section_performance">Performance</string>
     <string name="settings_description_on_screen_tv">Used when playing with touch</string>
 
+    <string name="settings_section_community">Community</string>
+    <string name="settings_title_discord">Discord</string>
+    <string name="settings_description_discord">Join our Discord community</string>
     <string name="settings_section_privacy">Privacy</string>
     <string name="settings_title_privacy_policy">Privacy policy</string>
     <string name="settings_description_privacy_policy">How Omnidroid handles your data</string>
@@ -203,6 +206,7 @@
     <string name="app_update_up_to_date_title">You\'re up to date</string>
     <string name="app_update_up_to_date_body">You already have the latest version of Omnidroid.</string>
     <string name="url_privacy_policy" translatable="false">https://github.com/Ahmed-Abousaif/Omnidroid/blob/master/PRIVACY.md</string>
+    <string name="url_discord" translatable="false">https://discord.gg/vzRWmbB5Z4</string>
     <string name="url_donate_buy_me_a_coffee" translatable="false">https://www.buymeacoffee.com/abousaif</string>
     <string name="url_donate_ko_fi" translatable="false">https://ko-fi.com/abousaif</string>
     <string name="url_developer_github" translatable="false">https://github.com/Ahmed-Abousaif</string>
