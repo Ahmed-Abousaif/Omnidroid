@@ -39,9 +39,9 @@ import androidx.compose.material3.Slider
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSwitch
 import kotlin.math.roundToInt
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Row
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import com.omnidroid.app.mobile.shared.compose.ui.SegmentedPills
@@ -287,29 +287,51 @@ fun OmnidroidSettingsSegmented(
             )
         }
     }
-    BoxWithConstraints(
+    BesideOrBelow(
         modifier =
             modifier
                 .fillMaxWidth()
                 .background(container)
                 .padding(horizontal = 16.dp, vertical = 10.dp)
                 .alpha(if (enabled) 1f else 0.45f),
-    ) {
-        // Beside the title when there is room for both, otherwise below it.
-        val stacked = maxWidth < 220.dp + 76.dp * items.size
-        if (stacked) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                label(Modifier.fillMaxWidth())
-                segments()
+        label = { label(Modifier) },
+        control = segments,
+    )
+}
+
+/**
+ * A settings row's [label] with its [control] beside it when both fit on one line, else the
+ * control under the label. Measured, so it follows the real text and control widths.
+ */
+@Composable
+internal fun BesideOrBelow(
+    modifier: Modifier,
+    label: @Composable () -> Unit,
+    control: @Composable () -> Unit,
+) {
+    Layout(contents = listOf(label, control), modifier = modifier) { (labelM, controlM), constraints ->
+        val width = constraints.maxWidth
+        val gap = 12.dp.roundToPx()
+        val below = 10.dp.roundToPx()
+        val c = controlM.first().measure(constraints.copy(minWidth = 0, minHeight = 0))
+        val labelNeeds = minOf(labelM.first().maxIntrinsicWidth(Constraints.Infinity), 160.dp.roundToPx())
+        if (c.width + gap + labelNeeds <= width) {
+            val l = labelM.first().measure(Constraints(maxWidth = width - c.width - gap))
+            val height = maxOf(l.height, c.height)
+            layout(width, height) {
+                l.placeRelative(0, (height - l.height) / 2)
+                c.placeRelative(width - c.width, (height - c.height) / 2)
             }
         } else {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                label(Modifier.weight(1f).padding(end = 12.dp))
-                segments()
+            val l = labelM.first().measure(Constraints(maxWidth = width))
+            layout(width, l.height + below + c.height) {
+                l.placeRelative(0, 0)
+                c.placeRelative(0, l.height + below)
             }
         }
     }
 }
+
 
 @Composable
 private fun settingsRowContainerColor(): Color? =
