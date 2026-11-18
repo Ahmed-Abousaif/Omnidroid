@@ -74,24 +74,6 @@ private fun ControlsOnScreenGroup(
             titleRes = R.string.settings_title_enable_touch_feedback,
             items = stringListResource(R.array.pref_key_haptic_feedback_mode_display_names),
         )
-        OmnidroidSettingsSlider(
-            state =
-                intPreferenceState(
-                    key = stringResource(id = R.string.pref_key_virtual_pad_opacity),
-                    default = 100,
-                ),
-            steps = 99,
-            valueRange = 0f..100f,
-            enabled = true,
-            titleRes = R.string.settings_title_virtual_pad_opacity,
-            subtitleRes = R.string.settings_description_virtual_pad_opacity,
-            valueText = { value ->
-                Text(
-                    text = value.toString(),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            },
-        )
         GamepadColorChoice()
         OmnidroidSettingsSlider(
             state =

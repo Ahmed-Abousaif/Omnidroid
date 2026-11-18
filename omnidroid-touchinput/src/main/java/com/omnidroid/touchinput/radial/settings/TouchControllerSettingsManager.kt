@@ -9,9 +9,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import timber.log.Timber
 
-class TouchControllerSettingsManager(private val sharedPreferences: SharedPreferences) {
+class TouchControllerSettingsManager(
+    private val sharedPreferences: SharedPreferences,
+    legacyPadOpacityKey: String? = null,
+) {
     enum class Orientation {
         PORTRAIT,
         LANDSCAPE,
@@ -32,9 +36,56 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
         val allowDiagonals: Boolean = DEFAULT_ALLOW_DIAGONALS,
         val dpadStyle: DpadStyle = DEFAULT_DPAD_STYLE,
         val screenPositionY: Float = DEFAULT_SCREEN_POSITION_Y,
+        val opacity: Float = DEFAULT_OPACITY,
     )
 
+    init {
+        legacyPadOpacityKey?.let(::migrateLegacyPadOpacity)
+    }
+
     private val cachedSettings = mutableMapOf<String, MutableStateFlow<Settings?>>()
+
+    private fun migrateLegacyPadOpacity(legacyPadOpacityKey: String) {
+        if (!sharedPreferences.contains(legacyPadOpacityKey)) return
+        val legacyOpacity =
+            runCatching { sharedPreferences.getInt(legacyPadOpacityKey, 100) }
+                .getOrNull()
+                ?.coerceIn(0, 100)
+                ?.div(100f)
+                ?: return
+
+        val keysToMigrate =
+            TouchControllerID.entries.flatMap { id ->
+                Orientation.entries.map { orientation -> getPreferenceString(id, orientation) }
+            }
+
+        sharedPreferences.edit {
+            keysToMigrate.forEach { key ->
+                val raw = sharedPreferences.getString(key, null)
+                val migrated =
+                    when {
+                        raw == null -> null
+                        rawContainsOpacity(raw) -> null
+                        else ->
+                            runCatching {
+                                Json
+                                    .decodeFromString(Settings.serializer(), raw)
+                                    .copy(opacity = legacyOpacity)
+                            }.getOrNull()
+                    }
+                if (migrated != null) {
+                    putString(key, Json.encodeToString(Settings.serializer(), migrated))
+                }
+            }
+            remove(legacyPadOpacityKey)
+        }
+        Timber.d("Migrated legacy virtual pad opacity into per-orientation settings")
+    }
+
+    private fun rawContainsOpacity(raw: String): Boolean =
+        runCatching {
+            Json.parseToJsonElement(raw).jsonObject.containsKey("opacity")
+        }.getOrDefault(false)
 
     fun observeSettings(
         touchControllerID: TouchControllerID,
@@ -51,13 +102,18 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
                 marginX = DEFAULT_MARGIN_X,
                 marginY = DEFAULT_MARGIN_Y,
                 screenPositionY = DEFAULT_SCREEN_POSITION_Y,
+                opacity = DEFAULT_OPACITY,
             )
         val settingsKey = getPreferenceString(touchControllerID, orientation)
         val cachedStateFlow =
             cachedSettings.getOrPut(settingsKey) {
                 val currentSettings =
-                    sharedPreferences.getString(settingsKey, null)
-                        ?.let { Json.decodeFromString(Settings.serializer(), it) }
+                    sharedPreferences
+                        .getString(settingsKey, null)
+                        ?.let {
+                            runCatching { Json.decodeFromString(Settings.serializer(), it) }
+                                .getOrNull()
+                        }
 
                 MutableStateFlow(currentSettings)
             }
@@ -111,6 +167,7 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
         const val DEFAULT_ALLOW_DIAGONALS = true
         val DEFAULT_DPAD_STYLE = DpadStyle.CROSS
         const val DEFAULT_SCREEN_POSITION_Y = 0.5f
+        const val DEFAULT_OPACITY = 1.0f
 
         const val MAX_ROTATION = 45f
         const val MIN_SCALE = 0.75f
@@ -123,7 +180,5 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
     private fun getPreferenceString(
         controllerID: TouchControllerID,
         orientation: Orientation,
-    ): String {
-        return "touch_controller_settings_${controllerID}_${orientation.ordinal}"
-    }
+    ): String = "touch_controller_settings_${controllerID}_${orientation.ordinal}"
 }

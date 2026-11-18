@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Height
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -125,7 +126,8 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 Id.Key(ComposeTouchLayouts.HOST_KEY_CLOSE_LID),
             )
         }
-        val padOpacity = viewModel.getVirtualPadOpacity().collectAsState(1f).value
+        val touchControllerSettings = touchControllerSettingsState.value
+        val padOpacity = touchControllerSettings?.opacity ?: TouchControllerSettingsManager.DEFAULT_OPACITY
         val gamepadColor =
             stringPreferenceState(
                 id = com.omnidroid.R.string.pref_key_gamepad_color,
@@ -137,8 +139,6 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             remember(gamepadColor, currentAccent, currentOnAccent) {
                 GamepadColor.padTheme(gamepadColor, currentAccent, currentOnAccent)
             }
-
-        val touchControllerSettings = touchControllerSettingsState.value
         val currentControllerConfig = controllerConfigState.value
 
         // DS/3DS showing one screen fill the display with pads overlaid (like PSP) instead of
@@ -481,6 +481,23 @@ private fun MenuEditTouchControls(
                             onValueChange = {
                                 viewModel.updateTouchControllerSettings(
                                     touchControllerSettings.copy(scale = it),
+                                )
+                            },
+                        )
+                    }
+
+                    MenuEditTouchControlSlider(
+                        icon = Icons.Default.Visibility,
+                        label = stringResource(R.string.touch_customize_opacity),
+                        rotation = 0f,
+                    ) {
+                        Slider(
+                            value = touchControllerSettings.opacity,
+                            valueRange = 0f..1f,
+                            steps = 99,
+                            onValueChange = {
+                                viewModel.updateTouchControllerSettings(
+                                    touchControllerSettings.copy(opacity = it),
                                 )
                             },
                         )

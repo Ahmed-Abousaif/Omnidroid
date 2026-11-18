@@ -64,7 +64,6 @@ class GameViewModelTouchControls(
     private val showEditControls = MutableStateFlow(false)
     private val hapticFeedbackMode = MutableStateFlow(HapticFeedbackMode.NONE)
     private val vibrationIntensity = MutableStateFlow(RumbleManager.DEFAULT_RUMBLE_STRENGTH)
-    private val virtualPadOpacity = MutableStateFlow(DEFAULT_PAD_OPACITY)
     private val hostHapticFeedback by lazy { createAndroidHapticFeedback(appContext) }
     private val forceHideTouchControls = MutableStateFlow(false)
 
@@ -81,7 +80,6 @@ class GameViewModelTouchControls(
     private val touchPreferenceKeys = setOf(
         appContext.getString(R.string.pref_key_haptic_feedback_mode),
         appContext.getString(R.string.pref_key_vibration_intensity),
-        appContext.getString(R.string.pref_key_virtual_pad_opacity),
     )
 
     private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
@@ -104,10 +102,8 @@ class GameViewModelTouchControls(
         touchPreferencesJob = scope.launch {
             val mode = HapticFeedbackMode.parse(settingsManager.hapticFeedbackMode())
             val intensity = settingsManager.vibrationIntensity()
-            val opacity = settingsManager.virtualPadOpacity()
             hapticFeedbackMode.value = mode
             vibrationIntensity.value = if (intensity.isFinite()) intensity.coerceIn(0f, 1f) else 0f
-            virtualPadOpacity.value = opacity
         }
     }
 
@@ -132,10 +128,6 @@ class GameViewModelTouchControls(
     }
 
     fun getTouchVibrationIntensity(): Flow<Float> = vibrationIntensity
-
-    fun getVirtualPadOpacity(): Flow<Float> {
-        return virtualPadOpacity
-    }
 
     fun updateTouchControllerSettings(touchControllerSettings: TouchControllerSettingsManager.Settings) {
         scope.launch {
@@ -390,6 +382,5 @@ class GameViewModelTouchControls(
 
     companion object {
         const val MENU_LOADING_ANIMATION_MILLIS = 500
-        private const val DEFAULT_PAD_OPACITY = 1f
     }
 }

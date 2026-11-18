@@ -1,4 +1,5 @@
 package com.omnidroid.app.shared.game
+import com.omnidroid.R
 import com.omnidroid.lib.backend.BackendID
 import android.app.Activity
 import android.view.View
@@ -209,7 +210,10 @@ class BaseGameScreenViewModel(
 
             settingsManager,
 
-            TouchControllerSettingsManager(sharedPreferences),
+            TouchControllerSettingsManager(
+                sharedPreferences,
+                appContext.getString(R.string.pref_key_virtual_pad_opacity),
+            ),
 
             retroGameView,
 
@@ -308,12 +312,6 @@ class BaseGameScreenViewModel(
     }
 
     fun getTouchVibrationIntensity(): Flow<Float> = touchControls.getTouchVibrationIntensity()
-
-    fun getVirtualPadOpacity(): Flow<Float> {
-
-        return touchControls.getVirtualPadOpacity()
-
-    }
 
     suspend fun loadSwitchGame(
         applicationContext: Context,
