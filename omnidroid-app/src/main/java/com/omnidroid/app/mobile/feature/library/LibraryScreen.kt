@@ -112,6 +112,7 @@ import com.omnidroid.BuildConfig
 import com.omnidroid.R
 import com.omnidroid.app.shared.settings.StorageFrameworkPickerLauncher
 import com.omnidroid.app.utils.android.benchmarkTag
+import com.omnidroid.app.utils.android.settings.booleanPreferenceState
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidEmptyView
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
@@ -216,6 +217,8 @@ fun LibraryScreen(
         ReportDrawnWhen { games.loadState.refresh is LoadState.NotLoading }
     }
     var startupTarget by remember { mutableStateOf<MetaSystemID?>(null) }
+    val consoleBarBottomInLandscape =
+        booleanPreferenceState(R.string.pref_key_console_bar_bottom_landscape, false)
     var backdropGame by remember { mutableStateOf<Game?>(null) }
     val consoleSelection =
         rememberConsoleSelection(listOf(state.filter, state.searchQuery, state.continueGame?.id, state.sort))
@@ -230,6 +233,8 @@ fun LibraryScreen(
                 .homeChromeBackground(),
     ) {
         val portrait = maxHeight > maxWidth
+        // Optional in landscape: the portrait bar along the bottom instead of the side rail.
+        val consoleBarAtBottom = portrait || consoleBarBottomInLandscape.value
         if (state.layout == LibraryLayout.CONSOLE) {
             ConsoleBackdrop(
                 game = backdropGame,
@@ -239,12 +244,15 @@ fun LibraryScreen(
                         .bleedTop(backdropTopBleed),
             )
         }
-        if (portrait) {
+        if (consoleBarAtBottom) {
             Column(
                 modifier =
                     Modifier
                         .then(
-                            if (portraitColumnWidth != Dp.Unspecified) {
+                            if (!portrait) {
+                                // Landscape: keep the games and the bar clear of the camera cutout.
+                                Modifier.fillMaxWidth().hugDisplayCutout(WindowInsetsSides.Horizontal)
+                            } else if (portraitColumnWidth != Dp.Unspecified) {
                                 Modifier.width(portraitColumnWidth)
                             } else {
                                 Modifier.fillMaxWidth()
@@ -273,7 +281,7 @@ fun LibraryScreen(
                     pagedScrollState = pagedScrollState,
                     requestInitialFocus = controllerConnected,
                     showZoomBar = !controllerConnected,
-                    portrait = true,
+                    portrait = portrait,
                 )
                 PortraitConsoleBar(
                     filter = state.filter,
