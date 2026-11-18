@@ -48,6 +48,7 @@
     <string name="pref_key_save_sync_conflicts" translatable="false">save_sync_conflicts</string>
     <string name="pref_key_save_sync_export" translatable="false">save_sync_export</string>
     <string name="pref_key_save_sync_import" translatable="false">save_sync_import</string>
+    <string name="pref_key_custom_saves_folder" translatable="false">custom_saves_folder</string>
     <string-array translatable="false" name="pref_key_save_sync_interval_values">
         <item>1h</item>
         <item>3h</item>

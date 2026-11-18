@@ -61,7 +61,14 @@ internal fun SettingsContentPane(
             }
             SettingsSection.DISPLAY -> DisplaySettings(navController)
             SettingsSection.CONTROLS -> ControllerSettings(onNavigateSubscreen)
-            SettingsSection.SAVES -> SavesSettings(state.isSaveSyncSupported, onNavigateSubscreen)
+            SettingsSection.SAVES ->
+                SavesSettings(
+                    state = state,
+                    onChangeSavesFolder = { viewModel.changeCustomSavesFolder() },
+                    onResetSavesFolder = { viewModel.resetCustomSavesFolder() },
+                    onDismissMigrationError = { viewModel.dismissMigrationError() },
+                    onNavigateSubscreen = onNavigateSubscreen,
+                )
             SettingsSection.EMULATION -> EmulationSettings(indexingInProgress, onNavigateSubscreen)
             SettingsSection.ADVANCED -> AdvancedSettings(cacheState, viewModel)
             SettingsSection.ABOUT -> AboutSettings()

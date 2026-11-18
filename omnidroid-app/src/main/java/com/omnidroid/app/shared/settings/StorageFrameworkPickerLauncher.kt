@@ -75,14 +75,20 @@ class StorageFrameworkPickerLauncher : RetrogradeActivity() {
     }
 
     private fun updatePersistableUris(uri: Uri) {
+        val legacyPrefs = SharedPreferencesHelper.getLegacySharedPreferences(this)
+        val customSavesKey = getString(com.omnidroid.lib.R.string.pref_key_custom_saves_folder)
+        val customSavesUriString = legacyPrefs.getString(customSavesKey, null)
+
         contentResolver.persistedUriPermissions
             .filter { it.isReadPermission }
-            .filter { it.uri != uri }
+            .filter { it.uri != uri && it.uri.toString() != customSavesUriString }
             .forEach {
-                contentResolver.releasePersistableUriPermission(
-                    it.uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
-                )
+                runCatching {
+                    contentResolver.releasePersistableUriPermission(
+                        it.uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                    )
+                }
             }
 
         contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
