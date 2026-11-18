@@ -1,6 +1,7 @@
 package com.omnidroid.app.mobile.feature.library
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -87,7 +88,34 @@ class LibraryViewModel(
     private val searchQueryFlow = MutableStateFlow("")
     private val scanRequested = MutableStateFlow(false)
     private val zoomDensityFlow = MutableStateFlow(readZoomDensity())
-    private val layoutFlow = MutableStateFlow(readLayout())
+    private val portraitFlow =
+        MutableStateFlow(appContext.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+    private val separateLayoutsFlow = MutableStateFlow(readSeparateLayouts())
+    private val landscapeLayoutFlow = MutableStateFlow(readLayout(portrait = false))
+    private val portraitLayoutFlow = MutableStateFlow(readLayout(portrait = true))
+    private val layoutFlow =
+        combine(portraitFlow, separateLayoutsFlow, landscapeLayoutFlow, portraitLayoutFlow) { portrait, separate, landscape, portraitLayout ->
+            LibraryLayout.forOrientation(portrait, separate, landscape, portraitLayout)
+        }
+
+    // Settings > Display turns separate layouts on and off while the library stays alive.
+    private val layoutPreferenceListener =
+        android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            when (key) {
+                SEPARATE_LAYOUTS_KEY -> separateLayoutsFlow.value = readSeparateLayouts()
+                LAYOUT_KEY -> landscapeLayoutFlow.value = readLayout(portrait = false)
+                PORTRAIT_LAYOUT_KEY -> portraitLayoutFlow.value = readLayout(portrait = true)
+            }
+        }
+
+    init {
+        preferences.registerOnSharedPreferenceChangeListener(layoutPreferenceListener)
+    }
+
+    override fun onCleared() {
+        preferences.unregisterOnSharedPreferenceChangeListener(layoutPreferenceListener)
+        super.onCleared()
+    }
     private val sortFlow = MutableStateFlow(readSort())
     private val syncProgressFlow = SyncProgressTracker.progress
     private val presentationFlow =
@@ -147,7 +175,7 @@ class LibraryViewModel(
             SharingStarted.WhileSubscribed(5_000),
             UiState(
                 zoomDensity = zoomDensityFlow.value,
-                layout = layoutFlow.value,
+                layout = currentLayout(),
                 sort = sortFlow.value,
                 filter = filterFlow.value,
                 startupFilter = startupStore.get(),
@@ -215,21 +243,36 @@ class LibraryViewModel(
         preferences.edit().putInt(ZOOM_DENSITY_KEY, value).apply()
     }
 
-    fun setLayout(layout: LibraryLayout) {
-        layoutFlow.value = layout
-        preferences.edit().putString(LAYOUT_KEY, layout.name).apply()
+    /** The screen's orientation; with separate layouts on, the library shows the one chosen for it. */
+    fun setPortrait(portrait: Boolean) {
+        portraitFlow.value = portrait
     }
+
+    /** Changes the layout: for the current orientation when layouts are separate, else for both. */
+    fun setLayout(layout: LibraryLayout) {
+        val portraitOnly = portraitFlow.value && separateLayoutsFlow.value
+        (if (portraitOnly) portraitLayoutFlow else landscapeLayoutFlow).value = layout
+        preferences.edit().putString(layoutKey(portraitOnly), layout.name).apply()
+    }
+
+    private fun currentLayout(): LibraryLayout =
+        LibraryLayout.forOrientation(
+            portraitFlow.value,
+            separateLayoutsFlow.value,
+            landscapeLayoutFlow.value,
+            portraitLayoutFlow.value,
+        )
+
+    private fun readSeparateLayouts(): Boolean = preferences.getBoolean(SEPARATE_LAYOUTS_KEY, false)
+
+    /** Portrait's own layout; until one is picked there, the one already chosen. */
+    private fun readLayout(portrait: Boolean): LibraryLayout =
+        LibraryLayout.fromName(
+            preferences.getString(layoutKey(portrait), null) ?: preferences.getString(LAYOUT_KEY, null),
+        )
 
     private fun readZoomDensity(): Int {
         return preferences.getInt(ZOOM_DENSITY_KEY, 0).coerceIn(0, MAX_ZOOM_DENSITY)
-    }
-
-    private fun readLayout(): LibraryLayout {
-        return when (preferences.getString(LAYOUT_KEY, LibraryLayout.CONSOLE.name)) {
-            LibraryLayout.LIST.name -> LibraryLayout.LIST
-            LibraryLayout.GRID.name -> LibraryLayout.GRID
-            else -> LibraryLayout.CONSOLE
-        }
     }
 
     fun setSort(sort: LibrarySort) {
@@ -278,12 +321,12 @@ class LibraryViewModel(
         }
 
     fun zoomIn() {
-        if (layoutFlow.value != LibraryLayout.GRID) return
+        if (currentLayout() != LibraryLayout.GRID) return
         setZoomDensity(zoomDensityFlow.value - 1)
     }
 
     fun zoomOut() {
-        if (layoutFlow.value != LibraryLayout.GRID) return
+        if (currentLayout() != LibraryLayout.GRID) return
         setZoomDensity(zoomDensityFlow.value + 1)
     }
 
@@ -363,7 +406,14 @@ class LibraryViewModel(
 
     companion object {
         private const val ZOOM_DENSITY_KEY = "pref_library_zoom_density"
+        /** The layout everywhere, or in landscape when portrait has its own ([PORTRAIT_LAYOUT_KEY]). */
         private const val LAYOUT_KEY = "pref_library_layout"
+        private const val PORTRAIT_LAYOUT_KEY = "pref_library_layout_portrait"
+
+        /** Settings > Display: portrait and landscape remember their own layout. */
+        const val SEPARATE_LAYOUTS_KEY = "pref_library_layout_per_orientation"
+
+        private fun layoutKey(portraitOnly: Boolean): String = if (portraitOnly) PORTRAIT_LAYOUT_KEY else LAYOUT_KEY
         private const val SORT_KEY = "pref_library_sort"
         const val MAX_ZOOM_DENSITY = 2
     }
@@ -373,6 +423,19 @@ enum class LibraryLayout {
     CONSOLE,
     GRID,
     LIST,
+    ;
+
+    companion object {
+        fun fromName(name: String?): LibraryLayout = entries.firstOrNull { it.name == name } ?: CONSOLE
+
+        /** The layout to show: portrait's own only when [separate] layouts are on. */
+        fun forOrientation(
+            portrait: Boolean,
+            separate: Boolean,
+            landscapeLayout: LibraryLayout,
+            portraitLayout: LibraryLayout,
+        ): LibraryLayout = if (portrait && separate) portraitLayout else landscapeLayout
+    }
 }
 
 enum class LibrarySort(val order: GameOrder) {

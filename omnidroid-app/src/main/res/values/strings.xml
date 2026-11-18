@@ -596,6 +596,8 @@
     <string name="shader_filter_names_smooth">Smooth</string>
     <string name="shader_filter_names_crt">CRT</string>
     <string name="shader_filter_names_lcd">LCD</string>
+    <string name="settings_title_layout_per_orientation">Separate layout in portrait</string>
+    <string name="settings_description_layout_per_orientation">Portrait and landscape each remember their own Console, Grid or List view</string>
 
     <string name="haptic_feedback_mode_names_none">None</string>
     <string name="haptic_feedback_mode_names_press">Press</string>
