@@ -446,12 +446,17 @@ private fun ConsoleCarouselState.settledAmount(): Float {
     return 1f - (abs(p - p.roundToInt()) * 2.5f).coerceIn(0f, 1f)
 }
 
+/** Height the compact info panel needs: one title line, the details row and the action buttons. */
+private val LandscapeInfoMinHeight = 112.dp
+
 private class LandscapeMetrics(maxWidth: Dp, maxHeight: Dp) {
     val edge = if (maxHeight < 280.dp) 16.dp else 20.dp
     val gap = 12.dp
     val bigHeight = (maxHeight - edge * 2).coerceIn(96.dp, 440.dp)
     val bigWidth = bigHeight * LibraryGameCardAspectRatio
-    val smallHeight = bigHeight * 0.55f
+    // The info panel sits under the small cards; on short screens (the console bar at the bottom,
+    // 4:3) shrink the small cards so the title, details and buttons still fit beside the cover.
+    val smallHeight = min(bigHeight * 0.55f, bigHeight - gap - LandscapeInfoMinHeight).coerceAtLeast(bigHeight * 0.3f)
     val smallWidth = smallHeight * LibraryGameCardAspectRatio
     val top = ((maxHeight - bigHeight) / 2).coerceAtLeast(0.dp)
     val anchorX = edge + smallWidth + gap - (if (maxHeight < 280.dp) 16.dp else 24.dp)
