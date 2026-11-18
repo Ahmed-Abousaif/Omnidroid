@@ -1,4 +1,5 @@
 package com.omnidroid.app.shared.game
+import androidx.compose.ui.graphics.Color
 import com.omnidroid.lib.backend.BackendID
 import android.app.Activity
 import android.view.View
@@ -314,6 +315,8 @@ class BaseGameScreenViewModel(
         return touchControls.getVirtualPadOpacity()
 
     }
+
+    fun getGamepadTint(): Flow<Color?> = touchControls.getGamepadTint()
 
     suspend fun loadSwitchGame(
         applicationContext: Context,

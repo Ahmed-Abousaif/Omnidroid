@@ -1,5 +1,7 @@
 package com.omnidroid.app.shared.game.viewmodel
 
+import com.omnidroid.app.shared.game.GamepadColor
+import androidx.compose.ui.graphics.Color
 import android.content.Context
 import android.content.SharedPreferences
 import android.view.KeyEvent
@@ -65,6 +67,7 @@ class GameViewModelTouchControls(
     private val hapticFeedbackMode = MutableStateFlow(HapticFeedbackMode.NONE)
     private val vibrationIntensity = MutableStateFlow(RumbleManager.DEFAULT_RUMBLE_STRENGTH)
     private val virtualPadOpacity = MutableStateFlow(DEFAULT_PAD_OPACITY)
+    private val gamepadTint = MutableStateFlow<Color?>(null)
     private val hostHapticFeedback by lazy { createAndroidHapticFeedback(appContext) }
     private val forceHideTouchControls = MutableStateFlow(false)
 
@@ -82,6 +85,8 @@ class GameViewModelTouchControls(
         appContext.getString(R.string.pref_key_haptic_feedback_mode),
         appContext.getString(R.string.pref_key_vibration_intensity),
         appContext.getString(R.string.pref_key_virtual_pad_opacity),
+        appContext.getString(R.string.pref_key_gamepad_color),
+        appContext.getString(R.string.pref_key_accent_color),
     )
 
     private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
@@ -105,9 +110,11 @@ class GameViewModelTouchControls(
             val mode = HapticFeedbackMode.parse(settingsManager.hapticFeedbackMode())
             val intensity = settingsManager.vibrationIntensity()
             val opacity = settingsManager.virtualPadOpacity()
+            val tint = GamepadColor.tint(settingsManager.gamepadColor(), settingsManager.accentColor())
             hapticFeedbackMode.value = mode
             vibrationIntensity.value = if (intensity.isFinite()) intensity.coerceIn(0f, 1f) else 0f
             virtualPadOpacity.value = opacity
+            gamepadTint.value = tint
         }
     }
 
@@ -136,6 +143,9 @@ class GameViewModelTouchControls(
     fun getVirtualPadOpacity(): Flow<Float> {
         return virtualPadOpacity
     }
+
+    /** The on-screen gamepad's tint, or null for the default grey pad. */
+    fun getGamepadTint(): Flow<Color?> = gamepadTint
 
     fun updateTouchControllerSettings(touchControllerSettings: TouchControllerSettingsManager.Settings) {
         scope.launch {

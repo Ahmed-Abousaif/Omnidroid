@@ -146,7 +146,7 @@ internal fun DisplaySettings(navController: NavController) {
     }
 }
 
-private fun AccentPreset.labelRes(): Int =
+internal fun AccentPreset.labelRes(): Int =
     when (this) {
         AccentPreset.GREEN -> R.string.accent_color_green
         AccentPreset.BLUE -> R.string.accent_color_blue

@@ -1,5 +1,10 @@
 package com.omnidroid.app.mobile.feature.settings.general
 
+import com.omnidroid.app.utils.android.settings.stringPreferenceState
+import com.omnidroid.app.utils.android.settings.OmnidroidSettingsColorChoice
+import com.omnidroid.app.shared.game.GamepadColor
+import com.omnidroid.app.mobile.shared.compose.ui.AccentPreset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -91,6 +96,7 @@ private fun ControlsOnScreenGroup(
                 )
             },
         )
+        GamepadColorChoice()
         OmnidroidSettingsSlider(
             state =
                 intPreferenceState(
@@ -164,3 +170,32 @@ private fun ControlsGamepadsGroup(
         )
     }
 }
+
+/** Gamepad colour swatches: default grey, the accent colour, then the accent presets. */
+@Composable
+private fun GamepadColorChoice() {
+    val padColor = stringPreferenceState(R.string.pref_key_gamepad_color, GamepadColor.DEFAULT)
+    val accentKey = stringPreferenceState(R.string.pref_key_accent_color, AccentPreset.GREEN.key).value
+    val keys = GamepadColor.keys
+    val presetLabels = AccentPreset.entries.associate { it.key to stringResource(it.labelRes()) }
+    val defaultLabel = stringResource(R.string.gamepad_color_default)
+    val accentLabel = stringResource(R.string.gamepad_color_accent)
+    OmnidroidSettingsColorChoice(
+        selectedIndex = keys.indexOf(padColor.value).coerceAtLeast(0),
+        colors = keys.map { GamepadColor.tint(it, accentKey) ?: DefaultPadSwatch },
+        labels =
+            keys.map {
+                when (it) {
+                    GamepadColor.DEFAULT -> defaultLabel
+                    GamepadColor.ACCENT -> accentLabel
+                    else -> presetLabels[it].orEmpty()
+                }
+            },
+        onSelect = { padColor.value = keys[it] },
+        titleRes = R.string.settings_title_gamepad_color,
+        subtitleRes = R.string.settings_description_gamepad_color,
+    )
+}
+
+/** The default pad's light grey, as a swatch. */
+private val DefaultPadSwatch = Color(0xFFBDBDBD)

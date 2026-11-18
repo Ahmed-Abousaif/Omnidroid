@@ -379,6 +379,10 @@
 
     <string name="settings_title_virtual_pad_opacity">Virtual controller opacity</string>
     <string name="settings_description_virtual_pad_opacity">Lower values make the virtual controller see-through</string>
+    <string name="settings_title_gamepad_color">Gamepad color</string>
+    <string name="settings_description_gamepad_color">Color of the on-screen buttons</string>
+    <string name="gamepad_color_default">Default gray</string>
+    <string name="gamepad_color_accent">Match accent color</string>
 
 
     <string name="settings_section_startup">Startup</string>
