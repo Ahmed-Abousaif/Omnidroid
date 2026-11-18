@@ -18,6 +18,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import com.omnidroid.R
@@ -270,10 +271,30 @@ fun AppTheme(
     // Always read the preference so composition stays consistent; in-game hosts ignore it.
     val themePreference = stringPreferenceState(R.string.pref_key_app_theme, AppThemeMode.DARK)
     val darkTheme = !followUserPreference || themePreference.value != AppThemeMode.LIGHT
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
     val accentPreference = stringPreferenceState(R.string.pref_key_accent_color, AccentPreset.GREEN.key)
     val accentPreset = AccentPreset.fromKey(accentPreference.value)
     val accent = accentPreset.color(darkTheme)
+    val baseScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    // Material's primary (settings headings, switches, sliders, dialog buttons) follows the accent
+    // too; green keeps the scheme's own tones.
+    val colorScheme =
+        if (accentPreset == AccentPreset.GREEN) {
+            baseScheme
+        } else {
+            // The containers and secondary tones are green-tinted in the base scheme (slider tracks,
+            // selected chips); tint them from the accent instead.
+            baseScheme.copy(
+                primary = accent,
+                onPrimary = accentPreset.onAccent(darkTheme),
+                primaryContainer = lerp(baseScheme.surface, accent, 0.35f),
+                onPrimaryContainer = baseScheme.onSurface,
+                secondary = lerp(baseScheme.onSurfaceVariant, accent, 0.35f),
+                secondaryContainer = lerp(baseScheme.surface, accent, 0.25f),
+                onSecondaryContainer = baseScheme.onSurface,
+                inversePrimary = accent,
+                surfaceTint = accent,
+            )
+        }
     val baseChrome = if (darkTheme) DarkChromeColors else LightChromeColors
     // The game menu's accent follows the setting too; green keeps its own tone.
     val chrome = if (accentPreset == AccentPreset.GREEN) baseChrome else baseChrome.copy(gameMenuAccent = accent)

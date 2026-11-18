@@ -198,7 +198,7 @@ private fun BatteryStatusIcon(status: BatteryStatus) {
     val lowBattery = status.percent <= LOW_BATTERY_PERCENT && !status.charging
     val color =
         when {
-            status.charging -> LibraryNeonGreen
+            status.charging -> libraryAccentColor
             lowBattery -> BatteryLowRed
             else -> LocalContentColor.current.copy(alpha = 0.85f)
         }
