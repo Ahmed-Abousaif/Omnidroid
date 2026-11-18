@@ -13,7 +13,7 @@ import com.alorma.compose.settings.storage.base.SettingValueState
 import com.omnidroid.R
 import com.omnidroid.app.tv.shared.TVHelper
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
-import com.omnidroid.app.utils.android.settings.OmnidroidSettingsList
+import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSegmented
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSlider
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
@@ -68,7 +68,7 @@ private fun ControlsOnScreenGroup(
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
             )
         }
-        OmnidroidSettingsList(
+        OmnidroidSettingsSegmented(
             state = touchFeedback,
             titleRes = R.string.settings_title_enable_touch_feedback,
             items = stringListResource(R.array.pref_key_haptic_feedback_mode_display_names),

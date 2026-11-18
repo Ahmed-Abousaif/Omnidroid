@@ -13,7 +13,7 @@ import com.omnidroid.app.mobile.feature.main.MainRoute
 import com.omnidroid.app.mobile.feature.main.navigateToRoute
 import com.omnidroid.app.shared.settings.rememberHdModeAllowed
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
-import com.omnidroid.app.utils.android.settings.OmnidroidSettingsList
+import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSegmented
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSlider
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
@@ -42,7 +42,7 @@ internal fun DisplaySettings(navController: NavController) {
     }
 
     OmnidroidSettingsGroup {
-        OmnidroidSettingsList(
+        OmnidroidSettingsSegmented(
             state =
                 indexPreferenceState(
                     R.string.pref_key_app_theme,
@@ -117,7 +117,7 @@ internal fun DisplaySettings(navController: NavController) {
                 )
             },
         )
-        OmnidroidSettingsList(
+        OmnidroidSettingsSegmented(
             enabled = !hdMode.value,
             state =
                 indexPreferenceState(

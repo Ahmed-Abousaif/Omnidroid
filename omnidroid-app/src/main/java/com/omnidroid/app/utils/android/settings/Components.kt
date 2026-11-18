@@ -39,6 +39,12 @@ import androidx.compose.material3.Slider
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSwitch
 import kotlin.math.roundToInt
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.text.font.FontWeight
+import com.omnidroid.app.mobile.shared.compose.ui.SegmentedPills
 
 /** Optional host surface for rows; null uses the app's default settings colors. */
 val LocalSettingsRowContainerColor = staticCompositionLocalOf<Color?> { null }
@@ -239,6 +245,69 @@ private fun SettingsGroupTitleSmall(title: @Composable () -> Unit) {
         val primary = MaterialTheme.colorScheme.primary
         val titleStyle = MaterialTheme.typography.labelLarge.copy(color = primary)
         ProvideTextStyle(value = titleStyle) { title() }
+    }
+}
+
+/**
+ * A short fixed choice as one-tap segments beside its title (below it when narrow), in place of a
+ * row that opens a dialog. For longer or dynamic lists keep [OmnidroidSettingsList].
+ */
+@Composable
+fun OmnidroidSettingsSegmented(
+    state: SettingValueState<Int>,
+    items: List<String>,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    titleRes: Int? = null,
+    title: @Composable () -> Unit = { Text(stringResource(requireNotNull(titleRes))) },
+    subtitleRes: Int? = null,
+    subtitle: (@Composable () -> Unit)? = subtitleRes?.let { { Text(stringResource(it)) } },
+) {
+    val container = settingsRowContainerColor() ?: Color.Transparent
+    val label: @Composable (Modifier) -> Unit = { labelModifier ->
+        Column(labelModifier) {
+            ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(color = chromeColors.content)) { title() }
+            if (subtitle != null) {
+                ProvideTextStyle(MaterialTheme.typography.bodySmall.copy(color = chromeColors.muted)) { subtitle() }
+            }
+        }
+    }
+    val segments: @Composable () -> Unit = {
+        SegmentedPills(
+            options = items.indices.toList(),
+            selected = state.value,
+            onSelect = { state.value = it },
+            enabled = enabled,
+        ) { index, contentColor ->
+            Text(
+                items[index],
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = contentColor,
+                maxLines = 1,
+            )
+        }
+    }
+    BoxWithConstraints(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(container)
+                .padding(horizontal = 16.dp, vertical = 10.dp)
+                .alpha(if (enabled) 1f else 0.45f),
+    ) {
+        // Beside the title when there is room for both, otherwise below it.
+        val stacked = maxWidth < 220.dp + 76.dp * items.size
+        if (stacked) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                label(Modifier.fillMaxWidth())
+                segments()
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                label(Modifier.weight(1f).padding(end = 12.dp))
+                segments()
+            }
+        }
     }
 }
 
