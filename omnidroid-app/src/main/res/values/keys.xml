@@ -27,6 +27,7 @@
     <string name="pref_key_auto_library_scan" translatable="false">auto_library_scan</string>
     <string name="pref_key_enable_immersive_mode" translatable="false">enable_immersive_mode</string>
     <string name="pref_key_app_theme" translatable="false">app_theme</string>
+    <string name="pref_key_accent_color" translatable="false">accent_color</string>
     <string name="pref_key_startup_destination" translatable="false">startup_destination</string>
 
     <string-array translatable="false" name="pref_key_app_theme_values">

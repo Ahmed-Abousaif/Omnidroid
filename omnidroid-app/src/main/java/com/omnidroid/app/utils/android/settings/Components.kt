@@ -1,6 +1,23 @@
 package com.omnidroid.app.utils.android.settings
 
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.omnidroid.app.mobile.shared.compose.ui.AccentContrast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -264,4 +281,63 @@ private fun omnidroidSettingsColor(enabled: Boolean): ListItemColors {
         trailingIconColor = defaultColors.disabledTrailingIconColor,
         supportingColor = defaultColors.supportingTextColor.copy(alpha = 0.3f),
     )
+}
+
+/**
+ * A row of colour swatches to pick one from. The whole 40 dp circle is the target; the chosen one
+ * shows a check in its own contrasting colour, and controller focus draws the focus ring around it.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun OmnidroidSettingsColorChoice(
+    selectedIndex: Int,
+    colors: List<Color>,
+    labels: List<String>,
+    onSelect: (Int) -> Unit,
+    titleRes: Int,
+    subtitleRes: Int? = null,
+    modifier: Modifier = Modifier,
+) {
+    val container = settingsRowContainerColor() ?: Color.Transparent
+    Column(
+        modifier = modifier.fillMaxWidth().background(container).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Column {
+            Text(stringResource(titleRes), style = MaterialTheme.typography.bodyLarge, color = chromeColors.content)
+            if (subtitleRes != null) {
+                Text(stringResource(subtitleRes), style = MaterialTheme.typography.bodySmall, color = chromeColors.muted)
+            }
+        }
+        FlowRow(
+            modifier = Modifier.selectableGroup(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            colors.forEachIndexed { index, color ->
+                val selected = index == selectedIndex
+                Box(
+                    modifier =
+                        Modifier
+                            .size(40.dp)
+                            .controllerFocusGlow(CircleShape)
+                            .selectable(selected = selected, role = Role.RadioButton) { onSelect(index) }
+                            .semantics { contentDescription = labels[index] }
+                            .padding(5.dp)
+                            .background(color, CircleShape)
+                            .border(BorderStroke(1.dp, chromeColors.panelBorder), CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (selected) {
+                        Icon(
+                            Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = Color(AccentContrast.onColor(color.toArgb())),
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
