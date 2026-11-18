@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.omnidroid.R
 import com.omnidroid.app.shared.library.LibraryIndexScheduler
 import com.omnidroid.app.shared.library.PendingOperationsMonitor
 import com.omnidroid.app.shared.settings.StorageFrameworkPickerLauncher
@@ -253,6 +254,7 @@ class LibraryViewModel(
 
     /** Reconcile folder changes on resume / watcher without prompting for a folder. */
     fun autoSyncLibrary(context: Context) {
+        if (!preferences.getBoolean(context.getString(R.string.pref_key_auto_library_scan), true)) return
         val folderKey = context.getString(com.omnidroid.lib.R.string.pref_key_extenral_folder)
         val folder =
             SharedPreferencesHelper.getLegacySharedPreferences(context)

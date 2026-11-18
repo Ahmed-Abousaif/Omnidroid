@@ -1829,17 +1829,17 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/LibraryViewModel.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="50" column="70" source="standard:function-expression-body" />
-        <error line="128" column="60" source="standard:chain-method-continuation" />
-        <error line="128" column="78" source="standard:chain-method-continuation" />
-        <error line="197" column="23" source="standard:multiline-expression-wrapping" />
-        <error line="222" column="40" source="standard:function-expression-body" />
-        <error line="226" column="45" source="standard:function-expression-body" />
-        <error line="258" column="36" source="standard:chain-method-continuation" />
-        <error line="296" column="36" source="standard:chain-method-continuation" />
-        <error line="328" column="23" source="standard:chain-method-continuation" />
-        <error line="376" column="24" source="standard:class-signature" />
-        <error line="376" column="44" source="standard:class-signature" />
+        <error line="51" column="70" source="standard:function-expression-body" />
+        <error line="129" column="60" source="standard:chain-method-continuation" />
+        <error line="129" column="78" source="standard:chain-method-continuation" />
+        <error line="198" column="23" source="standard:multiline-expression-wrapping" />
+        <error line="223" column="40" source="standard:function-expression-body" />
+        <error line="227" column="45" source="standard:function-expression-body" />
+        <error line="260" column="36" source="standard:chain-method-continuation" />
+        <error line="298" column="36" source="standard:chain-method-continuation" />
+        <error line="330" column="23" source="standard:chain-method-continuation" />
+        <error line="378" column="24" source="standard:class-signature" />
+        <error line="378" column="44" source="standard:class-signature" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/RegisteredSystemsStore.kt">
         <error line="10" column="30" source="standard:class-signature" />
@@ -2733,7 +2733,7 @@
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="74" column="5" source="standard:function-signature" />
         <error line="74" column="54" source="standard:function-signature" />
-        <error line="167" column="17" source="standard:multiline-expression-wrapping" />
+        <error line="173" column="17" source="standard:multiline-expression-wrapping" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/general/SettingsBackStack.kt">
         <error line="4" column="42" source="standard:class-signature" />

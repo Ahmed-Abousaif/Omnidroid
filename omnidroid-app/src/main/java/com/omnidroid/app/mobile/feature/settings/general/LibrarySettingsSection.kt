@@ -76,11 +76,17 @@ internal fun LibraryMaintenanceSettings(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val clearMissingDialogState = remember { mutableStateOf(false) }
+    val autoScan = booleanPreferenceState(R.string.pref_key_auto_library_scan, true)
     val periodicScan = booleanPreferenceState(R.string.pref_key_periodic_library_scan, false)
 
     OmnidroidSettingsGroup(
         titleRes = R.string.settings_section_maintenance,
     ) {
+        OmnidroidSettingsSwitch(
+            state = autoScan,
+            titleRes = R.string.settings_title_auto_library_scan,
+            subtitleRes = R.string.settings_description_auto_library_scan,
+        )
         OmnidroidSettingsSwitch(
             state = periodicScan,
             titleRes = R.string.settings_title_periodic_library_scan,
