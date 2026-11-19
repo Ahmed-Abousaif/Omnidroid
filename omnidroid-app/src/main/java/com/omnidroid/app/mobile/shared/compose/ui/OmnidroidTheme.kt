@@ -120,8 +120,14 @@ val OnLibraryNeonGreen = Color(0xFF0A0A0A)
  * selected borders and accent fills. Each has a darker light-mode variant to keep >= 3:1 against
  * light chrome. Green is the default and matches the brand colours used before the setting.
  */
-enum class AccentPreset(val key: String, val dark: Color, val light: Color) {
-    GREEN("green", LibraryNeonGreen, Color(0xFF00702A)),
+enum class AccentPreset(
+    val key: String,
+    val dark: Color,
+    val light: Color,
+    val onDark: Color = Color(AccentContrast.onColor(dark.toArgb())),
+    val onLight: Color = Color(AccentContrast.onColor(light.toArgb())),
+) {
+    GREEN("green", LibraryNeonGreen, Color(0xFF00702A), onDark = OnLibraryNeonGreen),
     BLUE("blue", Color(0xFF3D8BFF), Color(0xFF0B5ED7)),
     PURPLE("purple", Color(0xFFA77BFF), Color(0xFF6A3FC1)),
     PINK("pink", Color(0xFFFF5CA8), Color(0xFFC2185B)),
@@ -135,8 +141,7 @@ enum class AccentPreset(val key: String, val dark: Color, val light: Color) {
     fun color(dark: Boolean): Color = if (dark) this.dark else light
 
     /** Text and icons on a fill of this accent: black or white, whichever has more contrast. */
-    fun onAccent(dark: Boolean): Color =
-        if (this == GREEN && dark) OnLibraryNeonGreen else Color(AccentContrast.onColor(color(dark).toArgb()))
+    fun onAccent(dark: Boolean): Color = if (dark) onDark else onLight
 
     companion object {
         fun fromKey(key: String?): AccentPreset = entries.firstOrNull { it.key == key } ?: GREEN
@@ -291,8 +296,7 @@ fun AppTheme(
                 secondary = lerp(baseScheme.onSurfaceVariant, accent, 0.35f),
                 secondaryContainer = lerp(baseScheme.surface, accent, 0.25f),
                 onSecondaryContainer = baseScheme.onSurface,
-                inversePrimary = accent,
-                surfaceTint = accent,
+                inversePrimary = accentPreset.color(!darkTheme),
             )
         }
     val baseChrome = if (darkTheme) DarkChromeColors else LightChromeColors

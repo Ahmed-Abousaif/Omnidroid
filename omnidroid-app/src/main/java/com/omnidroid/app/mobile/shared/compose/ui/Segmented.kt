@@ -11,11 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -39,8 +39,7 @@ fun <T> SegmentedPills(
     content: @Composable (option: T, contentColor: Color) -> Unit,
 ) {
     val accent = libraryAccentColor
-    // Text on the accent fill: near-black on light accents, white on dark ones.
-    val onAccent = if (accent.luminance() > 0.4f) OnLibraryNeonGreen else Color.White
+    val onAccent = onLibraryAccentColor
     Row(
         modifier =
             modifier
@@ -55,8 +54,12 @@ fun <T> SegmentedPills(
             Box(
                 modifier =
                     Modifier
+                        .minimumInteractiveComponentSize()
                         .height(segmentHeight)
-                        .controllerFocusGlow(CircleShape)
+                        .controllerFocusGlow(
+                            shape = CircleShape,
+                            glowColor = if (isSelected) onAccent else accent,
+                        )
                         .background(if (isSelected) accent else Color.Transparent, CircleShape)
                         .selectable(selected = isSelected, enabled = enabled, role = Role.RadioButton) {
                             onSelect(option)

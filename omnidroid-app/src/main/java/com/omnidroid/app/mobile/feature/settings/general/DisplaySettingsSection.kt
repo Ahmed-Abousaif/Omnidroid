@@ -17,6 +17,7 @@ import com.omnidroid.app.mobile.feature.main.MainRoute
 import com.omnidroid.app.mobile.feature.main.navigateToRoute
 import com.omnidroid.app.shared.settings.rememberHdModeAllowed
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
+import com.omnidroid.app.utils.android.settings.OmnidroidSettingsList
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSegmented
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSlider
@@ -34,7 +35,7 @@ internal fun DisplaySettings(navController: NavController) {
     val uiScaleStep =
         intPreferenceState(
             key = stringResource(id = R.string.pref_key_button_ui_scale_step),
-            default = 0,
+            default = com.omnidroid.app.mobile.feature.settings.uiscale.UiScaleHelper.DEFAULT_STEP,
         )
     val scalePercentage =
         com.omnidroid.app.mobile.feature.settings.uiscale.UiScaleHelper.percentageForStep(uiScaleStep.value)
@@ -132,7 +133,7 @@ internal fun DisplaySettings(navController: NavController) {
                 )
             },
         )
-        OmnidroidSettingsSegmented(
+        OmnidroidSettingsList(
             enabled = !hdMode.value,
             state =
                 indexPreferenceState(

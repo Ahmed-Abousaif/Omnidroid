@@ -149,6 +149,10 @@
     <string name="settings_description_clear_missing_games">Permanently remove games whose files are no longer in the library folder.</string>
     <string name="settings_title_periodic_library_scan">Periodic library check</string>
     <string name="settings_description_periodic_library_scan">When charging and idle, occasionally rescan the games folder in the background. Off by default.</string>
+    <string name="pref_key_console_bar_bottom_landscape" translatable="false">pref_key_console_bar_bottom_landscape</string>
+    <string name="settings_section_layout">Layout</string>
+    <string name="settings_title_console_bar_bottom_landscape">Console bar at the bottom in landscape</string>
+    <string name="settings_description_console_bar_bottom_landscape">Use the horizontal bar along the bottom instead of the side rail</string>
     <string name="settings_title_auto_library_scan">Automatic library scan</string>
     <string name="settings_description_auto_library_scan">Automatically rescan the games folder when you return to the app. Turn off to keep the current library until you rescan it manually. On by default.</string>
     <string name="settings_clear_missing_games_done">Removed %1$d missing games</string>
@@ -257,7 +261,7 @@
     <string name="accent_color_orange">Orange</string>
     <string name="accent_color_yellow">Yellow</string>
     <string name="accent_color_teal">Teal</string>
-    <string name="accent_color_white">White</string>
+    <string name="accent_color_white">Monochrome</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_theme_light">Light</string>
 
@@ -265,8 +269,8 @@
     <string name="settings_title_button_ui_scale">Button UI scale</string>
     <string name="settings_description_button_ui_scale">Scale library buttons and controls (%1$d%%)</string>
     <string name="ui_scale_title">Button UI Scale</string>
-    <string name="ui_scale_default">Default (100%)</string>
-    <string name="ui_scale_maximum">Maximum (+25%)</string>
+    <string name="ui_scale_smaller">Smaller</string>
+    <string name="ui_scale_larger">Larger</string>
     <string name="save">Save</string>
 
     <string name="settings_title_gamepad_settings">Gamepads &amp; keyboards</string>

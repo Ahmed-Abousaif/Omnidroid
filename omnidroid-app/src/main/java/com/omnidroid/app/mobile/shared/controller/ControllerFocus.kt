@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.lib.library.db.entity.Game
 
 fun Modifier.controllerFocusGlow(
@@ -24,6 +24,7 @@ fun Modifier.controllerFocusGlow(
     strokeWidth: Dp = 1.25.dp,
     glowWidth: Dp = 5.dp,
     intensity: Float = 1f,
+    glowColor: Color? = null,
 ): Modifier =
     composed {
         var focused by remember { mutableStateOf(false) }
@@ -31,13 +32,13 @@ fun Modifier.controllerFocusGlow(
             targetValue = if (focused) 1f else 0f,
             label = "controllerFocus",
         )
-        val glowColor = LibraryNeonGreen
+        val targetColor = glowColor ?: libraryAccentColor
 
         this
             .onFocusChanged { focused = it.isFocused }
             .drawControllerGlow(
                 progress = progress * intensity,
-                color = glowColor,
+                color = targetColor,
                 shape = shape,
                 strokeWidth = strokeWidth,
                 glowWidth = glowWidth,

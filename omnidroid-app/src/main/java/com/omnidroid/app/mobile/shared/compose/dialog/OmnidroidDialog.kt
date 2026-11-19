@@ -86,6 +86,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
+import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 
 /** The single place to tune dialog geometry. Colors follow the side-menu palette. */
@@ -186,7 +187,7 @@ internal fun OmnidroidDialogLayout(
     }
     val scheme = MaterialTheme.colorScheme.copy(
         primary = libraryAccentColor,
-        onPrimary = androidx.compose.ui.graphics.Color.Black,
+        onPrimary = onLibraryAccentColor,
         surface = chrome.panel,
         onSurface = chrome.content,
         onSurfaceVariant = chrome.muted,
