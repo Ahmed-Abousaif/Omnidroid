@@ -30,7 +30,7 @@ internal fun DisplaySettings(navController: NavController) {
     val uiScaleStep =
         intPreferenceState(
             key = stringResource(id = R.string.pref_key_button_ui_scale_step),
-            default = 0,
+            default = com.omnidroid.app.mobile.feature.settings.uiscale.UiScaleHelper.DEFAULT_STEP,
         )
     val scalePercentage =
         com.omnidroid.app.mobile.feature.settings.uiscale.UiScaleHelper.percentageForStep(uiScaleStep.value)

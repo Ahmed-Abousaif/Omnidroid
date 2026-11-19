@@ -234,13 +234,16 @@ fun UiScalePreviewScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    val canDecrease = currentStep > UiScaleHelper.MIN_STEP
+                    val canIncrease = currentStep < UiScaleHelper.MAX_STEP
                     FloatingChromeButton(
-                        onClick = { if (currentStep > UiScaleHelper.MIN_STEP) currentStep-- },
+                        onClick = { currentStep = UiScaleHelper.clampStep(currentStep - 1) },
+                        enabled = canDecrease,
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Remove,
                             contentDescription = stringResource(R.string.ui_scale_smaller),
-                            tint = if (currentStep > UiScaleHelper.MIN_STEP) chromeColors.content else chromeColors.muted.copy(alpha = 0.35f),
+                            tint = if (canDecrease) chromeColors.content else chromeColors.muted.copy(alpha = 0.35f),
                             modifier = Modifier.size(18.dp),
                         )
                     }
@@ -248,7 +251,7 @@ fun UiScalePreviewScreen(
                         value = currentStep.toFloat(),
                         onValueChange = { currentStep = it.roundToInt() },
                         valueRange = UiScaleHelper.MIN_STEP.toFloat()..UiScaleHelper.MAX_STEP.toFloat(),
-                        steps = UiScaleHelper.MAX_STEP - UiScaleHelper.MIN_STEP - 1,
+                        steps = UiScaleHelper.SLIDER_STEPS,
                         modifier =
                             Modifier
                                 .weight(1f)
@@ -261,17 +264,13 @@ fun UiScalePreviewScreen(
                             ),
                     )
                     FloatingChromeButton(
-                        onClick = { if (currentStep < UiScaleHelper.MAX_STEP) currentStep++ },
+                        onClick = { currentStep = UiScaleHelper.clampStep(currentStep + 1) },
+                        enabled = canIncrease,
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Add,
                             contentDescription = stringResource(R.string.ui_scale_larger),
-                            tint =
-                                if (currentStep < UiScaleHelper.MAX_STEP) {
-                                    chromeColors.content
-                                } else {
-                                    chromeColors.muted.copy(alpha = 0.35f)
-                                },
+                            tint = if (canIncrease) chromeColors.content else chromeColors.muted.copy(alpha = 0.35f),
                             modifier = Modifier.size(18.dp),
                         )
                     }

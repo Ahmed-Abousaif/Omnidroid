@@ -523,7 +523,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
             val uiScaleStep =
                 com.omnidroid.app.utils.settings.rememberSafePreferenceIntSettingState(
                     key = stringResource(id = R.string.pref_key_button_ui_scale_step),
-                    defaultValue = 0,
+                    defaultValue = com.omnidroid.app.mobile.feature.settings.uiscale.UiScaleHelper.DEFAULT_STEP,
                     preferences = sharedPreferences,
                 )
             val uiScale =
