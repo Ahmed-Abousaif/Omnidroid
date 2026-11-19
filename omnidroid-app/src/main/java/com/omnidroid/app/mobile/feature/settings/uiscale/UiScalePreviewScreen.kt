@@ -81,7 +81,7 @@ fun UiScalePreviewScreen(
     val context = LocalContext.current
     val preferences = remember { SharedPreferencesHelper.getSharedPreferences(context) }
     val prefKey = stringResource(R.string.pref_key_button_ui_scale_step)
-    val initialStep = remember { preferences.safeGetInt(prefKey, 0).coerceIn(0, UiScaleHelper.TOTAL_INCREMENTS) }
+    val initialStep = remember { UiScaleHelper.clampStep(preferences.safeGetInt(prefKey, UiScaleHelper.DEFAULT_STEP)) }
 
     var currentStep by rememberSaveable { mutableIntStateOf(initialStep) }
     var previewFilter by remember { mutableStateOf<LibraryFilter>(LibraryFilter.All) }
@@ -234,21 +234,24 @@ fun UiScalePreviewScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    val canDecrease = currentStep > UiScaleHelper.MIN_STEP
+                    val canIncrease = currentStep < UiScaleHelper.MAX_STEP
                     FloatingChromeButton(
-                        onClick = { if (currentStep > 0) currentStep-- },
+                        onClick = { currentStep = UiScaleHelper.clampStep(currentStep - 1) },
+                        enabled = canDecrease,
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Remove,
-                            contentDescription = stringResource(R.string.ui_scale_default),
-                            tint = if (currentStep > 0) chromeColors.content else chromeColors.muted.copy(alpha = 0.35f),
+                            contentDescription = stringResource(R.string.ui_scale_smaller),
+                            tint = if (canDecrease) chromeColors.content else chromeColors.muted.copy(alpha = 0.35f),
                             modifier = Modifier.size(18.dp),
                         )
                     }
                     Slider(
                         value = currentStep.toFloat(),
                         onValueChange = { currentStep = it.roundToInt() },
-                        valueRange = 0f..UiScaleHelper.TOTAL_INCREMENTS.toFloat(),
-                        steps = UiScaleHelper.TOTAL_INCREMENTS - 1,
+                        valueRange = UiScaleHelper.MIN_STEP.toFloat()..UiScaleHelper.MAX_STEP.toFloat(),
+                        steps = UiScaleHelper.SLIDER_STEPS,
                         modifier =
                             Modifier
                                 .weight(1f)
@@ -261,17 +264,13 @@ fun UiScalePreviewScreen(
                             ),
                     )
                     FloatingChromeButton(
-                        onClick = { if (currentStep < UiScaleHelper.TOTAL_INCREMENTS) currentStep++ },
+                        onClick = { currentStep = UiScaleHelper.clampStep(currentStep + 1) },
+                        enabled = canIncrease,
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Add,
-                            contentDescription = stringResource(R.string.ui_scale_maximum),
-                            tint =
-                                if (currentStep < UiScaleHelper.TOTAL_INCREMENTS) {
-                                    chromeColors.content
-                                } else {
-                                    chromeColors.muted.copy(alpha = 0.35f)
-                                },
+                            contentDescription = stringResource(R.string.ui_scale_larger),
+                            tint = if (canIncrease) chromeColors.content else chromeColors.muted.copy(alpha = 0.35f),
                             modifier = Modifier.size(18.dp),
                         )
                     }

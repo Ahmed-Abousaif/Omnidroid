@@ -254,8 +254,8 @@
     <string name="settings_title_button_ui_scale">Button UI scale</string>
     <string name="settings_description_button_ui_scale">Scale library buttons and controls (%1$d%%)</string>
     <string name="ui_scale_title">Button UI Scale</string>
-    <string name="ui_scale_default">Default (100%)</string>
-    <string name="ui_scale_maximum">Maximum (+25%)</string>
+    <string name="ui_scale_smaller">Smaller</string>
+    <string name="ui_scale_larger">Larger</string>
     <string name="save">Save</string>
 
     <string name="settings_title_gamepad_settings">Gamepads &amp; keyboards</string>
