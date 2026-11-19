@@ -110,7 +110,7 @@ private val DarkColorScheme =
         scrim = md_theme_dark_scrim,
     )
 
-val LibraryNeonGreen = Color(0xFF3EE366)
+val LibraryNeonGreen = Color(0xFF00B33C)
 val BrandGreen = Color(0xFF00B33C)
 
 /** Text and icons on a [LibraryNeonGreen] fill: near-black reads at ~7:1, white only ~2.8:1. */
@@ -118,8 +118,8 @@ val OnLibraryNeonGreen = Color(0xFF0A0A0A)
 
 /**
  * Highlight colours for the Accent color setting (Display): focus and selection highlights,
- * selected borders and accent fills. Each has a darker light-mode variant to keep >= 3:1 against
- * light chrome. Green uses vibrant mint (#3EE366) in dark mode and brand green (#00B33C) in light mode.
+ * selected borders and accent fills. Green uses the classic brand green (#00B33C) in both themes,
+ * with near-black text in dark mode and white text in light mode.
  */
 enum class AccentPreset(
     val key: String,
@@ -128,7 +128,7 @@ enum class AccentPreset(
     val onDark: Color = Color(AccentContrast.onColor(dark.toArgb())),
     val onLight: Color = Color(AccentContrast.onColor(light.toArgb())),
 ) {
-    GREEN("green", LibraryNeonGreen, BrandGreen, onDark = OnLibraryNeonGreen, onLight = OnLibraryNeonGreen),
+    GREEN("green", LibraryNeonGreen, LibraryNeonGreen, onDark = OnLibraryNeonGreen, onLight = Color.White),
     BLUE("blue", Color(0xFF3D8BFF), Color(0xFF0B5ED7)),
     PURPLE("purple", Color(0xFFA77BFF), Color(0xFF6A3FC1)),
     PINK("pink", Color(0xFFFF5CA8), Color(0xFFC2185B)),
