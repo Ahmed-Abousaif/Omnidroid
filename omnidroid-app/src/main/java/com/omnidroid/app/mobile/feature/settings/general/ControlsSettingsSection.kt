@@ -13,8 +13,8 @@ import com.alorma.compose.settings.storage.base.SettingValueState
 import com.omnidroid.R
 import com.omnidroid.app.tv.shared.TVHelper
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
-import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSegmented
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
+import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSegmented
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSlider
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
 import com.omnidroid.app.utils.android.settings.SettingsHorizontalDivider
