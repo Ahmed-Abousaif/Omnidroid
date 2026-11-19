@@ -1,6 +1,5 @@
 package com.omnidroid.app.mobile.feature.settings.general
 
-import com.omnidroid.app.shared.game.GamepadColor
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -12,10 +11,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.alorma.compose.settings.storage.base.SettingValueState
 import com.omnidroid.R
+import com.omnidroid.app.shared.game.GamepadColor
 import com.omnidroid.app.tv.shared.TVHelper
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
-import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSegmented
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
+import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSegmented
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSlider
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
 import com.omnidroid.app.utils.android.settings.SettingsHorizontalDivider
@@ -166,6 +166,7 @@ private fun ControlsGamepadsGroup(
         )
     }
 }
+
 /** Gamepad colour: the default gray pad, or the accent colour chosen under Display. */
 @Composable
 private fun GamepadColorChoice() {

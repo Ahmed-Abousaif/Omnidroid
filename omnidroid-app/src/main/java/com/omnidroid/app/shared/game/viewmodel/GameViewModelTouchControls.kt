@@ -1,17 +1,17 @@
 package com.omnidroid.app.shared.game.viewmodel
 
-import com.omnidroid.app.shared.game.GamepadColor
-import androidx.compose.ui.graphics.Color
 import android.content.Context
 import android.content.SharedPreferences
 import android.view.KeyEvent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
+import com.omnidroid.app.shared.game.GamepadColor
 import com.omnidroid.app.shared.rumble.RumbleManager
 import com.omnidroid.app.shared.settings.HapticFeedbackMode
 import com.omnidroid.app.tv.shared.TVHelper
