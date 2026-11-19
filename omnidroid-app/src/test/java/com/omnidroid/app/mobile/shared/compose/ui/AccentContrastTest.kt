@@ -31,4 +31,14 @@ class AccentContrastTest {
         assertEquals(0xFFFFFFFF.toInt(), AccentContrast.onColor(AccentPreset.WHITE.light.toArgb()))
         assertEquals(0xFFFFFFFF.toInt(), AccentContrast.onColor(AccentPreset.BLUE.light.toArgb()))
     }
+
+    @Test
+    fun `light accents maintain at least 3 to 1 contrast on light chrome`() {
+        val lightChrome = 0xFFF5F5F5.toInt()
+        for (preset in AccentPreset.entries) {
+            val fill = preset.color(false).toArgb()
+            val ratio = AccentContrast.contrast(fill, lightChrome)
+            assertTrue("$preset on light chrome: $ratio", ratio >= 3.0)
+        }
+    }
 }

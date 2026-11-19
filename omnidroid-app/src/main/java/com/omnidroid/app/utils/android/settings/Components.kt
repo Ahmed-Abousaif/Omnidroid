@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -284,7 +285,7 @@ private fun omnidroidSettingsColor(enabled: Boolean): ListItemColors {
 }
 
 /**
- * A row of colour swatches to pick one from. The whole 40 dp circle is the target; the chosen one
+ * A row of colour swatches to pick one from. The whole 48 dp circle is the target; the chosen one
  * shows a check in its own contrasting colour, and controller focus draws the focus ring around it.
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -319,11 +320,12 @@ fun OmnidroidSettingsColorChoice(
                 Box(
                     modifier =
                         Modifier
-                            .size(40.dp)
+                            .size(48.dp)
                             .controllerFocusGlow(CircleShape)
+                            .clip(CircleShape)
                             .selectable(selected = selected, role = Role.RadioButton) { onSelect(index) }
                             .semantics { contentDescription = labels[index] }
-                            .padding(5.dp)
+                            .padding(4.dp)
                             .background(color, CircleShape)
                             .border(BorderStroke(1.dp, chromeColors.panelBorder), CircleShape),
                     contentAlignment = Alignment.Center,

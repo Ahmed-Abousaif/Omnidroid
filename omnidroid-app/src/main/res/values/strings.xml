@@ -261,7 +261,7 @@
     <string name="accent_color_orange">Orange</string>
     <string name="accent_color_yellow">Yellow</string>
     <string name="accent_color_teal">Teal</string>
-    <string name="accent_color_white">White</string>
+    <string name="accent_color_white">Monochrome</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_theme_light">Light</string>
 

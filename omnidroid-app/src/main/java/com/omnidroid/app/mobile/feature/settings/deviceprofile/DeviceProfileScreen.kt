@@ -58,6 +58,7 @@ import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
+import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.shared.deviceprofile.BenchmarkResult
@@ -429,9 +430,9 @@ private fun BenchmarkPanel(
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor = libraryAccentColor,
-                        contentColor = Color.Black,
+                        contentColor = onLibraryAccentColor,
                         disabledContainerColor = libraryAccentColor.copy(alpha = 0.35f),
-                        disabledContentColor = Color.Black.copy(alpha = 0.5f),
+                        disabledContentColor = onLibraryAccentColor.copy(alpha = 0.5f),
                     ),
                 contentPadding = PaddingValues(horizontal = 18.dp, vertical = 10.dp),
             ) {

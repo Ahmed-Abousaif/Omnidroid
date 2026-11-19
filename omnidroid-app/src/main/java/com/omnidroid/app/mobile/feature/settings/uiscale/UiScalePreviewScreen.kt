@@ -53,6 +53,7 @@ import com.omnidroid.app.mobile.feature.library.LibrarySidebar
 import com.omnidroid.app.mobile.feature.library.LibraryTopBar
 import com.omnidroid.app.mobile.feature.library.BottomConsoleBar
 import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
+import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.calculateAdaptiveLayoutSpec
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
@@ -328,7 +329,7 @@ fun UiScalePreviewScreen(
                         Text(
                             text = stringResource(R.string.save),
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                            color = Color.Black,
+                            color = onLibraryAccentColor,
                         )
                     }
                 }
