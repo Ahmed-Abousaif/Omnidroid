@@ -24,6 +24,7 @@ fun Modifier.controllerFocusGlow(
     strokeWidth: Dp = 1.25.dp,
     glowWidth: Dp = 5.dp,
     intensity: Float = 1f,
+    glowColor: Color? = null,
 ): Modifier =
     composed {
         var focused by remember { mutableStateOf(false) }
@@ -31,13 +32,13 @@ fun Modifier.controllerFocusGlow(
             targetValue = if (focused) 1f else 0f,
             label = "controllerFocus",
         )
-        val glowColor = libraryAccentColor
+        val targetColor = glowColor ?: libraryAccentColor
 
         this
             .onFocusChanged { focused = it.isFocused }
             .drawControllerGlow(
                 progress = progress * intensity,
-                color = glowColor,
+                color = targetColor,
                 shape = shape,
                 strokeWidth = strokeWidth,
                 glowWidth = glowWidth,

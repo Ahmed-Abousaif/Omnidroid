@@ -21,6 +21,7 @@ import androidx.compose.ui.semantics.semantics
 import com.omnidroid.app.mobile.shared.compose.ui.AccentContrast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -267,34 +268,57 @@ private fun SettingsGroupTitleSmall(title: @Composable () -> Unit) {
 }
 
 /**
- * A short fixed choice as one-tap segments beside its title (below it when narrow), in place of a
- * row that opens a dialog. For longer or dynamic lists keep [OmnidroidSettingsList].
+ * A short fixed choice as one-tap segments beside its title (below it when narrow or when a subtitle
+ * is present), in place of a row that opens a dialog. For longer or dynamic lists keep [OmnidroidSettingsList].
  */
 @Composable
 fun OmnidroidSettingsSegmented(
-    state: SettingValueState<Int>,
-    items: List<String>,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    state: SettingValueState<Int>? = null,
+    selectedIndex: Int = state?.value ?: 0,
+    onSelectionChange: (Int) -> Unit = { state?.value = it },
     titleRes: Int? = null,
     title: @Composable () -> Unit = { Text(stringResource(requireNotNull(titleRes))) },
     subtitleRes: Int? = null,
     subtitle: (@Composable () -> Unit)? = subtitleRes?.let { { Text(stringResource(it)) } },
+    items: List<String>,
+    icon: (@Composable () -> Unit)? = null,
+    onItemSelected: ((Int, String) -> Unit)? = null,
 ) {
     val container = settingsRowContainerColor() ?: Color.Transparent
+    val currentSelection = state?.value ?: selectedIndex
+    val onSelectOption: (Int) -> Unit = { index ->
+        state?.value = index
+        onSelectionChange(index)
+        if (index in items.indices) {
+            onItemSelected?.invoke(index, items[index])
+        }
+    }
+
     val label: @Composable (Modifier) -> Unit = { labelModifier ->
-        Column(labelModifier) {
-            ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(color = chromeColors.content)) { title() }
-            if (subtitle != null) {
-                ProvideTextStyle(MaterialTheme.typography.bodySmall.copy(color = chromeColors.muted)) { subtitle() }
+        Row(
+            modifier = labelModifier,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (icon != null) {
+                Box(modifier = Modifier.padding(end = 16.dp)) {
+                    icon()
+                }
+            }
+            Column {
+                ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(color = chromeColors.content)) { title() }
+                if (subtitle != null) {
+                    ProvideTextStyle(MaterialTheme.typography.bodySmall.copy(color = chromeColors.muted)) { subtitle() }
+                }
             }
         }
     }
     val segments: @Composable () -> Unit = {
         SegmentedPills(
             options = items.indices.toList(),
-            selected = state.value,
-            onSelect = { state.value = it },
+            selected = currentSelection,
+            onSelect = onSelectOption,
             enabled = enabled,
         ) { index, contentColor ->
             Text(
@@ -312,39 +336,51 @@ fun OmnidroidSettingsSegmented(
                 .background(container)
                 .padding(horizontal = 16.dp, vertical = 10.dp)
                 .alpha(if (enabled) 1f else 0.45f),
+        forceBelow = subtitle != null,
         label = { label(Modifier) },
         control = segments,
     )
 }
 
 /**
- * A settings row's [label] with its [control] beside it when both fit on one line, else the
- * control under the label. Measured, so it follows the real text and control widths.
+ * A settings row's [label] with its [control] beside it when both fit on one line without wrapping,
+ * else the control under the label. Measured, so it follows the real text and control widths.
  */
 @Composable
 internal fun BesideOrBelow(
     modifier: Modifier,
+    forceBelow: Boolean = false,
     label: @Composable () -> Unit,
     control: @Composable () -> Unit,
 ) {
     Layout(contents = listOf(label, control), modifier = modifier) { (labelM, controlM), constraints ->
-        val width = constraints.maxWidth
+        val width = if (constraints.hasBoundedWidth) constraints.maxWidth else constraints.minWidth
         val gap = 12.dp.roundToPx()
         val below = 10.dp.roundToPx()
-        val c = controlM.first().measure(constraints.copy(minWidth = 0, minHeight = 0))
-        val labelNeeds = minOf(labelM.first().maxIntrinsicWidth(Constraints.Infinity), 160.dp.roundToPx())
-        if (c.width + gap + labelNeeds <= width) {
-            val l = labelM.first().measure(Constraints(maxWidth = width - c.width - gap))
-            val height = maxOf(l.height, c.height)
+
+        val c = controlM.firstOrNull()?.measure(constraints.copy(minWidth = 0, minHeight = 0))
+        val cWidth = c?.width ?: 0
+        val cHeight = c?.height ?: 0
+
+        val labelSingleLineWidth = labelM.firstOrNull()?.maxIntrinsicWidth(Int.MAX_VALUE) ?: 0
+        val canFitBeside = !forceBelow && constraints.hasBoundedWidth && (cWidth + gap + labelSingleLineWidth <= width)
+
+        if (canFitBeside) {
+            val l = labelM.firstOrNull()?.measure(Constraints(maxWidth = (width - cWidth - gap).coerceAtLeast(0)))
+            val lWidth = l?.width ?: 0
+            val lHeight = l?.height ?: 0
+            val height = maxOf(lHeight, cHeight)
             layout(width, height) {
-                l.placeRelative(0, (height - l.height) / 2)
-                c.placeRelative(width - c.width, (height - c.height) / 2)
+                l?.placeRelative(0, (height - lHeight) / 2)
+                c?.placeRelative(width - cWidth, (height - cHeight) / 2)
             }
         } else {
-            val l = labelM.first().measure(Constraints(maxWidth = width))
-            layout(width, l.height + below + c.height) {
-                l.placeRelative(0, 0)
-                c.placeRelative(0, l.height + below)
+            val l = labelM.firstOrNull()?.measure(Constraints(maxWidth = width))
+            val lHeight = l?.height ?: 0
+            val totalHeight = lHeight + (if (c != null && lHeight > 0) below else 0) + cHeight
+            layout(width, totalHeight) {
+                l?.placeRelative(0, 0)
+                c?.placeRelative(0, lHeight + below)
             }
         }
     }
