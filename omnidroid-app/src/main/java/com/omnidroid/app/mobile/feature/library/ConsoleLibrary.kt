@@ -447,9 +447,9 @@ private fun ConsoleCarouselState.settledAmount(): Float {
 }
 
 /** Height the compact info panel needs: one title line, the details row and the action buttons. */
-private val LandscapeInfoMinHeight = 112.dp
+internal val LandscapeInfoMinHeight = 112.dp
 
-private class LandscapeMetrics(maxWidth: Dp, maxHeight: Dp) {
+internal class LandscapeMetrics(maxWidth: Dp, maxHeight: Dp) {
     val edge = if (maxHeight < 280.dp) 16.dp else 20.dp
     val gap = 12.dp
     val bigHeight = (maxHeight - edge * 2).coerceIn(96.dp, 440.dp)
@@ -463,7 +463,7 @@ private class LandscapeMetrics(maxWidth: Dp, maxHeight: Dp) {
     val infoX = anchorX + bigWidth + gap * 1.5f
     val infoWidth = (maxWidth - infoX - edge).coerceAtLeast(0.dp)
     val infoHeight = (bigHeight - smallHeight - gap).coerceAtLeast(0.dp)
-    val compactInfo = infoHeight < 110.dp
+    val compactInfo = infoHeight <= LandscapeInfoMinHeight + 4.dp
     val step = smallWidth + gap
     val visibleAfter = ceil(((maxWidth - infoX) / step).coerceAtLeast(0f)).toInt() + 2
 }

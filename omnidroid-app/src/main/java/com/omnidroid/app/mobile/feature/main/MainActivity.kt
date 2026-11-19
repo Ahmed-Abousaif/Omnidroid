@@ -898,6 +898,12 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     consoleGameCount = libraryState.selectedSystemGameCount,
                     portrait = portrait,
                     showLibraryControls = currentRoute == MainRoute.HOME,
+                    layout = libraryState.layout,
+                    onLayoutChange = { libraryViewModel.setLayout(it) },
+                    consoleBarAtBottom = portrait || libraryState.consoleBarBottomInLandscape,
+                    zoomDensity = libraryState.zoomDensity,
+                    onZoomDensityChange = { libraryViewModel.setZoomDensity(it) },
+                    showZoom = !gamepadConnected && libraryState.layout == LibraryLayout.GRID,
                     onBackPressed =
                         if (currentRoute == MainRoute.HOME) {
                             null

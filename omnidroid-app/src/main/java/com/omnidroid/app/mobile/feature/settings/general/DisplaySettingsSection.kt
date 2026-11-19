@@ -66,11 +66,6 @@ internal fun DisplaySettings(navController: NavController) {
             onClick = { navController.navigateToRoute(MainRoute.SETTINGS_UI_SCALE) },
         )
         OmnidroidSettingsSwitch(
-            state = booleanPreferenceState(R.string.pref_key_console_bar_bottom_landscape, false),
-            titleRes = R.string.settings_title_console_bar_bottom_landscape,
-            subtitleRes = R.string.settings_description_console_bar_bottom_landscape,
-        )
-        OmnidroidSettingsSwitch(
             state = immersiveMode,
             titleRes = R.string.settings_title_immersive_mode,
             subtitleRes = R.string.settings_description_immersive_mode,
