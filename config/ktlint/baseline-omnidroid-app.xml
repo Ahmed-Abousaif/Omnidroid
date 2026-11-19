@@ -1293,26 +1293,27 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/game/MobileGameScreen.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="117" column="31" source="standard:multiline-expression-wrapping" />
-        <error line="190" column="27" source="standard:multiline-expression-wrapping" />
-        <error line="197" column="11" source="standard:if-else-wrapping" />
-        <error line="197" column="16" source="standard:if-else-bracing" />
-        <error line="197" column="16" source="standard:if-else-wrapping" />
-        <error line="197" column="16" source="standard:multiline-if-else" />
-        <error line="198" column="29" source="standard:property-wrapping" />
-        <error line="198" column="53" source="standard:argument-list-wrapping" />
-        <error line="198" column="79" source="standard:argument-list-wrapping" />
-        <error line="198" column="101" source="standard:argument-list-wrapping" />
-        <error line="198" column="110" source="standard:argument-list-wrapping" />
-        <error line="198" column="121" source="standard:argument-list-wrapping" />
-        <error line="198" column="121" source="standard:max-line-length" />
-        <error line="203" column="34" source="standard:multiline-expression-wrapping" />
-        <error line="208" column="38" source="standard:multiline-expression-wrapping" />
-        <error line="567" column="43" source="standard:binary-expression-wrapping" />
-        <error line="567" column="79" source="standard:binary-expression-wrapping" />
-        <error line="567" column="121" source="standard:max-line-length" />
-        <error line="584" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="585" column="1" source="standard:no-consecutive-blank-lines" />
+        <error line="83" column="1" source="standard:no-unused-imports" />
+        <error line="121" column="31" source="standard:multiline-expression-wrapping" />
+        <error line="205" column="27" source="standard:multiline-expression-wrapping" />
+        <error line="212" column="11" source="standard:if-else-wrapping" />
+        <error line="212" column="16" source="standard:if-else-bracing" />
+        <error line="212" column="16" source="standard:if-else-wrapping" />
+        <error line="212" column="16" source="standard:multiline-if-else" />
+        <error line="213" column="29" source="standard:property-wrapping" />
+        <error line="213" column="53" source="standard:argument-list-wrapping" />
+        <error line="213" column="79" source="standard:argument-list-wrapping" />
+        <error line="213" column="101" source="standard:argument-list-wrapping" />
+        <error line="213" column="110" source="standard:argument-list-wrapping" />
+        <error line="213" column="121" source="standard:argument-list-wrapping" />
+        <error line="213" column="121" source="standard:max-line-length" />
+        <error line="218" column="34" source="standard:multiline-expression-wrapping" />
+        <error line="223" column="38" source="standard:multiline-expression-wrapping" />
+        <error line="584" column="43" source="standard:binary-expression-wrapping" />
+        <error line="584" column="79" source="standard:binary-expression-wrapping" />
+        <error line="584" column="121" source="standard:max-line-length" />
+        <error line="601" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="602" column="1" source="standard:no-consecutive-blank-lines" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/game/StylusPointerRouter.kt">
         <error line="8" column="36" source="standard:class-signature" />
@@ -2864,9 +2865,9 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/SettingsManager.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="18" column="23" source="standard:class-signature" />
-        <error line="18" column="53" source="standard:class-signature" />
-        <error line="18" column="95" source="standard:class-signature" />
+        <error line="19" column="23" source="standard:class-signature" />
+        <error line="19" column="53" source="standard:class-signature" />
+        <error line="19" column="95" source="standard:class-signature" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/bios/BiosSettingsScreen.kt">
         <error line="2" column="1" source="standard:import-ordering" />
@@ -2923,10 +2924,10 @@
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/general/ControlsSettingsSection.kt">
-        <error line="28" column="5" source="standard:function-signature" />
-        <error line="28" column="54" source="standard:function-signature" />
-        <error line="155" column="5" source="standard:function-signature" />
-        <error line="155" column="54" source="standard:function-signature" />
+        <error line="29" column="5" source="standard:function-signature" />
+        <error line="29" column="54" source="standard:function-signature" />
+        <error line="157" column="5" source="standard:function-signature" />
+        <error line="157" column="54" source="standard:function-signature" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/general/DisplaySettingsSection.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -3550,8 +3551,8 @@
         <error line="283" column="33" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/ui/Segmented.kt">
-        <error line="63" column="25" source="standard:chain-method-continuation" />
-        <error line="67" column="25" source="standard:chain-method-continuation" />
+        <error line="61" column="25" source="standard:chain-method-continuation" />
+        <error line="65" column="25" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/ui/SystemStatusIndicators.kt">
         <error line="148" column="19" source="standard:property-naming" />
