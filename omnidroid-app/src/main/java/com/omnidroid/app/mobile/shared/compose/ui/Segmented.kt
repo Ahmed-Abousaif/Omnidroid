@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +53,6 @@ fun <T> SegmentedPills(
             Box(
                 modifier =
                     Modifier
-                        .minimumInteractiveComponentSize()
                         .height(segmentHeight)
                         .controllerFocusGlow(
                             shape = CircleShape,
