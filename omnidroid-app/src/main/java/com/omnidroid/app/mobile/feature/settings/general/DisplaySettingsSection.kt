@@ -9,6 +9,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import com.omnidroid.R
+import com.omnidroid.app.mobile.shared.compose.ui.AccentPreset
+import com.omnidroid.app.mobile.shared.compose.ui.LocalAppDarkTheme
+import com.omnidroid.app.utils.android.settings.OmnidroidSettingsColorChoice
+import com.omnidroid.app.utils.android.settings.stringPreferenceState
 import com.omnidroid.app.mobile.feature.main.MainRoute
 import com.omnidroid.app.mobile.feature.main.navigateToRoute
 import com.omnidroid.app.shared.settings.rememberHdModeAllowed
@@ -30,7 +34,7 @@ internal fun DisplaySettings(navController: NavController) {
     val uiScaleStep =
         intPreferenceState(
             key = stringResource(id = R.string.pref_key_button_ui_scale_step),
-            default = 0,
+            default = com.omnidroid.app.mobile.feature.settings.uiscale.UiScaleHelper.DEFAULT_STEP,
         )
     val scalePercentage =
         com.omnidroid.app.mobile.feature.settings.uiscale.UiScaleHelper.percentageForStep(uiScaleStep.value)
@@ -51,6 +55,17 @@ internal fun DisplaySettings(navController: NavController) {
                 ),
             titleRes = R.string.settings_title_app_theme,
             items = stringListResource(R.array.pref_key_app_theme_display_names),
+        )
+        val accent = stringPreferenceState(R.string.pref_key_accent_color, AccentPreset.GREEN.key)
+        val dark = LocalAppDarkTheme.current
+        val presets = AccentPreset.entries
+        OmnidroidSettingsColorChoice(
+            selectedIndex = presets.indexOf(AccentPreset.fromKey(accent.value)),
+            colors = presets.map { it.color(dark) },
+            labels = presets.map { stringResource(it.labelRes()) },
+            onSelect = { accent.value = presets[it].key },
+            titleRes = R.string.settings_title_accent_color,
+            subtitleRes = R.string.settings_description_accent_color,
         )
         OmnidroidSettingsMenuLink(
             titleRes = R.string.settings_title_button_ui_scale,
@@ -130,3 +145,16 @@ internal fun DisplaySettings(navController: NavController) {
         )
     }
 }
+
+private fun AccentPreset.labelRes(): Int =
+    when (this) {
+        AccentPreset.GREEN -> R.string.accent_color_green
+        AccentPreset.BLUE -> R.string.accent_color_blue
+        AccentPreset.PURPLE -> R.string.accent_color_purple
+        AccentPreset.PINK -> R.string.accent_color_pink
+        AccentPreset.RED -> R.string.accent_color_red
+        AccentPreset.ORANGE -> R.string.accent_color_orange
+        AccentPreset.YELLOW -> R.string.accent_color_yellow
+        AccentPreset.TEAL -> R.string.accent_color_teal
+        AccentPreset.WHITE -> R.string.accent_color_white
+    }

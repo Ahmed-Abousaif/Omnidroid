@@ -1,6 +1,7 @@
 package com.omnidroid.app.mobile.feature.library
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -65,6 +66,7 @@ class LibraryViewModel(
         val sort: LibrarySort = LibrarySort.TITLE,
         val selectedSystemGameCount: Int? = null,
         val startupFilter: LibraryFilter = LibraryFilter.All,
+        val consoleBarBottomInLandscape: Boolean = false,
     )
 
     private data class LibraryChrome(
@@ -79,6 +81,7 @@ class LibraryViewModel(
         val zoomDensity: Int,
         val layout: LibraryLayout,
         val sort: LibrarySort,
+        val consoleBarBottomInLandscape: Boolean,
     )
 
     private val preferences = SharedPreferencesHelper.getSharedPreferences(appContext)
@@ -89,13 +92,28 @@ class LibraryViewModel(
     private val zoomDensityFlow = MutableStateFlow(readZoomDensity())
     private val layoutFlow = MutableStateFlow(readLayout())
     private val sortFlow = MutableStateFlow(readSort())
+    private val consoleBarBottomLandscapeFlow = MutableStateFlow(readConsoleBarBottomLandscape())
+    private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == CONSOLE_BAR_BOTTOM_LANDSCAPE_KEY) {
+            consoleBarBottomLandscapeFlow.value = readConsoleBarBottomLandscape()
+        }
+    }
     private val syncProgressFlow = SyncProgressTracker.progress
     private val presentationFlow =
-        combine(zoomDensityFlow, layoutFlow, sortFlow) { zoom, layout, sort ->
-            LibraryPresentation(zoom, layout, sort)
+        combine(zoomDensityFlow, layoutFlow, sortFlow, consoleBarBottomLandscapeFlow) { zoom, layout, sort, consoleBarBottom ->
+            LibraryPresentation(zoom, layout, sort, consoleBarBottom)
         }
     private val libraryOperationInProgress =
         PendingOperationsMonitor(appContext).anyLibraryOperationInProgress()
+
+    init {
+        preferences.registerOnSharedPreferenceChangeListener(prefListener)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        preferences.unregisterOnSharedPreferenceChangeListener(prefListener)
+    }
 
     val state: StateFlow<UiState> =
         combine(
@@ -141,6 +159,7 @@ class LibraryViewModel(
                 sort = chrome.presentation.sort,
                 selectedSystemGameCount = selectedCount,
                 startupFilter = chrome.startupFilter,
+                consoleBarBottomInLandscape = chrome.presentation.consoleBarBottomInLandscape,
             )
         }.stateIn(
             viewModelScope,
@@ -151,6 +170,7 @@ class LibraryViewModel(
                 sort = sortFlow.value,
                 filter = filterFlow.value,
                 startupFilter = startupStore.get(),
+                consoleBarBottomInLandscape = consoleBarBottomLandscapeFlow.value,
             ),
         )
 
@@ -361,10 +381,15 @@ class LibraryViewModel(
 
     private fun LibraryFilter.System.systemIds() = metaSystemID.systemIDs.map { it.dbname }
 
+    private fun readConsoleBarBottomLandscape(): Boolean {
+        return preferences.getBoolean(CONSOLE_BAR_BOTTOM_LANDSCAPE_KEY, false)
+    }
+
     companion object {
         private const val ZOOM_DENSITY_KEY = "pref_library_zoom_density"
         private const val LAYOUT_KEY = "pref_library_layout"
         private const val SORT_KEY = "pref_library_sort"
+        private const val CONSOLE_BAR_BOTTOM_LANDSCAPE_KEY = "pref_key_console_bar_bottom_landscape"
         const val MAX_ZOOM_DENSITY = 2
     }
 }

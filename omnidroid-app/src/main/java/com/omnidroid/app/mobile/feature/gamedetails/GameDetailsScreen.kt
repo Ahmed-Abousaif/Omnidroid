@@ -1,7 +1,7 @@
 package com.omnidroid.app.mobile.feature.gamedetails
 
 import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
-import com.omnidroid.app.mobile.shared.compose.ui.OnLibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
 import android.net.Uri
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -89,7 +89,6 @@ import com.omnidroid.app.mobile.shared.compose.dialog.DialogWidth
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogTextField
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.GameCoverOrigin
 import com.omnidroid.app.mobile.shared.compose.ui.gameCoverSharedBounds
@@ -766,7 +765,7 @@ private fun GameDetailsActions(
                     .height(DetailsActionHeight)
                     .controllerFocusGlow(DetailsActionCorner),
             shape = DetailsActionCorner,
-            color = LibraryNeonGreen,
+            color = libraryAccentColor,
             shadowElevation = 6.dp,
         ) {
             BoxWithConstraints(
@@ -781,14 +780,14 @@ private fun GameDetailsActions(
                     Icon(
                         imageVector = Icons.Filled.PlayArrow,
                         contentDescription = if (showLabel) null else stringResource(R.string.game_play),
-                        tint = OnLibraryNeonGreen,
+                        tint = onLibraryAccentColor,
                         modifier = Modifier.size(22.dp),
                     )
                     if (showLabel) {
                         Text(
                             text = stringResource(R.string.game_play),
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                            color = OnLibraryNeonGreen,
+                            color = onLibraryAccentColor,
                             textAlign = TextAlign.Center,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
