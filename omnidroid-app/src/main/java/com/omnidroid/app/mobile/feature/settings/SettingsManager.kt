@@ -1,5 +1,7 @@
 package com.omnidroid.app.mobile.feature.settings
 
+import com.omnidroid.app.mobile.shared.compose.ui.AccentPreset
+import com.omnidroid.app.shared.game.GamepadColor
 import android.content.Context
 import android.content.SharedPreferences
 import com.omnidroid.app.utils.settings.safeGetBoolean
@@ -27,6 +29,10 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
     suspend fun vibrationIntensity() = floatPreference(R.string.pref_key_vibration_intensity, 100, 50)
 
     suspend fun virtualPadOpacity() = floatPreference(R.string.pref_key_virtual_pad_opacity, 100, 100)
+
+    suspend fun gamepadColor() = stringPreference(R.string.pref_key_gamepad_color, GamepadColor.DEFAULT)
+
+    suspend fun accentColor() = stringPreference(R.string.pref_key_accent_color, AccentPreset.GREEN.key)
 
     suspend fun lowLatencyAudio() = booleanPreference(R.string.pref_key_low_latency_audio, true)
 

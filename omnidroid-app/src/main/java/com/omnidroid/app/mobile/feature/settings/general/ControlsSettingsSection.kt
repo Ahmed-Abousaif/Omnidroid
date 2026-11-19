@@ -11,10 +11,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.alorma.compose.settings.storage.base.SettingValueState
 import com.omnidroid.R
+import com.omnidroid.app.shared.game.GamepadColor
 import com.omnidroid.app.tv.shared.TVHelper
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
-import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSegmented
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
+import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSegmented
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSlider
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
 import com.omnidroid.app.utils.android.settings.SettingsHorizontalDivider
@@ -91,6 +92,7 @@ private fun ControlsOnScreenGroup(
                 )
             },
         )
+        GamepadColorChoice()
         OmnidroidSettingsSlider(
             state =
                 intPreferenceState(
@@ -163,4 +165,14 @@ private fun ControlsGamepadsGroup(
             onClick = { onNavigateSubscreen(SettingsSubscreen.INPUT_DEVICES) },
         )
     }
+}
+
+/** Gamepad colour: the default gray pad, or the accent colour chosen under Display. */
+@Composable
+private fun GamepadColorChoice() {
+    OmnidroidSettingsSegmented(
+        state = indexPreferenceState(R.string.pref_key_gamepad_color, GamepadColor.DEFAULT, GamepadColor.keys),
+        items = listOf(stringResource(R.string.gamepad_color_default), stringResource(R.string.gamepad_color_accent)),
+        titleRes = R.string.settings_title_gamepad_color,
+    )
 }

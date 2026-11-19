@@ -122,6 +122,8 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             )
         }
         val padOpacity = viewModel.getVirtualPadOpacity().collectAsState(1f).value
+        val padTint = viewModel.getGamepadTint().collectAsState(null).value
+        val padTheme = remember(padTint) { OmnidroidPadTheme(padTint) }
 
         val touchControllerSettings = touchControllerSettingsState.value
         val currentControllerConfig = controllerConfigState.value
@@ -277,7 +279,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 }
 
                 if (isVisible) {
-                    CompositionLocalProvider(LocalOmnidroidPadTheme provides OmnidroidPadTheme()) {
+                    CompositionLocalProvider(LocalOmnidroidPadTheme provides padTheme) {
                         // Portrait pads sit on a glass panel. Landscape pads are drawn straight over
                         // the background for every core, including DS/3DS dual screen whose pads sit
                         // beside the game rather than over it.
