@@ -57,7 +57,7 @@ import androidx.compose.ui.unit.sp
 import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.shared.deviceprofile.BenchmarkResult
@@ -96,7 +96,7 @@ fun DeviceProfileScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                CircularProgressIndicator(color = LibraryNeonGreen)
+                CircularProgressIndicator(color = libraryAccentColor)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = stringResource(R.string.settings_device_profile_loading),
@@ -194,13 +194,13 @@ private fun DeviceHeader(
                 modifier =
                     Modifier
                         .size(48.dp)
-                        .background(LibraryNeonGreen.copy(alpha = 0.15f), RoundedCornerShape(10.dp)),
+                        .background(libraryAccentColor.copy(alpha = 0.15f), RoundedCornerShape(10.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Outlined.PhoneAndroid,
                     contentDescription = null,
-                    tint = LibraryNeonGreen,
+                    tint = libraryAccentColor,
                     modifier = Modifier.size(26.dp),
                 )
             }
@@ -371,7 +371,7 @@ private fun BenchmarkPanel(
             Icon(
                 imageVector = Icons.Outlined.Speed,
                 contentDescription = null,
-                tint = LibraryNeonGreen,
+                tint = libraryAccentColor,
                 modifier = Modifier.size(20.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -428,9 +428,9 @@ private fun BenchmarkPanel(
                 shape = RoundedCornerShape(8.dp),
                 colors =
                     ButtonDefaults.buttonColors(
-                        containerColor = LibraryNeonGreen,
+                        containerColor = libraryAccentColor,
                         contentColor = Color.Black,
-                        disabledContainerColor = LibraryNeonGreen.copy(alpha = 0.35f),
+                        disabledContainerColor = libraryAccentColor.copy(alpha = 0.35f),
                         disabledContentColor = Color.Black.copy(alpha = 0.5f),
                     ),
                 contentPadding = PaddingValues(horizontal = 18.dp, vertical = 10.dp),
@@ -492,7 +492,7 @@ private fun SpecPanel(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = LibraryNeonGreen,
+                tint = libraryAccentColor,
                 modifier = Modifier.size(20.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -632,7 +632,7 @@ fun ExtendedBenchmarkProgressDialog(progress: Float) {
                 LinearProgressIndicator(
                     progress = progress,
                     modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    color = LibraryNeonGreen,
+                    color = libraryAccentColor,
                     trackColor = chromeColors.content.copy(alpha = 0.12f),
                 )
                 Text(
@@ -659,7 +659,7 @@ fun WelcomeBenchmarkDialog(
             Icon(
                 painter = painterResource(R.drawable.ic_profile_robot),
                 contentDescription = null,
-                tint = LibraryNeonGreen,
+                tint = libraryAccentColor,
                 modifier = Modifier.size(40.dp),
             )
         },

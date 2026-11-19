@@ -85,7 +85,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 
 /** The single place to tune dialog geometry. Colors follow the side-menu palette. */
@@ -185,7 +185,7 @@ internal fun OmnidroidDialogLayout(
         }
     }
     val scheme = MaterialTheme.colorScheme.copy(
-        primary = LibraryNeonGreen,
+        primary = libraryAccentColor,
         onPrimary = androidx.compose.ui.graphics.Color.Black,
         surface = chrome.panel,
         onSurface = chrome.content,
@@ -402,7 +402,7 @@ private fun DialogMoreBelow(visible: Boolean, modifier: Modifier, reserveSpace: 
             style = MaterialTheme.typography.labelMedium,
             color = chromeColors.content,
         )
-        Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, modifier = Modifier.size(18.dp), tint = LibraryNeonGreen)
+        Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, modifier = Modifier.size(18.dp), tint = libraryAccentColor)
     }
 }
 
