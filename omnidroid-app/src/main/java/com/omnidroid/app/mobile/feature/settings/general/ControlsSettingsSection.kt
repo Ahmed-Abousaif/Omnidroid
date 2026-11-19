@@ -173,6 +173,5 @@ private fun GamepadColorChoice() {
         state = indexPreferenceState(R.string.pref_key_gamepad_color, GamepadColor.DEFAULT, GamepadColor.keys),
         items = listOf(stringResource(R.string.gamepad_color_default), stringResource(R.string.gamepad_color_accent)),
         titleRes = R.string.settings_title_gamepad_color,
-        subtitleRes = R.string.settings_description_gamepad_color,
     )
 }
