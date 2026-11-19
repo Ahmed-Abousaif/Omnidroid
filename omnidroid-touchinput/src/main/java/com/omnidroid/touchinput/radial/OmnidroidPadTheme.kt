@@ -8,54 +8,100 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Colours of the on-screen gamepad. With no [tint] the pad is the default see-through grey. With a
- * tint, the light fills take that colour at the same opacities, so the pad keeps its look and
- * press feedback, and icons switch to black or white, whichever reads better on the tint.
+ * Colours of the on-screen gamepad.
+ * - Gray (default): see-through grey pads with black/white icons.
+ * - Accent: light fills take the app's accent colour with proper high-contrast icons.
+ * - Black: high-contrast dark pads with distinct button outlines.
  */
-class OmnidroidPadTheme(
-    private val tint: Color? = null,
+data class OmnidroidPadTheme(
+    val tint: Color? = null,
+    val iconTint: Color? = null,
+    val isBlack: Boolean = false,
+    val foregroundPadding: Dp = 8.dp,
+    val padding: Dp = 4.dp,
+    val level0CornerRadius: Dp = 0.dp,
+    val level0Fill: Color = if (isBlack) Color.Transparent else gray(1.0f, 0.05f),
+    val level0Border: Color = Color.Transparent,
+    val level0BorderWidth: Dp = 0.dp,
+    val level0Shadow: Color = if (isBlack) Color.Transparent else DefaultShadowColor.copy(0.10f),
+    val level0ShadowWidth: Dp = 2.dp,
+    val level1Fill: Color = if (isBlack) Color.Transparent else (tint?.copy(alpha = 0.10f) ?: gray(1.0f, 0.10f)),
+    val level1Border: Color = if (isBlack) Color(1.0f, 1.0f, 1.0f, 0.15f) else Color.Transparent,
+    val level1BorderWidth: Dp = if (isBlack) 1.dp else 0.dp,
+    val level1Shadow: Color = if (isBlack) Color.Transparent else DefaultShadowColor.copy(0.10f),
+    val level1ShadowWidth: Dp = 4.dp,
+    val level2Fill: Color = if (isBlack) Color.Transparent else (tint?.copy(alpha = 0.125f) ?: gray(1.0f, 0.125f)),
+    val level2FillPressed: Color =
+        if (isBlack) {
+            Color(1.0f, 1.0f, 1.0f, 0.25f)
+        } else {
+            tint?.copy(alpha = 0.25f) ?: gray(0.0f, 0.125f)
+        },
+    val level2Border: Color = if (isBlack) Color(1.0f, 1.0f, 1.0f, 0.22f) else Color.Transparent,
+    val level2BorderWidth: Dp = if (isBlack) 1.dp else 0.dp,
+    val level2Shadow: Color = if (isBlack) Color.Transparent else DefaultShadowColor.copy(0.05f),
+    val level2ShadowWidth: Dp = 4.dp,
+    val level3Fill: Color =
+        if (isBlack) Color(0.0f, 0.0f, 0.0f, 0.50f) else (tint?.copy(alpha = 0.50f) ?: gray(1.0f, 0.50f)),
+    val level3FillPressed: Color =
+        if (isBlack) {
+            Color(1.0f, 1.0f, 1.0f, 0.30f)
+        } else {
+            tint?.copy(alpha = 0.75f) ?: gray(0.0f, 0.50f)
+        },
+    val level3Border: Color = if (isBlack) Color(1.0f, 1.0f, 1.0f, 0.45f) else Color.Transparent,
+    val level3BorderPressed: Color = if (isBlack) Color(1.0f, 1.0f, 1.0f, 0.85f) else Color.Transparent,
+    val level3BorderWidth: Dp = if (isBlack) 1.5.dp else 0.dp,
+    val level3Shadow: Color = if (isBlack) Color.Transparent else DefaultShadowColor.copy(0.05f),
+    val level3ShadowWidth: Dp = 4.dp,
+    val iconColor: Color = calculateIconColor(isBlack, tint, iconTint),
+    val iconColorPressed: Color =
+        if (isBlack) {
+            Color.White
+        } else if (tint != null && iconTint != null) {
+            iconTint
+        } else {
+            gray(1.0f, 0.50f)
+        },
 ) {
-    private fun gray(
-        luminosity: Float,
-        opacity: Float,
-    ): Color = Color(luminosity, luminosity, luminosity, opacity)
-
-    /** The light fill colour at [opacity]: white by default, else the tint. */
-    private fun light(opacity: Float): Color = tint?.copy(alpha = opacity) ?: gray(1.0f, opacity)
-
-    /** Icons on a tinted fill: black on light tints, white on dark ones. */
-    private val iconBase: Float = if (tint == null || tint.luminance() > 0.4f) 0.0f else 1.0f
-
-    val foregroundPadding: Dp = 8.dp
-    val padding: Dp = 4.dp
-
-    private val icons = gray(iconBase, 0.50f)
-    private val iconsPressed = gray(1.0f, 0.50f)
-
-    private val level3Fill = light(0.50f)
-    private val level3FillPressed = gray(0.0f, 0.50f)
-    val level3Shadow = DefaultShadowColor.copy(0.05f)
-    val level3ShadowWidth = 4.dp
-
-    private val level2Fill = light(0.125f)
-    private val level2FillPressed = gray(0.0f, 0.125f)
-    val level2Shadow = DefaultShadowColor.copy(0.05f)
-    val level2ShadowWidth = 4.dp
-
-    val level1Fill = light(0.10f)
-    val level1Shadow = DefaultShadowColor.copy(0.10f)
-    val level1ShadowWidth = 4.dp
-
-    val level0CornerRadius = 0.dp
-    val level0Fill = light(0.05f)
-    val level0Shadow = DefaultShadowColor.copy(0.10f)
-    val level0ShadowWidth = 2.dp
-
     fun compositeFill(pressed: Boolean): Color = if (pressed) level2FillPressed else level2Fill
+
+    fun compositeBorder(pressed: Boolean): Color = level2Border
 
     fun foregroundFill(pressed: Boolean): Color = if (pressed) level3FillPressed else level3Fill
 
-    fun icons(pressed: Boolean): Color = if (pressed) iconsPressed else icons
+    fun foregroundBorder(pressed: Boolean): Color = if (pressed) level3BorderPressed else level3Border
+
+    fun icons(pressed: Boolean): Color = if (pressed) iconColorPressed else iconColor
+
+    companion object {
+        private fun gray(
+            luminosity: Float,
+            opacity: Float,
+        ): Color = Color(luminosity, luminosity, luminosity, opacity)
+
+        private fun calculateIconColor(
+            isBlack: Boolean,
+            tint: Color?,
+            iconTint: Color?,
+        ): Color {
+            if (isBlack) return Color(1.0f, 1.0f, 1.0f, 0.70f)
+            if (iconTint != null) return iconTint.copy(alpha = 0.65f)
+            if (tint == null) return gray(0.0f, 0.50f)
+            // WCAG relative luminance break-even point with black vs white is ~0.179f
+            val isDark = tint.luminance() > 0.18f
+            return gray(if (isDark) 0.0f else 1.0f, 0.65f)
+        }
+
+        fun gray(): OmnidroidPadTheme = OmnidroidPadTheme()
+
+        fun accent(
+            tint: Color,
+            iconTint: Color? = null,
+        ): OmnidroidPadTheme = OmnidroidPadTheme(tint = tint, iconTint = iconTint)
+
+        fun black(): OmnidroidPadTheme = OmnidroidPadTheme(isBlack = true)
+    }
 }
 
 val LocalOmnidroidPadTheme =

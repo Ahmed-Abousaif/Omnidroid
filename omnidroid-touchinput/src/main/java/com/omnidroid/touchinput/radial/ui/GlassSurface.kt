@@ -13,6 +13,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
@@ -64,6 +65,8 @@ fun GlassSurface(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = Dp.Infinity,
     fillColor: Color = Color.White.copy(alpha = 0.15f),
+    borderColor: Color = Color.Transparent,
+    borderWidth: Dp = 0.dp,
     shadowColor: Color = Color.Black.copy(alpha = 0.3f),
     shadowWidth: Dp = 1.dp,
     content: @Composable BoxWithConstraintsScope.() -> Unit = { },
@@ -111,12 +114,34 @@ fun GlassSurface(
                         drawImage(shadowBitmap, topLeft = shadowOffset)
                     }
 
-                    drawRoundRect(
-                        color = fillColor,
-                        topLeft = Offset(0f, 0f),
-                        size = expandedSize,
-                        cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx),
-                    )
+                    if (fillColor.alpha > 0f) {
+                        drawRoundRect(
+                            color = fillColor,
+                            topLeft = Offset(0f, 0f),
+                            size = expandedSize,
+                            cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx),
+                        )
+                    }
+
+                    if (borderColor.alpha > 0f && borderWidth > 0.dp) {
+                        val strokeWidthPx = borderWidth.toPx()
+                        val halfStroke = strokeWidthPx / 2f
+                        drawRoundRect(
+                            color = borderColor,
+                            topLeft = Offset(halfStroke, halfStroke),
+                            size =
+                                Size(
+                                    (expandedSize.width - strokeWidthPx).coerceAtLeast(0f),
+                                    (expandedSize.height - strokeWidthPx).coerceAtLeast(0f),
+                                ),
+                            cornerRadius =
+                                CornerRadius(
+                                    (cornerRadiusPx - halfStroke).coerceAtLeast(0f),
+                                    (cornerRadiusPx - halfStroke).coerceAtLeast(0f),
+                                ),
+                            style = Stroke(width = strokeWidthPx),
+                        )
+                    }
 
                     drawContent()
                 }

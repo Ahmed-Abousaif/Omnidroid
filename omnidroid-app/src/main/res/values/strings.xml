@@ -386,6 +386,7 @@
     <string name="settings_title_gamepad_color">Gamepad color</string>
     <string name="gamepad_color_default">Gray</string>
     <string name="gamepad_color_accent">Accent</string>
+    <string name="gamepad_color_black">Black</string>
 
 
     <string name="settings_section_startup">Startup</string>

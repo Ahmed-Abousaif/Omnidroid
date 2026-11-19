@@ -167,12 +167,17 @@ private fun ControlsGamepadsGroup(
     }
 }
 
-/** Gamepad colour: the default gray pad, or the accent colour chosen under Display. */
+/** Gamepad colour: the default gray pad, accent colour, or high-contrast black. */
 @Composable
 private fun GamepadColorChoice() {
     OmnidroidSettingsSegmented(
         state = indexPreferenceState(R.string.pref_key_gamepad_color, GamepadColor.DEFAULT, GamepadColor.keys),
-        items = listOf(stringResource(R.string.gamepad_color_default), stringResource(R.string.gamepad_color_accent)),
+        items =
+            listOf(
+                stringResource(R.string.gamepad_color_default),
+                stringResource(R.string.gamepad_color_accent),
+                stringResource(R.string.gamepad_color_black),
+            ),
         titleRes = R.string.settings_title_gamepad_color,
     )
 }

@@ -1230,12 +1230,14 @@
         <error line="354" column="85" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/addconsole/ConsoleCatalogue.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
         <error line="121" column="17" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/addconsole/ConsoleManagement.kt">
         <error line="19" column="32" source="standard:condition-wrapping" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/addconsole/ConsoleManagementDetail.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
         <error line="76" column="21" source="standard:chain-method-continuation" />
         <error line="76" column="59" source="standard:chain-method-continuation" />
         <error line="76" column="90" source="standard:chain-method-continuation" />
@@ -1291,26 +1293,27 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/game/MobileGameScreen.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="117" column="31" source="standard:multiline-expression-wrapping" />
-        <error line="192" column="27" source="standard:multiline-expression-wrapping" />
-        <error line="199" column="11" source="standard:if-else-wrapping" />
-        <error line="199" column="16" source="standard:if-else-bracing" />
-        <error line="199" column="16" source="standard:if-else-wrapping" />
-        <error line="199" column="16" source="standard:multiline-if-else" />
-        <error line="200" column="29" source="standard:property-wrapping" />
-        <error line="200" column="53" source="standard:argument-list-wrapping" />
-        <error line="200" column="79" source="standard:argument-list-wrapping" />
-        <error line="200" column="101" source="standard:argument-list-wrapping" />
-        <error line="200" column="110" source="standard:argument-list-wrapping" />
-        <error line="200" column="121" source="standard:argument-list-wrapping" />
-        <error line="200" column="121" source="standard:max-line-length" />
-        <error line="205" column="34" source="standard:multiline-expression-wrapping" />
-        <error line="210" column="38" source="standard:multiline-expression-wrapping" />
-        <error line="569" column="43" source="standard:binary-expression-wrapping" />
-        <error line="569" column="79" source="standard:binary-expression-wrapping" />
-        <error line="569" column="121" source="standard:max-line-length" />
-        <error line="586" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="587" column="1" source="standard:no-consecutive-blank-lines" />
+        <error line="83" column="1" source="standard:no-unused-imports" />
+        <error line="121" column="31" source="standard:multiline-expression-wrapping" />
+        <error line="205" column="27" source="standard:multiline-expression-wrapping" />
+        <error line="212" column="11" source="standard:if-else-wrapping" />
+        <error line="212" column="16" source="standard:if-else-bracing" />
+        <error line="212" column="16" source="standard:if-else-wrapping" />
+        <error line="212" column="16" source="standard:multiline-if-else" />
+        <error line="213" column="29" source="standard:property-wrapping" />
+        <error line="213" column="53" source="standard:argument-list-wrapping" />
+        <error line="213" column="79" source="standard:argument-list-wrapping" />
+        <error line="213" column="101" source="standard:argument-list-wrapping" />
+        <error line="213" column="110" source="standard:argument-list-wrapping" />
+        <error line="213" column="121" source="standard:argument-list-wrapping" />
+        <error line="213" column="121" source="standard:max-line-length" />
+        <error line="218" column="34" source="standard:multiline-expression-wrapping" />
+        <error line="223" column="38" source="standard:multiline-expression-wrapping" />
+        <error line="584" column="43" source="standard:binary-expression-wrapping" />
+        <error line="584" column="79" source="standard:binary-expression-wrapping" />
+        <error line="584" column="121" source="standard:max-line-length" />
+        <error line="601" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="602" column="1" source="standard:no-consecutive-blank-lines" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/game/StylusPointerRouter.kt">
         <error line="8" column="36" source="standard:class-signature" />
@@ -1321,20 +1324,20 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/gamedetails/GameDetailsScreen.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="110" column="11" source="standard:property-naming" />
-        <error line="160" column="25" source="standard:multiline-expression-wrapping" />
-        <error line="189" column="28" source="standard:multiline-expression-wrapping" />
-        <error line="375" column="31" source="standard:multiline-expression-wrapping" />
-        <error line="376" column="32" source="standard:argument-list-wrapping" />
-        <error line="376" column="57" source="standard:argument-list-wrapping" />
-        <error line="376" column="66" source="standard:argument-list-wrapping" />
-        <error line="376" column="80" source="standard:argument-list-wrapping" />
+        <error line="109" column="11" source="standard:property-naming" />
+        <error line="159" column="25" source="standard:multiline-expression-wrapping" />
+        <error line="188" column="28" source="standard:multiline-expression-wrapping" />
+        <error line="374" column="31" source="standard:multiline-expression-wrapping" />
+        <error line="375" column="32" source="standard:argument-list-wrapping" />
+        <error line="375" column="57" source="standard:argument-list-wrapping" />
+        <error line="375" column="66" source="standard:argument-list-wrapping" />
+        <error line="375" column="80" source="standard:argument-list-wrapping" />
+        <error line="414" column="1" source="standard:indent" />
         <error line="415" column="1" source="standard:indent" />
-        <error line="416" column="1" source="standard:indent" />
-        <error line="475" column="121" source="standard:max-line-length" />
-        <error line="518" column="19" source="standard:multiline-expression-wrapping" />
-        <error line="692" column="25" source="standard:chain-method-continuation" />
-        <error line="818" column="121" source="standard:max-line-length" />
+        <error line="474" column="121" source="standard:max-line-length" />
+        <error line="517" column="19" source="standard:multiline-expression-wrapping" />
+        <error line="691" column="25" source="standard:chain-method-continuation" />
+        <error line="817" column="121" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/gamedetails/GameDetailsViewModel.kt">
         <error line="32" column="70" source="standard:function-expression-body" />
@@ -1667,74 +1670,75 @@
         <error line="15" column="1" source="standard:no-unused-imports" />
         <error line="16" column="1" source="standard:no-unused-imports" />
         <error line="121" column="1" source="standard:no-unused-imports" />
-        <error line="142" column="1" source="standard:no-unused-imports" />
+        <error line="141" column="1" source="standard:no-unused-imports" />
+        <error line="157" column="19" source="standard:property-naming" />
         <error line="158" column="19" source="standard:property-naming" />
         <error line="159" column="19" source="standard:property-naming" />
         <error line="160" column="19" source="standard:property-naming" />
         <error line="161" column="19" source="standard:property-naming" />
         <error line="162" column="19" source="standard:property-naming" />
         <error line="163" column="19" source="standard:property-naming" />
-        <error line="164" column="19" source="standard:property-naming" />
-        <error line="167" column="37" source="standard:class-signature" />
-        <error line="167" column="54" source="standard:class-signature" />
-        <error line="343" column="17" source="standard:chain-method-continuation" />
-        <error line="449" column="32" source="standard:class-signature" />
-        <error line="449" column="46" source="standard:class-signature" />
-        <error line="449" column="59" source="standard:class-signature" />
-        <error line="510" column="62" source="standard:wrapping" />
-        <error line="510" column="62" source="standard:argument-list-wrapping" />
-        <error line="510" column="85" source="standard:argument-list-wrapping" />
-        <error line="510" column="110" source="standard:argument-list-wrapping" />
-        <error line="510" column="114" source="standard:argument-list-wrapping" />
-        <error line="510" column="121" source="standard:max-line-length" />
-        <error line="511" column="62" source="standard:argument-list-wrapping" />
-        <error line="511" column="67" source="standard:argument-list-wrapping" />
-        <error line="511" column="121" source="standard:max-line-length" />
-        <error line="511" column="122" source="standard:wrapping" />
-        <error line="511" column="123" source="standard:argument-list-wrapping" />
-        <error line="511" column="123" source="standard:trailing-comma-on-call-site" />
-        <error line="627" column="19" source="standard:property-naming" />
-        <error line="716" column="31" source="standard:class-signature" />
-        <error line="716" column="45" source="standard:class-signature" />
-        <error line="716" column="60" source="standard:class-signature" />
-        <error line="716" column="87" source="standard:class-signature" />
-        <error line="720" column="25" source="standard:argument-list-wrapping" />
-        <error line="720" column="43" source="standard:argument-list-wrapping" />
-        <error line="720" column="114" source="standard:argument-list-wrapping" />
-        <error line="720" column="115" source="standard:chain-method-continuation" />
-        <error line="720" column="121" source="standard:max-line-length" />
-        <error line="720" column="130" source="standard:argument-list-wrapping" />
-        <error line="720" column="132" source="standard:chain-method-continuation" />
-        <error line="720" column="135" source="standard:argument-list-wrapping" />
-        <error line="770" column="62" source="standard:wrapping" />
-        <error line="770" column="62" source="standard:argument-list-wrapping" />
-        <error line="770" column="85" source="standard:argument-list-wrapping" />
-        <error line="770" column="110" source="standard:argument-list-wrapping" />
-        <error line="770" column="114" source="standard:argument-list-wrapping" />
-        <error line="770" column="121" source="standard:max-line-length" />
-        <error line="771" column="62" source="standard:argument-list-wrapping" />
-        <error line="771" column="67" source="standard:argument-list-wrapping" />
-        <error line="771" column="121" source="standard:max-line-length" />
-        <error line="771" column="122" source="standard:wrapping" />
-        <error line="771" column="123" source="standard:argument-list-wrapping" />
-        <error line="771" column="123" source="standard:trailing-comma-on-call-site" />
-        <error line="782" column="54" source="standard:argument-list-wrapping" />
-        <error line="782" column="67" source="standard:argument-list-wrapping" />
-        <error line="782" column="121" source="standard:max-line-length" />
-        <error line="864" column="17" source="standard:chain-method-continuation" />
-        <error line="897" column="25" source="standard:chain-method-continuation" />
-        <error line="1047" column="52" source="standard:argument-list-wrapping" />
-        <error line="1047" column="73" source="standard:argument-list-wrapping" />
-        <error line="1047" column="89" source="standard:argument-list-wrapping" />
-        <error line="1047" column="93" source="standard:argument-list-wrapping" />
-        <error line="1047" column="95" source="standard:argument-list-wrapping" />
-        <error line="1047" column="98" source="standard:argument-list-wrapping" />
-        <error line="1047" column="113" source="standard:argument-list-wrapping" />
-        <error line="1047" column="121" source="standard:max-line-length" />
-        <error line="1068" column="1" source="standard:no-consecutive-blank-lines" />
-        <error line="1110" column="17" source="standard:chain-method-continuation" />
-        <error line="1165" column="121" source="standard:max-line-length" />
-        <error line="1282" column="23" source="standard:multiline-expression-wrapping" />
+        <error line="166" column="37" source="standard:class-signature" />
+        <error line="166" column="54" source="standard:class-signature" />
+        <error line="342" column="17" source="standard:chain-method-continuation" />
+        <error line="451" column="33" source="standard:class-signature" />
+        <error line="451" column="47" source="standard:class-signature" />
+        <error line="451" column="60" source="standard:class-signature" />
+        <error line="456" column="5" source="standard:spacing-between-declarations-with-comments" />
+        <error line="514" column="62" source="standard:wrapping" />
+        <error line="514" column="62" source="standard:argument-list-wrapping" />
+        <error line="514" column="85" source="standard:argument-list-wrapping" />
+        <error line="514" column="110" source="standard:argument-list-wrapping" />
+        <error line="514" column="114" source="standard:argument-list-wrapping" />
+        <error line="514" column="121" source="standard:max-line-length" />
+        <error line="515" column="62" source="standard:argument-list-wrapping" />
+        <error line="515" column="67" source="standard:argument-list-wrapping" />
+        <error line="515" column="121" source="standard:max-line-length" />
+        <error line="515" column="122" source="standard:wrapping" />
+        <error line="515" column="123" source="standard:argument-list-wrapping" />
+        <error line="515" column="123" source="standard:trailing-comma-on-call-site" />
+        <error line="631" column="19" source="standard:property-naming" />
+        <error line="720" column="31" source="standard:class-signature" />
+        <error line="720" column="45" source="standard:class-signature" />
+        <error line="720" column="60" source="standard:class-signature" />
+        <error line="720" column="87" source="standard:class-signature" />
+        <error line="724" column="25" source="standard:argument-list-wrapping" />
+        <error line="724" column="43" source="standard:argument-list-wrapping" />
+        <error line="724" column="114" source="standard:argument-list-wrapping" />
+        <error line="724" column="115" source="standard:chain-method-continuation" />
+        <error line="724" column="121" source="standard:max-line-length" />
+        <error line="724" column="130" source="standard:argument-list-wrapping" />
+        <error line="724" column="132" source="standard:chain-method-continuation" />
+        <error line="724" column="135" source="standard:argument-list-wrapping" />
+        <error line="774" column="62" source="standard:wrapping" />
+        <error line="774" column="62" source="standard:argument-list-wrapping" />
+        <error line="774" column="85" source="standard:argument-list-wrapping" />
+        <error line="774" column="110" source="standard:argument-list-wrapping" />
+        <error line="774" column="114" source="standard:argument-list-wrapping" />
+        <error line="774" column="121" source="standard:max-line-length" />
+        <error line="775" column="62" source="standard:argument-list-wrapping" />
+        <error line="775" column="67" source="standard:argument-list-wrapping" />
+        <error line="775" column="121" source="standard:max-line-length" />
+        <error line="775" column="122" source="standard:wrapping" />
+        <error line="775" column="123" source="standard:argument-list-wrapping" />
+        <error line="775" column="123" source="standard:trailing-comma-on-call-site" />
+        <error line="786" column="54" source="standard:argument-list-wrapping" />
+        <error line="786" column="67" source="standard:argument-list-wrapping" />
+        <error line="786" column="121" source="standard:max-line-length" />
+        <error line="868" column="17" source="standard:chain-method-continuation" />
+        <error line="901" column="25" source="standard:chain-method-continuation" />
+        <error line="1051" column="52" source="standard:argument-list-wrapping" />
+        <error line="1051" column="73" source="standard:argument-list-wrapping" />
+        <error line="1051" column="89" source="standard:argument-list-wrapping" />
+        <error line="1051" column="93" source="standard:argument-list-wrapping" />
+        <error line="1051" column="95" source="standard:argument-list-wrapping" />
+        <error line="1051" column="98" source="standard:argument-list-wrapping" />
+        <error line="1051" column="113" source="standard:argument-list-wrapping" />
+        <error line="1051" column="121" source="standard:max-line-length" />
+        <error line="1072" column="1" source="standard:no-consecutive-blank-lines" />
+        <error line="1114" column="17" source="standard:chain-method-continuation" />
+        <error line="1169" column="121" source="standard:max-line-length" />
+        <error line="1286" column="23" source="standard:multiline-expression-wrapping" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/LibraryEmptyStates.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -1811,23 +1815,158 @@
         <error line="178" column="66" source="standard:function-signature" />
         <error line="178" column="91" source="standard:function-signature" />
         <error line="222" column="28" source="standard:multiline-expression-wrapping" />
-        <error line="253" column="25" source="standard:chain-method-continuation" />
-        <error line="401" column="21" source="standard:chain-method-continuation" />
-        <error line="438" column="13" source="standard:blank-line-before-declaration" />
-        <error line="438" column="22" source="standard:function-signature" />
-        <error line="438" column="48" source="standard:function-signature" />
-        <error line="438" column="60" source="standard:function-signature" />
-        <error line="439" column="58" source="standard:argument-list-wrapping" />
-        <error line="439" column="77" source="standard:argument-list-wrapping" />
-        <error line="439" column="88" source="standard:argument-list-wrapping" />
-        <error line="439" column="102" source="standard:argument-list-wrapping" />
-        <error line="439" column="115" source="standard:argument-list-wrapping" />
-        <error line="439" column="121" source="standard:max-line-length" />
-        <error line="439" column="132" source="standard:argument-list-wrapping" />
-        <error line="714" column="37" source="standard:chain-method-continuation" />
-        <error line="925" column="19" source="standard:property-naming" />
-        <error line="1043" column="21" source="standard:chain-method-continuation" />
-        <error line="1152" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="258" column="25" source="standard:chain-method-continuation" />
+        <error line="408" column="21" source="standard:chain-method-continuation" />
+        <error line="445" column="13" source="standard:blank-line-before-declaration" />
+        <error line="445" column="22" source="standard:function-signature" />
+        <error line="445" column="48" source="standard:function-signature" />
+        <error line="445" column="60" source="standard:function-signature" />
+        <error line="446" column="58" source="standard:argument-list-wrapping" />
+        <error line="446" column="77" source="standard:argument-list-wrapping" />
+        <error line="446" column="88" source="standard:argument-list-wrapping" />
+        <error line="446" column="102" source="standard:argument-list-wrapping" />
+        <error line="446" column="115" source="standard:argument-list-wrapping" />
+        <error line="446" column="121" source="standard:max-line-length" />
+        <error line="446" column="132" source="standard:argument-list-wrapping" />
+        <error line="680" column="31" source="standard:argument-list-wrapping" />
+        <error line="680" column="121" source="standard:max-line-length" />
+        <error line="680" column="152" source="standard:argument-list-wrapping" />
+        <error line="745" column="37" source="standard:chain-method-continuation" />
+        <error line="782" column="1" source="standard:indent" />
+        <error line="783" column="1" source="standard:indent" />
+        <error line="784" column="1" source="standard:indent" />
+        <error line="785" column="1" source="standard:indent" />
+        <error line="786" column="1" source="standard:indent" />
+        <error line="787" column="1" source="standard:indent" />
+        <error line="788" column="1" source="standard:indent" />
+        <error line="789" column="1" source="standard:indent" />
+        <error line="790" column="1" source="standard:indent" />
+        <error line="791" column="1" source="standard:indent" />
+        <error line="792" column="1" source="standard:indent" />
+        <error line="793" column="1" source="standard:indent" />
+        <error line="794" column="1" source="standard:indent" />
+        <error line="795" column="1" source="standard:indent" />
+        <error line="796" column="1" source="standard:indent" />
+        <error line="797" column="1" source="standard:indent" />
+        <error line="798" column="1" source="standard:indent" />
+        <error line="799" column="1" source="standard:indent" />
+        <error line="800" column="1" source="standard:indent" />
+        <error line="801" column="1" source="standard:indent" />
+        <error line="802" column="1" source="standard:indent" />
+        <error line="803" column="1" source="standard:indent" />
+        <error line="804" column="1" source="standard:indent" />
+        <error line="805" column="1" source="standard:indent" />
+        <error line="806" column="1" source="standard:indent" />
+        <error line="807" column="1" source="standard:indent" />
+        <error line="808" column="1" source="standard:indent" />
+        <error line="809" column="1" source="standard:indent" />
+        <error line="810" column="1" source="standard:indent" />
+        <error line="811" column="1" source="standard:indent" />
+        <error line="812" column="1" source="standard:indent" />
+        <error line="813" column="1" source="standard:indent" />
+        <error line="814" column="1" source="standard:indent" />
+        <error line="815" column="1" source="standard:indent" />
+        <error line="816" column="1" source="standard:indent" />
+        <error line="817" column="1" source="standard:indent" />
+        <error line="818" column="1" source="standard:indent" />
+        <error line="819" column="1" source="standard:indent" />
+        <error line="820" column="1" source="standard:indent" />
+        <error line="821" column="1" source="standard:indent" />
+        <error line="822" column="1" source="standard:indent" />
+        <error line="823" column="1" source="standard:indent" />
+        <error line="824" column="1" source="standard:indent" />
+        <error line="825" column="1" source="standard:indent" />
+        <error line="826" column="1" source="standard:indent" />
+        <error line="827" column="1" source="standard:indent" />
+        <error line="828" column="1" source="standard:indent" />
+        <error line="829" column="1" source="standard:indent" />
+        <error line="830" column="1" source="standard:indent" />
+        <error line="831" column="1" source="standard:indent" />
+        <error line="832" column="1" source="standard:indent" />
+        <error line="833" column="1" source="standard:indent" />
+        <error line="834" column="1" source="standard:indent" />
+        <error line="835" column="1" source="standard:indent" />
+        <error line="836" column="1" source="standard:indent" />
+        <error line="837" column="1" source="standard:indent" />
+        <error line="838" column="1" source="standard:indent" />
+        <error line="839" column="1" source="standard:indent" />
+        <error line="840" column="1" source="standard:indent" />
+        <error line="841" column="1" source="standard:indent" />
+        <error line="842" column="1" source="standard:indent" />
+        <error line="843" column="1" source="standard:indent" />
+        <error line="844" column="1" source="standard:indent" />
+        <error line="845" column="1" source="standard:indent" />
+        <error line="846" column="1" source="standard:indent" />
+        <error line="847" column="1" source="standard:indent" />
+        <error line="848" column="1" source="standard:indent" />
+        <error line="849" column="1" source="standard:indent" />
+        <error line="850" column="1" source="standard:indent" />
+        <error line="852" column="1" source="standard:indent" />
+        <error line="853" column="1" source="standard:indent" />
+        <error line="854" column="1" source="standard:indent" />
+        <error line="855" column="1" source="standard:indent" />
+        <error line="856" column="1" source="standard:indent" />
+        <error line="857" column="1" source="standard:indent" />
+        <error line="858" column="1" source="standard:indent" />
+        <error line="859" column="1" source="standard:indent" />
+        <error line="860" column="1" source="standard:indent" />
+        <error line="861" column="1" source="standard:indent" />
+        <error line="862" column="1" source="standard:indent" />
+        <error line="863" column="1" source="standard:indent" />
+        <error line="864" column="1" source="standard:indent" />
+        <error line="865" column="1" source="standard:indent" />
+        <error line="866" column="1" source="standard:indent" />
+        <error line="868" column="1" source="standard:indent" />
+        <error line="869" column="1" source="standard:indent" />
+        <error line="870" column="1" source="standard:indent" />
+        <error line="871" column="1" source="standard:indent" />
+        <error line="872" column="1" source="standard:indent" />
+        <error line="873" column="1" source="standard:indent" />
+        <error line="874" column="1" source="standard:indent" />
+        <error line="875" column="1" source="standard:indent" />
+        <error line="876" column="1" source="standard:indent" />
+        <error line="877" column="1" source="standard:indent" />
+        <error line="878" column="1" source="standard:indent" />
+        <error line="879" column="1" source="standard:indent" />
+        <error line="880" column="1" source="standard:indent" />
+        <error line="881" column="1" source="standard:indent" />
+        <error line="882" column="1" source="standard:indent" />
+        <error line="883" column="1" source="standard:indent" />
+        <error line="884" column="1" source="standard:indent" />
+        <error line="885" column="1" source="standard:indent" />
+        <error line="886" column="1" source="standard:indent" />
+        <error line="887" column="1" source="standard:indent" />
+        <error line="888" column="1" source="standard:indent" />
+        <error line="889" column="1" source="standard:indent" />
+        <error line="890" column="1" source="standard:indent" />
+        <error line="891" column="1" source="standard:indent" />
+        <error line="892" column="1" source="standard:indent" />
+        <error line="893" column="1" source="standard:indent" />
+        <error line="894" column="1" source="standard:indent" />
+        <error line="895" column="1" source="standard:indent" />
+        <error line="896" column="1" source="standard:indent" />
+        <error line="897" column="1" source="standard:indent" />
+        <error line="898" column="1" source="standard:indent" />
+        <error line="899" column="1" source="standard:indent" />
+        <error line="900" column="1" source="standard:indent" />
+        <error line="901" column="1" source="standard:indent" />
+        <error line="902" column="1" source="standard:indent" />
+        <error line="903" column="1" source="standard:indent" />
+        <error line="904" column="1" source="standard:indent" />
+        <error line="905" column="1" source="standard:indent" />
+        <error line="906" column="1" source="standard:indent" />
+        <error line="907" column="1" source="standard:indent" />
+        <error line="908" column="1" source="standard:indent" />
+        <error line="909" column="1" source="standard:indent" />
+        <error line="910" column="1" source="standard:indent" />
+        <error line="911" column="1" source="standard:indent" />
+        <error line="912" column="1" source="standard:indent" />
+        <error line="913" column="1" source="standard:indent" />
+        <error line="914" column="1" source="standard:indent" />
+        <error line="915" column="1" source="standard:indent" />
+        <error line="957" column="19" source="standard:property-naming" />
+        <error line="1075" column="21" source="standard:chain-method-continuation" />
+        <error line="1184" column="24" source="standard:multiline-expression-wrapping" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/LibraryStartupStore.kt">
         <error line="11" column="27" source="standard:class-signature" />
@@ -1838,22 +1977,53 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/LibraryTopBar.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="622" column="25" source="standard:chain-method-continuation" />
-        <error line="718" column="1" source="standard:no-consecutive-blank-lines" />
+        <error line="257" column="40" source="standard:multiline-expression-wrapping" />
+        <error line="264" column="27" source="standard:if-else-wrapping" />
+        <error line="264" column="32" source="standard:if-else-bracing" />
+        <error line="264" column="32" source="standard:if-else-wrapping" />
+        <error line="264" column="32" source="standard:multiline-if-else" />
+        <error line="265" column="40" source="standard:multiline-expression-wrapping" />
+        <error line="283" column="27" source="standard:if-else-wrapping" />
+        <error line="283" column="32" source="standard:if-else-bracing" />
+        <error line="283" column="32" source="standard:if-else-wrapping" />
+        <error line="283" column="32" source="standard:multiline-if-else" />
+        <error line="313" column="19" source="standard:if-else-wrapping" />
+        <error line="313" column="24" source="standard:if-else-bracing" />
+        <error line="313" column="24" source="standard:if-else-wrapping" />
+        <error line="313" column="24" source="standard:multiline-if-else" />
+        <error line="337" column="35" source="standard:if-else-wrapping" />
+        <error line="337" column="35" source="standard:multiline-if-else" />
+        <error line="338" column="14" source="standard:if-else-wrapping" />
+        <error line="338" column="14" source="standard:multiline-if-else" />
+        <error line="702" column="25" source="standard:chain-method-continuation" />
+        <error line="798" column="1" source="standard:no-consecutive-blank-lines" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/LibraryViewModel.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="51" column="70" source="standard:function-expression-body" />
-        <error line="129" column="60" source="standard:chain-method-continuation" />
-        <error line="129" column="78" source="standard:chain-method-continuation" />
-        <error line="198" column="23" source="standard:multiline-expression-wrapping" />
-        <error line="223" column="40" source="standard:function-expression-body" />
-        <error line="227" column="45" source="standard:function-expression-body" />
-        <error line="260" column="36" source="standard:chain-method-continuation" />
-        <error line="298" column="36" source="standard:chain-method-continuation" />
-        <error line="330" column="23" source="standard:chain-method-continuation" />
-        <error line="378" column="24" source="standard:class-signature" />
-        <error line="378" column="44" source="standard:class-signature" />
+        <error line="52" column="70" source="standard:function-expression-body" />
+        <error line="96" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="103" column="17" source="standard:argument-list-wrapping" />
+        <error line="103" column="34" source="standard:argument-list-wrapping" />
+        <error line="103" column="46" source="standard:argument-list-wrapping" />
+        <error line="103" column="56" source="standard:argument-list-wrapping" />
+        <error line="103" column="85" source="standard:argument-list-wrapping" />
+        <error line="103" column="89" source="standard:function-literal" />
+        <error line="103" column="95" source="standard:function-literal" />
+        <error line="103" column="103" source="standard:function-literal" />
+        <error line="103" column="109" source="standard:function-literal" />
+        <error line="103" column="121" source="standard:max-line-length" />
+        <error line="103" column="126" source="standard:function-literal" />
+        <error line="147" column="60" source="standard:chain-method-continuation" />
+        <error line="147" column="78" source="standard:chain-method-continuation" />
+        <error line="218" column="23" source="standard:multiline-expression-wrapping" />
+        <error line="243" column="40" source="standard:function-expression-body" />
+        <error line="247" column="45" source="standard:function-expression-body" />
+        <error line="280" column="36" source="standard:chain-method-continuation" />
+        <error line="318" column="36" source="standard:chain-method-continuation" />
+        <error line="350" column="23" source="standard:chain-method-continuation" />
+        <error line="384" column="58" source="standard:function-expression-body" />
+        <error line="403" column="24" source="standard:class-signature" />
+        <error line="403" column="44" source="standard:class-signature" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/RegisteredSystemsStore.kt">
         <error line="10" column="30" source="standard:class-signature" />
@@ -1923,10 +2093,11 @@
         <error line="233" column="34" source="standard:argument-list-wrapping" />
         <error line="234" column="16" source="standard:argument-list-wrapping" />
         <error line="255" column="17" source="standard:multiline-expression-wrapping" />
-        <error line="306" column="17" source="standard:chain-method-continuation" />
-        <error line="355" column="1" source="standard:no-consecutive-blank-lines" />
+        <error line="307" column="17" source="standard:chain-method-continuation" />
+        <error line="356" column="1" source="standard:no-consecutive-blank-lines" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/gamemenu/LibraryGameMenu.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
         <error line="108" column="23" source="standard:multiline-expression-wrapping" />
         <error line="124" column="41" source="standard:chain-method-continuation" />
         <error line="124" column="72" source="standard:chain-method-continuation" />
@@ -2059,12 +2230,12 @@
         <error line="233" column="31" source="standard:argument-list-wrapping" />
         <error line="234" column="48" source="standard:argument-list-wrapping" />
         <error line="234" column="121" source="standard:max-line-length" />
-        <error line="234" column="122" source="standard:wrapping" />
-        <error line="234" column="123" source="standard:argument-list-wrapping" />
-        <error line="234" column="123" source="standard:trailing-comma-on-call-site" />
         <error line="234" column="124" source="standard:wrapping" />
-        <error line="234" column="125" source="standard:statement-wrapping" />
-        <error line="234" column="125" source="standard:function-literal" />
+        <error line="234" column="125" source="standard:argument-list-wrapping" />
+        <error line="234" column="125" source="standard:trailing-comma-on-call-site" />
+        <error line="234" column="126" source="standard:wrapping" />
+        <error line="234" column="127" source="standard:statement-wrapping" />
+        <error line="234" column="127" source="standard:function-literal" />
         <error line="241" column="28" source="standard:wrapping" />
         <error line="241" column="28" source="standard:argument-list-wrapping" />
         <error line="241" column="40" source="standard:argument-list-wrapping" />
@@ -2543,27 +2714,27 @@
         <error line="902" column="1" source="standard:indent" />
         <error line="903" column="1" source="standard:indent" />
         <error line="904" column="1" source="standard:indent" />
-        <error line="904" column="27" source="standard:if-else-wrapping" />
-        <error line="904" column="32" source="standard:if-else-bracing" />
-        <error line="904" column="32" source="standard:if-else-wrapping" />
-        <error line="904" column="32" source="standard:multiline-if-else" />
-        <error line="904" column="33" source="standard:wrapping" />
         <error line="905" column="1" source="standard:indent" />
-        <error line="905" column="73" source="standard:if-else-wrapping" />
-        <error line="905" column="73" source="standard:multiline-if-else" />
         <error line="906" column="1" source="standard:indent" />
-        <error line="906" column="34" source="standard:if-else-wrapping" />
-        <error line="906" column="34" source="standard:multiline-if-else" />
         <error line="907" column="1" source="standard:indent" />
-        <error line="907" column="25" source="standard:wrapping" />
         <error line="908" column="1" source="standard:indent" />
         <error line="909" column="1" source="standard:indent" />
+        <error line="910" column="1" source="standard:indent" />
+        <error line="910" column="27" source="standard:if-else-wrapping" />
+        <error line="910" column="32" source="standard:if-else-bracing" />
+        <error line="910" column="32" source="standard:if-else-wrapping" />
+        <error line="910" column="32" source="standard:multiline-if-else" />
+        <error line="910" column="33" source="standard:wrapping" />
         <error line="911" column="1" source="standard:indent" />
+        <error line="911" column="73" source="standard:if-else-wrapping" />
+        <error line="911" column="73" source="standard:multiline-if-else" />
         <error line="912" column="1" source="standard:indent" />
+        <error line="912" column="34" source="standard:if-else-wrapping" />
+        <error line="912" column="34" source="standard:multiline-if-else" />
         <error line="913" column="1" source="standard:indent" />
+        <error line="913" column="25" source="standard:wrapping" />
         <error line="914" column="1" source="standard:indent" />
         <error line="915" column="1" source="standard:indent" />
-        <error line="916" column="1" source="standard:indent" />
         <error line="917" column="1" source="standard:indent" />
         <error line="918" column="1" source="standard:indent" />
         <error line="919" column="1" source="standard:indent" />
@@ -2578,9 +2749,15 @@
         <error line="928" column="1" source="standard:indent" />
         <error line="929" column="1" source="standard:indent" />
         <error line="930" column="1" source="standard:indent" />
-        <error line="935" column="61" source="standard:function-expression-body" />
-        <error line="975" column="69" source="standard:function-expression-body" />
-        <error line="1034" column="55" source="standard:function-expression-body" />
+        <error line="931" column="1" source="standard:indent" />
+        <error line="932" column="1" source="standard:indent" />
+        <error line="933" column="1" source="standard:indent" />
+        <error line="934" column="1" source="standard:indent" />
+        <error line="935" column="1" source="standard:indent" />
+        <error line="936" column="1" source="standard:indent" />
+        <error line="941" column="61" source="standard:function-expression-body" />
+        <error line="981" column="69" source="standard:function-expression-body" />
+        <error line="1040" column="55" source="standard:function-expression-body" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/main/MainNavigationRoutes.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -2640,6 +2817,7 @@
         <error line="74" column="139" source="standard:argument-list-wrapping" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/profile/ProfileScreen.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
         <error line="182" column="29" source="standard:chain-method-continuation" />
         <error line="182" column="43" source="standard:chain-method-continuation" />
         <error line="182" column="59" source="standard:chain-method-continuation" />
@@ -2655,6 +2833,7 @@
         <error line="31" column="20" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/profile/ProfileSummary.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
         <error line="107" column="29" source="standard:chain-method-continuation" />
         <error line="107" column="56" source="standard:chain-method-continuation" />
         <error line="108" column="39" source="standard:chain-method-continuation" />
@@ -2686,9 +2865,9 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/SettingsManager.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="20" column="23" source="standard:class-signature" />
-        <error line="20" column="53" source="standard:class-signature" />
-        <error line="20" column="95" source="standard:class-signature" />
+        <error line="19" column="23" source="standard:class-signature" />
+        <error line="19" column="53" source="standard:class-signature" />
+        <error line="19" column="95" source="standard:class-signature" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/bios/BiosSettingsScreen.kt">
         <error line="2" column="1" source="standard:import-ordering" />
@@ -2719,21 +2898,21 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/deviceprofile/DeviceProfileScreen.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="710" column="21" source="standard:argument-list-wrapping" />
-        <error line="710" column="30" source="standard:argument-list-wrapping" />
-        <error line="710" column="37" source="standard:argument-list-wrapping" />
-        <error line="710" column="45" source="standard:argument-list-wrapping" />
-        <error line="710" column="53" source="standard:argument-list-wrapping" />
-        <error line="710" column="62" source="standard:argument-list-wrapping" />
-        <error line="710" column="73" source="standard:argument-list-wrapping" />
-        <error line="710" column="79" source="standard:argument-list-wrapping" />
-        <error line="711" column="20" source="standard:argument-list-wrapping" />
-        <error line="711" column="28" source="standard:argument-list-wrapping" />
-        <error line="711" column="36" source="standard:argument-list-wrapping" />
-        <error line="711" column="44" source="standard:argument-list-wrapping" />
-        <error line="711" column="51" source="standard:argument-list-wrapping" />
-        <error line="711" column="59" source="standard:argument-list-wrapping" />
-        <error line="711" column="66" source="standard:argument-list-wrapping" />
+        <error line="711" column="21" source="standard:argument-list-wrapping" />
+        <error line="711" column="30" source="standard:argument-list-wrapping" />
+        <error line="711" column="37" source="standard:argument-list-wrapping" />
+        <error line="711" column="45" source="standard:argument-list-wrapping" />
+        <error line="711" column="53" source="standard:argument-list-wrapping" />
+        <error line="711" column="62" source="standard:argument-list-wrapping" />
+        <error line="711" column="73" source="standard:argument-list-wrapping" />
+        <error line="711" column="79" source="standard:argument-list-wrapping" />
+        <error line="712" column="20" source="standard:argument-list-wrapping" />
+        <error line="712" column="28" source="standard:argument-list-wrapping" />
+        <error line="712" column="36" source="standard:argument-list-wrapping" />
+        <error line="712" column="44" source="standard:argument-list-wrapping" />
+        <error line="712" column="51" source="standard:argument-list-wrapping" />
+        <error line="712" column="59" source="standard:argument-list-wrapping" />
+        <error line="712" column="66" source="standard:argument-list-wrapping" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/deviceprofile/DeviceProfileViewModel.kt">
         <error line="56" column="70" source="standard:function-expression-body" />
@@ -2752,16 +2931,16 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/general/DisplaySettingsSection.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="36" column="72" source="standard:chain-method-continuation" />
+        <error line="41" column="72" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/general/EmulationSettingsSection.kt">
         <error line="27" column="121" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/general/LibrarySettingsSection.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="74" column="5" source="standard:function-signature" />
-        <error line="74" column="54" source="standard:function-signature" />
-        <error line="173" column="17" source="standard:multiline-expression-wrapping" />
+        <error line="87" column="5" source="standard:function-signature" />
+        <error line="87" column="54" source="standard:function-signature" />
+        <error line="186" column="17" source="standard:multiline-expression-wrapping" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/general/SettingsBackStack.kt">
         <error line="4" column="42" source="standard:class-signature" />
@@ -3026,138 +3205,138 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/dialog/OmnidroidDialog.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="113" column="1" source="standard:blank-line-before-declaration" />
-        <error line="116" column="29" source="standard:class-signature" />
-        <error line="116" column="50" source="standard:class-signature" />
-        <error line="116" column="78" source="standard:class-signature" />
-        <error line="116" column="107" source="standard:class-signature" />
-        <error line="145" column="22" source="standard:multiline-expression-wrapping" />
-        <error line="153" column="31" source="standard:argument-list-wrapping" />
-        <error line="153" column="41" source="standard:argument-list-wrapping" />
-        <error line="153" column="48" source="standard:argument-list-wrapping" />
-        <error line="153" column="54" source="standard:argument-list-wrapping" />
-        <error line="153" column="60" source="standard:argument-list-wrapping" />
-        <error line="153" column="75" source="standard:argument-list-wrapping" />
-        <error line="154" column="26" source="standard:argument-list-wrapping" />
-        <error line="154" column="33" source="standard:argument-list-wrapping" />
-        <error line="154" column="45" source="standard:argument-list-wrapping" />
-        <error line="154" column="68" source="standard:argument-list-wrapping" />
-        <error line="154" column="88" source="standard:argument-list-wrapping" />
-        <error line="187" column="18" source="standard:multiline-expression-wrapping" />
-        <error line="198" column="18" source="standard:multiline-expression-wrapping" />
-        <error line="205" column="28" source="standard:multiline-expression-wrapping" />
-        <error line="205" column="28" source="standard:wrapping" />
-        <error line="205" column="36" source="standard:chain-method-continuation" />
-        <error line="205" column="50" source="standard:chain-method-continuation" />
-        <error line="210" column="15" source="standard:if-else-wrapping" />
-        <error line="210" column="20" source="standard:if-else-bracing" />
-        <error line="210" column="20" source="standard:if-else-wrapping" />
-        <error line="210" column="20" source="standard:multiline-if-else" />
-        <error line="215" column="9" source="standard:wrapping" />
-        <error line="219" column="17" source="standard:multiline-expression-wrapping" />
-        <error line="219" column="17" source="standard:wrapping" />
-        <error line="221" column="13" source="standard:wrapping" />
-        <error line="223" column="25" source="standard:chain-method-continuation" />
-        <error line="225" column="68" source="standard:argument-list-wrapping" />
-        <error line="226" column="70" source="standard:argument-list-wrapping" />
-        <error line="228" column="21" source="standard:chain-method-continuation" />
-        <error line="235" column="35" source="standard:multiline-expression-wrapping" />
-        <error line="237" column="35" source="standard:multiline-expression-wrapping" />
-        <error line="243" column="32" source="standard:multiline-expression-wrapping" />
-        <error line="244" column="34" source="standard:wrapping" />
-        <error line="244" column="34" source="standard:argument-list-wrapping" />
-        <error line="244" column="93" source="standard:wrapping" />
-        <error line="244" column="94" source="standard:argument-list-wrapping" />
-        <error line="244" column="100" source="standard:multiline-expression-wrapping" />
-        <error line="249" column="25" source="standard:wrapping" />
-        <error line="249" column="26" source="standard:argument-list-wrapping" />
-        <error line="250" column="31" source="standard:argument-list-wrapping" />
-        <error line="250" column="43" source="standard:binary-expression-wrapping" />
-        <error line="250" column="80" source="standard:argument-list-wrapping" />
-        <error line="250" column="97" source="standard:argument-list-wrapping" />
-        <error line="250" column="112" source="standard:chain-method-continuation" />
-        <error line="250" column="121" source="standard:max-line-length" />
-        <error line="250" column="127" source="standard:argument-list-wrapping" />
-        <error line="263" column="41" source="standard:chain-method-continuation" />
-        <error line="275" column="66" source="standard:argument-list-wrapping" />
-        <error line="275" column="102" source="standard:chain-method-continuation" />
-        <error line="275" column="108" source="standard:argument-list-wrapping" />
-        <error line="275" column="121" source="standard:max-line-length" />
-        <error line="275" column="140" source="standard:argument-list-wrapping" />
-        <error line="275" column="141" source="standard:argument-list-wrapping" />
-        <error line="285" column="74" source="standard:binary-expression-wrapping" />
-        <error line="285" column="106" source="standard:argument-list-wrapping" />
-        <error line="285" column="121" source="standard:max-line-length" />
-        <error line="285" column="123" source="standard:argument-list-wrapping" />
-        <error line="285" column="135" source="standard:argument-list-wrapping" />
-        <error line="286" column="56" source="standard:multiline-expression-wrapping" />
-        <error line="293" column="103" source="standard:chain-method-continuation" />
-        <error line="293" column="111" source="standard:argument-list-wrapping" />
-        <error line="293" column="115" source="standard:argument-list-wrapping" />
-        <error line="293" column="121" source="standard:max-line-length" />
-        <error line="293" column="127" source="standard:argument-list-wrapping" />
-        <error line="295" column="61" source="standard:chain-method-continuation" />
-        <error line="303" column="78" source="standard:binary-expression-wrapping" />
-        <error line="303" column="101" source="standard:chain-method-continuation" />
-        <error line="303" column="117" source="standard:argument-list-wrapping" />
-        <error line="303" column="121" source="standard:max-line-length" />
-        <error line="303" column="132" source="standard:argument-list-wrapping" />
-        <error line="310" column="57" source="standard:chain-method-continuation" />
-        <error line="316" column="87" source="standard:binary-expression-wrapping" />
-        <error line="316" column="121" source="standard:max-line-length" />
-        <error line="316" column="123" source="standard:binary-expression-wrapping" />
-        <error line="323" column="45" source="standard:chain-method-continuation" />
-        <error line="323" column="60" source="standard:chain-method-continuation" />
-        <error line="325" column="72" source="standard:chain-method-continuation" />
-        <error line="325" column="82" source="standard:argument-list-wrapping" />
-        <error line="325" column="108" source="standard:argument-list-wrapping" />
-        <error line="325" column="121" source="standard:argument-list-wrapping" />
-        <error line="325" column="121" source="standard:max-line-length" />
-        <error line="334" column="62" source="standard:multiline-expression-wrapping" />
-        <error line="334" column="62" source="standard:wrapping" />
-        <error line="334" column="62" source="standard:argument-list-wrapping" />
-        <error line="343" column="45" source="standard:chain-method-continuation" />
-        <error line="343" column="72" source="standard:chain-method-continuation" />
-        <error line="348" column="43" source="standard:binary-expression-wrapping" />
-        <error line="348" column="62" source="standard:binary-expression-wrapping" />
-        <error line="348" column="101" source="standard:binary-expression-wrapping" />
-        <error line="348" column="121" source="standard:max-line-length" />
-        <error line="362" column="30" source="standard:function-signature" />
-        <error line="362" column="50" source="standard:function-signature" />
-        <error line="362" column="63" source="standard:function-signature" />
-        <error line="373" column="29" source="standard:function-signature" />
-        <error line="373" column="54" source="standard:function-signature" />
-        <error line="373" column="72" source="standard:function-signature" />
-        <error line="380" column="27" source="standard:multiline-expression-wrapping" />
-        <error line="389" column="29" source="standard:function-signature" />
-        <error line="389" column="47" source="standard:function-signature" />
-        <error line="389" column="67" source="standard:function-signature" />
-        <error line="389" column="88" source="standard:function-signature" />
-        <error line="405" column="14" source="standard:argument-list-wrapping" />
-        <error line="405" column="47" source="standard:argument-list-wrapping" />
-        <error line="405" column="74" source="standard:argument-list-wrapping" />
-        <error line="405" column="99" source="standard:argument-list-wrapping" />
-        <error line="405" column="104" source="standard:argument-list-wrapping" />
-        <error line="405" column="107" source="standard:argument-list-wrapping" />
-        <error line="405" column="121" source="standard:max-line-length" />
-        <error line="405" column="130" source="standard:argument-list-wrapping" />
-        <error line="421" column="26" source="standard:multiline-expression-wrapping" />
-        <error line="422" column="15" source="standard:argument-list-wrapping" />
-        <error line="422" column="53" source="standard:binary-expression-wrapping" />
-        <error line="422" column="99" source="standard:argument-list-wrapping" />
-        <error line="422" column="110" source="standard:argument-list-wrapping" />
-        <error line="422" column="121" source="standard:max-line-length" />
-        <error line="422" column="125" source="standard:argument-list-wrapping" />
-        <error line="428" column="32" source="standard:argument-list-wrapping" />
-        <error line="428" column="59" source="standard:argument-list-wrapping" />
-        <error line="428" column="78" source="standard:argument-list-wrapping" />
-        <error line="429" column="22" source="standard:multiline-expression-wrapping" />
-        <error line="439" column="32" source="standard:argument-list-wrapping" />
-        <error line="439" column="59" source="standard:argument-list-wrapping" />
-        <error line="439" column="78" source="standard:argument-list-wrapping" />
-        <error line="441" column="22" source="standard:multiline-expression-wrapping" />
-        <error line="442" column="121" source="standard:max-line-length" />
+        <error line="114" column="1" source="standard:blank-line-before-declaration" />
+        <error line="117" column="29" source="standard:class-signature" />
+        <error line="117" column="50" source="standard:class-signature" />
+        <error line="117" column="78" source="standard:class-signature" />
+        <error line="117" column="107" source="standard:class-signature" />
+        <error line="146" column="22" source="standard:multiline-expression-wrapping" />
+        <error line="154" column="31" source="standard:argument-list-wrapping" />
+        <error line="154" column="41" source="standard:argument-list-wrapping" />
+        <error line="154" column="48" source="standard:argument-list-wrapping" />
+        <error line="154" column="54" source="standard:argument-list-wrapping" />
+        <error line="154" column="60" source="standard:argument-list-wrapping" />
+        <error line="154" column="75" source="standard:argument-list-wrapping" />
+        <error line="155" column="26" source="standard:argument-list-wrapping" />
+        <error line="155" column="33" source="standard:argument-list-wrapping" />
+        <error line="155" column="45" source="standard:argument-list-wrapping" />
+        <error line="155" column="68" source="standard:argument-list-wrapping" />
+        <error line="155" column="88" source="standard:argument-list-wrapping" />
+        <error line="188" column="18" source="standard:multiline-expression-wrapping" />
+        <error line="199" column="18" source="standard:multiline-expression-wrapping" />
+        <error line="206" column="28" source="standard:multiline-expression-wrapping" />
+        <error line="206" column="28" source="standard:wrapping" />
+        <error line="206" column="36" source="standard:chain-method-continuation" />
+        <error line="206" column="50" source="standard:chain-method-continuation" />
+        <error line="211" column="15" source="standard:if-else-wrapping" />
+        <error line="211" column="20" source="standard:if-else-bracing" />
+        <error line="211" column="20" source="standard:if-else-wrapping" />
+        <error line="211" column="20" source="standard:multiline-if-else" />
+        <error line="216" column="9" source="standard:wrapping" />
+        <error line="220" column="17" source="standard:multiline-expression-wrapping" />
+        <error line="220" column="17" source="standard:wrapping" />
+        <error line="222" column="13" source="standard:wrapping" />
+        <error line="224" column="25" source="standard:chain-method-continuation" />
+        <error line="226" column="68" source="standard:argument-list-wrapping" />
+        <error line="227" column="70" source="standard:argument-list-wrapping" />
+        <error line="229" column="21" source="standard:chain-method-continuation" />
+        <error line="236" column="35" source="standard:multiline-expression-wrapping" />
+        <error line="238" column="35" source="standard:multiline-expression-wrapping" />
+        <error line="244" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="245" column="34" source="standard:wrapping" />
+        <error line="245" column="34" source="standard:argument-list-wrapping" />
+        <error line="245" column="93" source="standard:wrapping" />
+        <error line="245" column="94" source="standard:argument-list-wrapping" />
+        <error line="245" column="100" source="standard:multiline-expression-wrapping" />
+        <error line="250" column="25" source="standard:wrapping" />
+        <error line="250" column="26" source="standard:argument-list-wrapping" />
+        <error line="251" column="31" source="standard:argument-list-wrapping" />
+        <error line="251" column="43" source="standard:binary-expression-wrapping" />
+        <error line="251" column="80" source="standard:argument-list-wrapping" />
+        <error line="251" column="97" source="standard:argument-list-wrapping" />
+        <error line="251" column="112" source="standard:chain-method-continuation" />
+        <error line="251" column="121" source="standard:max-line-length" />
+        <error line="251" column="127" source="standard:argument-list-wrapping" />
+        <error line="264" column="41" source="standard:chain-method-continuation" />
+        <error line="276" column="66" source="standard:argument-list-wrapping" />
+        <error line="276" column="102" source="standard:chain-method-continuation" />
+        <error line="276" column="108" source="standard:argument-list-wrapping" />
+        <error line="276" column="121" source="standard:max-line-length" />
+        <error line="276" column="140" source="standard:argument-list-wrapping" />
+        <error line="276" column="141" source="standard:argument-list-wrapping" />
+        <error line="286" column="74" source="standard:binary-expression-wrapping" />
+        <error line="286" column="106" source="standard:argument-list-wrapping" />
+        <error line="286" column="121" source="standard:max-line-length" />
+        <error line="286" column="123" source="standard:argument-list-wrapping" />
+        <error line="286" column="135" source="standard:argument-list-wrapping" />
+        <error line="287" column="56" source="standard:multiline-expression-wrapping" />
+        <error line="294" column="103" source="standard:chain-method-continuation" />
+        <error line="294" column="111" source="standard:argument-list-wrapping" />
+        <error line="294" column="115" source="standard:argument-list-wrapping" />
+        <error line="294" column="121" source="standard:max-line-length" />
+        <error line="294" column="127" source="standard:argument-list-wrapping" />
+        <error line="296" column="61" source="standard:chain-method-continuation" />
+        <error line="304" column="78" source="standard:binary-expression-wrapping" />
+        <error line="304" column="101" source="standard:chain-method-continuation" />
+        <error line="304" column="117" source="standard:argument-list-wrapping" />
+        <error line="304" column="121" source="standard:max-line-length" />
+        <error line="304" column="132" source="standard:argument-list-wrapping" />
+        <error line="311" column="57" source="standard:chain-method-continuation" />
+        <error line="317" column="87" source="standard:binary-expression-wrapping" />
+        <error line="317" column="121" source="standard:max-line-length" />
+        <error line="317" column="123" source="standard:binary-expression-wrapping" />
+        <error line="324" column="45" source="standard:chain-method-continuation" />
+        <error line="324" column="60" source="standard:chain-method-continuation" />
+        <error line="326" column="72" source="standard:chain-method-continuation" />
+        <error line="326" column="82" source="standard:argument-list-wrapping" />
+        <error line="326" column="108" source="standard:argument-list-wrapping" />
+        <error line="326" column="121" source="standard:argument-list-wrapping" />
+        <error line="326" column="121" source="standard:max-line-length" />
+        <error line="335" column="62" source="standard:multiline-expression-wrapping" />
+        <error line="335" column="62" source="standard:wrapping" />
+        <error line="335" column="62" source="standard:argument-list-wrapping" />
+        <error line="344" column="45" source="standard:chain-method-continuation" />
+        <error line="344" column="72" source="standard:chain-method-continuation" />
+        <error line="349" column="43" source="standard:binary-expression-wrapping" />
+        <error line="349" column="62" source="standard:binary-expression-wrapping" />
+        <error line="349" column="101" source="standard:binary-expression-wrapping" />
+        <error line="349" column="121" source="standard:max-line-length" />
+        <error line="363" column="30" source="standard:function-signature" />
+        <error line="363" column="50" source="standard:function-signature" />
+        <error line="363" column="63" source="standard:function-signature" />
+        <error line="374" column="29" source="standard:function-signature" />
+        <error line="374" column="54" source="standard:function-signature" />
+        <error line="374" column="72" source="standard:function-signature" />
+        <error line="381" column="27" source="standard:multiline-expression-wrapping" />
+        <error line="390" column="29" source="standard:function-signature" />
+        <error line="390" column="47" source="standard:function-signature" />
+        <error line="390" column="67" source="standard:function-signature" />
+        <error line="390" column="88" source="standard:function-signature" />
+        <error line="406" column="14" source="standard:argument-list-wrapping" />
+        <error line="406" column="47" source="standard:argument-list-wrapping" />
+        <error line="406" column="74" source="standard:argument-list-wrapping" />
+        <error line="406" column="99" source="standard:argument-list-wrapping" />
+        <error line="406" column="104" source="standard:argument-list-wrapping" />
+        <error line="406" column="107" source="standard:argument-list-wrapping" />
+        <error line="406" column="121" source="standard:max-line-length" />
+        <error line="406" column="132" source="standard:argument-list-wrapping" />
+        <error line="422" column="26" source="standard:multiline-expression-wrapping" />
+        <error line="423" column="15" source="standard:argument-list-wrapping" />
+        <error line="423" column="53" source="standard:binary-expression-wrapping" />
+        <error line="423" column="99" source="standard:argument-list-wrapping" />
+        <error line="423" column="110" source="standard:argument-list-wrapping" />
+        <error line="423" column="121" source="standard:max-line-length" />
+        <error line="423" column="125" source="standard:argument-list-wrapping" />
+        <error line="429" column="32" source="standard:argument-list-wrapping" />
+        <error line="429" column="59" source="standard:argument-list-wrapping" />
+        <error line="429" column="78" source="standard:argument-list-wrapping" />
+        <error line="430" column="22" source="standard:multiline-expression-wrapping" />
+        <error line="440" column="32" source="standard:argument-list-wrapping" />
+        <error line="440" column="59" source="standard:argument-list-wrapping" />
+        <error line="440" column="78" source="standard:argument-list-wrapping" />
+        <error line="442" column="22" source="standard:multiline-expression-wrapping" />
         <error line="443" column="121" source="standard:max-line-length" />
+        <error line="444" column="121" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/dialog/OmnidroidDialogHost.kt">
         <error line="21" column="50" source="standard:class-signature" />
@@ -3370,6 +3549,10 @@
         <error line="112" column="121" source="standard:max-line-length" />
         <error line="215" column="21" source="standard:chain-method-continuation" />
         <error line="283" column="33" source="standard:chain-method-continuation" />
+    </file>
+    <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/ui/Segmented.kt">
+        <error line="63" column="25" source="standard:chain-method-continuation" />
+        <error line="67" column="25" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/ui/SystemStatusIndicators.kt">
         <error line="148" column="19" source="standard:property-naming" />
@@ -3919,279 +4102,279 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/shared/game/BaseGameScreenViewModel.kt">
         <error line="2" column="1" source="standard:import-ordering" />
-        <error line="54" column="1" source="standard:no-blank-line-in-list" />
-        <error line="56" column="1" source="standard:no-blank-line-in-list" />
-        <error line="58" column="1" source="standard:no-blank-line-in-list" />
-        <error line="60" column="1" source="standard:no-blank-line-in-list" />
-        <error line="62" column="1" source="standard:no-blank-line-in-list" />
-        <error line="64" column="1" source="standard:no-blank-line-in-list" />
-        <error line="66" column="1" source="standard:no-blank-line-in-list" />
-        <error line="68" column="1" source="standard:no-blank-line-in-list" />
-        <error line="70" column="1" source="standard:no-blank-line-in-list" />
-        <error line="72" column="1" source="standard:no-blank-line-in-list" />
-        <error line="74" column="1" source="standard:no-blank-line-in-list" />
-        <error line="76" column="1" source="standard:no-blank-line-in-list" />
-        <error line="78" column="1" source="standard:no-blank-line-in-list" />
-        <error line="80" column="1" source="standard:no-blank-line-in-list" />
-        <error line="81" column="18" source="standard:class-signature" />
-        <error line="82" column="1" source="standard:no-empty-first-line-in-class-body" />
-        <error line="90" column="1" source="standard:no-blank-line-in-list" />
-        <error line="92" column="1" source="standard:no-blank-line-in-list" />
-        <error line="94" column="1" source="standard:no-blank-line-in-list" />
-        <error line="96" column="1" source="standard:no-blank-line-in-list" />
-        <error line="98" column="1" source="standard:no-blank-line-in-list" />
-        <error line="100" column="1" source="standard:no-blank-line-in-list" />
-        <error line="102" column="1" source="standard:no-blank-line-in-list" />
-        <error line="104" column="1" source="standard:no-blank-line-in-list" />
-        <error line="106" column="1" source="standard:no-blank-line-in-list" />
-        <error line="108" column="1" source="standard:no-blank-line-in-list" />
-        <error line="110" column="1" source="standard:no-blank-line-in-list" />
-        <error line="112" column="1" source="standard:no-blank-line-in-list" />
-        <error line="114" column="1" source="standard:no-blank-line-in-list" />
-        <error line="116" column="1" source="standard:no-blank-line-in-list" />
-        <error line="118" column="1" source="standard:no-empty-first-line-in-class-body" />
-        <error line="119" column="70" source="standard:function-expression-body" />
-        <error line="120" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="122" column="1" source="standard:no-blank-line-in-list" />
-        <error line="124" column="1" source="standard:no-blank-line-in-list" />
-        <error line="126" column="1" source="standard:no-blank-line-in-list" />
-        <error line="128" column="1" source="standard:no-blank-line-in-list" />
-        <error line="130" column="1" source="standard:no-blank-line-in-list" />
-        <error line="132" column="1" source="standard:no-blank-line-in-list" />
-        <error line="134" column="1" source="standard:no-blank-line-in-list" />
-        <error line="136" column="1" source="standard:no-blank-line-in-list" />
-        <error line="138" column="1" source="standard:no-blank-line-in-list" />
-        <error line="140" column="1" source="standard:no-blank-line-in-list" />
-        <error line="142" column="1" source="standard:no-blank-line-in-list" />
-        <error line="144" column="1" source="standard:no-blank-line-in-list" />
-        <error line="146" column="1" source="standard:no-blank-line-in-list" />
-        <error line="148" column="1" source="standard:no-blank-line-in-list" />
-        <error line="150" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="152" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="160" column="1" source="standard:no-blank-line-in-list" />
-        <error line="162" column="1" source="standard:no-blank-line-in-list" />
-        <error line="164" column="1" source="standard:no-blank-line-in-list" />
-        <error line="166" column="1" source="standard:no-blank-line-in-list" />
-        <error line="168" column="1" source="standard:no-blank-line-in-list" />
-        <error line="170" column="1" source="standard:no-blank-line-in-list" />
-        <error line="172" column="1" source="standard:no-blank-line-in-list" />
-        <error line="174" column="1" source="standard:no-blank-line-in-list" />
-        <error line="176" column="1" source="standard:no-blank-line-in-list" />
-        <error line="184" column="1" source="standard:no-blank-line-in-list" />
-        <error line="186" column="1" source="standard:no-blank-line-in-list" />
-        <error line="188" column="1" source="standard:no-blank-line-in-list" />
-        <error line="190" column="1" source="standard:no-blank-line-in-list" />
-        <error line="192" column="1" source="standard:no-blank-line-in-list" />
-        <error line="194" column="1" source="standard:no-blank-line-in-list" />
-        <error line="196" column="1" source="standard:no-blank-line-in-list" />
-        <error line="198" column="1" source="standard:no-blank-line-in-list" />
-        <error line="200" column="1" source="standard:no-blank-line-in-list" />
-        <error line="202" column="1" source="standard:no-blank-line-in-list" />
-        <error line="208" column="1" source="standard:no-blank-line-in-list" />
-        <error line="210" column="1" source="standard:no-blank-line-in-list" />
-        <error line="212" column="1" source="standard:no-blank-line-in-list" />
-        <error line="214" column="1" source="standard:no-blank-line-in-list" />
-        <error line="216" column="1" source="standard:no-blank-line-in-list" />
-        <error line="218" column="1" source="standard:no-blank-line-in-list" />
-        <error line="220" column="1" source="standard:no-blank-line-in-list" />
-        <error line="222" column="1" source="standard:no-blank-line-in-list" />
-        <error line="224" column="1" source="standard:no-blank-line-in-list" />
-        <error line="226" column="1" source="standard:no-blank-line-in-list" />
-        <error line="228" column="1" source="standard:no-blank-line-in-list" />
-        <error line="230" column="1" source="standard:no-blank-line-in-list" />
-        <error line="232" column="1" source="standard:no-blank-line-in-list" />
-        <error line="238" column="1" source="standard:no-blank-line-in-list" />
-        <error line="240" column="1" source="standard:no-blank-line-in-list" />
-        <error line="242" column="1" source="standard:no-blank-line-in-list" />
-        <error line="244" column="1" source="standard:no-blank-line-in-list" />
-        <error line="246" column="1" source="standard:no-blank-line-in-list" />
-        <error line="248" column="1" source="standard:no-blank-line-in-list" />
-        <error line="250" column="1" source="standard:no-blank-line-in-list" />
-        <error line="252" column="1" source="standard:no-blank-line-in-list" />
-        <error line="254" column="1" source="standard:no-blank-line-in-list" />
-        <error line="256" column="1" source="standard:no-blank-line-in-list" />
-        <error line="258" column="1" source="standard:no-blank-line-in-list" />
-        <error line="264" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="272" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="275" column="68" source="standard:function-expression-body" />
-        <error line="276" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="278" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="281" column="67" source="standard:function-expression-body" />
-        <error line="282" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="284" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="287" column="57" source="standard:function-expression-body" />
-        <error line="288" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="290" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="293" column="52" source="standard:function-expression-body" />
-        <error line="294" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="296" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="299" column="84" source="standard:function-expression-body" />
-        <error line="300" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="302" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="305" column="64" source="standard:function-expression-body" />
-        <error line="306" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="308" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="313" column="45" source="standard:function-expression-body" />
-        <error line="314" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="316" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="328" column="28" source="standard:multiline-expression-wrapping" />
-        <error line="332" column="63" source="standard:chain-method-continuation" />
-        <error line="342" column="1" source="standard:no-blank-line-in-list" />
-        <error line="343" column="9" source="standard:function-signature" />
-        <error line="344" column="1" source="standard:no-blank-line-in-list" />
-        <error line="345" column="9" source="standard:function-signature" />
-        <error line="346" column="1" source="standard:no-blank-line-in-list" />
-        <error line="347" column="5" source="standard:function-signature" />
-        <error line="348" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="354" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="357" column="27" source="standard:multiline-expression-wrapping" />
-        <error line="358" column="1" source="standard:no-blank-line-in-list" />
-        <error line="360" column="1" source="standard:no-blank-line-in-list" />
-        <error line="362" column="1" source="standard:no-blank-line-in-list" />
-        <error line="364" column="1" source="standard:no-blank-line-in-list" />
-        <error line="366" column="1" source="standard:no-blank-line-in-list" />
-        <error line="370" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="372" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="374" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="376" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="378" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="380" column="1" source="standard:no-blank-line-in-list" />
-        <error line="388" column="45" source="standard:multiline-expression-wrapping" />
-        <error line="389" column="1" source="standard:no-empty-first-line-in-class-body" />
-        <error line="391" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="393" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="397" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="399" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="403" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="405" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="407" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="411" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="413" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="416" column="27" source="standard:multiline-expression-wrapping" />
-        <error line="417" column="1" source="standard:no-blank-line-in-list" />
-        <error line="419" column="1" source="standard:no-blank-line-in-list" />
-        <error line="420" column="32" source="standard:binary-expression-wrapping" />
-        <error line="420" column="77" source="standard:argument-list-wrapping" />
-        <error line="420" column="100" source="standard:argument-list-wrapping" />
-        <error line="420" column="116" source="standard:argument-list-wrapping" />
-        <error line="420" column="120" source="standard:max-line-length" />
-        <error line="420" column="132" source="standard:argument-list-wrapping" />
-        <error line="420" column="134" source="standard:binary-expression-wrapping" />
-        <error line="421" column="1" source="standard:no-blank-line-in-list" />
-        <error line="427" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="429" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="433" column="1" source="standard:no-blank-line-in-list" />
-        <error line="434" column="9" source="standard:function-signature" />
-        <error line="435" column="1" source="standard:no-blank-line-in-list" />
-        <error line="436" column="9" source="standard:function-signature" />
-        <error line="437" column="1" source="standard:no-blank-line-in-list" />
-        <error line="438" column="5" source="standard:function-signature" />
-        <error line="439" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="443" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="447" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="449" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="451" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="455" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="459" column="1" source="standard:no-blank-line-in-list" />
-        <error line="460" column="9" source="standard:function-signature" />
-        <error line="461" column="1" source="standard:no-blank-line-in-list" />
-        <error line="462" column="9" source="standard:function-signature" />
-        <error line="463" column="1" source="standard:no-blank-line-in-list" />
-        <error line="464" column="9" source="standard:function-signature" />
-        <error line="465" column="1" source="standard:no-blank-line-in-list" />
-        <error line="466" column="9" source="standard:function-signature" />
-        <error line="467" column="1" source="standard:no-blank-line-in-list" />
-        <error line="468" column="9" source="standard:function-signature" />
-        <error line="469" column="1" source="standard:no-blank-line-in-list" />
-        <error line="470" column="5" source="standard:function-signature" />
-        <error line="471" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="475" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="479" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="481" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="484" column="45" source="standard:function-expression-body" />
-        <error line="485" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="487" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="491" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="493" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="497" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="499" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="503" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="505" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="510" column="43" source="standard:function-expression-body" />
-        <error line="511" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="513" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="521" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="527" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="530" column="51" source="standard:function-expression-body" />
-        <error line="531" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="533" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="536" column="51" source="standard:function-expression-body" />
-        <error line="537" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="539" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="543" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="545" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="548" column="60" source="standard:function-expression-body" />
-        <error line="549" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="551" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="555" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="557" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="560" column="40" source="standard:function-expression-body" />
-        <error line="561" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="563" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="567" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="571" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="573" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="575" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="579" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="583" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="585" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="587" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="601" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="607" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="609" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="611" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="615" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="621" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="623" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="625" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="629" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="631" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="637" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="639" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="645" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="647" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="651" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="653" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="655" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="657" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="661" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="665" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="667" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="669" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="673" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="684" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="686" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="688" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="692" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="696" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="700" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="702" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="714" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="724" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="728" column="1" source="standard:no-blank-line-in-list" />
-        <error line="729" column="9" source="standard:function-signature" />
-        <error line="730" column="1" source="standard:no-blank-line-in-list" />
-        <error line="731" column="9" source="standard:function-signature" />
-        <error line="732" column="1" source="standard:no-blank-line-in-list" />
-        <error line="733" column="5" source="standard:function-signature" />
-        <error line="733" column="16" source="standard:function-expression-body" />
-        <error line="734" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="736" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="739" column="54" source="standard:function-expression-body" />
-        <error line="740" column="1" source="standard:no-empty-first-line-in-method-block" />
-        <error line="742" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="744" column="1" source="standard:no-blank-line-before-rbrace" />
-        <error line="747" column="1" source="standard:no-consecutive-blank-lines" />
+        <error line="53" column="1" source="standard:no-blank-line-in-list" />
+        <error line="55" column="1" source="standard:no-blank-line-in-list" />
+        <error line="57" column="1" source="standard:no-blank-line-in-list" />
+        <error line="59" column="1" source="standard:no-blank-line-in-list" />
+        <error line="61" column="1" source="standard:no-blank-line-in-list" />
+        <error line="63" column="1" source="standard:no-blank-line-in-list" />
+        <error line="65" column="1" source="standard:no-blank-line-in-list" />
+        <error line="67" column="1" source="standard:no-blank-line-in-list" />
+        <error line="69" column="1" source="standard:no-blank-line-in-list" />
+        <error line="71" column="1" source="standard:no-blank-line-in-list" />
+        <error line="73" column="1" source="standard:no-blank-line-in-list" />
+        <error line="75" column="1" source="standard:no-blank-line-in-list" />
+        <error line="77" column="1" source="standard:no-blank-line-in-list" />
+        <error line="79" column="1" source="standard:no-blank-line-in-list" />
+        <error line="80" column="18" source="standard:class-signature" />
+        <error line="81" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="89" column="1" source="standard:no-blank-line-in-list" />
+        <error line="91" column="1" source="standard:no-blank-line-in-list" />
+        <error line="93" column="1" source="standard:no-blank-line-in-list" />
+        <error line="95" column="1" source="standard:no-blank-line-in-list" />
+        <error line="97" column="1" source="standard:no-blank-line-in-list" />
+        <error line="99" column="1" source="standard:no-blank-line-in-list" />
+        <error line="101" column="1" source="standard:no-blank-line-in-list" />
+        <error line="103" column="1" source="standard:no-blank-line-in-list" />
+        <error line="105" column="1" source="standard:no-blank-line-in-list" />
+        <error line="107" column="1" source="standard:no-blank-line-in-list" />
+        <error line="109" column="1" source="standard:no-blank-line-in-list" />
+        <error line="111" column="1" source="standard:no-blank-line-in-list" />
+        <error line="113" column="1" source="standard:no-blank-line-in-list" />
+        <error line="115" column="1" source="standard:no-blank-line-in-list" />
+        <error line="117" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="118" column="70" source="standard:function-expression-body" />
+        <error line="119" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="121" column="1" source="standard:no-blank-line-in-list" />
+        <error line="123" column="1" source="standard:no-blank-line-in-list" />
+        <error line="125" column="1" source="standard:no-blank-line-in-list" />
+        <error line="127" column="1" source="standard:no-blank-line-in-list" />
+        <error line="129" column="1" source="standard:no-blank-line-in-list" />
+        <error line="131" column="1" source="standard:no-blank-line-in-list" />
+        <error line="133" column="1" source="standard:no-blank-line-in-list" />
+        <error line="135" column="1" source="standard:no-blank-line-in-list" />
+        <error line="137" column="1" source="standard:no-blank-line-in-list" />
+        <error line="139" column="1" source="standard:no-blank-line-in-list" />
+        <error line="141" column="1" source="standard:no-blank-line-in-list" />
+        <error line="143" column="1" source="standard:no-blank-line-in-list" />
+        <error line="145" column="1" source="standard:no-blank-line-in-list" />
+        <error line="147" column="1" source="standard:no-blank-line-in-list" />
+        <error line="149" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="151" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="159" column="1" source="standard:no-blank-line-in-list" />
+        <error line="161" column="1" source="standard:no-blank-line-in-list" />
+        <error line="163" column="1" source="standard:no-blank-line-in-list" />
+        <error line="165" column="1" source="standard:no-blank-line-in-list" />
+        <error line="167" column="1" source="standard:no-blank-line-in-list" />
+        <error line="169" column="1" source="standard:no-blank-line-in-list" />
+        <error line="171" column="1" source="standard:no-blank-line-in-list" />
+        <error line="173" column="1" source="standard:no-blank-line-in-list" />
+        <error line="175" column="1" source="standard:no-blank-line-in-list" />
+        <error line="183" column="1" source="standard:no-blank-line-in-list" />
+        <error line="185" column="1" source="standard:no-blank-line-in-list" />
+        <error line="187" column="1" source="standard:no-blank-line-in-list" />
+        <error line="189" column="1" source="standard:no-blank-line-in-list" />
+        <error line="191" column="1" source="standard:no-blank-line-in-list" />
+        <error line="193" column="1" source="standard:no-blank-line-in-list" />
+        <error line="195" column="1" source="standard:no-blank-line-in-list" />
+        <error line="197" column="1" source="standard:no-blank-line-in-list" />
+        <error line="199" column="1" source="standard:no-blank-line-in-list" />
+        <error line="201" column="1" source="standard:no-blank-line-in-list" />
+        <error line="207" column="1" source="standard:no-blank-line-in-list" />
+        <error line="209" column="1" source="standard:no-blank-line-in-list" />
+        <error line="211" column="1" source="standard:no-blank-line-in-list" />
+        <error line="213" column="1" source="standard:no-blank-line-in-list" />
+        <error line="215" column="1" source="standard:no-blank-line-in-list" />
+        <error line="217" column="1" source="standard:no-blank-line-in-list" />
+        <error line="219" column="1" source="standard:no-blank-line-in-list" />
+        <error line="221" column="1" source="standard:no-blank-line-in-list" />
+        <error line="223" column="1" source="standard:no-blank-line-in-list" />
+        <error line="225" column="1" source="standard:no-blank-line-in-list" />
+        <error line="227" column="1" source="standard:no-blank-line-in-list" />
+        <error line="229" column="1" source="standard:no-blank-line-in-list" />
+        <error line="231" column="1" source="standard:no-blank-line-in-list" />
+        <error line="237" column="1" source="standard:no-blank-line-in-list" />
+        <error line="239" column="1" source="standard:no-blank-line-in-list" />
+        <error line="241" column="1" source="standard:no-blank-line-in-list" />
+        <error line="243" column="1" source="standard:no-blank-line-in-list" />
+        <error line="245" column="1" source="standard:no-blank-line-in-list" />
+        <error line="247" column="1" source="standard:no-blank-line-in-list" />
+        <error line="249" column="1" source="standard:no-blank-line-in-list" />
+        <error line="251" column="1" source="standard:no-blank-line-in-list" />
+        <error line="253" column="1" source="standard:no-blank-line-in-list" />
+        <error line="255" column="1" source="standard:no-blank-line-in-list" />
+        <error line="257" column="1" source="standard:no-blank-line-in-list" />
+        <error line="263" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="271" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="274" column="68" source="standard:function-expression-body" />
+        <error line="275" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="277" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="280" column="67" source="standard:function-expression-body" />
+        <error line="281" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="283" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="286" column="57" source="standard:function-expression-body" />
+        <error line="287" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="289" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="292" column="52" source="standard:function-expression-body" />
+        <error line="293" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="295" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="298" column="84" source="standard:function-expression-body" />
+        <error line="299" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="301" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="304" column="64" source="standard:function-expression-body" />
+        <error line="305" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="307" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="312" column="45" source="standard:function-expression-body" />
+        <error line="313" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="315" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="325" column="28" source="standard:multiline-expression-wrapping" />
+        <error line="329" column="63" source="standard:chain-method-continuation" />
+        <error line="339" column="1" source="standard:no-blank-line-in-list" />
+        <error line="340" column="9" source="standard:function-signature" />
+        <error line="341" column="1" source="standard:no-blank-line-in-list" />
+        <error line="342" column="9" source="standard:function-signature" />
+        <error line="343" column="1" source="standard:no-blank-line-in-list" />
+        <error line="344" column="5" source="standard:function-signature" />
+        <error line="345" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="351" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="354" column="27" source="standard:multiline-expression-wrapping" />
+        <error line="355" column="1" source="standard:no-blank-line-in-list" />
+        <error line="357" column="1" source="standard:no-blank-line-in-list" />
+        <error line="359" column="1" source="standard:no-blank-line-in-list" />
+        <error line="361" column="1" source="standard:no-blank-line-in-list" />
+        <error line="363" column="1" source="standard:no-blank-line-in-list" />
+        <error line="367" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="369" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="371" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="373" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="375" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="377" column="1" source="standard:no-blank-line-in-list" />
+        <error line="385" column="45" source="standard:multiline-expression-wrapping" />
+        <error line="386" column="1" source="standard:no-empty-first-line-in-class-body" />
+        <error line="388" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="390" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="394" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="396" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="400" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="402" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="404" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="408" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="410" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="413" column="27" source="standard:multiline-expression-wrapping" />
+        <error line="414" column="1" source="standard:no-blank-line-in-list" />
+        <error line="416" column="1" source="standard:no-blank-line-in-list" />
+        <error line="417" column="32" source="standard:binary-expression-wrapping" />
+        <error line="417" column="77" source="standard:argument-list-wrapping" />
+        <error line="417" column="100" source="standard:argument-list-wrapping" />
+        <error line="417" column="116" source="standard:argument-list-wrapping" />
+        <error line="417" column="120" source="standard:max-line-length" />
+        <error line="417" column="132" source="standard:argument-list-wrapping" />
+        <error line="417" column="134" source="standard:binary-expression-wrapping" />
+        <error line="418" column="1" source="standard:no-blank-line-in-list" />
+        <error line="424" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="426" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="430" column="1" source="standard:no-blank-line-in-list" />
+        <error line="431" column="9" source="standard:function-signature" />
+        <error line="432" column="1" source="standard:no-blank-line-in-list" />
+        <error line="433" column="9" source="standard:function-signature" />
+        <error line="434" column="1" source="standard:no-blank-line-in-list" />
+        <error line="435" column="5" source="standard:function-signature" />
+        <error line="436" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="440" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="444" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="446" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="448" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="452" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="456" column="1" source="standard:no-blank-line-in-list" />
+        <error line="457" column="9" source="standard:function-signature" />
+        <error line="458" column="1" source="standard:no-blank-line-in-list" />
+        <error line="459" column="9" source="standard:function-signature" />
+        <error line="460" column="1" source="standard:no-blank-line-in-list" />
+        <error line="461" column="9" source="standard:function-signature" />
+        <error line="462" column="1" source="standard:no-blank-line-in-list" />
+        <error line="463" column="9" source="standard:function-signature" />
+        <error line="464" column="1" source="standard:no-blank-line-in-list" />
+        <error line="465" column="9" source="standard:function-signature" />
+        <error line="466" column="1" source="standard:no-blank-line-in-list" />
+        <error line="467" column="5" source="standard:function-signature" />
+        <error line="468" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="472" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="476" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="478" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="481" column="45" source="standard:function-expression-body" />
+        <error line="482" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="484" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="488" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="490" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="494" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="496" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="500" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="502" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="507" column="43" source="standard:function-expression-body" />
+        <error line="508" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="510" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="518" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="524" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="527" column="51" source="standard:function-expression-body" />
+        <error line="528" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="530" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="533" column="51" source="standard:function-expression-body" />
+        <error line="534" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="536" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="540" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="542" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="545" column="60" source="standard:function-expression-body" />
+        <error line="546" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="548" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="552" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="554" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="557" column="40" source="standard:function-expression-body" />
+        <error line="558" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="560" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="564" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="568" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="570" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="572" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="576" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="580" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="582" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="584" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="598" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="604" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="606" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="608" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="612" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="618" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="620" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="622" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="626" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="628" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="634" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="636" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="642" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="644" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="648" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="650" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="652" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="654" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="658" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="662" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="664" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="666" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="670" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="681" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="683" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="685" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="689" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="693" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="697" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="699" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="711" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="721" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="725" column="1" source="standard:no-blank-line-in-list" />
+        <error line="726" column="9" source="standard:function-signature" />
+        <error line="727" column="1" source="standard:no-blank-line-in-list" />
+        <error line="728" column="9" source="standard:function-signature" />
+        <error line="729" column="1" source="standard:no-blank-line-in-list" />
+        <error line="730" column="5" source="standard:function-signature" />
+        <error line="730" column="16" source="standard:function-expression-body" />
+        <error line="731" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="733" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="736" column="54" source="standard:function-expression-body" />
+        <error line="737" column="1" source="standard:no-empty-first-line-in-method-block" />
+        <error line="739" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="741" column="1" source="standard:no-blank-line-before-rbrace" />
+        <error line="744" column="1" source="standard:no-consecutive-blank-lines" />
     </file>
     <file name="src/main/java/com/omnidroid/app/shared/game/ExternalGameLauncherActivity.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -4305,6 +4488,9 @@
         <error line="196" column="1" source="standard:no-blank-line-before-rbrace" />
         <error line="198" column="1" source="standard:no-blank-line-before-rbrace" />
         <error line="201" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/main/java/com/omnidroid/app/shared/game/GameLoadingScreen.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
     </file>
     <file name="src/main/java/com/omnidroid/app/shared/game/GameSessionCoordinator.kt">
         <error line="52" column="28" source="standard:multiline-expression-wrapping" />
@@ -4733,17 +4919,17 @@
         <error line="45" column="27" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/app/shared/game/viewmodel/GameViewModelTouchControls.kt">
-        <error line="84" column="39" source="standard:multiline-expression-wrapping" />
-        <error line="92" column="32" source="standard:multiline-expression-wrapping" />
-        <error line="109" column="31" source="standard:multiline-expression-wrapping" />
-        <error line="127" column="84" source="standard:function-expression-body" />
-        <error line="137" column="64" source="standard:function-expression-body" />
-        <error line="143" column="45" source="standard:function-expression-body" />
-        <error line="169" column="43" source="standard:function-expression-body" />
-        <error line="236" column="60" source="standard:function-expression-body" />
-        <error line="237" column="22" source="standard:chain-method-continuation" />
-        <error line="339" column="40" source="standard:function-expression-body" />
-        <error line="343" column="46" source="standard:function-expression-body" />
+        <error line="81" column="39" source="standard:multiline-expression-wrapping" />
+        <error line="87" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="104" column="31" source="standard:multiline-expression-wrapping" />
+        <error line="120" column="84" source="standard:function-expression-body" />
+        <error line="130" column="64" source="standard:function-expression-body" />
+        <error line="136" column="45" source="standard:function-expression-body" />
+        <error line="159" column="43" source="standard:function-expression-body" />
+        <error line="226" column="60" source="standard:function-expression-body" />
+        <error line="227" column="22" source="standard:chain-method-continuation" />
+        <error line="329" column="40" source="standard:function-expression-body" />
+        <error line="333" column="46" source="standard:function-expression-body" />
     </file>
     <file name="src/main/java/com/omnidroid/app/shared/game/viewmodel/RendererSettingsGuard.kt">
         <error line="6" column="38" source="standard:class-signature" />
@@ -5179,10 +5365,20 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/utils/android/settings/Components.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="137" column="5" source="standard:function-signature" />
-        <error line="137" column="35" source="standard:function-signature" />
-        <error line="167" column="25" source="standard:multiline-expression-wrapping" />
-        <error line="252" column="25" source="standard:multiline-expression-wrapping" />
+        <error line="63" column="1" source="standard:import-ordering" />
+        <error line="63" column="1" source="standard:no-unused-imports" />
+        <error line="162" column="5" source="standard:function-signature" />
+        <error line="162" column="35" source="standard:function-signature" />
+        <error line="192" column="25" source="standard:multiline-expression-wrapping" />
+        <error line="389" column="1" source="standard:no-consecutive-blank-lines" />
+        <error line="397" column="25" source="standard:multiline-expression-wrapping" />
+        <error line="437" column="22" source="standard:argument-list-wrapping" />
+        <error line="437" column="37" source="standard:argument-list-wrapping" />
+        <error line="437" column="48" source="standard:argument-list-wrapping" />
+        <error line="437" column="51" source="standard:argument-list-wrapping" />
+        <error line="437" column="95" source="standard:argument-list-wrapping" />
+        <error line="437" column="121" source="standard:argument-list-wrapping" />
+        <error line="437" column="121" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/omnidroid/app/utils/android/settings/OmnidroidSettingsList.kt">
         <error line="67" column="21" source="standard:statement-wrapping" />
