@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.lib.core.SyncProgress
@@ -259,6 +259,7 @@ fun SyncProgressNotch(
     )
 
     val infiniteTransition = rememberInfiniteTransition(label = "notchActivity")
+    val accent = libraryAccentColor
     val strobeAlpha by infiniteTransition.animateFloat(
         initialValue = 0.10f,
         targetValue = 0.22f,
@@ -313,7 +314,7 @@ fun SyncProgressNotch(
                     drawPath(fillPath, color = panelBg)
                     drawPath(
                         strokePath,
-                        color = LibraryNeonGreen.copy(alpha = strobeAlpha),
+                        color = accent.copy(alpha = strobeAlpha),
                         style = Stroke(width = strokeWidth.toPx()),
                     )
                 },
@@ -332,7 +333,7 @@ fun SyncProgressNotch(
                     Modifier
                         .size((5.5f * scale).dp)
                         .clip(CircleShape)
-                        .background(LibraryNeonGreen.copy(alpha = dotAlpha)),
+                        .background(libraryAccentColor.copy(alpha = dotAlpha)),
             )
             Spacer(modifier = Modifier.width((6 * scale).dp))
             Text(

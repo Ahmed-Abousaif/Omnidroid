@@ -1,7 +1,7 @@
 package com.omnidroid.app.mobile.feature.library
 
 import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
-import com.omnidroid.app.mobile.shared.compose.ui.OnLibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -121,7 +121,6 @@ import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
 import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.app.mobile.feature.gamedetails.PlayTimeStore
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
@@ -602,7 +601,7 @@ private fun ConsoleLandscapeCard(
         modifier =
             Modifier
                 .fillMaxSize()
-                .consoleSelectionGlow(LandscapeCardCorner, focus, pulse)
+                .consoleSelectionGlow(libraryAccentColor, LandscapeCardCorner, focus, pulse)
                 .then(sharedModifier)
                 .shadow(elevation = 6.dp, shape = shape)
                 .background(chromeColors.listRow)
@@ -858,7 +857,7 @@ private fun ConsolePortraitCard(
         modifier =
             Modifier
                 .fillMaxSize()
-                .consoleSelectionGlow(PortraitCardCorner, focus, pulse)
+                .consoleSelectionGlow(libraryAccentColor, PortraitCardCorner, focus, pulse)
                 .then(sharedModifier)
                 .shadow(
                     elevation = 20.dp,
@@ -1230,7 +1229,7 @@ private fun ConsoleStartButton(
                 .widthIn(min = ConsoleStartMinWidth)
                 .focusProperties { canFocus = false },
         shape = ConsoleActionShape,
-        color = LibraryNeonGreen,
+        color = libraryAccentColor,
         shadowElevation = 6.dp,
     ) {
         Row(
@@ -1243,13 +1242,13 @@ private fun ConsoleStartButton(
                     modifier =
                         Modifier
                             .size(20.dp)
-                            .border(1.5.dp, OnLibraryNeonGreen, CircleShape),
+                            .border(1.5.dp, onLibraryAccentColor, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = "A",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = OnLibraryNeonGreen,
+                        color = onLibraryAccentColor,
                         textAlign = TextAlign.Center,
                     )
                 }
@@ -1258,14 +1257,14 @@ private fun ConsoleStartButton(
                     imageVector = Icons.Filled.PlayArrow,
                     contentDescription = null,
                     modifier = Modifier.size(22.dp),
-                    tint = OnLibraryNeonGreen,
+                    tint = onLibraryAccentColor,
                 )
             }
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = OnLibraryNeonGreen,
+                color = onLibraryAccentColor,
                 maxLines = 1,
             )
         }
@@ -1329,8 +1328,9 @@ internal fun Modifier.bleedTop(amount: Dp): Modifier =
         }
     }
 
-/** Gentle green halo and outline that fade in as the card becomes selected. */
+/** Gentle accent halo and outline that fade in as the card becomes selected. */
 private fun Modifier.consoleSelectionGlow(
+    accent: Color,
     corner: Dp,
     amount: () -> Float,
     pulse: State<Float>,
@@ -1344,7 +1344,7 @@ private fun Modifier.consoleSelectionGlow(
         for (layer in GlowLayers downTo 1) {
             val grow = spread * layer / GlowLayers
             drawRoundRect(
-                color = LibraryNeonGreen.copy(alpha = GlowLayerAlpha * strength),
+                color = accent.copy(alpha = GlowLayerAlpha * strength),
                 topLeft = Offset(-grow, -grow),
                 size = Size(size.width + grow * 2, size.height + grow * 2),
                 cornerRadius = CornerRadius(radius + grow),
@@ -1356,7 +1356,7 @@ private fun Modifier.consoleSelectionGlow(
         if (selected <= 0.01f) return@drawWithContent
         val stroke = 1.5.dp.toPx()
         drawRoundRect(
-            color = LibraryNeonGreen.copy(alpha = selected),
+            color = accent.copy(alpha = selected),
             topLeft = Offset(stroke / 2, stroke / 2),
             size = Size(size.width - stroke, size.height - stroke),
             cornerRadius = CornerRadius(corner.toPx() - stroke / 2),

@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
 import com.omnidroid.app.mobile.shared.compose.ui.chromeMutedContentColor
@@ -94,7 +94,7 @@ internal fun ProfileIdentity(
                     Icon(
                         painterResource(R.drawable.ic_profile_robot),
                         contentDescription = null,
-                        tint = LibraryNeonGreen,
+                        tint = libraryAccentColor,
                         modifier = Modifier.size(if (compact) 28.dp else 36.dp),
                     )
                 }
@@ -182,7 +182,7 @@ internal fun ProfileProgress(state: ProfileViewModel.UiState) {
         LinearProgressIndicator(
             progress = { state.xpProgress.coerceIn(0f, 1f) },
             modifier = Modifier.fillMaxWidth().height(4.dp),
-            color = LibraryNeonGreen,
+            color = libraryAccentColor,
             trackColor = chromeColors.divider,
         )
         Text(
@@ -259,7 +259,7 @@ internal fun ProfileStreak(
                     Box(
                         Modifier.size(if (day == 7) 10.dp else 7.dp).clip(CircleShape).background(
                             if (day <= state.currentStreak) {
-                                if (day == 7) LibraryNeonGreen else StreakFire
+                                if (day == 7) libraryAccentColor else StreakFire
                             } else {
                                 chromeColors.divider
                             },

@@ -52,7 +52,8 @@ import com.omnidroid.app.mobile.feature.library.LibraryLayoutToggle
 import com.omnidroid.app.mobile.feature.library.LibrarySidebar
 import com.omnidroid.app.mobile.feature.library.LibraryTopBar
 import com.omnidroid.app.mobile.feature.library.BottomConsoleBar
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
+import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.calculateAdaptiveLayoutSpec
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
@@ -227,7 +228,7 @@ fun UiScalePreviewScreen(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = (-0.5).sp,
                         ),
-                    color = LibraryNeonGreen,
+                    color = libraryAccentColor,
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
@@ -258,8 +259,8 @@ fun UiScalePreviewScreen(
                                 .padding(horizontal = 8.dp),
                         colors =
                             SliderDefaults.colors(
-                                thumbColor = LibraryNeonGreen,
-                                activeTrackColor = LibraryNeonGreen,
+                                thumbColor = libraryAccentColor,
+                                activeTrackColor = libraryAccentColor,
                                 inactiveTrackColor = chromeColors.muted.copy(alpha = 0.3f),
                             ),
                     )
@@ -318,7 +319,7 @@ fun UiScalePreviewScreen(
                         onDismiss()
                     },
                     shape = RoundedCornerShape(12.dp),
-                    color = LibraryNeonGreen,
+                    color = libraryAccentColor,
                     modifier =
                         Modifier
                             .height(44.dp)
@@ -328,7 +329,7 @@ fun UiScalePreviewScreen(
                         Text(
                             text = stringResource(R.string.save),
                             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                            color = Color.Black,
+                            color = onLibraryAccentColor,
                         )
                     }
                 }

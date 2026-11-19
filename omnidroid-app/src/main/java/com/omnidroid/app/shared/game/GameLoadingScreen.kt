@@ -44,7 +44,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.db.entity.Game
@@ -152,14 +152,15 @@ private fun GameLoadingIndicator(modifier: Modifier = Modifier) {
         label = "Loading bar fill",
     )
 
+    val accent = libraryAccentColor
     Canvas(modifier) {
         val cornerRadius = CornerRadius(size.height / 2f)
         drawRoundRect(
-            color = LibraryNeonGreen.copy(alpha = 0.18f),
+            color = accent.copy(alpha = 0.18f),
             cornerRadius = cornerRadius,
         )
         drawRoundRect(
-            color = LibraryNeonGreen,
+            color = accent,
             size = Size(size.width * progress, size.height),
             cornerRadius = cornerRadius,
         )
