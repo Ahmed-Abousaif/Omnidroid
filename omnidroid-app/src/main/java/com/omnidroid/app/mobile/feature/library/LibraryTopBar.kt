@@ -21,6 +21,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -138,6 +139,12 @@ fun LibraryTopBar(
     consoleGameCount: Int? = null,
     portrait: Boolean = false,
     showLibraryControls: Boolean = true,
+    layout: LibraryLayout = LibraryLayout.CONSOLE,
+    onLayoutChange: (LibraryLayout) -> Unit = {},
+    consoleBarAtBottom: Boolean = false,
+    zoomDensity: Int = 0,
+    onZoomDensityChange: (Int) -> Unit = {},
+    showZoom: Boolean = false,
     onBackPressed: (() -> Unit)? = null,
 ) {
     val spec = LocalAdaptiveLayout.current
@@ -244,14 +251,66 @@ fun LibraryTopBar(
                 } else {
                     LibrarySearchRow(
                         expanded = searchExpanded,
-                        consoleTitleId = consoleTitleId,
-                        consoleGameCount = consoleGameCount,
+                        consoleTitleId = if (consoleBarAtBottom) null else consoleTitleId,
+                        consoleGameCount = if (consoleBarAtBottom) null else consoleGameCount,
                         searchField = searchField,
+                        layoutToggle = if (consoleBarAtBottom) {
+                            {
+                                LibraryLayoutToggle(
+                                    layout = layout,
+                                    onLayoutChange = onLayoutChange,
+                                )
+                            }
+                        } else null,
+                        zoomControls = if (consoleBarAtBottom && showZoom) {
+                            {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .height(28.dp * spec.uiScale)
+                                            .background(chromeColors.panel, CircleShape)
+                                            .border(BorderStroke(1.dp, chromeColors.panelBorder), CircleShape)
+                                            .padding(horizontal = 4.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    LibraryZoomControls(
+                                        density = zoomDensity,
+                                        onDensityChange = onZoomDensityChange,
+                                        trackWidth = 140.dp,
+                                    )
+                                }
+                            }
+                        } else null,
                     )
                 }
             },
             trailingContent = if (portrait) null else actions,
-            bottomContent = if (portrait) ({ searchField(Modifier.fillMaxWidth()) }) else null,
+            bottomContent =
+                if (portrait) {
+                    {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            searchField(Modifier.weight(1f))
+                            if (consoleBarAtBottom) {
+                                AnimatedVisibility(
+                                    visible = !searchExpanded,
+                                    enter = fadeIn(tween(180)) + expandHorizontally(expandFrom = Alignment.End),
+                                    exit = fadeOut(tween(180)) + shrinkHorizontally(shrinkTowards = Alignment.End),
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        LibraryLayoutToggle(
+                                            layout = layout,
+                                            onLayoutChange = onLayoutChange,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else null,
         )
         LibrarySortMenu(menu = sortMenu, sort = sort, onSortChange = onSortChange)
     }
@@ -263,6 +322,8 @@ private fun LibrarySearchRow(
     consoleTitleId: Int?,
     consoleGameCount: Int?,
     searchField: @Composable (Modifier) -> Unit,
+    layoutToggle: (@Composable () -> Unit)? = null,
+    zoomControls: (@Composable () -> Unit)? = null,
 ) {
     val spec = LocalAdaptiveLayout.current
     // Keep the last label available while its exit animation finishes.
@@ -272,7 +333,9 @@ private fun LibrarySearchRow(
         displayedTitleId = consoleTitleId
         displayedGameCount = consoleGameCount
     }
-    val startPadding = ((spec.sidebarWidth - spec.sidebarButtonSize) / 2 - 8.dp).coerceAtLeast(0.dp)
+    val startPadding =
+        if (layoutToggle != null) 0.dp
+        else ((spec.sidebarWidth - spec.sidebarButtonSize) / 2 - 8.dp).coerceAtLeast(0.dp)
     BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(start = startPadding, end = 10.dp)) {
         val searchWidth by animateDpAsState(
             targetValue = if (expanded) maxWidth else spec.searchWidth.coerceAtMost(maxWidth),
@@ -281,21 +344,38 @@ private fun LibrarySearchRow(
         )
         Row(modifier = Modifier.fillMaxWidth().clipToBounds(), verticalAlignment = Alignment.CenterVertically) {
             searchField(Modifier.width(searchWidth))
-            AnimatedVisibility(
-                visible = !expanded && consoleTitleId != null,
-                enter = fadeIn(tween(180)) + expandHorizontally(expandFrom = Alignment.Start),
-                exit = fadeOut(tween(180)) + shrinkHorizontally(shrinkTowards = Alignment.Start),
-            ) {
-                displayedTitleId?.let { titleId ->
-                    val title = stringResource(titleId)
-                    Text(
-                        text = displayedGameCount?.let { "$title ($it)" } ?: title,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = chromeColors.content,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 14.dp),
-                    )
+            if (layoutToggle != null) {
+                AnimatedVisibility(
+                    visible = !expanded,
+                    enter = fadeIn(tween(180)) + expandHorizontally(expandFrom = Alignment.Start),
+                    exit = fadeOut(tween(180)) + shrinkHorizontally(shrinkTowards = Alignment.Start),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Spacer(modifier = Modifier.width(10.dp))
+                        layoutToggle()
+                        if (zoomControls != null) {
+                            Spacer(modifier = Modifier.width(10.dp))
+                            zoomControls()
+                        }
+                    }
+                }
+            } else {
+                AnimatedVisibility(
+                    visible = !expanded && consoleTitleId != null,
+                    enter = fadeIn(tween(180)) + expandHorizontally(expandFrom = Alignment.Start),
+                    exit = fadeOut(tween(180)) + shrinkHorizontally(shrinkTowards = Alignment.Start),
+                ) {
+                    displayedTitleId?.let { titleId ->
+                        val title = stringResource(titleId)
+                        Text(
+                            text = displayedGameCount?.let { "$title ($it)" } ?: title,
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = chromeColors.content,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start = 14.dp),
+                        )
+                    }
                 }
             }
         }

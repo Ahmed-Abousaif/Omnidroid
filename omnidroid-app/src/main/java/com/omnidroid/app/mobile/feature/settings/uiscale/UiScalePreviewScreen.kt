@@ -51,7 +51,7 @@ import com.omnidroid.app.mobile.feature.library.LibraryLayout
 import com.omnidroid.app.mobile.feature.library.LibraryLayoutToggle
 import com.omnidroid.app.mobile.feature.library.LibrarySidebar
 import com.omnidroid.app.mobile.feature.library.LibraryTopBar
-import com.omnidroid.app.mobile.feature.library.PortraitConsoleBar
+import com.omnidroid.app.mobile.feature.library.BottomConsoleBar
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.calculateAdaptiveLayoutSpec
@@ -140,7 +140,7 @@ fun UiScalePreviewScreen(
                             )
                         }
                         // Bottom console bar
-                        PortraitConsoleBar(
+                        BottomConsoleBar(
                             filter = previewFilter,
                             systems = displaySystems,
                             selectedGameCount = null,

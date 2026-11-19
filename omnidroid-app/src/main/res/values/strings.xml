@@ -149,6 +149,10 @@
     <string name="settings_description_clear_missing_games">Permanently remove games whose files are no longer in the library folder.</string>
     <string name="settings_title_periodic_library_scan">Periodic library check</string>
     <string name="settings_description_periodic_library_scan">When charging and idle, occasionally rescan the games folder in the background. Off by default.</string>
+    <string name="pref_key_console_bar_bottom_landscape" translatable="false">pref_key_console_bar_bottom_landscape</string>
+    <string name="settings_section_layout">Layout</string>
+    <string name="settings_title_console_bar_bottom_landscape">Console bar at the bottom in landscape</string>
+    <string name="settings_description_console_bar_bottom_landscape">Use the horizontal bar along the bottom instead of the side rail</string>
     <string name="settings_title_auto_library_scan">Automatic library scan</string>
     <string name="settings_description_auto_library_scan">Automatically rescan the games folder when you return to the app. Turn off to keep the current library until you rescan it manually. On by default.</string>
     <string name="settings_clear_missing_games_done">Removed %1$d missing games</string>
