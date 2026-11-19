@@ -3551,8 +3551,8 @@
         <error line="283" column="33" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/ui/Segmented.kt">
-        <error line="63" column="25" source="standard:chain-method-continuation" />
-        <error line="67" column="25" source="standard:chain-method-continuation" />
+        <error line="61" column="25" source="standard:chain-method-continuation" />
+        <error line="65" column="25" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/ui/SystemStatusIndicators.kt">
         <error line="148" column="19" source="standard:property-naming" />
