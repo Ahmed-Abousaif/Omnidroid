@@ -16,7 +16,9 @@ sealed class UpdateState {
 
     data object ReadyToInstall : UpdateState()
 
-    data object UpToDate : UpdateState()
+    data class UpToDate(
+        val canReinstall: Boolean = false,
+    ) : UpdateState()
 
     data class Error(
         val message: String? = null,

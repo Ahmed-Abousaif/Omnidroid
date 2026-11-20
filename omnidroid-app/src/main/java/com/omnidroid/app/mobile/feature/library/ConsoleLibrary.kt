@@ -6,14 +6,9 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateDp
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -57,7 +52,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -292,16 +286,6 @@ internal fun ConsoleLibrary(
     val scope = rememberCoroutineScope()
     val selectedIndex by remember(state) { derivedStateOf { state.selectedIndex } }
     val selectedGame = items.gameAt(selectedIndex)
-    // Pulse the selection glow a few times after the selection changes, then settle, instead of
-    // redrawing the glow every frame forever on an idle screen.
-    val pulseAnim = remember { Animatable(1f) }
-    LaunchedEffect(selectedIndex) {
-        repeat(GLOW_PULSES) {
-            pulseAnim.animateTo(0.8f, tween(2400, easing = FastOutSlowInEasing))
-            pulseAnim.animateTo(1f, tween(2400, easing = FastOutSlowInEasing))
-        }
-    }
-    val pulse = pulseAnim.asState()
 
     val navigation = LocalControllerNavigation.current
     var hasFocus by remember { mutableStateOf(false) }
@@ -352,7 +336,6 @@ internal fun ConsoleLibrary(
                 state = state,
                 items = items,
                 selectedIndex = selectedIndex,
-                pulse = pulse,
                 sharedTransitionScope = sharedTransitionScope,
                 animatedVisibilityScope = animatedVisibilityScope,
                 showControllerGlyph = showControllerGlyph,
@@ -367,7 +350,6 @@ internal fun ConsoleLibrary(
                 state = state,
                 items = items,
                 selectedIndex = selectedIndex,
-                pulse = pulse,
                 sharedTransitionScope = sharedTransitionScope,
                 animatedVisibilityScope = animatedVisibilityScope,
                 showControllerGlyph = showControllerGlyph,
@@ -382,7 +364,6 @@ internal fun ConsoleLibrary(
                 state = state,
                 items = items,
                 selectedIndex = selectedIndex,
-                pulse = pulse,
                 sharedTransitionScope = sharedTransitionScope,
                 animatedVisibilityScope = animatedVisibilityScope,
                 showControllerGlyph = showControllerGlyph,
@@ -473,7 +454,6 @@ private fun ConsoleLandscapeCarousel(
     state: ConsoleCarouselState,
     items: ConsoleItems,
     selectedIndex: Int,
-    pulse: State<Float>,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     showControllerGlyph: Boolean,
@@ -508,7 +488,6 @@ private fun ConsoleLandscapeCarousel(
                             focus = {
                                 if (coverTransitioning) 0f else state.focusOf(index)
                             },
-                            pulse = pulse,
                             sharedModifier =
                                 game?.let {
                                     consoleCoverSharedBounds(sharedTransitionScope, animatedVisibilityScope, it, LandscapeCardCorner,
@@ -591,7 +570,6 @@ private fun ConsoleLandscapeCard(
     renderWidth: Dp,
     renderHeight: Dp,
     focus: () -> Float,
-    pulse: State<Float>,
     sharedModifier: Modifier,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -601,7 +579,7 @@ private fun ConsoleLandscapeCard(
         modifier =
             Modifier
                 .fillMaxSize()
-                .consoleSelectionGlow(libraryAccentColor, LandscapeCardCorner, focus, pulse)
+                .consoleSelectionGlow(libraryAccentColor, LandscapeCardCorner, focus)
                 .then(sharedModifier)
                 .shadow(elevation = 6.dp, shape = shape)
                 .background(chromeColors.listRow)
@@ -662,7 +640,7 @@ private fun ConsoleRotatingTitle(
                 color = color,
                 maxLines = 1,
                 softWrap = false,
-                modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = 0),
+                modifier = Modifier.basicMarquee(iterations = 1, initialDelayMillis = 0),
             )
         }
     } else {
@@ -733,7 +711,6 @@ private fun ConsolePortraitCarousel(
     state: ConsoleCarouselState,
     items: ConsoleItems,
     selectedIndex: Int,
-    pulse: State<Float>,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     showControllerGlyph: Boolean,
@@ -768,7 +745,6 @@ private fun ConsolePortraitCarousel(
                             focus = {
                                 if (coverTransitioning) 0f else state.focusOf(index)
                             },
-                            pulse = pulse,
                             sharedModifier =
                                 game?.let {
                                     consoleCoverSharedBounds(sharedTransitionScope, animatedVisibilityScope, it, PortraitCardCorner,
@@ -845,7 +821,6 @@ private fun ConsolePortraitCard(
     game: Game?,
     cardWidth: Dp,
     focus: () -> Float,
-    pulse: State<Float>,
     sharedModifier: Modifier,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -857,7 +832,7 @@ private fun ConsolePortraitCard(
         modifier =
             Modifier
                 .fillMaxSize()
-                .consoleSelectionGlow(libraryAccentColor, PortraitCardCorner, focus, pulse)
+                .consoleSelectionGlow(libraryAccentColor, PortraitCardCorner, focus)
                 .then(sharedModifier)
                 .shadow(
                     elevation = 20.dp,
@@ -1333,12 +1308,11 @@ private fun Modifier.consoleSelectionGlow(
     accent: Color,
     corner: Dp,
     amount: () -> Float,
-    pulse: State<Float>,
 ): Modifier =
     drawBehind {
         val selected = amount()
         if (selected <= 0.01f) return@drawBehind
-        val strength = selected * selected * pulse.value
+        val strength = selected * selected
         val spread = GlowSpread.toPx()
         val radius = corner.toPx()
         for (layer in GlowLayers downTo 1) {
@@ -1408,6 +1382,3 @@ private fun consoleCoverSharedBounds(
     }
     return Modifier.gameCoverSharedBounds(sharedTransitionScope, animatedVisibilityScope, game.id, cornerAnim, origin)
 }
-
-/** Glow pulses after a selection change before it settles. */
-private const val GLOW_PULSES = 3

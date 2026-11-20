@@ -58,11 +58,11 @@ android {
 
 
 
-        versionCode = 300
+        versionCode = 310
 
 
 
-        versionName = "3.0.0" // Keep in sync with OmnidroidCores when you cut version tags
+        versionName = "3.1.0" // Keep in sync with OmnidroidCores when you cut version tags
 
 
 

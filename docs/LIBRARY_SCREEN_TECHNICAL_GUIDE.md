@@ -328,9 +328,10 @@ clears it when disposed. `ConsoleBackdrop` crossfades over 450 ms, uses a 36 dp
 blur on Android 12/API 31 and above, and uses a lower-alpha unblurred image on
 older versions. The host allows it to bleed underneath top chrome.
 
-The selection glow pulses between `0.8f` and `1f` on a reversing 2,400 ms
-animation. Glow is suppressed while shared-cover transitions are active.
-`ConsoleRotatingTitle` handles overflow/title motion after a 1,500 ms delay.
+The selection glow renders steadily without continuous pulsing to allow the screen
+to idle efficiently. Glow is suppressed while shared-cover transitions are active.
+`ConsoleRotatingTitle` handles overflow/title motion after a 1,500 ms delay with a
+single marquee cycle so the full name can be read before returning to an idle state.
 
 `ConsoleGameStats` reads the application's `GameSessionDao` and legacy
 `PlayTimeStore`, using the greater stored duration. Its achievement text is

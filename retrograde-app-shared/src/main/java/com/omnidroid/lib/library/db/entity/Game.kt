@@ -20,6 +20,7 @@
 package com.omnidroid.lib.library.db.entity
 
 import androidx.recyclerview.widget.DiffUtil
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
@@ -56,6 +57,7 @@ data class Game(
     val fileLastModified: Long? = null,
     val isAvailable: Boolean = true,
     val partialHash: String? = null,
+    @ColumnInfo(defaultValue = "0") val isManualMatch: Boolean = false,
 ) : Serializable {
     @get:Ignore
     val displayName: String
@@ -67,16 +69,12 @@ data class Game(
                 override fun areItemsTheSame(
                     oldItem: Game,
                     newItem: Game,
-                ): Boolean {
-                    return oldItem.id == newItem.id
-                }
+                ): Boolean = oldItem.id == newItem.id
 
                 override fun areContentsTheSame(
                     oldItem: Game,
                     newItem: Game,
-                ): Boolean {
-                    return oldItem == newItem
-                }
+                ): Boolean = oldItem == newItem
             }
     }
 }

@@ -46,7 +46,7 @@ class PlayAppUpdater(
                     unregisterListener()
                 }
                 InstallStatus.INSTALLED -> {
-                    _state.value = UpdateState.UpToDate
+                    _state.value = UpdateState.UpToDate()
                     unregisterListener()
                 }
                 else -> Unit
@@ -70,7 +70,7 @@ class PlayAppUpdater(
                     _state.value = UpdateState.ReadyToInstall
                 }
                 else -> {
-                    _state.value = if (force) UpdateState.UpToDate else UpdateState.Idle
+                    _state.value = if (force) UpdateState.UpToDate() else UpdateState.Idle
                 }
             }
         }.onFailure { error ->

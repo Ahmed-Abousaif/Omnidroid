@@ -185,7 +185,11 @@ class OmnidroidLibrary(
                             savedStamps,
                             existing = null,
                         )
-                        val created = retrogradedb.gameDao().selectByFileUri(entry.group.primaryFile.uri.toString())
+                        val created =
+                            retrogradedb.gameDao().selectByFileUri(
+                                entry.group.primaryFile.uri
+                                    .toString(),
+                            )
                         if (created != null && created.systemId !in beforeSystems) {
                             newSystems += created.systemId
                         }
@@ -193,8 +197,8 @@ class OmnidroidLibrary(
                     is LibraryDiffEntry.Removed -> {
                         removed++
                         if (entry.game.isAvailable) {
-                            retrogradedb.gameDao().update(
-                                listOf(entry.game.copy(isAvailable = false, lastIndexedAt = startedAtMs)),
+                            retrogradedb.gameDao().updateFromScan(
+                                entry.game.copy(isAvailable = false, lastIndexedAt = startedAtMs),
                             )
                         }
                     }
@@ -228,6 +232,22 @@ class OmnidroidLibrary(
         provider: StorageProvider,
     ) {
         val game = entry.game
+        if (game.isManualMatch) {
+            val restored = !game.isAvailable
+            touch(
+                game,
+                entry.group.primaryFile,
+                startedAtMs,
+                backfill = game.fileSize == null,
+                forceAvailable = restored || game.isAvailable,
+            )
+            updateDataFiles(entry.group, game.id, startedAtMs)
+            retrogradedb.unrecognizedFileDao().deleteByUri(
+                entry.group.primaryFile.uri
+                    .toString(),
+            )
+            return
+        }
         val stampChanged =
             currentStamps[game.systemId] != null &&
                 currentStamps[game.systemId] != savedStamps[game.systemId]
@@ -252,7 +272,10 @@ class OmnidroidLibrary(
             forceAvailable = restored || game.isAvailable,
         )
         updateDataFiles(entry.group, game.id, startedAtMs)
-        retrogradedb.unrecognizedFileDao().deleteByUri(entry.group.primaryFile.uri.toString())
+        retrogradedb.unrecognizedFileDao().deleteByUri(
+            entry.group.primaryFile.uri
+                .toString(),
+        )
     }
 
     private fun applyRename(
@@ -288,7 +311,7 @@ class OmnidroidLibrary(
                 isAvailable = true,
                 partialHash = hash,
             )
-        retrogradedb.gameDao().update(listOf(updated))
+        retrogradedb.gameDao().updateFromScan(updated)
         // Replace data files for this game from the new group.
         val oldData = retrogradedb.dataFileDao().selectDataFilesForGame(game.id)
         if (oldData.isNotEmpty()) {
@@ -308,8 +331,7 @@ class OmnidroidLibrary(
                     val size = game.fileSize ?: return@mapNotNull null
                     val mtime = game.fileLastModified ?: return@mapNotNull null
                     LibraryDiff.SizeMtime(size, mtime) to game
-                }
-                .groupBy({ it.first }, { it.second })
+                }.groupBy({ it.first }, { it.second })
                 .filter { it.value.size > 1 }
 
         for (group in ambiguousKeys.values) {
@@ -323,7 +345,7 @@ class OmnidroidLibrary(
                         lastModified = game.fileLastModified ?: 0L,
                     )
                 val hash = hashFile(provider, file) ?: continue
-                retrogradedb.gameDao().update(listOf(game.copy(partialHash = hash)))
+                retrogradedb.gameDao().updateFromScan(game.copy(partialHash = hash))
             }
         }
     }
@@ -331,13 +353,12 @@ class OmnidroidLibrary(
     private fun hashFile(
         provider: StorageProvider,
         file: BaseStorageFile,
-    ): String? {
-        return runCatching {
+    ): String? =
+        runCatching {
             provider.openRandomAccess(file.uri)?.use { PartialContentHasher.hash(it) }
         }.onFailure {
             Timber.w(it, "Failed to hash ${file.name}")
         }.getOrNull()
-    }
 
     private fun gamesForProvider(provider: StorageProvider): List<Game> {
         val schemes = provider.uriSchemes.toSet()
@@ -365,6 +386,12 @@ class OmnidroidLibrary(
         existing: Game?,
     ) {
         val primary = group.primaryFile
+        if (existing != null && existing.isManualMatch) {
+            touch(existing, primary, startedAtMs, backfill = true, forceAvailable = true)
+            updateDataFiles(group, existing.id, startedAtMs)
+            retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
+            return
+        }
         val stampChanged =
             existing != null &&
                 currentStamps[existing.systemId] != null &&
@@ -586,8 +613,13 @@ class OmnidroidLibrary(
             return
         }
         insertedId?.let { id ->
-            retrogradedb.gameDao().selectByIdBlocking(id)?.let { game ->
-                retrogradedb.gameDao().delete(listOf(game))
+            if (retrogradedb.gameDao().deleteAutomaticMatch(id) == 0) {
+                retrogradedb.gameDao().selectByIdBlocking(id)?.let { game ->
+                    touch(game, primary, startedAtMs, backfill = true, forceAvailable = true)
+                    updateDataFiles(group, game.id, startedAtMs)
+                    retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
+                    return
+                }
             }
         }
         retrogradedb.unrecognizedFileDao().insert(
@@ -626,7 +658,7 @@ class OmnidroidLibrary(
                     },
                 isAvailable = if (forceAvailable) true else existing.isAvailable,
             )
-        retrogradedb.gameDao().update(listOf(updated))
+        retrogradedb.gameDao().updateFromScan(updated)
     }
 
     private fun upsert(
@@ -643,25 +675,31 @@ class OmnidroidLibrary(
         val primary = group.primaryFile
         val current = existing ?: insertedId?.let { retrogradedb.gameDao().selectByIdBlocking(it) }
         if (current != null) {
+            val finalTitle = if (current.isManualMatch) current.title else title
+            val finalDeveloper = if (current.isManualMatch) current.developer else developer
+            val finalCover = if (current.isManualMatch) current.coverFrontUrl else cover
             val fileName = archiveEntry ?: current.fileName
             val changed =
-                current.title != title || current.developer != developer || current.coverFrontUrl != cover ||
+                current.title != finalTitle ||
+                    current.developer != finalDeveloper ||
+                    current.coverFrontUrl != finalCover ||
                     current.fileName != fileName ||
-                    current.fileSize != primary.size || current.fileLastModified != primary.lastModified ||
+                    current.fileSize != primary.size ||
+                    current.fileLastModified != primary.lastModified ||
                     !current.isAvailable
             val updated =
                 current.copy(
                     fileName = fileName,
-                    title = title,
-                    developer = developer,
-                    coverFrontUrl = cover,
+                    title = finalTitle,
+                    developer = finalDeveloper,
+                    coverFrontUrl = finalCover,
                     lastIndexedAt = startedAtMs,
                     fileSize = primary.size,
                     fileLastModified = primary.lastModified,
                     isAvailable = true,
                 )
             if (changed || current.lastIndexedAt != startedAtMs) {
-                retrogradedb.gameDao().update(listOf(updated))
+                retrogradedb.gameDao().updateFromScan(updated)
             }
             return current.id
         }
@@ -691,7 +729,11 @@ class OmnidroidLibrary(
                 fileLastModified = primary.lastModified,
                 isAvailable = true,
             )
-        return retrogradedb.gameDao().insert(listOf(game)).first().toInt()
+        return retrogradedb
+            .gameDao()
+            .insert(listOf(game))
+            .first()
+            .toInt()
     }
 
     private fun updateDataFiles(
@@ -730,9 +772,7 @@ class OmnidroidLibrary(
         }
     }
 
-    private fun systemByName(systemId: String): SystemID {
-        return SystemID.entries.first { it.dbname == systemId }
-    }
+    private fun systemByName(systemId: String): SystemID = SystemID.entries.first { it.dbname == systemId }
 
     private fun scanInput(
         provider: StorageProvider,
@@ -795,10 +835,12 @@ class SliceStampStore(
 ) {
     fun get(): Map<String, String> {
         val raw = preferences.getString(KEY, null) ?: return emptyMap()
-        return raw.lineSequence().mapNotNull { line ->
-            val parts = line.split('=', limit = 2)
-            if (parts.size == 2) parts[0] to parts[1] else null
-        }.toMap()
+        return raw
+            .lineSequence()
+            .mapNotNull { line ->
+                val parts = line.split('=', limit = 2)
+                if (parts.size == 2) parts[0] to parts[1] else null
+            }.toMap()
     }
 
     fun set(stamps: Map<String, String>) {

@@ -66,14 +66,14 @@ class GitHubAppUpdater(
                 if (release == null) {
                     prefs.clearCachedAvailable()
                     pendingRelease = null
-                    _state.value = if (force) UpdateState.UpToDate else UpdateState.Idle
+                    _state.value = if (force) UpdateState.UpToDate() else UpdateState.Idle
                     return
                 }
                 val current = BuildConfig.VERSION_NAME
                 if (!SemVer.isNewerThan(release.version, current)) {
                     prefs.clearCachedAvailable()
-                    pendingRelease = null
-                    _state.value = if (force) UpdateState.UpToDate else UpdateState.Idle
+                    pendingRelease = release.takeIf { force }
+                    _state.value = if (force) UpdateState.UpToDate(canReinstall = true) else UpdateState.Idle
                     return
                 }
                 if (prefs.skippedVersion != null &&
