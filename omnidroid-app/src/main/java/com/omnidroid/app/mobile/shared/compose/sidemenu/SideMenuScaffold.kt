@@ -1,17 +1,14 @@
 package com.omnidroid.app.mobile.shared.compose.sidemenu
 
-import com.omnidroid.app.utils.android.settings.booleanPreferenceState
-import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.runtime.movableContentOf
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.slideInVertically
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -44,9 +41,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
@@ -61,6 +60,7 @@ import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.utils.android.settings.LocalSettingsRowContainerColor
+import com.omnidroid.app.utils.android.settings.booleanPreferenceState
 
 /** Shared visual shell. Android/game lifecycle and action execution belong to the host. */
 @Composable
@@ -101,18 +101,33 @@ fun SideMenuScaffold(
     val panelContent =
         remember(state) {
             movableContentOf { sheet: Boolean ->
+                val insetSides =
+                    if (sheet) {
+                        WindowInsetsSides.Horizontal
+                    } else {
+                        WindowInsetsSides.Top + WindowInsetsSides.End
+                    }
+                val bottomInset = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
                 Column(
-                    Modifier.fillMaxSize()
-                        .windowInsetsPadding(
-                            WindowInsets.safeDrawing.only(
-                                if (sheet) WindowInsetsSides.Horizontal else WindowInsetsSides.Top + WindowInsetsSides.End,
-                            ),
-                        )
-                        .padding(bottom = maxOf(currentBottomReserved, WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding())),
+                    Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(insetSides))
+                        .padding(bottom = maxOf(currentBottomReserved, bottomInset)),
                 ) {
-                    SideMenuHeader(currentTitle, currentCanGoBack) { if (currentCanGoBack) currentOnBack() else state.closeThen() }
-                    Box(Modifier.fillMaxWidth().height(1.dp).background(chromeColors.divider))
-                    Box(Modifier.weight(1f).fillMaxWidth()) {
+                    SideMenuHeader(currentTitle, currentCanGoBack) {
+                        if (currentCanGoBack) currentOnBack() else state.closeThen()
+                    }
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(chromeColors.divider),
+                    )
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                    ) {
                         CompositionLocalProvider(
                             LocalSettingsRowContainerColor provides chromeColors.panel,
                             LocalSideMenuIsSheet provides sheet,
