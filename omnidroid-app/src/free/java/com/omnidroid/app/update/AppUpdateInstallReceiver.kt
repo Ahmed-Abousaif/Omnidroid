@@ -31,7 +31,7 @@ class AppUpdateInstallReceiver : BroadcastReceiver() {
             PackageInstaller.STATUS_SUCCESS -> {
                 Timber.i("App update installed successfully")
                 deletePendingApk(context)
-                AppUpdateBus.notify(UpdateState.UpToDate)
+                AppUpdateBus.notify(UpdateState.UpToDate())
             }
             else -> {
                 Timber.w("App update install failed: status=$status message=$message")

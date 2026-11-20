@@ -202,6 +202,7 @@
     <string name="app_update_available_title">Update available (v%1$s)</string>
     <string name="app_update_available_body">A newer version of Omnidroid is ready to install.</string>
     <string name="app_update_action_update">Update</string>
+    <string name="app_update_action_reinstall">Reinstall app</string>
     <string name="app_update_action_later">Later</string>
     <string name="app_update_action_skip">Skip this version</string>
     <string name="app_update_action_restart">Restart to finish update</string>

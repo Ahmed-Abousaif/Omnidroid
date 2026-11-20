@@ -146,6 +146,13 @@ fun AppUpdateOverlay(
             OmnidroidDialog(
                 onDismissRequest = onLater,
                 confirmButton = {
+                    if (state.canReinstall && supportsGitHubOptions) {
+                        OmnidroidDialogButton(onClick = onUpdate) {
+                            Text(text = stringResource(R.string.app_update_action_reinstall))
+                        }
+                    }
+                },
+                dismissButton = {
                     OmnidroidDialogButton(onClick = onLater) {
                         Text(text = stringResource(R.string.settings_action_close))
                     }
