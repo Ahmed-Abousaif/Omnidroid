@@ -1,5 +1,7 @@
 package com.omnidroid.app.mobile.feature.library
 
+import androidx.compose.ui.platform.LocalConfiguration
+import android.content.res.Configuration
 import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import android.content.Context
 import androidx.activity.compose.ReportDrawnWhen
@@ -222,6 +224,9 @@ fun LibraryScreen(
     val pagedScrollState = key(state.filter, state.searchQuery, state.sort) {
         rememberLibraryPagedScrollState()
     }
+    // Lets the view model show portrait's own layout when layouts are separate (Settings > Display).
+    val orientation = LocalConfiguration.current.orientation
+    LaunchedEffect(orientation) { viewModel.setPortrait(orientation == Configuration.ORIENTATION_PORTRAIT) }
 
     BoxWithConstraints(
         modifier =

@@ -1805,38 +1805,33 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/LibraryScreen.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="116" column="1" source="standard:no-unused-imports" />
-        <error line="137" column="21" source="standard:function-signature" />
-        <error line="137" column="39" source="standard:function-signature" />
-        <error line="137" column="60" source="standard:function-signature" />
-        <error line="137" column="85" source="standard:function-signature" />
-        <error line="178" column="28" source="standard:function-signature" />
-        <error line="178" column="46" source="standard:function-signature" />
-        <error line="178" column="66" source="standard:function-signature" />
-        <error line="178" column="91" source="standard:function-signature" />
-        <error line="222" column="28" source="standard:multiline-expression-wrapping" />
-        <error line="258" column="25" source="standard:chain-method-continuation" />
-        <error line="408" column="21" source="standard:chain-method-continuation" />
-        <error line="445" column="13" source="standard:blank-line-before-declaration" />
-        <error line="445" column="22" source="standard:function-signature" />
-        <error line="445" column="48" source="standard:function-signature" />
-        <error line="445" column="60" source="standard:function-signature" />
-        <error line="446" column="58" source="standard:argument-list-wrapping" />
-        <error line="446" column="77" source="standard:argument-list-wrapping" />
-        <error line="446" column="88" source="standard:argument-list-wrapping" />
-        <error line="446" column="102" source="standard:argument-list-wrapping" />
-        <error line="446" column="115" source="standard:argument-list-wrapping" />
-        <error line="446" column="121" source="standard:max-line-length" />
-        <error line="446" column="132" source="standard:argument-list-wrapping" />
-        <error line="680" column="31" source="standard:argument-list-wrapping" />
-        <error line="680" column="121" source="standard:max-line-length" />
-        <error line="680" column="152" source="standard:argument-list-wrapping" />
-        <error line="745" column="37" source="standard:chain-method-continuation" />
-        <error line="782" column="1" source="standard:indent" />
-        <error line="783" column="1" source="standard:indent" />
-        <error line="784" column="1" source="standard:indent" />
-        <error line="785" column="1" source="standard:indent" />
-        <error line="786" column="1" source="standard:indent" />
+        <error line="118" column="1" source="standard:no-unused-imports" />
+        <error line="139" column="21" source="standard:function-signature" />
+        <error line="139" column="39" source="standard:function-signature" />
+        <error line="139" column="60" source="standard:function-signature" />
+        <error line="139" column="85" source="standard:function-signature" />
+        <error line="180" column="28" source="standard:function-signature" />
+        <error line="180" column="46" source="standard:function-signature" />
+        <error line="180" column="66" source="standard:function-signature" />
+        <error line="180" column="91" source="standard:function-signature" />
+        <error line="224" column="28" source="standard:multiline-expression-wrapping" />
+        <error line="263" column="25" source="standard:chain-method-continuation" />
+        <error line="413" column="21" source="standard:chain-method-continuation" />
+        <error line="450" column="13" source="standard:blank-line-before-declaration" />
+        <error line="450" column="22" source="standard:function-signature" />
+        <error line="450" column="48" source="standard:function-signature" />
+        <error line="450" column="60" source="standard:function-signature" />
+        <error line="451" column="58" source="standard:argument-list-wrapping" />
+        <error line="451" column="77" source="standard:argument-list-wrapping" />
+        <error line="451" column="88" source="standard:argument-list-wrapping" />
+        <error line="451" column="102" source="standard:argument-list-wrapping" />
+        <error line="451" column="115" source="standard:argument-list-wrapping" />
+        <error line="451" column="121" source="standard:max-line-length" />
+        <error line="451" column="132" source="standard:argument-list-wrapping" />
+        <error line="685" column="31" source="standard:argument-list-wrapping" />
+        <error line="685" column="121" source="standard:max-line-length" />
+        <error line="685" column="152" source="standard:argument-list-wrapping" />
+        <error line="750" column="37" source="standard:chain-method-continuation" />
         <error line="787" column="1" source="standard:indent" />
         <error line="788" column="1" source="standard:indent" />
         <error line="789" column="1" source="standard:indent" />
@@ -1901,11 +1896,11 @@
         <error line="848" column="1" source="standard:indent" />
         <error line="849" column="1" source="standard:indent" />
         <error line="850" column="1" source="standard:indent" />
+        <error line="851" column="1" source="standard:indent" />
         <error line="852" column="1" source="standard:indent" />
         <error line="853" column="1" source="standard:indent" />
         <error line="854" column="1" source="standard:indent" />
         <error line="855" column="1" source="standard:indent" />
-        <error line="856" column="1" source="standard:indent" />
         <error line="857" column="1" source="standard:indent" />
         <error line="858" column="1" source="standard:indent" />
         <error line="859" column="1" source="standard:indent" />
@@ -1916,11 +1911,11 @@
         <error line="864" column="1" source="standard:indent" />
         <error line="865" column="1" source="standard:indent" />
         <error line="866" column="1" source="standard:indent" />
+        <error line="867" column="1" source="standard:indent" />
         <error line="868" column="1" source="standard:indent" />
         <error line="869" column="1" source="standard:indent" />
         <error line="870" column="1" source="standard:indent" />
         <error line="871" column="1" source="standard:indent" />
-        <error line="872" column="1" source="standard:indent" />
         <error line="873" column="1" source="standard:indent" />
         <error line="874" column="1" source="standard:indent" />
         <error line="875" column="1" source="standard:indent" />
@@ -1964,9 +1959,14 @@
         <error line="913" column="1" source="standard:indent" />
         <error line="914" column="1" source="standard:indent" />
         <error line="915" column="1" source="standard:indent" />
-        <error line="957" column="19" source="standard:property-naming" />
-        <error line="1075" column="21" source="standard:chain-method-continuation" />
-        <error line="1184" column="24" source="standard:multiline-expression-wrapping" />
+        <error line="916" column="1" source="standard:indent" />
+        <error line="917" column="1" source="standard:indent" />
+        <error line="918" column="1" source="standard:indent" />
+        <error line="919" column="1" source="standard:indent" />
+        <error line="920" column="1" source="standard:indent" />
+        <error line="962" column="19" source="standard:property-naming" />
+        <error line="1080" column="21" source="standard:chain-method-continuation" />
+        <error line="1189" column="24" source="standard:multiline-expression-wrapping" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/LibraryStartupStore.kt">
         <error line="11" column="27" source="standard:class-signature" />
@@ -2000,30 +2000,30 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/LibraryViewModel.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="52" column="70" source="standard:function-expression-body" />
-        <error line="96" column="32" source="standard:multiline-expression-wrapping" />
-        <error line="103" column="17" source="standard:argument-list-wrapping" />
-        <error line="103" column="34" source="standard:argument-list-wrapping" />
-        <error line="103" column="46" source="standard:argument-list-wrapping" />
-        <error line="103" column="56" source="standard:argument-list-wrapping" />
-        <error line="103" column="85" source="standard:argument-list-wrapping" />
-        <error line="103" column="89" source="standard:function-literal" />
-        <error line="103" column="95" source="standard:function-literal" />
-        <error line="103" column="103" source="standard:function-literal" />
-        <error line="103" column="109" source="standard:function-literal" />
-        <error line="103" column="121" source="standard:max-line-length" />
-        <error line="103" column="126" source="standard:function-literal" />
-        <error line="147" column="60" source="standard:chain-method-continuation" />
-        <error line="147" column="78" source="standard:chain-method-continuation" />
-        <error line="218" column="23" source="standard:multiline-expression-wrapping" />
-        <error line="243" column="40" source="standard:function-expression-body" />
-        <error line="247" column="45" source="standard:function-expression-body" />
-        <error line="280" column="36" source="standard:chain-method-continuation" />
-        <error line="318" column="36" source="standard:chain-method-continuation" />
-        <error line="350" column="23" source="standard:chain-method-continuation" />
-        <error line="384" column="58" source="standard:function-expression-body" />
-        <error line="403" column="24" source="standard:class-signature" />
-        <error line="403" column="44" source="standard:class-signature" />
+        <error line="53" column="70" source="standard:function-expression-body" />
+        <error line="110" column="32" source="standard:multiline-expression-wrapping" />
+        <error line="121" column="17" source="standard:argument-list-wrapping" />
+        <error line="121" column="34" source="standard:argument-list-wrapping" />
+        <error line="121" column="46" source="standard:argument-list-wrapping" />
+        <error line="121" column="56" source="standard:argument-list-wrapping" />
+        <error line="121" column="85" source="standard:argument-list-wrapping" />
+        <error line="121" column="89" source="standard:function-literal" />
+        <error line="121" column="95" source="standard:function-literal" />
+        <error line="121" column="103" source="standard:function-literal" />
+        <error line="121" column="109" source="standard:function-literal" />
+        <error line="121" column="121" source="standard:max-line-length" />
+        <error line="121" column="126" source="standard:function-literal" />
+        <error line="165" column="60" source="standard:chain-method-continuation" />
+        <error line="165" column="78" source="standard:chain-method-continuation" />
+        <error line="236" column="23" source="standard:multiline-expression-wrapping" />
+        <error line="284" column="40" source="standard:function-expression-body" />
+        <error line="313" column="36" source="standard:chain-method-continuation" />
+        <error line="351" column="36" source="standard:chain-method-continuation" />
+        <error line="383" column="23" source="standard:chain-method-continuation" />
+        <error line="417" column="58" source="standard:function-expression-body" />
+        <error line="432" column="9" source="standard:blank-line-before-declaration" />
+        <error line="457" column="24" source="standard:class-signature" />
+        <error line="457" column="44" source="standard:class-signature" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/RegisteredSystemsStore.kt">
         <error line="10" column="30" source="standard:class-signature" />
@@ -2931,7 +2931,7 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/general/DisplaySettingsSection.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="41" column="72" source="standard:chain-method-continuation" />
+        <error line="42" column="72" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/settings/general/EmulationSettingsSection.kt">
         <error line="27" column="121" source="standard:max-line-length" />

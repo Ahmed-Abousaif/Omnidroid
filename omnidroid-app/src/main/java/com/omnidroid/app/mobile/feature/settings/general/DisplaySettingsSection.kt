@@ -15,6 +15,7 @@ import com.omnidroid.app.utils.android.settings.OmnidroidSettingsColorChoice
 import com.omnidroid.app.utils.android.settings.stringPreferenceState
 import com.omnidroid.app.mobile.feature.main.MainRoute
 import com.omnidroid.app.mobile.feature.main.navigateToRoute
+import com.omnidroid.app.mobile.feature.library.LibraryViewModel
 import com.omnidroid.app.shared.settings.rememberHdModeAllowed
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsList
@@ -143,6 +144,11 @@ internal fun DisplaySettings(navController: NavController) {
                 ),
             titleRes = R.string.display_filter,
             items = stringListResource(R.array.pref_key_shader_filter_display_names),
+        )
+        OmnidroidSettingsSwitch(
+            state = booleanPreferenceState(LibraryViewModel.SEPARATE_LAYOUTS_KEY, false),
+            titleRes = R.string.settings_title_layout_per_orientation,
+            subtitleRes = R.string.settings_description_layout_per_orientation,
         )
     }
 }
