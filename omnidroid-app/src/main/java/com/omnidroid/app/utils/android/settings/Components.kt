@@ -1,8 +1,27 @@
 package com.omnidroid.app.utils.android.settings
 
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.omnidroid.app.mobile.shared.compose.ui.AccentContrast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,6 +58,12 @@ import androidx.compose.material3.Slider
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSwitch
 import kotlin.math.roundToInt
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.text.font.FontWeight
+import com.omnidroid.app.mobile.shared.compose.ui.SegmentedPills
 
 /** Optional host surface for rows; null uses the app's default settings colors. */
 val LocalSettingsRowContainerColor = staticCompositionLocalOf<Color?> { null }
@@ -242,6 +267,126 @@ private fun SettingsGroupTitleSmall(title: @Composable () -> Unit) {
     }
 }
 
+/**
+ * A short fixed choice as one-tap segments beside its title (below it when narrow or when a subtitle
+ * is present), in place of a row that opens a dialog. For longer or dynamic lists keep [OmnidroidSettingsList].
+ */
+@Composable
+fun OmnidroidSettingsSegmented(
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    state: SettingValueState<Int>? = null,
+    selectedIndex: Int = state?.value ?: 0,
+    onSelectionChange: (Int) -> Unit = { state?.value = it },
+    titleRes: Int? = null,
+    title: @Composable () -> Unit = { Text(stringResource(requireNotNull(titleRes))) },
+    subtitleRes: Int? = null,
+    subtitle: (@Composable () -> Unit)? = subtitleRes?.let { { Text(stringResource(it)) } },
+    items: List<String>,
+    icon: (@Composable () -> Unit)? = null,
+    onItemSelected: ((Int, String) -> Unit)? = null,
+) {
+    val container = settingsRowContainerColor() ?: Color.Transparent
+    val currentSelection = state?.value ?: selectedIndex
+    val onSelectOption: (Int) -> Unit = { index ->
+        state?.value = index
+        onSelectionChange(index)
+        if (index in items.indices) {
+            onItemSelected?.invoke(index, items[index])
+        }
+    }
+
+    val label: @Composable (Modifier) -> Unit = { labelModifier ->
+        Row(
+            modifier = labelModifier,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (icon != null) {
+                Box(modifier = Modifier.padding(end = 16.dp)) {
+                    icon()
+                }
+            }
+            Column {
+                ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(color = chromeColors.content)) { title() }
+                if (subtitle != null) {
+                    ProvideTextStyle(MaterialTheme.typography.bodySmall.copy(color = chromeColors.muted)) { subtitle() }
+                }
+            }
+        }
+    }
+    val segments: @Composable () -> Unit = {
+        SegmentedPills(
+            options = items.indices.toList(),
+            selected = currentSelection,
+            onSelect = onSelectOption,
+            enabled = enabled,
+        ) { index, contentColor ->
+            Text(
+                items[index],
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = contentColor,
+                maxLines = 1,
+            )
+        }
+    }
+    BesideOrBelow(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(container)
+                .padding(horizontal = 16.dp, vertical = 10.dp)
+                .alpha(if (enabled) 1f else 0.45f),
+        forceBelow = subtitle != null,
+        label = { label(Modifier) },
+        control = segments,
+    )
+}
+
+/**
+ * A settings row's [label] with its [control] beside it when both fit on one line without wrapping,
+ * else the control under the label. Measured, so it follows the real text and control widths.
+ */
+@Composable
+internal fun BesideOrBelow(
+    modifier: Modifier,
+    forceBelow: Boolean = false,
+    label: @Composable () -> Unit,
+    control: @Composable () -> Unit,
+) {
+    Layout(contents = listOf(label, control), modifier = modifier) { (labelM, controlM), constraints ->
+        val width = if (constraints.hasBoundedWidth) constraints.maxWidth else constraints.minWidth
+        val gap = 12.dp.roundToPx()
+        val below = 10.dp.roundToPx()
+
+        val c = controlM.firstOrNull()?.measure(constraints.copy(minWidth = 0, minHeight = 0))
+        val cWidth = c?.width ?: 0
+        val cHeight = c?.height ?: 0
+
+        val labelSingleLineWidth = labelM.firstOrNull()?.maxIntrinsicWidth(Int.MAX_VALUE) ?: 0
+        val canFitBeside = !forceBelow && constraints.hasBoundedWidth && (cWidth + gap + labelSingleLineWidth <= width)
+
+        if (canFitBeside) {
+            val l = labelM.firstOrNull()?.measure(Constraints(maxWidth = (width - cWidth - gap).coerceAtLeast(0)))
+            val lWidth = l?.width ?: 0
+            val lHeight = l?.height ?: 0
+            val height = maxOf(lHeight, cHeight)
+            layout(width, height) {
+                l?.placeRelative(0, (height - lHeight) / 2)
+                c?.placeRelative(width - cWidth, (height - cHeight) / 2)
+            }
+        } else {
+            val l = labelM.firstOrNull()?.measure(Constraints(maxWidth = width))
+            val lHeight = l?.height ?: 0
+            val totalHeight = lHeight + (if (c != null && lHeight > 0) below else 0) + cHeight
+            layout(width, totalHeight) {
+                l?.placeRelative(0, 0)
+                c?.placeRelative(0, lHeight + below)
+            }
+        }
+    }
+}
+
+
 @Composable
 private fun settingsRowContainerColor(): Color? =
     LocalSettingsRowContainerColor.current
@@ -264,4 +409,64 @@ private fun omnidroidSettingsColor(enabled: Boolean): ListItemColors {
         trailingIconColor = defaultColors.disabledTrailingIconColor,
         supportingColor = defaultColors.supportingTextColor.copy(alpha = 0.3f),
     )
+}
+
+/**
+ * A row of colour swatches to pick one from. The whole 48 dp circle is the target; the chosen one
+ * shows a check in its own contrasting colour, and controller focus draws the focus ring around it.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun OmnidroidSettingsColorChoice(
+    selectedIndex: Int,
+    colors: List<Color>,
+    labels: List<String>,
+    onSelect: (Int) -> Unit,
+    titleRes: Int,
+    subtitleRes: Int? = null,
+    modifier: Modifier = Modifier,
+) {
+    val container = settingsRowContainerColor() ?: Color.Transparent
+    Column(
+        modifier = modifier.fillMaxWidth().background(container).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Column {
+            Text(stringResource(titleRes), style = MaterialTheme.typography.bodyLarge, color = chromeColors.content)
+            if (subtitleRes != null) {
+                Text(stringResource(subtitleRes), style = MaterialTheme.typography.bodySmall, color = chromeColors.muted)
+            }
+        }
+        FlowRow(
+            modifier = Modifier.selectableGroup(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            colors.forEachIndexed { index, color ->
+                val selected = index == selectedIndex
+                Box(
+                    modifier =
+                        Modifier
+                            .size(48.dp)
+                            .controllerFocusGlow(CircleShape)
+                            .clip(CircleShape)
+                            .selectable(selected = selected, role = Role.RadioButton) { onSelect(index) }
+                            .semantics { contentDescription = labels[index] }
+                            .padding(4.dp)
+                            .background(color, CircleShape)
+                            .border(BorderStroke(1.dp, chromeColors.panelBorder), CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (selected) {
+                        Icon(
+                            Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = Color(AccentContrast.onColor(color.toArgb())),
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

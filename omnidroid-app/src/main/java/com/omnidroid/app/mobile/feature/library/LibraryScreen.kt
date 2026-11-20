@@ -235,6 +235,8 @@ fun LibraryScreen(
                 .homeChromeBackground(),
     ) {
         val portrait = maxHeight > maxWidth
+        // Optional in landscape: the horizontal bar along the bottom instead of the side rail.
+        val consoleBarAtBottom = portrait || state.consoleBarBottomInLandscape
         if (state.layout == LibraryLayout.CONSOLE) {
             ConsoleBackdrop(
                 game = backdropGame,
@@ -244,12 +246,15 @@ fun LibraryScreen(
                         .bleedTop(backdropTopBleed),
             )
         }
-        if (portrait) {
+        if (consoleBarAtBottom) {
             Column(
                 modifier =
                     Modifier
                         .then(
-                            if (portraitColumnWidth != Dp.Unspecified) {
+                            if (!portrait) {
+                                // Landscape: keep the games and the bar clear of the camera cutout.
+                                Modifier.fillMaxWidth().hugDisplayCutout(WindowInsetsSides.Horizontal)
+                            } else if (portraitColumnWidth != Dp.Unspecified) {
                                 Modifier.width(portraitColumnWidth)
                             } else {
                                 Modifier.fillMaxWidth()
@@ -278,9 +283,10 @@ fun LibraryScreen(
                     pagedScrollState = pagedScrollState,
                     requestInitialFocus = controllerConnected,
                     showZoomBar = !controllerConnected,
-                    portrait = true,
+                    portrait = portrait,
+                    consoleBarAtBottom = true,
                 )
-                PortraitConsoleBar(
+                BottomConsoleBar(
                     filter = state.filter,
                     systems = state.sidebarSystems,
                     selectedGameCount = state.selectedSystemGameCount,
@@ -330,6 +336,7 @@ fun LibraryScreen(
                     requestInitialFocus = controllerConnected,
                     showZoomBar = !controllerConnected,
                     portrait = false,
+                    consoleBarAtBottom = false,
                 )
             }
         }
@@ -576,7 +583,7 @@ private fun SidebarSystemLogoButton(
 }
 
 @Composable
-internal fun PortraitConsoleBar(
+internal fun BottomConsoleBar(
     filter: LibraryFilter,
     systems: List<MetaSystemID>,
     selectedGameCount: Int?,
@@ -673,6 +680,29 @@ internal fun PortraitConsoleBar(
     }
 }
 
+@Deprecated(
+    message = "Use BottomConsoleBar instead",
+    replaceWith = ReplaceWith("BottomConsoleBar(filter, systems, selectedGameCount, startupFilter, onFilterSelected, onConsoleLongClick, onAddConsole)"),
+)
+@Composable
+internal fun PortraitConsoleBar(
+    filter: LibraryFilter,
+    systems: List<MetaSystemID>,
+    selectedGameCount: Int?,
+    startupFilter: LibraryFilter,
+    onFilterSelected: (LibraryFilter) -> Unit,
+    onConsoleLongClick: (MetaSystemID) -> Unit,
+    onAddConsole: () -> Unit,
+) = BottomConsoleBar(
+    filter = filter,
+    systems = systems,
+    selectedGameCount = selectedGameCount,
+    startupFilter = startupFilter,
+    onFilterSelected = onFilterSelected,
+    onConsoleLongClick = onConsoleLongClick,
+    onAddConsole = onAddConsole,
+)
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun LibraryGames(
@@ -696,6 +726,7 @@ private fun LibraryGames(
     requestInitialFocus: Boolean = false,
     showZoomBar: Boolean = true,
     portrait: Boolean = false,
+    consoleBarAtBottom: Boolean = false,
 ) {
     val context = LocalContext.current
     val firstItemRequester = remember { FocusRequester() }
@@ -720,12 +751,26 @@ private fun LibraryGames(
                 .getString(context.getString(com.omnidroid.lib.R.string.pref_key_extenral_folder), null)
                 .isNullOrBlank()
         }
-    val showViewBar = games.itemCount > 0 || showContinue || portrait
     val pinchScale = remember { mutableFloatStateOf(1f) }
     val currentZoomDensity by rememberUpdatedState(state.zoomDensity)
     val currentOnZoomDensityChange by rememberUpdatedState(onZoomDensityChange)
+    val adaptiveSpec = LocalAdaptiveLayout.current
+    val scale = adaptiveSpec.uiScale
+    val showFloatingControls = games.itemCount > 0 || showContinue || portrait
+    val showZoom = showZoomBar && state.layout == LibraryLayout.GRID
+    val hasBottomBar =
+        when {
+            portrait -> state.layout == LibraryLayout.GRID && showZoom
+            !consoleBarAtBottom -> state.layout == LibraryLayout.GRID
+            else -> false
+        }
 
-    Column(modifier = modifier.fillMaxSize().benchmarkTag(if (isRefreshing) "library-loading" else "library-ready")) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .benchmarkTag(if (isRefreshing) "library-loading" else "library-ready"),
+    ) {
         Box(
             modifier =
                 Modifier
@@ -739,153 +784,140 @@ private fun LibraryGames(
                     ),
         ) {
             when {
-                isRefreshing && games.itemCount == 0 -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
-                    }
+            isRefreshing && games.itemCount == 0 -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
                 }
-                isEmpty -> {
-                    LibraryEmptyState(
-                        kind = libraryEmptyKind(hasGamesFolder, state.filter, state.searchQuery),
-                        filter = state.filter,
-                        searchQuery = state.searchQuery,
-                        scanning = state.operationInProgress,
-                        onPickFolder = { StorageFrameworkPickerLauncher.pickFolder(context) },
-                        onRescan = { onSync(context) },
-                        onClearSearch = onClearSearch,
-                    )
-                }
-                else -> {
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .graphicsLayer {
-                                    scaleX = pinchScale.floatValue
-                                    scaleY = pinchScale.floatValue
-                                },
-                    ) {
-                        val featured = continueGame.takeIf { showContinue }
-                        if (state.layout == LibraryLayout.CONSOLE) {
-                            ConsoleLibrary(
-                                modifier = Modifier.fillMaxSize(),
-                                sharedTransitionScope = sharedTransitionScope,
-                                animatedVisibilityScope = animatedVisibilityScope,
+            }
+            isEmpty -> {
+                LibraryEmptyState(
+                    kind = libraryEmptyKind(hasGamesFolder, state.filter, state.searchQuery),
+                    filter = state.filter,
+                    searchQuery = state.searchQuery,
+                    scanning = state.operationInProgress,
+                    onPickFolder = { StorageFrameworkPickerLauncher.pickFolder(context) },
+                    onRescan = { onSync(context) },
+                    onClearSearch = onClearSearch,
+                )
+            }
+            else -> {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                scaleX = pinchScale.floatValue
+                                scaleY = pinchScale.floatValue
+                            },
+                ) {
+                    val featured = continueGame.takeIf { showContinue }
+                    if (state.layout == LibraryLayout.CONSOLE) {
+                        ConsoleLibrary(
+                            modifier = Modifier.fillMaxSize(),
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            games = games,
+                            featured = featured,
+                            selection = consoleSelection,
+                            portrait = portrait,
+                            showControllerGlyph = requestInitialFocus,
+                            focusRequester = firstItemRequester,
+                            onOpenGame = onGameClick,
+                            onOpenContinueGame = onOpenContinueGame,
+                            onPlayGame = onContinueClick,
+                            onGameLongClick = onGameLongClick,
+                            onFavoriteToggle = onFavoriteToggle,
+                            onBackdropGameChange = onBackdropGameChange,
+                        )
+                    } else {
+                        key(state.filter, state.searchQuery, state.sort) {
+                            LibraryPagedContent(
                                 games = games,
                                 featured = featured,
-                                selection = consoleSelection,
+                                layout = state.layout,
+                                zoomDensity = state.zoomDensity,
                                 portrait = portrait,
-                                showControllerGlyph = requestInitialFocus,
-                                focusRequester = firstItemRequester,
-                                onOpenGame = onGameClick,
-                                onOpenContinueGame = onOpenContinueGame,
-                                onPlayGame = onContinueClick,
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                firstItemRequester = firstItemRequester,
+                                onGameClick = onGameClick,
+                                onContinueClick = onContinueClick,
                                 onGameLongClick = onGameLongClick,
-                                onFavoriteToggle = onFavoriteToggle,
-                                onBackdropGameChange = onBackdropGameChange,
+                                scrollState = pagedScrollState,
                             )
-                        } else {
-                            key(state.filter, state.searchQuery, state.sort) {
-                                LibraryPagedContent(
-                                    games = games,
-                                    featured = featured,
-                                    layout = state.layout,
-                                    zoomDensity = state.zoomDensity,
-                                    portrait = portrait,
-                                    sharedTransitionScope = sharedTransitionScope,
-                                    animatedVisibilityScope = animatedVisibilityScope,
-                                    firstItemRequester = firstItemRequester,
-                                    onGameClick = onGameClick,
-                                    onContinueClick = onContinueClick,
-                                    onGameLongClick = onGameLongClick,
-                                    scrollState = pagedScrollState,
-                                )
-                            }
                         }
                     }
                 }
             }
         }
-        if (showViewBar) {
-            LibraryViewBar(
-                layout = state.layout,
-                density = state.zoomDensity,
-                portrait = portrait,
-                showZoom = showZoomBar && state.layout == LibraryLayout.GRID,
-                onLayoutChange = onLayoutChange,
-                onDensityChange = onZoomDensityChange,
-                modifier = Modifier,
-            )
+
+        if (showFloatingControls && !consoleBarAtBottom && !portrait && state.layout != LibraryLayout.GRID) {
+            // Side rail mode (Console / List view): float layout toggle at bottom-right
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 12.dp),
+            ) {
+                LibraryLayoutToggle(
+                    layout = state.layout,
+                    onLayoutChange = onLayoutChange,
+                )
+            }
+        }
+    }
+
+    if (hasBottomBar) {
+        val barHeight = 36.dp * scale
+        if (portrait) {
+            // Portrait grid view: zoom takes full width on its own bottom bar
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(barHeight)
+                        .padding(start = 8.dp, end = 8.dp, bottom = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                LibraryZoomControls(
+                    density = currentZoomDensity,
+                    onDensityChange = { currentOnZoomDensityChange(it) },
+                    trackWidth = null,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        } else if (!consoleBarAtBottom && state.layout == LibraryLayout.GRID) {
+            // Landscape side rail grid view: 36dp bar with zoom and view selector
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(barHeight)
+                        .padding(bottom = 6.dp),
+            ) {
+                if (showZoom) {
+                    LibraryZoomControls(
+                        density = currentZoomDensity,
+                        onDensityChange = { currentOnZoomDensityChange(it) },
+                        trackWidth = 168.dp,
+                        modifier = Modifier.align(Alignment.Center),
+                    )
+                }
+                LibraryLayoutToggle(
+                    layout = state.layout,
+                    onLayoutChange = onLayoutChange,
+                    modifier =
+                        Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(end = 8.dp),
+                )
+            }
         }
     }
 }
-
-@Composable
-private fun LibraryViewBar(
-    layout: LibraryLayout,
-    density: Int,
-    portrait: Boolean,
-    showZoom: Boolean,
-    onLayoutChange: (LibraryLayout) -> Unit,
-    onDensityChange: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val adaptiveSpec = LocalAdaptiveLayout.current
-    val barHeight = 36.dp * adaptiveSpec.uiScale
-    if (portrait) {
-        Row(
-            modifier =
-                modifier
-                    .fillMaxWidth()
-                    .height(barHeight)
-                    .padding(start = 8.dp, end = 8.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (showZoom) {
-                LibraryZoomControls(
-                    density = density,
-                    onDensityChange = onDensityChange,
-                    trackWidth = null,
-                    modifier = Modifier.weight(1f),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            } else {
-                Spacer(modifier = Modifier.weight(1f))
-            }
-            LibraryLayoutToggle(
-                layout = layout,
-                onLayoutChange = onLayoutChange,
-            )
-        }
-    } else {
-        Box(
-            modifier =
-                modifier
-                    .fillMaxWidth()
-                    .height(barHeight)
-                    .padding(bottom = 6.dp),
-        ) {
-            LibraryLayoutToggle(
-                layout = layout,
-                onLayoutChange = onLayoutChange,
-                modifier =
-                    Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 8.dp),
-            )
-            if (showZoom) {
-                LibraryZoomControls(
-                    density = density,
-                    onDensityChange = onDensityChange,
-                    trackWidth = 168.dp,
-                    modifier = Modifier.align(Alignment.Center),
-                )
-            }
-        }
-    }
 }
 
 /**
@@ -1004,7 +1036,7 @@ private fun LayoutToggleIcon(
 }
 
 @Composable
-private fun LibraryZoomControls(
+internal fun LibraryZoomControls(
     density: Int,
     onDensityChange: (Int) -> Unit,
     trackWidth: Dp?,

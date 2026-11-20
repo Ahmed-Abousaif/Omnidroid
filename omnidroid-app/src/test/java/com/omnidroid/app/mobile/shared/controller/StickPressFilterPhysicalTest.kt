@@ -3,7 +3,6 @@ package com.omnidroid.app.mobile.shared.controller
 import com.omnidroid.app.mobile.shared.controller.PhysicalStick.Spring
 import com.omnidroid.app.mobile.shared.controller.StickPressFilter.Press
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.cos
 import kotlin.math.sin
@@ -41,7 +40,12 @@ class StickPressFilterPhysicalTest {
         everyStick { name, stick ->
             for (dir in directions) {
                 for (holdMs in listOf(0L, 30L, 150L)) {
-                    val presses = stick().pushTo(dir, 25).hold(holdMs).letGo().drive()
+                    val presses =
+                        stick()
+                            .pushTo(dir, 25)
+                            .hold(holdMs)
+                            .letGo()
+                            .drive()
                     assertEquals("$name, $dir held $holdMs ms", listOf(dir), presses.directions())
                 }
             }
@@ -87,7 +91,12 @@ class StickPressFilterPhysicalTest {
     fun `holding against the gate is one press`() {
         everyStick { name, stick ->
             for (dir in directions) {
-                val presses = stick().pushTo(dir, 30).hold(1000).letGo().drive()
+                val presses =
+                    stick()
+                        .pushTo(dir, 30)
+                        .hold(1000)
+                        .letGo()
+                        .drive()
                 assertEquals(name, listOf(dir), presses.directions())
             }
         }
@@ -106,7 +115,12 @@ class StickPressFilterPhysicalTest {
         for (spring in Spring.ALL) {
             for (seed in 1L..10L) {
                 val stick = PhysicalStick(spring = spring, noise = 0.05f, seed = seed)
-                val presses = stick.push(0.68, 0.0, 60).hold(300).letGo().drive()
+                val presses =
+                    stick
+                        .push(0.68, 0.0, 60)
+                        .hold(300)
+                        .letGo()
+                        .drive()
                 assertEquals("$spring, seed $seed", listOf(Press(1, 0)), presses.directions())
             }
         }

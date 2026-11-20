@@ -61,7 +61,7 @@ import com.omnidroid.app.mobile.feature.addconsole.AddConsoleViewModel.ConsoleIt
 import com.omnidroid.app.mobile.feature.library.LibrarySearchField
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
@@ -249,7 +249,7 @@ internal fun ConsoleManagementContent(
                             state.loading ->
                                 item {
                                     Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                                        CircularProgressIndicator(color = LibraryNeonGreen)
+                                        CircularProgressIndicator(color = libraryAccentColor)
                                     }
                                 }
                             catalogue.isEmpty() ->

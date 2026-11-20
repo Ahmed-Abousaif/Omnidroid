@@ -14,6 +14,7 @@
     <string name="pref_key_vibration_intensity" translatable="false">vibration_intensity</string>
     <string name="pref_key_tilt_sensitivity_index" translatable="false">tilt_sensitivity_index</string>
     <string name="pref_key_virtual_pad_opacity" translatable="false">virtual_pad_opacity</string>
+    <string name="pref_key_gamepad_color" translatable="false">gamepad_color</string>
     <string name="pref_key_hd_mode_quality" translatable="false">hd_mode_quality</string>
     <string name="pref_key_autosave" translatable="false">autosave</string>
     <string name="pref_key_confirm_game_menu_actions" translatable="false">confirm_game_menu_actions</string>
@@ -27,6 +28,7 @@
     <string name="pref_key_auto_library_scan" translatable="false">auto_library_scan</string>
     <string name="pref_key_enable_immersive_mode" translatable="false">enable_immersive_mode</string>
     <string name="pref_key_app_theme" translatable="false">app_theme</string>
+    <string name="pref_key_accent_color" translatable="false">accent_color</string>
     <string name="pref_key_startup_destination" translatable="false">startup_destination</string>
 
     <string-array translatable="false" name="pref_key_app_theme_values">

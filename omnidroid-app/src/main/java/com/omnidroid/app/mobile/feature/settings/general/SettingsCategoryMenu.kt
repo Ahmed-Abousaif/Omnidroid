@@ -39,7 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
 import com.omnidroid.app.mobile.shared.compose.ui.chromeMutedContentColor
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
@@ -74,7 +74,7 @@ internal fun SettingsBackHeader(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = stringResource(R.string.back),
-                tint = LibraryNeonGreen,
+                tint = libraryAccentColor,
                 modifier = Modifier.size(20.dp),
             )
             Text(
@@ -158,7 +158,7 @@ internal fun SettingsTopMenu(
                                     .fillMaxWidth()
                                     .height(3.dp)
                                     .align(Alignment.BottomCenter)
-                                    .background(if (isSelected) LibraryNeonGreen else Color.Transparent),
+                                    .background(if (isSelected) libraryAccentColor else Color.Transparent),
                         )
                     }
                 }
@@ -216,7 +216,7 @@ internal fun SettingsSidebar(
                             Modifier
                                 .width(4.dp)
                                 .fillMaxHeight()
-                                .background(if (isSelected) LibraryNeonGreen else Color.Transparent),
+                                .background(if (isSelected) libraryAccentColor else Color.Transparent),
                     )
                     Text(
                         text = stringResource(item.titleId),

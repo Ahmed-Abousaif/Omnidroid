@@ -28,6 +28,8 @@ fun OmnidroidButtonForeground(
     GlassSurface(
         modifier = modifier.fillMaxSize().padding(theme.foregroundPadding),
         fillColor = theme.foregroundFill(pressed.value),
+        borderColor = theme.foregroundBorder(pressed.value),
+        borderWidth = theme.level3BorderWidth,
         shadowColor = theme.level3Shadow,
         shadowWidth = theme.level3ShadowWidth,
         content = {

@@ -1,6 +1,7 @@
 package com.omnidroid.app.mobile.feature.library
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.res.Configuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -66,6 +67,7 @@ class LibraryViewModel(
         val sort: LibrarySort = LibrarySort.TITLE,
         val selectedSystemGameCount: Int? = null,
         val startupFilter: LibraryFilter = LibraryFilter.All,
+        val consoleBarBottomInLandscape: Boolean = false,
     )
 
     private data class LibraryChrome(
@@ -80,6 +82,7 @@ class LibraryViewModel(
         val zoomDensity: Int,
         val layout: LibraryLayout,
         val sort: LibrarySort,
+        val consoleBarBottomInLandscape: Boolean,
     )
 
     private val preferences = SharedPreferencesHelper.getSharedPreferences(appContext)
@@ -97,33 +100,33 @@ class LibraryViewModel(
         combine(portraitFlow, separateLayoutsFlow, landscapeLayoutFlow, portraitLayoutFlow) { portrait, separate, landscape, portraitLayout ->
             LibraryLayout.forOrientation(portrait, separate, landscape, portraitLayout)
         }
-
-    // Settings > Display turns separate layouts on and off while the library stays alive.
-    private val layoutPreferenceListener =
-        android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            when (key) {
-                SEPARATE_LAYOUTS_KEY -> separateLayoutsFlow.value = readSeparateLayouts()
-                LAYOUT_KEY -> landscapeLayoutFlow.value = readLayout(portrait = false)
-                PORTRAIT_LAYOUT_KEY -> portraitLayoutFlow.value = readLayout(portrait = true)
-            }
-        }
-
-    init {
-        preferences.registerOnSharedPreferenceChangeListener(layoutPreferenceListener)
-    }
-
-    override fun onCleared() {
-        preferences.unregisterOnSharedPreferenceChangeListener(layoutPreferenceListener)
-        super.onCleared()
-    }
     private val sortFlow = MutableStateFlow(readSort())
+    private val consoleBarBottomLandscapeFlow = MutableStateFlow(readConsoleBarBottomLandscape())
+    private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        when (key) {
+            CONSOLE_BAR_BOTTOM_LANDSCAPE_KEY -> consoleBarBottomLandscapeFlow.value = readConsoleBarBottomLandscape()
+            // Settings > Display turns separate layouts on and off while the library stays alive.
+            SEPARATE_LAYOUTS_KEY -> separateLayoutsFlow.value = readSeparateLayouts()
+            LAYOUT_KEY -> landscapeLayoutFlow.value = readLayout(portrait = false)
+            PORTRAIT_LAYOUT_KEY -> portraitLayoutFlow.value = readLayout(portrait = true)
+        }
+    }
     private val syncProgressFlow = SyncProgressTracker.progress
     private val presentationFlow =
-        combine(zoomDensityFlow, layoutFlow, sortFlow) { zoom, layout, sort ->
-            LibraryPresentation(zoom, layout, sort)
+        combine(zoomDensityFlow, layoutFlow, sortFlow, consoleBarBottomLandscapeFlow) { zoom, layout, sort, consoleBarBottom ->
+            LibraryPresentation(zoom, layout, sort, consoleBarBottom)
         }
     private val libraryOperationInProgress =
         PendingOperationsMonitor(appContext).anyLibraryOperationInProgress()
+
+    init {
+        preferences.registerOnSharedPreferenceChangeListener(prefListener)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        preferences.unregisterOnSharedPreferenceChangeListener(prefListener)
+    }
 
     val state: StateFlow<UiState> =
         combine(
@@ -169,6 +172,7 @@ class LibraryViewModel(
                 sort = chrome.presentation.sort,
                 selectedSystemGameCount = selectedCount,
                 startupFilter = chrome.startupFilter,
+                consoleBarBottomInLandscape = chrome.presentation.consoleBarBottomInLandscape,
             )
         }.stateIn(
             viewModelScope,
@@ -179,6 +183,7 @@ class LibraryViewModel(
                 sort = sortFlow.value,
                 filter = filterFlow.value,
                 startupFilter = startupStore.get(),
+                consoleBarBottomInLandscape = consoleBarBottomLandscapeFlow.value,
             ),
         )
 
@@ -404,6 +409,10 @@ class LibraryViewModel(
 
     private fun LibraryFilter.System.systemIds() = metaSystemID.systemIDs.map { it.dbname }
 
+    private fun readConsoleBarBottomLandscape(): Boolean {
+        return preferences.getBoolean(CONSOLE_BAR_BOTTOM_LANDSCAPE_KEY, false)
+    }
+
     companion object {
         private const val ZOOM_DENSITY_KEY = "pref_library_zoom_density"
         /** The layout everywhere, or in landscape when portrait has its own ([PORTRAIT_LAYOUT_KEY]). */
@@ -415,6 +424,7 @@ class LibraryViewModel(
 
         private fun layoutKey(portraitOnly: Boolean): String = if (portraitOnly) PORTRAIT_LAYOUT_KEY else LAYOUT_KEY
         private const val SORT_KEY = "pref_library_sort"
+        private const val CONSOLE_BAR_BOTTOM_LANDSCAPE_KEY = "pref_key_console_bar_bottom_landscape"
         const val MAX_ZOOM_DENSITY = 2
     }
 }

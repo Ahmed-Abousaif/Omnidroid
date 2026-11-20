@@ -34,7 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.addconsole.AddConsoleViewModel.ConsoleItem
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAppDarkTheme
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
@@ -102,7 +102,7 @@ internal fun ConsoleCatalogueRow(
                     Icons.Outlined.CheckCircle,
                     stringResource(R.string.consoles_in_library),
                     Modifier.size(18.dp),
-                    tint = LibraryNeonGreen,
+                    tint = libraryAccentColor,
                 )
             }
         }

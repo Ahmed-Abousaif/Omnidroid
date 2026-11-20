@@ -11,6 +11,8 @@ fun OmnidroidControlBackground(modifier: Modifier = Modifier) {
     GlassSurface(
         modifier = modifier.fillMaxSize(),
         fillColor = theme.level1Fill,
+        borderColor = theme.level1Border,
+        borderWidth = theme.level1BorderWidth,
         shadowColor = theme.level1Shadow,
         shadowWidth = theme.level1ShadowWidth,
     )

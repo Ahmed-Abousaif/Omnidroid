@@ -69,7 +69,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import coil.compose.AsyncImage
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
 import com.omnidroid.app.mobile.shared.compose.ui.chromeMutedContentColor
@@ -215,7 +215,7 @@ internal fun ProfileContent(
                     SecondaryTabRow(
                         selectedTabIndex = selectedTab,
                         containerColor = homeChromeColor,
-                        contentColor = LibraryNeonGreen,
+                        contentColor = libraryAccentColor,
                         divider = { ProfileDivider() },
                     ) {
                         listOf(R.string.profile_sessions_tab, R.string.profile_consoles_tab).forEachIndexed {
@@ -277,7 +277,7 @@ internal fun ProfileContent(
                         item(key = "sessions_loading", span = { GridItemSpan(maxLineSpan) }, contentType = "loading") {
                             LinearProgressIndicator(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                                color = LibraryNeonGreen,
+                                color = libraryAccentColor,
                                 trackColor = chromeColors.divider,
                             )
                         }
@@ -421,7 +421,7 @@ private fun ProfileConsoleTile(achievement: ConsoleAchievement) {
                 Icon(
                     Icons.Outlined.Check,
                     contentDescription = null,
-                    tint = LibraryNeonGreen,
+                    tint = libraryAccentColor,
                     modifier = Modifier.size(12.dp),
                 )
             }
