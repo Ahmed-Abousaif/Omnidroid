@@ -38,6 +38,19 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
+internal fun LibraryLayoutSettings() {
+    OmnidroidSettingsGroup(
+        titleRes = R.string.settings_section_layout,
+    ) {
+        OmnidroidSettingsSwitch(
+            state = booleanPreferenceState(R.string.pref_key_console_bar_bottom_landscape, false),
+            titleRes = R.string.settings_title_console_bar_bottom_landscape,
+            subtitleRes = R.string.settings_description_console_bar_bottom_landscape,
+        )
+    }
+}
+
+@Composable
 internal fun StartupScreenSettings(availableConsoles: List<MetaSystemID>) {
     val context = LocalContext.current
     val startupStore = remember { LibraryStartupStore(context) }

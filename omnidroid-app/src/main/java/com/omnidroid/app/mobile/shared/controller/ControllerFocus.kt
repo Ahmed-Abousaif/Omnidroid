@@ -1,13 +1,8 @@
 package com.omnidroid.app.mobile.shared.controller
 
-import androidx.compose.ui.graphics.Color
-import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
-import com.omnidroid.app.mobile.shared.compose.ui.RingPlacement
-import com.omnidroid.app.mobile.shared.compose.ui.drawShapeRing
-import com.omnidroid.app.mobile.shared.compose.ui.OnLibraryNeonGreen
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,23 +11,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.omnidroid.app.mobile.shared.compose.ui.RingPlacement
+import com.omnidroid.app.mobile.shared.compose.ui.drawShapeRing
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.lib.library.db.entity.Game
 
 /**
  * Controller / D-pad focus ring: a crisp ring in the accent colour, drawn
  * just inside the element, so lists, cards and docks that clip their children never cut it. A thin
- * dark line inside the ring keeps it readable on dark or light fills. Pass [onFill] for an element
- * filled with the accent: the ring is then drawn in the colour of text on the accent so it shows.
+ * dark line inside the ring keeps it readable on dark or light fills. Pass [glowColor] to draw it in
+ * another colour, e.g. the on-accent colour for an element filled with the accent.
  */
 fun Modifier.controllerFocusGlow(
     shape: Shape = RoundedCornerShape(12.dp),
     strokeWidth: Dp = 2.dp,
     inset: Dp = 2.dp,
     intensity: Float = 1f,
-    onFill: Boolean = false,
+    glowColor: Color? = null,
 ): Modifier =
     composed {
         var focused by remember { mutableStateOf(false) }
@@ -41,7 +40,7 @@ fun Modifier.controllerFocusGlow(
             animationSpec = tween(120),
             label = "controllerFocus",
         )
-        val color = if (onFill) OnLibraryNeonGreen else libraryAccentColor
+        val color = glowColor ?: libraryAccentColor
         this
             .onFocusChanged { focused = it.isFocused }
             .drawWithContent {
@@ -54,7 +53,7 @@ fun Modifier.controllerFocusGlow(
                     width = strokeWidth.toPx(),
                     gap = inset.toPx(),
                     placement = RingPlacement.Inside,
-                    innerLine = if (onFill) null else Color.Black.copy(alpha = 0.55f * alpha),
+                    innerLine = Color.Black.copy(alpha = 0.55f * alpha),
                 )
             }
     }

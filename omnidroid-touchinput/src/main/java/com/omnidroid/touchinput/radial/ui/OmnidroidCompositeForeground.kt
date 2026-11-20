@@ -12,6 +12,8 @@ fun OmnidroidCompositeForeground(pressed: State<Boolean>) {
     GlassSurface(
         modifier = Modifier.fillMaxSize(),
         fillColor = theme.compositeFill(pressed.value),
+        borderColor = theme.compositeBorder(pressed.value),
+        borderWidth = theme.level2BorderWidth,
         shadowColor = theme.level2Shadow,
         shadowWidth = theme.level2ShadowWidth,
     )

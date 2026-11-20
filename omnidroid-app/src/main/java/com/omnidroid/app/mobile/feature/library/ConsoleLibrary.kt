@@ -1,7 +1,7 @@
 package com.omnidroid.app.mobile.feature.library
 
 import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
-import com.omnidroid.app.mobile.shared.compose.ui.OnLibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -121,7 +121,6 @@ import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
 import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.app.mobile.feature.gamedetails.PlayTimeStore
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
@@ -446,19 +445,24 @@ private fun ConsoleCarouselState.settledAmount(): Float {
     return 1f - (abs(p - p.roundToInt()) * 2.5f).coerceIn(0f, 1f)
 }
 
-private class LandscapeMetrics(maxWidth: Dp, maxHeight: Dp) {
+/** Height the compact info panel needs: one title line, the details row and the action buttons. */
+internal val LandscapeInfoMinHeight = 112.dp
+
+internal class LandscapeMetrics(maxWidth: Dp, maxHeight: Dp) {
     val edge = if (maxHeight < 280.dp) 16.dp else 20.dp
     val gap = 12.dp
     val bigHeight = (maxHeight - edge * 2).coerceIn(96.dp, 440.dp)
     val bigWidth = bigHeight * LibraryGameCardAspectRatio
-    val smallHeight = bigHeight * 0.55f
+    // The info panel sits under the small cards; on short screens (the console bar at the bottom,
+    // 4:3) shrink the small cards so the title, details and buttons still fit beside the cover.
+    val smallHeight = min(bigHeight * 0.55f, bigHeight - gap - LandscapeInfoMinHeight).coerceAtLeast(bigHeight * 0.3f)
     val smallWidth = smallHeight * LibraryGameCardAspectRatio
     val top = ((maxHeight - bigHeight) / 2).coerceAtLeast(0.dp)
     val anchorX = edge + smallWidth + gap - (if (maxHeight < 280.dp) 16.dp else 24.dp)
     val infoX = anchorX + bigWidth + gap * 1.5f
     val infoWidth = (maxWidth - infoX - edge).coerceAtLeast(0.dp)
     val infoHeight = (bigHeight - smallHeight - gap).coerceAtLeast(0.dp)
-    val compactInfo = infoHeight < 110.dp
+    val compactInfo = infoHeight <= LandscapeInfoMinHeight + 4.dp
     val step = smallWidth + gap
     val visibleAfter = ceil(((maxWidth - infoX) / step).coerceAtLeast(0f)).toInt() + 2
 }
@@ -597,7 +601,7 @@ private fun ConsoleLandscapeCard(
         modifier =
             Modifier
                 .fillMaxSize()
-                .consoleSelectionGlow(LandscapeCardCorner, focus, pulse)
+                .consoleSelectionGlow(libraryAccentColor, LandscapeCardCorner, focus, pulse)
                 .then(sharedModifier)
                 .shadow(elevation = 6.dp, shape = shape)
                 .background(chromeColors.listRow)
@@ -853,7 +857,7 @@ private fun ConsolePortraitCard(
         modifier =
             Modifier
                 .fillMaxSize()
-                .consoleSelectionGlow(PortraitCardCorner, focus, pulse)
+                .consoleSelectionGlow(libraryAccentColor, PortraitCardCorner, focus, pulse)
                 .then(sharedModifier)
                 .shadow(
                     elevation = 20.dp,
@@ -1225,7 +1229,7 @@ private fun ConsoleStartButton(
                 .widthIn(min = ConsoleStartMinWidth)
                 .focusProperties { canFocus = false },
         shape = ConsoleActionShape,
-        color = LibraryNeonGreen,
+        color = libraryAccentColor,
         shadowElevation = 6.dp,
     ) {
         Row(
@@ -1238,13 +1242,13 @@ private fun ConsoleStartButton(
                     modifier =
                         Modifier
                             .size(20.dp)
-                            .border(1.5.dp, OnLibraryNeonGreen, CircleShape),
+                            .border(1.5.dp, onLibraryAccentColor, CircleShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = "A",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = OnLibraryNeonGreen,
+                        color = onLibraryAccentColor,
                         textAlign = TextAlign.Center,
                     )
                 }
@@ -1253,14 +1257,14 @@ private fun ConsoleStartButton(
                     imageVector = Icons.Filled.PlayArrow,
                     contentDescription = null,
                     modifier = Modifier.size(22.dp),
-                    tint = OnLibraryNeonGreen,
+                    tint = onLibraryAccentColor,
                 )
             }
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = OnLibraryNeonGreen,
+                color = onLibraryAccentColor,
                 maxLines = 1,
             )
         }
@@ -1324,8 +1328,9 @@ internal fun Modifier.bleedTop(amount: Dp): Modifier =
         }
     }
 
-/** Gentle green halo and outline that fade in as the card becomes selected. */
+/** Gentle accent halo and outline that fade in as the card becomes selected. */
 private fun Modifier.consoleSelectionGlow(
+    accent: Color,
     corner: Dp,
     amount: () -> Float,
     pulse: State<Float>,
@@ -1339,7 +1344,7 @@ private fun Modifier.consoleSelectionGlow(
         for (layer in GlowLayers downTo 1) {
             val grow = spread * layer / GlowLayers
             drawRoundRect(
-                color = LibraryNeonGreen.copy(alpha = GlowLayerAlpha * strength),
+                color = accent.copy(alpha = GlowLayerAlpha * strength),
                 topLeft = Offset(-grow, -grow),
                 size = Size(size.width + grow * 2, size.height + grow * 2),
                 cornerRadius = CornerRadius(radius + grow),
@@ -1351,7 +1356,7 @@ private fun Modifier.consoleSelectionGlow(
         if (selected <= 0.01f) return@drawWithContent
         val stroke = 1.5.dp.toPx()
         drawRoundRect(
-            color = LibraryNeonGreen.copy(alpha = selected),
+            color = accent.copy(alpha = selected),
             topLeft = Offset(stroke / 2, stroke / 2),
             size = Size(size.width - stroke, size.height - stroke),
             cornerRadius = CornerRadius(corner.toPx() - stroke / 2),

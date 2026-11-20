@@ -71,7 +71,7 @@ import com.omnidroid.app.mobile.shared.compose.sidemenu.SideMenuScaffold
 import com.omnidroid.app.mobile.shared.compose.sidemenu.openMenuPage
 import com.omnidroid.app.mobile.shared.compose.sidemenu.rememberSideMenuState
 import com.omnidroid.app.mobile.shared.compose.sidemenu.validateSideMenuDestinations
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidSmallGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.controller.ControllerHintBar
@@ -231,7 +231,7 @@ private fun LibraryGameMenuRoot(
                 icon = { MenuDrawableIcon(R.drawable.ic_menu_restart) }, onClick = onRestart)
             MenuAction("favorite", titleRes = if (game.isFavorite) R.string.game_context_menu_remove_from_favorites else R.string.game_context_menu_add_to_favorites,
                 icon = { Icon(if (game.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = null, tint = if (game.isFavorite) LibraryNeonGreen else LocalContentColor.current) },
+                    contentDescription = null, tint = if (game.isFavorite) libraryAccentColor else LocalContentColor.current) },
             ) { actions.favorite(game, !game.isFavorite) }
         }
         MenuSection("playback", visible = speedSupported || syncSupported) {

@@ -523,7 +523,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
             val uiScaleStep =
                 com.omnidroid.app.utils.settings.rememberSafePreferenceIntSettingState(
                     key = stringResource(id = R.string.pref_key_button_ui_scale_step),
-                    defaultValue = 0,
+                    defaultValue = com.omnidroid.app.mobile.feature.settings.uiscale.UiScaleHelper.DEFAULT_STEP,
                     preferences = sharedPreferences,
                 )
             val uiScale =
@@ -898,6 +898,12 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     consoleGameCount = libraryState.selectedSystemGameCount,
                     portrait = portrait,
                     showLibraryControls = currentRoute == MainRoute.HOME,
+                    layout = libraryState.layout,
+                    onLayoutChange = { libraryViewModel.setLayout(it) },
+                    consoleBarAtBottom = portrait || libraryState.consoleBarBottomInLandscape,
+                    zoomDensity = libraryState.zoomDensity,
+                    onZoomDensityChange = { libraryViewModel.setZoomDensity(it) },
+                    showZoom = !gamepadConnected && libraryState.layout == LibraryLayout.GRID,
                     onBackPressed =
                         if (currentRoute == MainRoute.HOME) {
                             null

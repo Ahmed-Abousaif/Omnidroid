@@ -82,7 +82,7 @@ Preserve raw key strings, storage types and defaults. Important examples:
 - Folder: legacy `external_folder`; the resource identifier is historically misspelled `pref_key_extenral_folder`.
 - Display filter: `shader_filter_0`.
 - Maximum cache: `max_cache_size_bytes` stores a string representation.
-- UI scale: `pref_key_button_ui_scale_step`, integer steps 0..5 representing 100..125%.
+- UI scale: `pref_key_button_ui_scale_step`, integer steps -4..8 representing 80..140% (step 0 = 100%).
 - HD quality: absent UI value defaults to **2**, while runtime `SettingsManager.hdModeQuality()` defaults to **1**. This discrepancy is deliberately preserved; do not silently unify it.
 - Startup destinations keep the existing All/Favorites/console encoding in `LibraryStartupStore`.
 - Dynamic controller keys and system/core option keys must keep their existing key builders.
