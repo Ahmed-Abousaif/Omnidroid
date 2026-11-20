@@ -3441,20 +3441,20 @@
         <error line="147" column="122" source="standard:function-signature" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/sidemenu/SideMenuScaffold.kt">
-        <error line="140" column="21" source="standard:chain-method-continuation" />
-        <error line="140" column="35" source="standard:chain-method-continuation" />
-        <error line="200" column="28" source="standard:function-signature" />
-        <error line="200" column="43" source="standard:function-signature" />
-        <error line="200" column="63" source="standard:function-signature" />
-        <error line="200" column="82" source="standard:function-signature" />
-        <error line="201" column="9" source="standard:argument-list-wrapping" />
-        <error line="201" column="40" source="standard:argument-list-wrapping" />
-        <error line="201" column="45" source="standard:argument-list-wrapping" />
-        <error line="201" column="55" source="standard:argument-list-wrapping" />
-        <error line="201" column="72" source="standard:argument-list-wrapping" />
-        <error line="201" column="75" source="standard:argument-list-wrapping" />
-        <error line="201" column="121" source="standard:argument-list-wrapping" />
-        <error line="201" column="121" source="standard:max-line-length" />
+        <error line="152" column="21" source="standard:chain-method-continuation" />
+        <error line="152" column="35" source="standard:chain-method-continuation" />
+        <error line="212" column="28" source="standard:function-signature" />
+        <error line="212" column="43" source="standard:function-signature" />
+        <error line="212" column="63" source="standard:function-signature" />
+        <error line="212" column="82" source="standard:function-signature" />
+        <error line="213" column="9" source="standard:argument-list-wrapping" />
+        <error line="213" column="40" source="standard:argument-list-wrapping" />
+        <error line="213" column="45" source="standard:argument-list-wrapping" />
+        <error line="213" column="55" source="standard:argument-list-wrapping" />
+        <error line="213" column="72" source="standard:argument-list-wrapping" />
+        <error line="213" column="75" source="standard:argument-list-wrapping" />
+        <error line="213" column="121" source="standard:argument-list-wrapping" />
+        <error line="213" column="121" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/ui/AdaptiveDimensions.kt">
         <error line="30" column="32" source="standard:multiline-expression-wrapping" />
