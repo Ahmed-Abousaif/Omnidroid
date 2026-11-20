@@ -48,7 +48,7 @@ import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.addconsole.AddConsoleViewModel.BusyAction
 import com.omnidroid.app.mobile.feature.addconsole.AddConsoleViewModel.ConsoleItem
 import com.omnidroid.app.mobile.shared.compose.ui.BatteryLowRed
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 
@@ -108,7 +108,7 @@ internal fun ConsoleManagementDetail(
                         style = MaterialTheme.typography.bodySmall,
                         color = chromeColors.muted,
                     )
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = LibraryNeonGreen)
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = libraryAccentColor)
                 }
             } else if (!actionsEnabled) {
                 Text(

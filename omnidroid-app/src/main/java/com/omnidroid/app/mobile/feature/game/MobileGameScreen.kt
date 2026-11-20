@@ -67,7 +67,11 @@ import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
 import com.omnidroid.app.mobile.shared.compose.dialog.DialogWidth
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.mobile.shared.compose.ui.CutoutClearance
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
+import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.rememberHuggingCutoutInsets
+import com.omnidroid.app.shared.game.GamepadColor
+import com.omnidroid.app.utils.android.settings.stringPreferenceState
 import com.omnidroid.app.shared.settings.HapticFeedbackMode
 import com.omnidroid.app.shared.game.BaseGameScreenViewModel
 import com.omnidroid.app.shared.game.view.IRetroGameView
@@ -122,6 +126,17 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             )
         }
         val padOpacity = viewModel.getVirtualPadOpacity().collectAsState(1f).value
+        val gamepadColor =
+            stringPreferenceState(
+                id = com.omnidroid.R.string.pref_key_gamepad_color,
+                default = GamepadColor.DEFAULT,
+            ).value
+        val currentAccent = libraryAccentColor
+        val currentOnAccent = onLibraryAccentColor
+        val padTheme =
+            remember(gamepadColor, currentAccent, currentOnAccent) {
+                GamepadColor.padTheme(gamepadColor, currentAccent, currentOnAccent)
+            }
 
         val touchControllerSettings = touchControllerSettingsState.value
         val currentControllerConfig = controllerConfigState.value
@@ -277,7 +292,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 }
 
                 if (isVisible) {
-                    CompositionLocalProvider(LocalOmnidroidPadTheme provides OmnidroidPadTheme()) {
+                    CompositionLocalProvider(LocalOmnidroidPadTheme provides padTheme) {
                         // Portrait pads sit on a glass panel. Landscape pads are drawn straight over
                         // the background for every core, including DS/3DS dual screen whose pads sit
                         // beside the game rather than over it.
@@ -386,6 +401,8 @@ private fun PadContainer(modifier: Modifier = Modifier) {
         modifier = modifier,
         cornerRadius = theme.level0CornerRadius,
         fillColor = theme.level0Fill,
+        borderColor = theme.level0Border,
+        borderWidth = theme.level0BorderWidth,
         shadowColor = theme.level0Shadow,
         shadowWidth = theme.level0ShadowWidth,
     )
