@@ -116,6 +116,7 @@ class GameInteractor(
                 current.copy(
                     coverFrontUrl = newCoverUrl,
                     customCoverPath = null,
+                    isManualMatch = true,
                 ),
             )
             withContext(Dispatchers.Main) {
@@ -138,6 +139,7 @@ class GameInteractor(
                     coverFrontUrl = newCoverUrl,
                     customCoverPath = null,
                     customName = null,
+                    isManualMatch = true,
                 ),
             )
             runCatching {

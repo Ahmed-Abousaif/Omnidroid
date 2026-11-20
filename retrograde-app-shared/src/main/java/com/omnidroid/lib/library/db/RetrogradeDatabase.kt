@@ -41,7 +41,7 @@ import com.omnidroid.lib.library.db.entity.UnrecognizedFile
         UnrecognizedFile::class,
         ScanDirectory::class,
     ],
-    version = 17,
+    version = 18,
     exportSchema = true,
 )
 abstract class RetrogradeDatabase : RoomDatabase() {

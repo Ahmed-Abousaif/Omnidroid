@@ -6,6 +6,12 @@ import org.junit.Test
 
 class Migrations16to17Test {
     @Test
+    fun migrationTargetsVersion18() {
+        assertEquals(17, Migrations.VERSION_17_18.startVersion)
+        assertEquals(18, Migrations.VERSION_17_18.endVersion)
+    }
+
+    @Test
     fun migrationTargetsVersion17() {
         assertEquals(16, Migrations.VERSION_16_17.startVersion)
         assertEquals(17, Migrations.VERSION_16_17.endVersion)

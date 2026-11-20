@@ -25,6 +25,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.RawQuery
+import androidx.room.Transaction
 import androidx.room.Update
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
@@ -49,7 +50,10 @@ interface GameDao {
     fun selectAllBlocking(): List<Game>
 
     @Query("SELECT * FROM games ORDER BY title ASC, id DESC LIMIT :limit OFFSET :offset")
-    fun selectPage(offset: Int, limit: Int): List<Game>
+    fun selectPage(
+        offset: Int,
+        limit: Int,
+    ): List<Game>
 
     @Query("SELECT COUNT(*) FROM games")
     fun countAll(): Int
@@ -139,16 +143,45 @@ interface GameDao {
     @Delete
     fun delete(games: List<Game>)
 
+    @Query("DELETE FROM games WHERE id = :id AND isManualMatch = 0")
+    fun deleteAutomaticMatch(id: Int): Int
+
     @Update
     suspend fun update(game: Game)
 
     @Update
     fun update(games: List<Game>)
+
+    /** Merge scan results with the latest user choices, not the scan's older snapshot. */
+    @Transaction
+    fun updateFromScan(scanned: Game) {
+        val current = selectByIdBlocking(scanned.id) ?: return
+        update(
+            listOf(
+                scanned.copy(
+                    title = if (current.isManualMatch) current.title else scanned.title,
+                    developer = if (current.isManualMatch) current.developer else scanned.developer,
+                    coverFrontUrl = if (current.isManualMatch) current.coverFrontUrl else scanned.coverFrontUrl,
+                    systemId = if (current.isManualMatch) current.systemId else scanned.systemId,
+                    isManualMatch = current.isManualMatch,
+                    customName = current.customName,
+                    customCoverPath = current.customCoverPath,
+                    isFavorite = current.isFavorite,
+                    lastPlayedAt = current.lastPlayedAt,
+                ),
+            ),
+        )
+    }
 }
 
-data class SystemCount(val systemId: String, val count: Int)
+data class SystemCount(
+    val systemId: String,
+    val count: Int,
+)
 
-enum class GameOrder(internal val sql: String) {
+enum class GameOrder(
+    internal val sql: String,
+) {
     TITLE("title ASC, id DESC"),
     RECENTLY_PLAYED("lastPlayedAt IS NULL, lastPlayedAt DESC, title ASC, id DESC"),
     FAVORITES_FIRST("isFavorite DESC, title ASC, id DESC"),

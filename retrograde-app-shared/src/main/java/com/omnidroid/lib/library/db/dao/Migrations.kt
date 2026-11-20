@@ -128,7 +128,27 @@ object Migrations {
     val VERSION_15_16: Migration =
         object : Migration(15, 16) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                val legacyMetadataTable = listOf('r', 'a', 'w', 'g', '_', 'g', 'a', 'm', 'e', '_', 'm', 'e', 't', 'a', 'd', 'a', 't', 'a').joinToString("")
+                val legacyMetadataTable =
+                    listOf(
+                        'r',
+                        'a',
+                        'w',
+                        'g',
+                        '_',
+                        'g',
+                        'a',
+                        'm',
+                        'e',
+                        '_',
+                        'm',
+                        'e',
+                        't',
+                        'a',
+                        'd',
+                        'a',
+                        't',
+                        'a',
+                    ).joinToString("")
                 database.execSQL("DROP TABLE IF EXISTS `$legacyMetadataTable`")
             }
         }
@@ -163,6 +183,18 @@ object Migrations {
                     ON `scan_directories` (`treeUri`)
                     """.trimIndent(),
                 )
+            }
+        }
+
+    val VERSION_17_18: Migration =
+        object : Migration(17, 18) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE `games` ADD COLUMN `isManualMatch` INTEGER NOT NULL DEFAULT 0",
+                )
+                // Older versions did not record which matches were user-selected.
+                // Preserve existing metadata rather than risk overwriting those choices.
+                database.execSQL("UPDATE `games` SET `isManualMatch` = 1")
             }
         }
 }
