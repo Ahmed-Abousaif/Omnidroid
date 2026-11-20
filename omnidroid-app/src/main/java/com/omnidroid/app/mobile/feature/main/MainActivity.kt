@@ -111,6 +111,7 @@ import com.omnidroid.app.shared.main.GameLaunchTaskHandler
 import com.omnidroid.app.shared.settings.SettingsInteractor
 import com.omnidroid.app.tv.channel.ChannelUpdateWork
 import com.omnidroid.app.tv.shared.TVHelper
+import com.omnidroid.app.mobile.shared.compose.ui.TvSafeMargin
 import com.omnidroid.app.update.AppUpdateOverlay
 import com.omnidroid.app.update.AppUpdater
 import com.omnidroid.common.coroutines.safeLaunch
@@ -519,7 +520,16 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 }
             }
 
-            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            // On a TV, keep the app clear of the picture edges many sets crop (overscan).
+            val tvSafeArea =
+                remember {
+                    if (TVHelper.isTV(applicationContext)) {
+                        Modifier.padding(horizontal = TvSafeMargin.horizontal, vertical = TvSafeMargin.vertical)
+                    } else {
+                        Modifier
+                    }
+                }
+            BoxWithConstraints(modifier = Modifier.fillMaxSize().then(tvSafeArea)) {
             val uiScaleStep =
                 com.omnidroid.app.utils.settings.rememberSafePreferenceIntSettingState(
                     key = stringResource(id = R.string.pref_key_button_ui_scale_step),
