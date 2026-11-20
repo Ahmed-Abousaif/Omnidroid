@@ -6,7 +6,9 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -39,9 +41,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
@@ -84,6 +88,53 @@ fun SideMenuScaffold(
     )
     // Share the console selectors' neutral fill with every row in the panel.
     val panelColor = chromeColors.panel
+    // The panel's content moves between the sheet and the side panel when the screen rotates;
+    // movable content keeps its state (scroll position, focused row) across the move.
+    val currentContent by rememberUpdatedState(content)
+    val currentTitle by rememberUpdatedState(title)
+    val currentCanGoBack by rememberUpdatedState(canGoBack)
+    val currentOnBack by rememberUpdatedState(onBack)
+    val currentBottomReserved by rememberUpdatedState(bottomReserved)
+    val panelContent =
+        remember(state) {
+            movableContentOf { sheet: Boolean ->
+                val insetSides =
+                    if (sheet) {
+                        WindowInsetsSides.Horizontal
+                    } else {
+                        WindowInsetsSides.Top + WindowInsetsSides.End
+                    }
+                val bottomInset = WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding()
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(insetSides))
+                        .padding(bottom = maxOf(currentBottomReserved, bottomInset)),
+                ) {
+                    SideMenuHeader(currentTitle, currentCanGoBack) {
+                        if (currentCanGoBack) currentOnBack() else state.closeThen()
+                    }
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(chromeColors.divider),
+                    )
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                    ) {
+                        CompositionLocalProvider(
+                            LocalSettingsRowContainerColor provides chromeColors.panel,
+                            LocalSideMenuIsSheet provides sheet,
+                        ) {
+                            currentContent()
+                        }
+                    }
+                }
+            }
+        }
     BoxWithConstraints(modifier.fillMaxSize()) {
         Box(
             Modifier.fillMaxSize().background(Color.Black.copy(alpha = scrimAlpha))
@@ -92,40 +143,58 @@ fun SideMenuScaffold(
                 .focusProperties { canFocus = false }
                 .clickable(remember { MutableInteractionSource() }, indication = null) { state.closeThen() },
         )
-        AnimatedVisibility(
-            visibleState = transition,
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-            enter = slideInHorizontally(tween(280, easing = FastOutSlowInEasing)) { it },
-            exit = slideOutHorizontally(tween(220, easing = FastOutSlowInEasing)) { it },
-        ) {
-            Surface(
-                modifier = Modifier.fillMaxHeight().width(sideMenuWidth(maxWidth.value).dp),
-                color = panelColor,
-                contentColor = chromeContentColor,
-                shape = RectangleShape,
-                tonalElevation = 0.dp,
-                shadowElevation = 0.dp,
+        val sheet = maxHeight > maxWidth
+        if (sheet) {
+            // Portrait: a bottom sheet, leaving the game visible above it.
+            AnimatedVisibility(
+                visibleState = transition,
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+                enter = slideInVertically(tween(280, easing = FastOutSlowInEasing)) { it },
+                exit = slideOutVertically(tween(220, easing = FastOutSlowInEasing)) { it },
             ) {
-                Row(Modifier.fillMaxSize()) {
-                    Box(Modifier.width(3.dp).fillMaxHeight().background(chromeColors.gameMenuAccent))
-                    Column(
-                        Modifier.weight(1f).fillMaxHeight()
-                            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.End))
-                            .padding(bottom = maxOf(bottomReserved, WindowInsets.safeDrawing.asPaddingValues().calculateBottomPadding())),
-                    ) {
-                        SideMenuHeader(title, canGoBack) { if (canGoBack) onBack() else state.closeThen() }
-                        Box(Modifier.fillMaxWidth().height(1.dp).background(chromeColors.divider))
-                        Box(Modifier.weight(1f).fillMaxWidth()) {
-                            CompositionLocalProvider(LocalSettingsRowContainerColor provides panelColor) {
-                                content()
-                            }
-                        }
+                Surface(
+                    modifier = Modifier.fillMaxWidth().height(sideMenuSheetHeight(maxHeight.value).dp),
+                    color = panelColor,
+                    contentColor = chromeContentColor,
+                    // Same treatment as the side panel: straight edges and an accent line along the
+                    // edge that faces the game.
+                    shape = RectangleShape,
+                    tonalElevation = 0.dp,
+                    shadowElevation = 0.dp,
+                ) {
+                    Column(Modifier.fillMaxSize()) {
+                        Box(Modifier.fillMaxWidth().height(3.dp).background(chromeColors.gameMenuAccent))
+                        Box(Modifier.weight(1f).fillMaxWidth()) { panelContent(true) }
+                    }
+                }
+            }
+        } else {
+            AnimatedVisibility(
+                visibleState = transition,
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                enter = slideInHorizontally(tween(280, easing = FastOutSlowInEasing)) { it },
+                exit = slideOutHorizontally(tween(220, easing = FastOutSlowInEasing)) { it },
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxHeight().width(sideMenuWidth(maxWidth.value).dp),
+                    color = panelColor,
+                    contentColor = chromeContentColor,
+                    shape = RectangleShape,
+                    tonalElevation = 0.dp,
+                    shadowElevation = 0.dp,
+                ) {
+                    Row(Modifier.fillMaxSize()) {
+                        Box(Modifier.width(3.dp).fillMaxHeight().background(chromeColors.gameMenuAccent))
+                        Box(Modifier.weight(1f).fillMaxHeight()) { panelContent(false) }
                     }
                 }
             }
         }
     }
 }
+
+/** True when the menu shows as a portrait bottom sheet rather than a side panel. */
+val LocalSideMenuIsSheet = staticCompositionLocalOf { false }
 
 @Composable
 private fun SideMenuHeader(title: String, canGoBack: Boolean, onClick: () -> Unit) {
