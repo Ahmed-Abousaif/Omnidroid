@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 /**
@@ -70,4 +71,13 @@ private class ScaledWindowInsets(
         other is ScaledWindowInsets && other.insets == insets && other.fraction == fraction
 
     override fun hashCode(): Int = 31 * insets.hashCode() + fraction.hashCode()
+}
+
+/**
+ * Margins that keep content clear of the edges a TV may crop (overscan): Android TV's guideline of
+ * 48 dp at the sides and 27 dp at the top and bottom.
+ */
+object TvSafeMargin {
+    val horizontal = 48.dp
+    val vertical = 27.dp
 }

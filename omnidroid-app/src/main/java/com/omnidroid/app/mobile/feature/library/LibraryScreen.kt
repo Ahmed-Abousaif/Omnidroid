@@ -471,10 +471,10 @@ private fun SidebarIconButton(
 ) {
     val adaptiveSpec = LocalAdaptiveLayout.current
     Surface(
-        // The selectable Surface tells screen readers which console or filter is showing.
-        selected = selected,
-        onClick = onClick,
-        modifier = Modifier.size(adaptiveSpec.sidebarButtonSize).controllerFocusGlow(CircleShape),
+        // A plain Surface: a clickable one pads itself out to the 48 dp touch minimum, which put the
+        // focus ring outside this smaller button where the bar cuts it off. Selectable still tells
+        // screen readers which console or filter is showing.
+        modifier = Modifier.size(adaptiveSpec.sidebarButtonSize).dockButtonClick(selected, onClick),
         shape = CircleShape,
         color = chromeColors.panel,
         tonalElevation = 0.dp,
@@ -1188,3 +1188,12 @@ internal fun LibrarySyncEmpty(
         }
     }
 }
+
+/** Focus ring, circle clip and selectable click for a console bar button, kept within the button. */
+private fun Modifier.dockButtonClick(
+    selected: Boolean,
+    onClick: () -> Unit,
+): Modifier =
+    controllerFocusGlow(CircleShape)
+        .clip(CircleShape)
+        .selectable(selected = selected, onClick = onClick)

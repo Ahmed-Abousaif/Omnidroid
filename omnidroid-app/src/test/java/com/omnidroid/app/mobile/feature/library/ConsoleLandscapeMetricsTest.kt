@@ -8,14 +8,14 @@ import org.junit.Test
 
 class ConsoleLandscapeMetricsTest {
     @Test
-    fun `standard landscape height uses 55 percent for small cards and full info`() {
+    fun `standard landscape height uses 60 percent for small cards and full info`() {
         val metrics = LandscapeMetrics(maxWidth = 840.dp, maxHeight = 400.dp)
         assertEquals(20.dp, metrics.edge)
         assertEquals(360.dp, metrics.bigHeight)
-        // 360 * 0.55 = 198dp; 360 - 12 - 112 = 236dp -> min is 198dp
-        assertEquals(198.dp, metrics.smallHeight)
-        // infoHeight = 360 - 198 - 12 = 150dp (> 116dp, so not compact)
-        assertEquals(150.dp, metrics.infoHeight)
+        // 360 * 0.60 = 216dp; 360 - 12 - 96 = 252dp -> min is 216dp
+        assertEquals(216f, metrics.smallHeight.value, 0.01f)
+        // infoHeight = 360 - 216 - 12 = 132dp (> 100dp, so not compact)
+        assertEquals(132f, metrics.infoHeight.value, 0.01f)
         assertFalse(metrics.compactInfo)
     }
 
@@ -24,9 +24,9 @@ class ConsoleLandscapeMetricsTest {
         val metrics = LandscapeMetrics(maxWidth = 800.dp, maxHeight = 268.dp)
         assertEquals(16.dp, metrics.edge)
         assertEquals(236.dp, metrics.bigHeight)
-        // 236 * 0.55 = 129.8dp; 236 - 12 - 112 = 112dp -> min is 112dp
-        assertEquals(112.dp, metrics.smallHeight)
-        // infoHeight = 236 - 112 - 12 = 112dp
+        // 236 * 0.60 = 141.6dp; 236 - 12 - 96 = 128dp -> min is 128dp
+        assertEquals(128.dp, metrics.smallHeight)
+        // infoHeight = 236 - 128 - 12 = 96dp
         assertEquals(LandscapeInfoMinHeight, metrics.infoHeight)
         assertTrue("compactInfo must be true when infoHeight is at min height", metrics.compactInfo)
     }

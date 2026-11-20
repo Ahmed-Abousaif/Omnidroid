@@ -298,7 +298,7 @@ translation, scale, 3D Y rotation (up to 32 degrees), alpha and depth ordering.
 
 `LandscapeMetrics` calculates the selected large card, smaller neighbors,
 anchor position, information panel and drag step. Large-card height is bounded
-to 96–440 dp; smaller cards use `0.55f` of that height. Placement packs cards
+to 96–440 dp; smaller cards use up to `0.60f` of that height. Placement packs cards
 around the moving selection and transitions their widths based on focus.
 Use these metrics classes for carousel sizing changes rather than Grid helpers.
 
