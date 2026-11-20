@@ -259,7 +259,10 @@ fun OmnidroidSettingsSlider(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                    .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                    // The row takes focus and handles Left/Right. Focus on the slider itself would be
+                    // invisible, and its Up/Down would change the value instead of moving down the page.
+                    .focusProperties { canFocus = false },
         )
     }
 }
