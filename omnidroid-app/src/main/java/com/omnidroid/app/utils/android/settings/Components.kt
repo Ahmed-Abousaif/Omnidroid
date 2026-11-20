@@ -18,7 +18,10 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -216,11 +219,15 @@ fun OmnidroidSettingsSlider(
 
     // Same grey focus highlight as the other settings rows, which get it from their click indication.
     val focusInteraction = remember { MutableInteractionSource() }
+    // Like the clickable rows, take focus only from a controller or keyboard: in touch mode the page's
+    // opening focus request would land here and leave the highlight on.
+    val inputModeManager = LocalInputModeManager.current
     Column(
         modifier =
             modifier
                 .fillMaxWidth()
                 .indication(focusInteraction, LocalIndication.current)
+                .focusProperties { canFocus = inputModeManager.inputMode != InputMode.Touch }
                 .focusable(enabled, focusInteraction)
                 .onPreviewKeyEvent { event ->
                     if (!enabled || event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
