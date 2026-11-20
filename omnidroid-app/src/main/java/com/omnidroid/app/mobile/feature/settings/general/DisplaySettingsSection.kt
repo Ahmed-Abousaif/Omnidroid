@@ -87,11 +87,6 @@ internal fun DisplaySettings(navController: NavController) {
             subtitleRes = R.string.settings_description_immersive_mode,
         )
         OmnidroidSettingsSwitch(
-            state = booleanPreferenceState(R.string.pref_key_side_menu_sheet_portrait, false),
-            titleRes = R.string.settings_title_side_menu_sheet_portrait,
-            subtitleRes = R.string.settings_description_side_menu_sheet_portrait,
-        )
-        OmnidroidSettingsSwitch(
             enabled = hdModeAllowed,
             state = hdMode,
             titleRes = R.string.settings_title_hd_mode,

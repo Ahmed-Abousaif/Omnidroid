@@ -249,9 +249,6 @@
 
     <string name="settings_title_immersive_mode">Dynamic background</string>
     <string name="settings_description_immersive_mode">Colors the background from the game\'s visuals</string>
-    <string name="pref_key_side_menu_sheet_portrait" translatable="false">pref_key_side_menu_sheet_portrait</string>
-    <string name="settings_title_side_menu_sheet_portrait">Menus from the bottom in portrait</string>
-    <string name="settings_description_side_menu_sheet_portrait">The in-game and game menus slide up from the bottom instead of in from the side</string>
 
     <string name="settings_title_app_theme">Theme</string>
     <string name="settings_title_accent_color">Accent color</string>

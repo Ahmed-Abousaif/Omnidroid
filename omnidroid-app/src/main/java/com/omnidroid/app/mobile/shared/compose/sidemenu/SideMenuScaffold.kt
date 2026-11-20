@@ -60,7 +60,6 @@ import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.utils.android.settings.LocalSettingsRowContainerColor
-import com.omnidroid.app.utils.android.settings.booleanPreferenceState
 
 /** Shared visual shell. Android/game lifecycle and action execution belong to the host. */
 @Composable
@@ -89,8 +88,6 @@ fun SideMenuScaffold(
     )
     // Share the console selectors' neutral fill with every row in the panel.
     val panelColor = chromeColors.panel
-    // Settings > Display: portrait menus can open as a bottom sheet instead of a side panel.
-    val sheetInPortrait = booleanPreferenceState(R.string.pref_key_side_menu_sheet_portrait, false).value
     // The panel's content moves between the sheet and the side panel when the screen rotates;
     // movable content keeps its state (scroll position, focused row) across the move.
     val currentContent by rememberUpdatedState(content)
@@ -146,7 +143,7 @@ fun SideMenuScaffold(
                 .focusProperties { canFocus = false }
                 .clickable(remember { MutableInteractionSource() }, indication = null) { state.closeThen() },
         )
-        val sheet = sheetInPortrait && maxHeight > maxWidth
+        val sheet = maxHeight > maxWidth
         if (sheet) {
             // Portrait: a bottom sheet, leaving the game visible above it.
             AnimatedVisibility(
