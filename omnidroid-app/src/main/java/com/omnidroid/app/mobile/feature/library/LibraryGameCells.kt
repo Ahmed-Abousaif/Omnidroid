@@ -1,5 +1,6 @@
 package com.omnidroid.app.mobile.feature.library
 
+import com.omnidroid.app.mobile.shared.compose.ui.gameFocusGlow
 import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
@@ -36,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,7 +52,6 @@ import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameCard
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.gameCoverSharedBounds
-import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.mobile.shared.controller.reportControllerGame
 import com.omnidroid.lib.library.db.entity.Game
 
@@ -117,7 +116,7 @@ internal fun LibraryGameRow(
             modifier
                 .fillMaxWidth()
                 .alpha(availabilityAlpha)
-                .controllerFocusGlow(shape)
+                .gameFocusGlow(rowCorner)
                 .reportControllerGame(game)
                 .combinedClickable(
                     onClick = onClick,

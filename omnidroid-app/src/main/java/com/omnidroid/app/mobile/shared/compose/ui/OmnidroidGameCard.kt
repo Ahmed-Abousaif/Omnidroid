@@ -35,7 +35,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.mobile.shared.controller.reportControllerGame
 import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.lib.library.db.entity.Game
@@ -87,7 +86,7 @@ fun OmnidroidGameCard(
         modifier =
             modifier
                 .alpha(availabilityAlpha)
-                .controllerFocusGlow(cardShape)
+                .gameFocusGlow(cornerRadius)
                 .reportControllerGame(game)
                 .combinedClickable(
                     onClick = onClick,
@@ -145,7 +144,7 @@ private fun CaptionBelowGameCard(
                     .width(coverWidth)
                     .fillMaxHeight()
                     .alpha(availabilityAlpha)
-                    .controllerFocusGlow(cardShape)
+                    .gameFocusGlow(cornerRadius)
                     .reportControllerGame(game)
                     .combinedClickable(
                         onClick = onClick,
