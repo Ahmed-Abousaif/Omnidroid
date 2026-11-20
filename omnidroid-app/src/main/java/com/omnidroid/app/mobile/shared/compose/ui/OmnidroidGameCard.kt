@@ -293,7 +293,7 @@ private fun ContinueButton() {
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = ContinueButtonCorner,
-            color = LibraryNeonGreen,
+            color = libraryAccentColor,
         ) {
             Text(
                 text = label,
@@ -302,7 +302,7 @@ private fun ContinueButton() {
                         .fillMaxWidth()
                         .padding(horizontal = fit.second, vertical = fit.third),
                 style = textStyle,
-                color = OnLibraryNeonGreen,
+                color = onLibraryAccentColor,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 softWrap = false,

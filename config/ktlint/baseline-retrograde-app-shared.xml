@@ -786,6 +786,50 @@
         <error line="15" column="85" source="standard:function-expression-body" />
         <error line="22" column="73" source="standard:function-expression-body" />
     </file>
+    <file name="src/main/java/com/omnidroid/lib/saves/CustomSaveStorage.kt">
+        <error line="27" column="9" source="standard:blank-line-before-declaration" />
+        <error line="27" column="28" source="standard:class-signature" />
+        <error line="27" column="45" source="standard:class-signature" />
+        <error line="103" column="58" source="standard:function-signature" />
+        <error line="207" column="41" source="standard:chain-method-continuation" />
+        <error line="398" column="22" source="standard:argument-list-wrapping" />
+        <error line="398" column="70" source="standard:argument-list-wrapping" />
+        <error line="398" column="75" source="standard:chain-method-continuation" />
+        <error line="398" column="89" source="standard:argument-list-wrapping" />
+        <error line="398" column="106" source="standard:argument-list-wrapping" />
+        <error line="398" column="107" source="standard:chain-method-continuation" />
+        <error line="398" column="121" source="standard:argument-list-wrapping" />
+        <error line="398" column="121" source="standard:max-line-length" />
+        <error line="398" column="137" source="standard:argument-list-wrapping" />
+        <error line="398" column="138" source="standard:argument-list-wrapping" />
+        <error line="469" column="29" source="standard:binary-expression-wrapping" />
+        <error line="469" column="47" source="standard:chain-method-continuation" />
+        <error line="469" column="67" source="standard:chain-method-continuation" />
+        <error line="469" column="79" source="standard:chain-method-continuation" />
+        <error line="469" column="88" source="standard:function-literal" />
+        <error line="469" column="100" source="standard:function-literal" />
+        <error line="469" column="101" source="standard:chain-method-continuation" />
+        <error line="469" column="107" source="standard:function-literal" />
+        <error line="469" column="117" source="standard:function-literal" />
+        <error line="469" column="119" source="standard:binary-expression-wrapping" />
+        <error line="469" column="121" source="standard:max-line-length" />
+        <error line="470" column="30" source="standard:binary-expression-wrapping" />
+        <error line="470" column="48" source="standard:chain-method-continuation" />
+        <error line="470" column="69" source="standard:chain-method-continuation" />
+        <error line="470" column="81" source="standard:chain-method-continuation" />
+        <error line="470" column="90" source="standard:function-literal" />
+        <error line="470" column="102" source="standard:function-literal" />
+        <error line="470" column="103" source="standard:chain-method-continuation" />
+        <error line="470" column="109" source="standard:function-literal" />
+        <error line="470" column="119" source="standard:function-literal" />
+        <error line="470" column="121" source="standard:binary-expression-wrapping" />
+        <error line="470" column="121" source="standard:max-line-length" />
+    </file>
+    <file name="src/main/java/com/omnidroid/lib/saves/SaveFileRenamer.kt">
+        <error line="36" column="48" source="standard:argument-list-wrapping" />
+        <error line="36" column="57" source="standard:argument-list-wrapping" />
+        <error line="36" column="121" source="standard:max-line-length" />
+    </file>
     <file name="src/main/java/com/omnidroid/lib/saves/SaveInfo.kt">
         <error line="3" column="21" source="standard:class-signature" />
         <error line="3" column="42" source="standard:class-signature" />
@@ -804,24 +848,32 @@
         <error line="15" column="60" source="standard:class-signature" />
         <error line="15" column="92" source="standard:class-signature" />
     </file>
+    <file name="src/main/java/com/omnidroid/lib/saves/SavesManager.kt">
+        <error line="10" column="1" source="standard:no-unused-imports" />
+        <error line="14" column="55" source="standard:parameter-wrapping" />
+        <error line="14" column="74" source="standard:argument-list-wrapping" />
+        <error line="14" column="102" source="standard:argument-list-wrapping" />
+        <error line="14" column="120" source="standard:argument-list-wrapping" />
+        <error line="14" column="121" source="standard:max-line-length" />
+    </file>
     <file name="src/main/java/com/omnidroid/lib/saves/StatesManager.kt">
-        <error line="19" column="21" source="standard:class-signature" />
-        <error line="19" column="71" source="standard:class-signature" />
-        <error line="22" column="25" source="standard:class-signature" />
-        <error line="22" column="41" source="standard:class-signature" />
-        <error line="22" column="63" source="standard:class-signature" />
-        <error line="110" column="37" source="standard:chain-method-continuation" />
-        <error line="110" column="60" source="standard:chain-method-continuation" />
-        <error line="110" column="73" source="standard:chain-method-continuation" />
-        <error line="110" column="81" source="standard:chain-method-continuation" />
-        <error line="119" column="19" source="standard:function-expression-body" />
-        <error line="176" column="13" source="standard:function-expression-body" />
-        <error line="183" column="13" source="standard:function-expression-body" />
+        <error line="20" column="55" source="standard:parameter-wrapping" />
+        <error line="20" column="74" source="standard:argument-list-wrapping" />
+        <error line="20" column="102" source="standard:argument-list-wrapping" />
+        <error line="20" column="120" source="standard:argument-list-wrapping" />
+        <error line="20" column="121" source="standard:max-line-length" />
+        <error line="24" column="25" source="standard:class-signature" />
+        <error line="24" column="41" source="standard:class-signature" />
+        <error line="24" column="63" source="standard:class-signature" />
+        <error line="115" column="33" source="standard:chain-method-continuation" />
+        <error line="115" column="51" source="standard:chain-method-continuation" />
+        <error line="115" column="64" source="standard:chain-method-continuation" />
+        <error line="115" column="72" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/lib/saves/StatesPreviewManager.kt">
-        <error line="14" column="28" source="standard:class-signature" />
-        <error line="14" column="78" source="standard:class-signature" />
-        <error line="26" column="27" source="standard:multiline-expression-wrapping" />
+        <error line="11" column="1" source="standard:no-unused-imports" />
+        <error line="12" column="1" source="standard:no-unused-imports" />
+        <error line="30" column="27" source="standard:multiline-expression-wrapping" />
     </file>
     <file name="src/main/java/com/omnidroid/lib/saves/migrators/SavesMigrator.kt">
         <error line="15" column="57" source="standard:function-expression-body" />

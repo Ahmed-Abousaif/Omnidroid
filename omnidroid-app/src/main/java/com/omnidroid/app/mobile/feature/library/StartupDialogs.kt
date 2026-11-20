@@ -37,7 +37,7 @@ import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
 import com.omnidroid.app.mobile.shared.compose.dialog.DialogWidth
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.lib.library.MetaSystemID
 
@@ -59,14 +59,14 @@ private fun StartupDestinationIcon(filter: LibraryFilter) {
                     imageVector = Icons.Filled.GridView,
                     contentDescription = null,
                     modifier = Modifier.size(28.dp),
-                    tint = LibraryNeonGreen,
+                    tint = libraryAccentColor,
                 )
             is LibraryFilter.Favorites ->
                 Icon(
                     imageVector = Icons.Filled.Favorite,
                     contentDescription = null,
                     modifier = Modifier.size(28.dp),
-                    tint = LibraryNeonGreen,
+                    tint = libraryAccentColor,
                 )
             is LibraryFilter.System ->
                 Image(

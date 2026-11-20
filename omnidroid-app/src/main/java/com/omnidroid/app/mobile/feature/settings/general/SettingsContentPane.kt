@@ -55,6 +55,8 @@ internal fun SettingsContentPane(
             SettingsSection.LIBRARY -> {
                 RomsSettings(state, { viewModel.changeLocalStorageFolder() }, indexingInProgress, scanInProgress)
                 SettingsHorizontalDivider()
+                LibraryLayoutSettings()
+                SettingsHorizontalDivider()
                 StartupScreenSettings(availableConsoles)
                 SettingsHorizontalDivider()
                 LibraryMaintenanceSettings(onNavigateSubscreen)

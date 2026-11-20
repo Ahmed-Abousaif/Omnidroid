@@ -1,6 +1,6 @@
 package com.omnidroid.app.mobile.feature.library
 
-import com.omnidroid.app.mobile.shared.compose.ui.OnLibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -46,7 +46,7 @@ import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.GameCardInfoStyle
 import com.omnidroid.app.mobile.shared.compose.ui.GameCoverOrigin
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
-import com.omnidroid.app.mobile.shared.compose.ui.LibraryNeonGreen
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameCard
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
@@ -181,7 +181,7 @@ internal fun LibraryGameRow(
                             Modifier
                                 .height(thumbHeight)
                                 .clip(trailingShape)
-                                .background(LibraryNeonGreen)
+                                .background(libraryAccentColor)
                                 .padding(start = 12.dp, end = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -189,7 +189,7 @@ internal fun LibraryGameRow(
                             imageVector = Icons.Filled.PlayArrow,
                             contentDescription = null,
                             modifier = Modifier.size(22.dp),
-                            tint = OnLibraryNeonGreen,
+                            tint = onLibraryAccentColor,
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
@@ -198,7 +198,7 @@ internal fun LibraryGameRow(
                                 MaterialTheme.typography.labelLarge.copy(
                                     fontWeight = FontWeight.Bold,
                                 ),
-                            color = OnLibraryNeonGreen,
+                            color = onLibraryAccentColor,
                             maxLines = 1,
                         )
                     }
@@ -209,14 +209,14 @@ internal fun LibraryGameRow(
                             Modifier
                                 .size(thumbHeight)
                                 .clip(trailingShape)
-                                .background(LibraryNeonGreen.copy(alpha = 0.16f)),
+                                .background(libraryAccentColor.copy(alpha = 0.16f)),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Favorite,
                             contentDescription = stringResource(R.string.favorites),
                             modifier = Modifier.size(24.dp),
-                            tint = LibraryNeonGreen,
+                            tint = libraryAccentColor,
                         )
                     }
                 }

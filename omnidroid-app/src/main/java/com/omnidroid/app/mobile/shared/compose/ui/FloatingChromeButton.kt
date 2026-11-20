@@ -32,12 +32,13 @@ internal fun chromeButtonSize(): Dp {
 @Composable
 fun FloatingChromeButton(
     onClick: () -> Unit,
+    enabled: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val background by animateColorAsState(
-        targetValue = if (pressed) chromeColors.pressed else Color.Transparent,
+        targetValue = if (enabled && pressed) chromeColors.pressed else Color.Transparent,
         animationSpec = tween(120),
         label = "chromeButtonPressed",
     )
@@ -51,6 +52,7 @@ fun FloatingChromeButton(
                 .clickable(
                     interactionSource = interactionSource,
                     indication = null,
+                    enabled = enabled,
                     role = Role.Button,
                     onClick = onClick,
                 ),
