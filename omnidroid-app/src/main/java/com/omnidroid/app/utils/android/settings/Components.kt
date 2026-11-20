@@ -1,9 +1,12 @@
 package com.omnidroid.app.utils.android.settings
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.size
@@ -13,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.Role
@@ -210,12 +214,14 @@ fun OmnidroidSettingsSlider(
             1
         }
 
+    // Same grey focus highlight as the other settings rows, which get it from their click indication.
+    val focusInteraction = remember { MutableInteractionSource() }
     Column(
         modifier =
             modifier
                 .fillMaxWidth()
-                .focusable(enabled)
-                .controllerFocusGlow(RoundedCornerShape(8.dp))
+                .indication(focusInteraction, LocalIndication.current)
+                .focusable(enabled, focusInteraction)
                 .onPreviewKeyEvent { event ->
                     if (!enabled || event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                     when (event.key) {
