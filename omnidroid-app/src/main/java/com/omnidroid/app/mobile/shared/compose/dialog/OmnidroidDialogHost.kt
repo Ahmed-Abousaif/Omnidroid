@@ -47,22 +47,25 @@ fun showOmnidroidDialog(
     content: (@Composable () -> Unit)? = null,
 ): OmnidroidDialogHandle? {
     if (activity.isFinishing || activity.isDestroyed) return null
-    val parent = activity.window.decorView as ViewGroup
     val host = ComposeView(activity)
     host.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-    val handle = OmnidroidDialogHandle {
-        // Native/game callbacks may dismiss outside the UI thread.
-        host.post {
-            host.disposeComposition()
-            parent.removeView(host)
-            onDismiss()
+    val handle =
+        OmnidroidDialogHandle {
+            // Native/game callbacks may dismiss outside the UI thread.
+            host.post {
+                host.disposeComposition()
+                (host.parent as? ViewGroup)?.removeView(host)
+                onDismiss()
+            }
         }
-    }
     host.setContent {
         AppTheme(followUserPreference = !forceDark, syncSystemBars = false) {
             OmnidroidDialog(
                 width = width,
-                onDismissRequest = { onCancel(); handle.dismiss() },
+                onDismissRequest = {
+                    onCancel()
+                    handle.dismiss()
+                },
                 title = title?.let { { Text(it) } },
                 text = {
                     message?.let { Text(it) }
@@ -87,7 +90,9 @@ fun showOmnidroidDialog(
             )
         }
     }
-    parent.addView(host, ViewGroup.LayoutParams(0, 0))
+    // ComponentActivity installs the view-tree owners here, even when a picker
+    // activity has never called setContentView. Adding to decorView bypasses that.
+    activity.addContentView(host, ViewGroup.LayoutParams(0, 0))
     return handle
 }
 
