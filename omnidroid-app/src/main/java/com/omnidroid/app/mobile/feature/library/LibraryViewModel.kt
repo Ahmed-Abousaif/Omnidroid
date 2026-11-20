@@ -97,7 +97,12 @@ class LibraryViewModel(
     private val landscapeLayoutFlow = MutableStateFlow(readLayout(portrait = false))
     private val portraitLayoutFlow = MutableStateFlow(readLayout(portrait = true))
     private val layoutFlow =
-        combine(portraitFlow, separateLayoutsFlow, landscapeLayoutFlow, portraitLayoutFlow) { portrait, separate, landscape, portraitLayout ->
+        combine(
+            portraitFlow,
+            separateLayoutsFlow,
+            landscapeLayoutFlow,
+            portraitLayoutFlow,
+        ) { portrait, separate, landscape, portraitLayout ->
             LibraryLayout.forOrientation(portrait, separate, landscape, portraitLayout)
         }
     private val sortFlow = MutableStateFlow(readSort())
@@ -415,6 +420,7 @@ class LibraryViewModel(
 
     companion object {
         private const val ZOOM_DENSITY_KEY = "pref_library_zoom_density"
+
         /** The layout everywhere, or in landscape when portrait has its own ([PORTRAIT_LAYOUT_KEY]). */
         private const val LAYOUT_KEY = "pref_library_layout"
         private const val PORTRAIT_LAYOUT_KEY = "pref_library_layout_portrait"

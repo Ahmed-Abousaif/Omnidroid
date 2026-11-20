@@ -12,8 +12,10 @@ class LibraryLayoutTest {
 
     @Test
     fun `with separate layouts portrait shows its own`() {
-        assertEquals(LibraryLayout.LIST, LibraryLayout.forOrientation(true, true, LibraryLayout.GRID, LibraryLayout.LIST))
-        assertEquals(LibraryLayout.GRID, LibraryLayout.forOrientation(false, true, LibraryLayout.GRID, LibraryLayout.LIST))
+        val inPortrait = LibraryLayout.forOrientation(true, true, LibraryLayout.GRID, LibraryLayout.LIST)
+        val inLandscape = LibraryLayout.forOrientation(false, true, LibraryLayout.GRID, LibraryLayout.LIST)
+        assertEquals(LibraryLayout.LIST, inPortrait)
+        assertEquals(LibraryLayout.GRID, inLandscape)
     }
 
     @Test
