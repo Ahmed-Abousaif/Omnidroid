@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -145,8 +146,11 @@ fun SettingsScreen(
                 SettingsSidebar(
                     modifier =
                         Modifier
-                            .focusGroup()
-                            .focusProperties { right = contentFocusRequester },
+                            .focusProperties {
+                                right = contentFocusRequester
+                                // Land on the open section, not the nearest one (focusing a section opens it).
+                                onEnter = { sidebarFocusRequesters.getValue(section).requestFocus() }
+                            }.focusGroup(),
                     selected = section,
                     focusRequesters = sidebarFocusRequesters,
                     onFocused = {
@@ -166,10 +170,16 @@ fun SettingsScreen(
                         Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .focusGroup()
                             .focusProperties {
-                                left = sidebarFocusRequesters.getValue(section)
-                            },
+                                // Only Left leaves the page for the rail; Up and Down stay in the page.
+                                onExit = {
+                                    if (requestedFocusDirection == FocusDirection.Up ||
+                                        requestedFocusDirection == FocusDirection.Down
+                                    ) {
+                                        cancelFocusChange()
+                                    }
+                                }
+                            }.focusGroup(),
                 ) {
                     val paneModifier = Modifier.fillMaxSize().focusRequester(contentFocusRequester)
                     content(paneModifier)
@@ -180,8 +190,11 @@ fun SettingsScreen(
                 SettingsTopMenu(
                     modifier =
                         Modifier
-                            .focusGroup()
-                            .focusProperties { down = contentFocusRequester },
+                            .focusProperties {
+                                down = contentFocusRequester
+                                // Land on the open section, not the nearest one (focusing a section opens it).
+                                onEnter = { sidebarFocusRequesters.getValue(section).requestFocus() }
+                            }.focusGroup(),
                     selected = section,
                     focusRequesters = sidebarFocusRequesters,
                     onFocused = {
@@ -201,10 +214,7 @@ fun SettingsScreen(
                         Modifier
                             .weight(1f)
                             .fillMaxWidth()
-                            .focusGroup()
-                            .focusProperties {
-                                up = sidebarFocusRequesters.getValue(section)
-                            },
+                            .focusGroup(),
                 ) {
                     val paneModifier = Modifier.fillMaxSize().focusRequester(contentFocusRequester)
                     content(paneModifier)
