@@ -68,22 +68,17 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
@@ -120,6 +115,7 @@ import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.GameCoverOrigin
 import com.omnidroid.app.mobile.shared.compose.ui.gameCoverSharedBounds
+import com.omnidroid.app.mobile.shared.compose.ui.selectionGlow
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.app.shared.covers.backdropRequest
@@ -147,9 +143,6 @@ private val ConsoleActionHeight = 40.dp
 private val ConsoleActionShape = RoundedCornerShape(8.dp)
 private val ConsoleActionShadowPadding = 12.dp
 private val ConsoleStartMinWidth = 168.dp
-private val GlowSpread = 14.dp
-private const val GlowLayers = 14
-private const val GlowLayerAlpha = 0.016f
 private const val PortraitMaxRotation = 32f
 private const val MaxOverscroll = 0.35f
 private const val OverscrollResistance = 0.35f
@@ -579,7 +572,7 @@ private fun ConsoleLandscapeCard(
         modifier =
             Modifier
                 .fillMaxSize()
-                .consoleSelectionGlow(libraryAccentColor, LandscapeCardCorner, focus)
+                .selectionGlow(libraryAccentColor, LandscapeCardCorner, focus)
                 .then(sharedModifier)
                 .shadow(elevation = 6.dp, shape = shape)
                 .background(chromeColors.listRow)
@@ -832,7 +825,7 @@ private fun ConsolePortraitCard(
         modifier =
             Modifier
                 .fillMaxSize()
-                .consoleSelectionGlow(libraryAccentColor, PortraitCardCorner, focus)
+                .selectionGlow(libraryAccentColor, PortraitCardCorner, focus)
                 .then(sharedModifier)
                 .shadow(
                     elevation = 20.dp,
@@ -1301,41 +1294,6 @@ internal fun Modifier.bleedTop(amount: Dp): Modifier =
         layout(constraints.maxWidth, constraints.maxHeight) {
             placeable.place(0, -extra)
         }
-    }
-
-/** Gentle accent halo and outline that fade in as the card becomes selected. */
-private fun Modifier.consoleSelectionGlow(
-    accent: Color,
-    corner: Dp,
-    amount: () -> Float,
-): Modifier =
-    drawBehind {
-        val selected = amount()
-        if (selected <= 0.01f) return@drawBehind
-        val strength = selected * selected
-        val spread = GlowSpread.toPx()
-        val radius = corner.toPx()
-        for (layer in GlowLayers downTo 1) {
-            val grow = spread * layer / GlowLayers
-            drawRoundRect(
-                color = accent.copy(alpha = GlowLayerAlpha * strength),
-                topLeft = Offset(-grow, -grow),
-                size = Size(size.width + grow * 2, size.height + grow * 2),
-                cornerRadius = CornerRadius(radius + grow),
-            )
-        }
-    }.drawWithContent {
-        drawContent()
-        val selected = amount()
-        if (selected <= 0.01f) return@drawWithContent
-        val stroke = 1.5.dp.toPx()
-        drawRoundRect(
-            color = accent.copy(alpha = selected),
-            topLeft = Offset(stroke / 2, stroke / 2),
-            size = Size(size.width - stroke, size.height - stroke),
-            cornerRadius = CornerRadius(corner.toPx() - stroke / 2),
-            style = Stroke(width = stroke),
-        )
     }
 
 /**
