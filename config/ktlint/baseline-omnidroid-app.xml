@@ -5184,13 +5184,13 @@
         <error line="146" column="19" source="standard:function-expression-body" />
     </file>
     <file name="src/main/java/com/omnidroid/app/shared/savesync/SaveBackupManager.kt">
-        <error line="81" column="64" source="standard:binary-expression-wrapping" />
-        <error line="81" column="86" source="standard:argument-list-wrapping" />
-        <error line="81" column="103" source="standard:argument-list-wrapping" />
-        <error line="81" column="120" source="standard:argument-list-wrapping" />
-        <error line="81" column="121" source="standard:max-line-length" />
-        <error line="256" column="13" source="standard:chain-method-continuation" />
-        <error line="274" column="36" source="standard:function-expression-body" />
+        <error line="82" column="64" source="standard:binary-expression-wrapping" />
+        <error line="82" column="86" source="standard:argument-list-wrapping" />
+        <error line="82" column="103" source="standard:argument-list-wrapping" />
+        <error line="82" column="120" source="standard:argument-list-wrapping" />
+        <error line="82" column="121" source="standard:max-line-length" />
+        <error line="262" column="13" source="standard:chain-method-continuation" />
+        <error line="280" column="36" source="standard:function-expression-body" />
     </file>
     <file name="src/main/java/com/omnidroid/app/shared/savesync/SaveBackupWork.kt">
         <error line="28" column="26" source="standard:multiline-expression-wrapping" />

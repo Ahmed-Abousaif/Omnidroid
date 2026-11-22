@@ -37,6 +37,7 @@ import com.omnidroid.lib.library.SystemID
 import com.omnidroid.lib.library.metaSystemID
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.saves.Ps2MemoryCards
 import com.omnidroid.lib.saves.SaveState
 import com.omnidroid.lib.saves.SavesCoherencyEngine
 import com.omnidroid.lib.saves.SavesManager
@@ -148,6 +149,11 @@ class GameLoader(
 
                 val systemDirectory = directoriesManager.getSystemDirectory()
                 val savesDirectory = directoriesManager.getSavesDirectory()
+                if (systemCoreConfig.coreID == CoreID.ARMSX2) {
+                    // On failure the core keeps its old card folder, so the game still starts with its saves.
+                    runCatching { Ps2MemoryCards.prepare(systemDirectory, savesDirectory) }
+                        .onFailure { Timber.e(it, "Could not move PS2 memory cards to the saves folder") }
+                }
 
                 emit(
                     LoadingState.Ready(

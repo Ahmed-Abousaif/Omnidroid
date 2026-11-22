@@ -6,6 +6,7 @@ import android.os.Build
 import com.omnidroid.common.kotlin.calculateMd5
 import com.omnidroid.ext.R
 import com.omnidroid.lib.library.CoreID
+import com.omnidroid.lib.saves.Ps2MemoryCards
 import com.omnidroid.lib.savesync.CloudSaveFolder
 import com.omnidroid.lib.savesync.CloudSaveProviderInfo
 import com.omnidroid.lib.savesync.ConflictResolution
@@ -273,6 +274,10 @@ class SaveSyncManagerImpl(
         }
         val gameFileName = request.gameFileName
         if (gameFileName != null) {
+            // A PS2 memory card isn't named after any game: it holds the saves of every PS2 game.
+            if (folder == CloudSaveFolder.SAVES && Ps2MemoryCards.isCardPath(relativePath)) {
+                return CoreID.ARMSX2 in request.cores
+            }
             return SaveSyncFileMatcher.matchesGame(relativePath, gameFileName)
         }
         val always = SaveSyncFileMatcher.matchesAnyGame(relativePath, request.alwaysFileNames)
