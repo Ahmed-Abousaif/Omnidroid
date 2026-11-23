@@ -66,6 +66,8 @@ object FolderHints {
             "wonderswancolor" to SystemID.WSC,
             "dos" to SystemID.DOS,
             "ps2" to SystemID.PS2,
+            "ps3" to SystemID.PS3,
+            "playstation3" to SystemID.PS3,
             "playstation2" to SystemID.PS2,
             "gc" to SystemID.GAMECUBE,
             "gamecube" to SystemID.GAMECUBE,

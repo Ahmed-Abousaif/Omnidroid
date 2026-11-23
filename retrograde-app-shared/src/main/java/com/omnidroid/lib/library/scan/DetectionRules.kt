@@ -17,6 +17,8 @@ sealed class Detection {
         val system: SystemID,
         val key: MetadataKey?,
         val archiveEntry: String? = null,
+        val title: String? = null,
+        val cover: ByteArray? = null,
     ) : Detection()
 
     data class HashedBin(
@@ -113,6 +115,7 @@ object DetectionRules {
             "rvz", "wia" -> nintendo(input) { NintendoDisc.fromRvz(it) }
             "ciso" -> nintendo(input) { NintendoDisc.fromCiso(it) }
             "iso" -> iso(input)
+            "sfo" -> ps3Folder(input)
             "bin" -> bin(input)
             "cue" -> cue(input)
             "chd" -> chd(input)
@@ -168,12 +171,31 @@ object DetectionRules {
     private fun iso(input: ScanInput): Detection {
         val source = input.open() ?: return Detection.Rejected("Could not open ${input.name}")
         source.use { bytes ->
+            val sectors = DiscImages.userSectors(bytes, SectorLayout(2048, 0))
+            Iso9660.readFile(sectors, "PS3_GAME/PARAM.SFO")?.let { sfo ->
+                Ps3Content.parse(sfo)?.takeIf { it.playable }?.let { info ->
+                    return Detection.Ready(SystemID.PS3, MetadataKey(MetadataKeyType.SERIAL, info.titleId),
+                        title = info.title, cover = Iso9660.readFile(sectors, "PS3_GAME/ICON0.PNG"))
+                }
+            }
+            // Encrypted PS3 images still expose their volume label. Native probing
+            // resolves their metadata using the user's disc key before launch.
+            if (bytes.ascii(0x8028, 32) == "PS3VOLUME") return Detection.Ready(SystemID.PS3, romBase(input.name))
             NintendoDisc.fromIso(bytes)?.let { id ->
                 return Detection.Ready(id.system, id.code?.let { MetadataKey(MetadataKeyType.CODE, it) })
             }
             identifyFlat(bytes, input.name, 0)?.let { return it }
         }
         return folderOrReject(input, ".iso was not a recognised disc")
+    }
+
+    private fun ps3Folder(input: ScanInput): Detection {
+        if (!input.name.equals("PARAM.SFO", ignoreCase = true)) return Detection.Rejected("Not a PS3 game descriptor")
+        val info = input.open()?.use { Ps3Content.parse(it.read(0, minOf(input.size, 1024 * 1024L).toInt())) }
+            ?: return Detection.Rejected("Invalid PS3 game descriptor")
+        if (!info.playable) return Detection.Rejected("PS3 update, DLC or system content")
+        val cover = input.openNamed("ICON0.PNG")?.use { it.read(0, minOf(it.size, 1024 * 1024L).toInt()) }
+        return Detection.Ready(SystemID.PS3, MetadataKey(MetadataKeyType.SERIAL, info.titleId), title = info.title, cover = cover)
     }
 
     private fun bin(input: ScanInput): Detection {

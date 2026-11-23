@@ -62,7 +62,9 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
                         saveSyncManager.sync(
                             SaveSyncRequest(
                                 cores = setOf(coreConfig.coreID),
-                                gameFileName = game.fileName,
+                                gameFileName = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                    com.omnidroid.lib.savesync.GameCloudSyncPreferences(applicationContext).syncFileName(game)
+                                },
                                 includeSaves = true,
                                 includeStates = true,
                                 includePreviews = true,

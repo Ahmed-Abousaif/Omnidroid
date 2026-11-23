@@ -60,7 +60,14 @@ class LocalStorageProvider(
     override fun listBaseStorageFiles(
         options: com.omnidroid.lib.storage.StorageListOptions,
     ): Flow<List<BaseStorageFile>> =
-        walkDirectory(getExternalFolder() ?: directoriesManager.getInternalRomsDirectory())
+        flow {
+            walkDirectory(getExternalFolder() ?: directoriesManager.getInternalRomsDirectory()).collect { emit(it) }
+            val installed = File(context.filesDir, "ps3/config/dev_hdd0/game")
+            val descriptors = installed.listFiles().orEmpty().filter { it.isDirectory }.flatMap { title ->
+                listOf(File(title, "PARAM.SFO"), File(title, "ICON0.PNG")).filter { it.isFile }
+            }
+            emit(descriptors.map { BaseStorageFile(it.name, it.length(), it.toUri(), it.path, it.lastModified()) })
+        }
 
     override fun isLibraryRootReadable(): Boolean {
         val root = getExternalFolder() ?: directoriesManager.getInternalRomsDirectory()

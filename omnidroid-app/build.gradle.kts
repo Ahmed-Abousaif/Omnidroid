@@ -299,6 +299,7 @@ android {
 
 
                 ":omnidroid_core_switch",
+                ":omnidroid_core_armsx3",
 
 
 

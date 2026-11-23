@@ -42,7 +42,7 @@ data class GameSystem(
         get() = when (id) {
             SystemID.GB, SystemID.GBC, SystemID.GG -> 10f / 9f
             SystemID.GBA -> 3f / 2f
-            SystemID.PSP, SystemID.WII_U, SystemID.SWITCH -> 16f / 9f
+            SystemID.PSP, SystemID.WII_U, SystemID.SWITCH, SystemID.PS3 -> 16f / 9f
             SystemID.NDS, SystemID.NINTENDO_3DS -> 4f / 6f
             SystemID.WS, SystemID.WSC -> 14f / 9f
             SystemID.NGP -> 20f / 19f
@@ -2359,6 +2359,32 @@ data class GameSystem(
                     supportedExtensions = listOf("wud", "wux", "wua", "iso", "rpx", "elf"),
                     hasTouchScreen = true,
                     hasMultiDiskSupport = false,
+                ),
+                GameSystem(
+                    SystemID.PS3,
+                    "Sony - PlayStation 3",
+                    R.string.game_system_title_ps3,
+                    R.string.game_system_abbr_ps3,
+                    listOf(
+                        SystemCoreConfig(
+                            CoreID.ARMSX3,
+                            controllerConfigs = hashMapOf(
+                                0 to arrayListOf(ControllerConfigs.PS3_DUALSHOCK3),
+                                1 to arrayListOf(ControllerConfigs.PS3_DUALSHOCK3),
+                                2 to arrayListOf(ControllerConfigs.PS3_DUALSHOCK3),
+                                3 to arrayListOf(ControllerConfigs.PS3_DUALSHOCK3),
+                            ),
+                            statesSupported = true,
+                            autoSaveSupported = false,
+                            supportedOnlyArchitectures = setOf("arm64-v8a"),
+                            defaultSettings = com.omnidroid.lib.backend.ps3.Ps3GraphicsOptions.defaults,
+                            exposedSettings = com.omnidroid.lib.backend.ps3.Ps3GraphicsOptions.settings,
+                            exposedAdvancedSettings = com.omnidroid.lib.backend.ps3.Ps3GraphicsOptions.advancedSettings,
+                        ),
+                    ),
+                    uniqueExtensions = emptyList(),
+                    supportedExtensions = listOf("iso", "sfo"),
+                    fastForwardSupport = false,
                 ),
                 GameSystem(
                     SystemID.SWITCH,

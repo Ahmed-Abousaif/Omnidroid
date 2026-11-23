@@ -64,6 +64,11 @@ class GameLauncher(
 
         val systemDescriptor = ConsoleBackendRegistry.findDescriptorForSystem(game.systemId)
 
+        if (systemDescriptor?.isAvailable(activity) == false) {
+            android.widget.Toast.makeText(activity, "${systemDescriptor.displayName} requires Android 13 or newer and an ARM64 device.", android.widget.Toast.LENGTH_LONG).show()
+            return false
+        }
+
         val initialConfig = system.systemCoreConfigs.firstOrNull()
         val initialReqs = initialConfig?.let { systemDescriptor?.requirementsFor(it) }
         val initialUnfulfilled = initialReqs?.items?.filter { it.severity == RequirementSeverity.REQUIRED && !it.isFulfilled(activity) }

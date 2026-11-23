@@ -75,6 +75,13 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
 
         ConsoleBackendRegistry.registerDescriptor(LibretroBackendDescriptor())
         ConsoleBackendRegistry.registerDescriptor(SwitchBackendDescriptor())
+        ConsoleBackendRegistry.registerDescriptor(com.omnidroid.lib.backend.ps3.Ps3BackendDescriptor())
+        ConsoleBackendRegistry.registerRuntimeFactory(com.omnidroid.lib.backend.BackendID.SWITCH) {
+            com.omnidroid.app.shared.game.backend.switch_backend.SwitchBackendRuntime()
+        }
+        ConsoleBackendRegistry.registerRuntimeFactory(com.omnidroid.lib.backend.BackendID.PS3) {
+            com.omnidroid.app.shared.game.backend.ps3.Ps3BackendRuntime()
+        }
 
         if (isMainProcess()) {
             com.omnidroid.app.shared.library.LibraryPeriodicScanScheduler.syncWithPreference(this)

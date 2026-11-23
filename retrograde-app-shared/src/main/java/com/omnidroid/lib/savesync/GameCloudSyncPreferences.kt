@@ -12,7 +12,7 @@ enum class GameCloudSyncOverride {
     NEVER,
 }
 
-class GameCloudSyncPreferences(context: Context) {
+class GameCloudSyncPreferences(private val context: Context) {
     private val prefs = SharedPreferencesHelper.getSharedPreferences(context)
 
     fun observeOverride(gameId: Int) = FlowSharedPreferences(prefs).getString(key(gameId), INHERIT_VALUE).asFlow().map(::decode)
@@ -37,12 +37,18 @@ class GameCloudSyncPreferences(context: Context) {
         val always = mutableSetOf<String>()
         games.forEach { game ->
             when (getOverride(game.id)) {
-                GameCloudSyncOverride.NEVER -> excluded.add(game.fileName)
-                GameCloudSyncOverride.ALWAYS -> always.add(game.fileName)
+                GameCloudSyncOverride.NEVER -> excluded.add(syncFileName(game))
+                GameCloudSyncOverride.ALWAYS -> always.add(syncFileName(game))
                 GameCloudSyncOverride.INHERIT -> Unit
             }
         }
         return GameSyncPartition(excluded, always)
+    }
+
+    fun syncFileName(game: Game): String {
+        if (game.systemId != "ps3") return game.fileName
+        val info = com.omnidroid.lib.library.scan.Ps3Content.read(context, android.net.Uri.parse(game.fileUri))
+        return info?.let { "ps3-${it.titleId}.srm" } ?: game.fileName
     }
 
     fun shouldSyncGame(

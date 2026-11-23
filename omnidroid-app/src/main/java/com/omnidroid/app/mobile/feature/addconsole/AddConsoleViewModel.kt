@@ -229,6 +229,12 @@ class AddConsoleViewModel(
     fun install(metaSystemID: MetaSystemID) {
         runExclusive(metaSystemID, BusyAction.INSTALL) {
             val cores = ConsoleManager.coresFor(metaSystemID, coresSelection)
+            cores.forEach { core ->
+                val descriptor = com.omnidroid.lib.backend.ConsoleBackendRegistry.findDescriptorForCore(core)
+                check(descriptor?.isAvailable(applicationContext) != false) {
+                    "${descriptor?.displayName} requires Android 13 or newer and an ARM64 device."
+                }
+            }
             check(cores.isNotEmpty()) { applicationContext.getString(R.string.consoles_emulator_unavailable) }
             coreUpdater.downloadCores(applicationContext, cores)
             check(cores.all { ConsoleManager.isCorePresent(applicationContext, it) }) {

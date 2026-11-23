@@ -31,6 +31,16 @@ interface StateSaveableSession {
     suspend fun restoreAutoSaveState(state: ByteArray): Boolean
 }
 
+interface NativeSaveSession {
+    suspend fun persistNativeSaves(stop: Boolean = false)
+}
+
+/** File-backed snapshots, for engines whose states cannot fit in a Java byte array. */
+interface NativeStateSession {
+    suspend fun saveNativeState(index: Int): Boolean
+    suspend fun loadNativeState(index: Int): Boolean
+}
+
 interface DiscSwappableSession {
     val totalDiscs: Int
     val currentDisc: Int

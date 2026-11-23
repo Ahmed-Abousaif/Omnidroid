@@ -44,6 +44,7 @@ class GameViewModelSaves(
     )
 
     suspend fun saveSlot(index: Int) {
+        if (saveNativeSlot(index)) return
         saveManualState {
             statesManager.setSlotSave(game, it, systemCoreConfig.coreID, index)
             index
@@ -51,7 +52,36 @@ class GameViewModelSaves(
     }
 
     suspend fun saveNewSlot() {
+        if (retroGameView.retroGameView is com.omnidroid.lib.backend.NativeStateSession) {
+            try {
+                val index = withContext(Dispatchers.IO) { com.omnidroid.lib.saves.Ps3StateSlots.forGame(appContext, game).nextIndex() }
+                saveNativeSlot(index)
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { showSaveError(e) }
+            return
+        }
         saveManualState { statesManager.setNewSlotSave(game, systemCoreConfig.coreID, it) }
+    }
+
+    private suspend fun saveNativeSlot(index: Int): Boolean {
+        val session = retroGameView.retroGameView as? com.omnidroid.lib.backend.NativeStateSession ?: return false
+        try {
+            val previewSize = GraphicsUtils.convertDpToPixel(StatesPreviewManager.PREVIEW_SIZE_DP, appContext).roundToInt()
+            val preview = try {
+                if (index == com.omnidroid.lib.saves.Ps3StateSlots.QUICK_SLOT) null else retroGameView.retroGameView?.takeScreenshot(previewSize, 3)
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { Timber.w(e, "Cannot capture state preview"); null }
+            try {
+                if (!session.saveNativeState(index)) throw IOException("Core rejected state capture")
+                try {
+                    if (preview != null) statesPreviewManager.setPreviewForSlot(game, preview, systemCoreConfig.coreID, index)
+                } catch (e: CancellationException) { throw e }
+                catch (e: Exception) { Timber.w(e, "State saved, but preview failed") }
+            } finally { preview?.recycle() }
+            sideEffects.showToast(appContext.getString(R.string.game_toast_save_state_saved))
+        } catch (e: CancellationException) { throw e }
+        catch (e: Exception) { showSaveError(e) }
+        return true
     }
 
     private suspend fun saveManualState(write: suspend (SaveState) -> Int) {
@@ -75,6 +105,11 @@ class GameViewModelSaves(
 
     suspend fun loadSlot(index: Int) {
         try {
+            val native = retroGameView.retroGameView as? com.omnidroid.lib.backend.NativeStateSession
+            if (native != null) {
+                if (!native.loadNativeState(index)) throw IOException("Core rejected state")
+                return
+            }
             val state =
                 statesManager.getSlotSave(game, systemCoreConfig.coreID, index)
                     ?: throw IOException("Save slot is missing")
@@ -229,7 +264,7 @@ class GameViewModelSaves(
     }
 
     private suspend fun isAutoSaveEnabled(): Boolean {
-        return systemCoreConfig.statesSupported && settingsManager.autoSave()
+        return systemCoreConfig.statesSupported && systemCoreConfig.autoSaveSupported && settingsManager.autoSave()
     }
 
     private suspend fun takeScreenshotPreview(index: Int) {
@@ -262,7 +297,8 @@ class GameViewModelSaves(
         return retroGameView.unserializeState(saveState.state)
     }
 
-    fun saveQuickSave() {
+    suspend fun saveQuickSave() {
+        if (saveNativeSlot(com.omnidroid.lib.saves.Ps3StateSlots.QUICK_SLOT)) return
         try {
             val state = getCurrentSaveState() ?: throw IOException("Core did not capture quick save")
             currentQuickSave = state
@@ -274,7 +310,11 @@ class GameViewModelSaves(
         }
     }
 
-    fun loadQuickSave() {
+    suspend fun loadQuickSave() {
+        if (retroGameView.retroGameView is com.omnidroid.lib.backend.NativeStateSession) {
+            loadSlot(com.omnidroid.lib.saves.Ps3StateSlots.QUICK_SLOT)
+            return
+        }
         val state = currentQuickSave
         if (state == null) {
             sideEffects.showToast(appContext.getString(R.string.game_toast_quick_save_missing))

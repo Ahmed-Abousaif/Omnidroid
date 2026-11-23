@@ -7,14 +7,16 @@ import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.storage.DirectoriesManager
 import timber.log.Timber
 import java.io.File
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class GithubCoreDownloader(
     private val directoriesManager: DirectoriesManager,
     private val api: CoreUpdater.CoreManagerApi,
 ) {
-    suspend fun retrieve(coreID: CoreID): File {
+    suspend fun retrieve(coreID: CoreID): File = downloadMutex.withLock {
         val mainCoresDirectory = directoriesManager.getCoresDirectory()
-        findCached(mainCoresDirectory, coreID)?.let { return it }
+        findCached(mainCoresDirectory, coreID)?.let { return@withLock it }
 
         Timber.i("Downloading core $coreID from github")
         val coresDirectory =
@@ -35,11 +37,14 @@ class GithubCoreDownloader(
                 .appendPath(coreID.libretroFileName)
                 .build()
 
+        val stagedFile = File(coresDirectory, "${coreID.libretroFileName}.part")
         try {
-            downloadFile(uri, destFile)
-            return destFile
+            downloadFile(uri, stagedFile)
+            check(stagedFile.renameTo(destFile)) { "Could not install ${destFile.name}" }
+            destFile
         } catch (error: Throwable) {
             destFile.safeDelete()
+            stagedFile.safeDelete()
             throw error
         }
     }
@@ -77,6 +82,7 @@ class GithubCoreDownloader(
     }
 
     companion object {
+        private val downloadMutex = Mutex()
         fun findCached(
             coresDirectory: File,
             coreID: CoreID,

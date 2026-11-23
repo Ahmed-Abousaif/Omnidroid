@@ -8,6 +8,15 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class SystemDetectorTest {
+    @Test
+    fun identifiesPs3VolumeBeforeIsoFallback() {
+        val header = ByteArray(0x9000) { 0x20 }
+        "CD001".toByteArray().copyInto(header, 0x8001)
+        "PS3VOLUME".toByteArray().copyInto(header, 0x8028)
+        assertEquals(SystemID.PS3, SystemDetector.detectSystem("iso", openStream = { ByteArrayInputStream(header) })?.id)
+        assertEquals(SystemID.PS2, SystemDetector.detectSystem("iso", "ps2", { ByteArrayInputStream(header) })?.id)
+    }
+
 
     @Test
     fun detectsUniqueExtensions() {

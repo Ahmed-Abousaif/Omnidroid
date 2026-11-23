@@ -1,0 +1,45 @@
+name: PS3 native build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - modules/ps3/**
+      - .github/workflows/ps3-native.yml
+      - omnidroid-cores
+
+concurrency:
+  group: ps3-native-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize pinned sources
+        run: git submodule update --init -- omnidroid-cores modules/ps3/upstream/armsx3
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: ./.github/actions/setup-armsx3
+      - name: Test host boundary and dialog lifecycle
+        run: |
+          python3 -m unittest discover -s modules/ps3/engine/tests -p 'test_*.py'
+          g++ -std=c++20 -pthread -Imodules/ps3/engine/include -Imodules/ps3/engine modules/ps3/engine/tests/host_requests_test.cpp -o /tmp/ps3-host-requests
+          /tmp/ps3-host-requests
+          g++ -std=c++20 -Imodules/ps3/engine/include -Imodules/ps3/engine modules/ps3/engine/api.cpp modules/ps3/engine/tests/api_test.cpp -o /tmp/ps3-api
+          /tmp/ps3-api
+          g++ -std=c++20 -Imodules/ps3/engine modules/ps3/engine/tests/performance_session_test.cpp -o /tmp/ps3-performance
+          /tmp/ps3-performance
+      - name: Build integrated engine and JNI library
+        run: python3 omnidroid-cores/build_armsx3.py --jobs 2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: omnidroid-ps3-native
+          path: |
+            omnidroid-cores/omnidroid_core_armsx3/src/main/jniLibs/arm64-v8a/*.so
+            omnidroid-cores/omnidroid_core_armsx3/src/main/armsx3-build.json
+          if-no-files-found: error

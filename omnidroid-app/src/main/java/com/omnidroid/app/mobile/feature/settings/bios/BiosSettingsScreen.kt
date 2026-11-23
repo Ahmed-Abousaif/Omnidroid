@@ -42,16 +42,25 @@ fun BiosScreen(
     val context = LocalContext.current
     var revision by remember { mutableStateOf(0) }
     var currentImportAction by remember { mutableStateOf<RequirementAction?>(null) }
+    var importProgress by remember { mutableStateOf<String?>(null) }
     val keysPickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) importProgress = null
             if (uri != null) {
                 val action = currentImportAction
                 if (action != null) {
-                    OmnidroidApplication.scope(context.applicationContext).launch {
+                    OmnidroidApplication.scope(context.applicationContext).launch(Dispatchers.Main) {
                         val result = withContext(Dispatchers.IO) {
-                            RequirementImporter.import(context.applicationContext, uri, action)
+                            RequirementImporter.import(context.applicationContext, uri, action) { message ->
+                                android.os.Handler(android.os.Looper.getMainLooper()).post { importProgress = message }
+                            }
                         }
                         revision++
+                        importProgress = null
+                        if (action is RequirementAction.BackendImport) {
+                            Toast.makeText(context, result.message ?: if (result.success) "Import complete" else "Import failed", Toast.LENGTH_LONG).show()
+                            return@launch
+                        }
                         val isFirmware = when (action) {
                             is RequirementAction.ArchiveImport -> true
                             is RequirementAction.FileImport -> action.destinationDir.contains("registered")
@@ -90,6 +99,10 @@ fun BiosScreen(
             .collectAsState()
             .value
     OmnidroidSettingsPage(modifier = modifier.fillMaxSize()) {
+        importProgress?.let { message ->
+            androidx.compose.material3.LinearProgressIndicator()
+            Text(text = message)
+        }
         Ps2Choices(
             detected = ps2.map { it.libretroFileName }.toSet(),
             selection = uiState.ps2Selection,
@@ -108,7 +121,9 @@ fun BiosScreen(
                 revision = revision,
                 onAction = { item ->
                     when (val action = item.action) {
-                        is RequirementAction.FileImport, is RequirementAction.ArchiveImport -> {
+                        is RequirementAction.FileImport, is RequirementAction.ArchiveImport, is RequirementAction.BackendImport -> {
+                            if (importProgress != null) return@RequirementSection
+                            importProgress = "Select a file…"
                             currentImportAction = action
                             keysPickerLauncher.launch(arrayOf("*/*"))
                         }

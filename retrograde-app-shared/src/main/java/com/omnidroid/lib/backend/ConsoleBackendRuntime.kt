@@ -20,6 +20,7 @@ interface ConsoleBackendRuntime {
         game: Game,
         config: SystemCoreConfig,
         container: ViewGroup,
+        onExit: (Int) -> Unit,
     ): BackendSession
 }
 

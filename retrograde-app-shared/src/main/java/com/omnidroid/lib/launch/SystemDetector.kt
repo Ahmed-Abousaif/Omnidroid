@@ -22,6 +22,8 @@ object SystemDetector {
         "psx" to SystemID.PSX,
         "ps" to SystemID.PSX,
         "ps2" to SystemID.PS2,
+        "ps3" to SystemID.PS3,
+        "playstation3" to SystemID.PS3,
         "playstation2" to SystemID.PS2,
         "psp" to SystemID.PSP,
         "n64" to SystemID.N64,
@@ -117,6 +119,27 @@ object SystemDetector {
                     return candidateSystem
                 }
             }
+        }
+
+        if (openStream != null && extension in setOf("iso", "sfo")) {
+            val isPs3 = runCatching {
+                openStream()?.use { stream ->
+                    val buffer = ByteArray(if (extension == "iso") 0x9000 else 1024 * 1024)
+                    var count = 0
+                    while (count < buffer.size) {
+                        val read = stream.read(buffer, count, buffer.size - count)
+                        if (read <= 0) break
+                        count += read
+                    }
+                    if (extension == "sfo") {
+                        com.omnidroid.lib.library.scan.Ps3Content.parse(buffer.copyOf(count))?.playable == true
+                    } else {
+                        count >= 0x8048 && buffer.copyOfRange(0x8001, 0x8006).toString(Charsets.US_ASCII) == "CD001" &&
+                            buffer.copyOfRange(0x8028, 0x8048).toString(Charsets.US_ASCII).trim() == "PS3VOLUME"
+                    }
+                } == true
+            }.getOrDefault(false)
+            if (isPs3) return GameSystem.findById(SystemID.PS3.dbname)
         }
 
         // 2. Sniff header for Nintendo disc images (RVZ / WIA) if stream is available

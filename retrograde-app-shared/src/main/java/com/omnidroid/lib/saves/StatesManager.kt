@@ -91,6 +91,10 @@ class StatesManager(
         coreID: CoreID,
     ): List<SlotInfo> =
         withContext(Dispatchers.IO) {
+            if (coreID == CoreID.ARMSX3) {
+                val slots = Ps3StateSlots.forGame(directoriesManager.context, game)
+                return@withContext slots.indices().map { SlotInfo(it, slots.info(it)) }
+            }
             writes.withLock {
                 getSlotIndices(game, coreID.coreName).map { index ->
                     val slotFileName = getSlotSaveFileName(game, index)

@@ -18,8 +18,24 @@ object RequirementImporter {
         val message: String? = null,
     )
 
-    fun import(context: Context, uri: Uri, action: RequirementAction): ImportResult {
+    suspend fun import(context: Context, uri: Uri, action: RequirementAction, onProgress: (String) -> Unit = {}): ImportResult {
         return when (action) {
+            is RequirementAction.BackendImport -> {
+                if (action.backendID != com.omnidroid.lib.backend.BackendID.PS3) return ImportResult(false, "Unsupported installer")
+                try {
+                    val entry = dagger.hilt.android.EntryPointAccessors.fromApplication(context, Ps3InstallerDependencies::class.java)
+                    onProgress("Preparing PS3 engine…")
+                    entry.coreUpdater().downloadCores(context, listOf(com.omnidroid.lib.library.CoreID.ARMSX3))
+                    val message = com.omnidroid.app.shared.ps3.Armsx3Bridge.install(context, uri, action.operation, onProgress)
+                    com.omnidroid.app.shared.library.LibraryIndexScheduler.scheduleLibrarySync(context, forceDeep = true)
+                    ImportResult(true, message)
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                } catch (failure: Exception) {
+                    Timber.e(failure, "PS3 content installation failed")
+                    ImportResult(false, failure.cause?.message ?: failure.message)
+                }
+            }
             is RequirementAction.FileImport -> importFile(context, uri, action)
             is RequirementAction.ArchiveImport -> importArchive(context, uri, action)
             else -> ImportResult(false, "Unsupported action")
@@ -133,5 +149,11 @@ object RequirementImporter {
             ImportResult(false, e.message)
         }
     }
+}
+
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+interface Ps3InstallerDependencies {
+    fun coreUpdater(): com.omnidroid.lib.core.CoreUpdater
 }
 

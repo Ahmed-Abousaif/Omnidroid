@@ -239,6 +239,9 @@ class GameViewModelTouchControls(
         events.forEach { event ->
             when (event) {
                 is InputEvent.Button -> {
+                    // The menu button belongs to the host. Forwarding it also opens
+                    // an embedded emulator menu on native backends.
+                    if (event.id == KeyEvent.KEYCODE_BUTTON_MODE) return@forEach
                     if (handleHostButton(event)) {
                         return@forEach
                     }

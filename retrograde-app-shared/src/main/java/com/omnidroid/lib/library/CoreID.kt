@@ -139,6 +139,11 @@ enum class CoreID(
         "Eden",
         "libyuzu-android.so",
     ),
+    ARMSX3(
+        "armsx3",
+        "ARMSX3",
+        "libomnidroid-armsx3.so",
+    ),
     ;
 
     companion object {

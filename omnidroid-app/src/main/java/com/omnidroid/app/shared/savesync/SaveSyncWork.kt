@@ -102,14 +102,13 @@ class SaveSyncWork
             val isAutoSync = inputData.getBoolean(IS_AUTO, false)
             val isGameSync = inputData.getString(GAME_FILE_NAME) != null
             val isManualSync = !isAutoSync && !isGameSync
-            val gameAlways =
-                inputData.getString(GAME_FILE_NAME)?.let { fileName ->
-                    retrogradeDb.gameDao().selectAll().any { it.fileName == fileName } &&
-                        GameCloudSyncPreferences(applicationContext).shouldSyncGame(
-                            retrogradeDb.gameDao().selectAll().first { it.fileName == fileName },
-                            settingsManager.syncSaves(),
-                        )
-                } ?: true
+            val syncPreferences = GameCloudSyncPreferences(applicationContext)
+            val gameAlways = inputData.getString(GAME_FILE_NAME)?.let { fileName ->
+                val game = retrogradeDb.gameDao().selectAll().firstOrNull {
+                    it.fileName == fileName || syncPreferences.syncFileName(it) == fileName
+                }
+                game != null && syncPreferences.shouldSyncGame(game, settingsManager.syncSaves())
+            } ?: true
             return when {
                 isGameSync -> gameAlways
                 isAutoSync ->

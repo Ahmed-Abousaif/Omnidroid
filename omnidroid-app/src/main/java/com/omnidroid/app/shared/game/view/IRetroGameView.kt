@@ -56,6 +56,13 @@ interface IRetroGameView : DefaultLifecycleObserver {
 }
 
 suspend fun IRetroGameView.takeScreenshot(maxResolution: Int, retries: Int = 1): android.graphics.Bitmap? {
+    if (this is com.omnidroid.lib.backend.ScreenshotSession) {
+        val bitmap = captureScreenshot() ?: return null
+        val ratio = maxResolution.toFloat() / maxOf(bitmap.width, bitmap.height)
+        if (ratio >= 1) return bitmap
+        return android.graphics.Bitmap.createScaledBitmap(bitmap, (bitmap.width * ratio).toInt().coerceAtLeast(1),
+            (bitmap.height * ratio).toInt().coerceAtLeast(1), true).also { if (it !== bitmap) bitmap.recycle() }
+    }
     val surfaceView = asView() as? SurfaceView ?: return null
     return surfaceView.takeScreenshot(maxResolution, retries)
 }

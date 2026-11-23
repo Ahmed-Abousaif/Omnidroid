@@ -91,6 +91,7 @@ class ConsoleBackendRegistryTest {
                 game: com.omnidroid.lib.library.db.entity.Game,
                 config: com.omnidroid.lib.library.SystemCoreConfig,
                 container: android.view.ViewGroup,
+                onExit: (Int) -> Unit,
             ): BackendSession {
                 throw UnsupportedOperationException()
             }

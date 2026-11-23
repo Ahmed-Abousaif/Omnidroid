@@ -56,12 +56,15 @@ class GameLaunchTaskHandler(
         CacheCleanerWork.cancelCleanCacheLRU(context)
     }
 
-    private fun rescheduleBackgroundWork(
+    private suspend fun rescheduleBackgroundWork(
         context: Context,
         game: Game? = null,
     ) {
         if (game != null) {
-            SaveSyncWork.enqueueGameWork(context, game.fileName)
+            val name = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                com.omnidroid.lib.savesync.GameCloudSyncPreferences(context).syncFileName(game)
+            }
+            SaveSyncWork.enqueueGameWork(context, name)
         }
         SaveSyncWork.enqueueAutoWork(context, 5)
         CacheCleanerWork.enqueueCleanCacheLRU(context)

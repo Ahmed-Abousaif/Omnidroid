@@ -9,6 +9,12 @@ enum class RequirementSeverity {
 }
 
 sealed class RequirementAction {
+    data class BackendImport(
+        val backendID: BackendID,
+        val operation: String,
+        val acceptedExtensions: List<String>,
+    ) : RequirementAction()
+
     data class FileImport(
         val destinationDir: String,
         val destinationFileName: String? = null,

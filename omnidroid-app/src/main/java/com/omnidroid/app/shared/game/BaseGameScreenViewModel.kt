@@ -315,23 +315,25 @@ class BaseGameScreenViewModel(
 
     }
 
-    suspend fun loadSwitchGame(
-        applicationContext: Context,
+    suspend fun loadNativeGame(
+        activity: Activity,
         systemCoreConfig: SystemCoreConfig,
         gameLoader: GameLoader,
     ) {
-        retroGameView.setLoadingForSwitch("Loading Nintendo Switch core...")
+        val descriptor = requireNotNull(ConsoleBackendRegistry.findDescriptorForCore(systemCoreConfig.coreID))
+        retroGameView.setLoadingForNative("Loading ${descriptor.displayName}…")
         try {
-            val coreFile = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                gameLoader.ensureCoreDownloaded(applicationContext, systemCoreConfig.coreID)
-            }
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                com.omnidroid.app.shared.switch_emu.EdenBridge.initialize(applicationContext, coreFile)
+                gameLoader.ensureCoreDownloaded(activity.applicationContext, systemCoreConfig.coreID)
             }
-            retroGameView.setReadyForSwitch()
-        } catch (e: Throwable) {
-            Timber.e(e, "Failed to load Nintendo Switch core")
-            sideEffects.requestFailureFinish(e.message ?: "Failed to load Nintendo Switch core")
+            val runtime = requireNotNull(ConsoleBackendRegistry.getRuntime(activity, descriptor.id))
+            runtime.prepare(activity, game, systemCoreConfig).getOrThrow()
+            retroGameView.setReadyForNative()
+        } catch (failure: kotlinx.coroutines.CancellationException) {
+            throw failure
+        } catch (failure: Exception) {
+            Timber.e(failure, "Failed to load native backend")
+            sideEffects.requestFailureFinish(failure.message ?: "Failed to load ${descriptor.displayName}")
         }
     }
 
@@ -347,40 +349,24 @@ class BaseGameScreenViewModel(
 
         val capabilities = descriptor?.capabilities(systemCoreConfig) ?: BackendCapabilities()
 
-        if (descriptor?.id == BackendID.SWITCH) {
+        if (descriptor != null && descriptor.id != BackendID.LIBRETRO) {
 
             val activity = context as? Activity ?: throw IllegalStateException("Context must be an Activity")
 
-            val session = SwitchBackendSession(
-
-                activity = activity,
-
-                game = game,
-
-                sharedPreferences = sharedPreferences,
-
-                capabilities = capabilities,
-
-                onEmulationExit = { resultCode ->
-
-                    if (resultCode != 0) {
-
-                        sideEffects.requestFailureFinish("Emulation exited with code $resultCode")
-
-                    } else {
-
-                        sideEffects.requestSuccessfulFinish()
-
-                    }
-
-                },
-
-            )
+            val runtime = requireNotNull(ConsoleBackendRegistry.getRuntime(context, descriptor.id))
+            val session = runtime.createSession(
+                activity, game, systemCoreConfig, android.widget.FrameLayout(activity),
+            ) { resultCode ->
+                if (resultCode != 0) sideEffects.requestFailureFinish("Emulation exited with code $resultCode")
+                else if (activeSession is com.omnidroid.lib.backend.NativeSaveSession) requestFinish()
+                else sideEffects.requestSuccessfulFinish()
+            }
+            val gameView = session as IRetroGameView
 
             activeSession = session
 
-            retroGameView.retroGameView = session
-            session.disableTouchEvents()
+            retroGameView.retroGameView = gameView
+            gameView.disableTouchEvents()
 
             lifecycle.lifecycle.addObserver(object : DefaultLifecycleObserver {
 
@@ -600,11 +586,7 @@ class BaseGameScreenViewModel(
 
         if (loadingState.value) return
 
-        withLoading {
-
-            saves.saveQuickSave()
-
-        }
+        viewModelScope.launch { withLoading { saves.saveQuickSave() } }
 
     }
 
@@ -614,11 +596,7 @@ class BaseGameScreenViewModel(
 
         if (loadingState.value) return
 
-        withLoading {
-
-            saves.loadQuickSave()
-
-        }
+        viewModelScope.launch { withLoading { saves.loadQuickSave() } }
 
     }
 
@@ -662,6 +640,17 @@ class BaseGameScreenViewModel(
 
             withLoading {
 
+                val nativeSaves = activeSession as? com.omnidroid.lib.backend.NativeSaveSession
+                if (nativeSaves != null) {
+                    try {
+                        nativeSaves.persistNativeSaves(stop = true)
+                        sideEffects.requestSuccessfulFinish()
+                    } catch (failure: Exception) {
+                        Timber.e(failure, "Could not back up PS3 saves")
+                        sideEffects.requestSaveFailureOnQuit()
+                    }
+                    return@withLoading
+                }
                 if (activeSession !is com.omnidroid.lib.backend.StateSaveableSession) {
 
                     sideEffects.requestSuccessfulFinish()
@@ -687,10 +676,17 @@ class BaseGameScreenViewModel(
 
     fun requestBackgroundSave() {
 
-        if (loadingState.value || activeSession !is com.omnidroid.lib.backend.StateSaveableSession) return
+        if (loadingState.value || (activeSession !is com.omnidroid.lib.backend.StateSaveableSession &&
+            activeSession !is com.omnidroid.lib.backend.NativeSaveSession)) return
 
         GameService.schedule {
 
+            val nativeSaves = activeSession as? com.omnidroid.lib.backend.NativeSaveSession
+            if (nativeSaves != null) {
+                try { nativeSaves.persistNativeSaves() }
+                catch (failure: Exception) { Timber.e(failure, "Could not back up native saves") }
+                return@schedule
+            }
             val snapshot = saves.captureSaveSnapshot(false)
 
             saves.writeSaveSnapshot(snapshot)
