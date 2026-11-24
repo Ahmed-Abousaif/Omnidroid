@@ -151,6 +151,7 @@ object OmnidroidApplicationModule {
                 Migrations.VERSION_15_16,
                 Migrations.VERSION_16_17,
                 Migrations.VERSION_17_18,
+                Migrations.VERSION_18_19,
             )
             .fallbackToDestructiveMigration()
             .build()

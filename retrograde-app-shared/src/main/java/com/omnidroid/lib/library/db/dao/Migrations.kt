@@ -186,6 +186,28 @@ object Migrations {
             }
         }
 
+    val VERSION_18_19: Migration =
+        object : Migration(18, 19) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `games` ADD COLUMN `customCoverOrigin` TEXT NOT NULL DEFAULT 'user'")
+                database.execSQL("""CREATE TABLE IF NOT EXISTS `game_identities` (
+                    `gameId` INTEGER NOT NULL PRIMARY KEY, `identityKey` TEXT NOT NULL, `lookupKey` TEXT NOT NULL,
+                    `system` TEXT NOT NULL, `title` TEXT NOT NULL, `alternateTitle` TEXT, `region` TEXT,
+                    `keyType` TEXT, `keyValue` TEXT, `matchMethod` TEXT NOT NULL, `libretroUrl` TEXT,
+                    `thumbnailIndexed` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `fileSize` INTEGER, `fileLastModified` INTEGER,
+                    FOREIGN KEY(`gameId`) REFERENCES `games`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)""")
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_game_identities_lookupKey` ON `game_identities` (`lookupKey`)")
+                database.execSQL("""CREATE TABLE IF NOT EXISTS `catalog_lookups` (
+                    `lookupKey` TEXT NOT NULL PRIMARY KEY, `state` TEXT NOT NULL, `payload` TEXT NOT NULL,
+                    `retryAt` INTEGER NOT NULL, `fetchedAt` INTEGER NOT NULL, `assetRetryAt` INTEGER NOT NULL DEFAULT 0)""")
+                database.execSQL("""CREATE TABLE IF NOT EXISTS `game_artwork` (
+                    `gameId` INTEGER NOT NULL PRIMARY KEY, `identityKey` TEXT NOT NULL, `source` TEXT NOT NULL, `sourceUrl` TEXT NOT NULL,
+                    FOREIGN KEY(`gameId`) REFERENCES `games`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)""")
+                database.execSQL("""CREATE TABLE IF NOT EXISTS `artwork_attempts` (
+                    `url` TEXT NOT NULL PRIMARY KEY, `state` TEXT NOT NULL, `retryAt` INTEGER NOT NULL)""")
+            }
+        }
+
     val VERSION_17_18: Migration =
         object : Migration(17, 18) {
             override fun migrate(database: SupportSQLiteDatabase) {

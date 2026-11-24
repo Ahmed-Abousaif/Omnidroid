@@ -32,6 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
+import com.omnidroid.app.shared.metadata.MetadataRepository
+import com.omnidroid.app.shared.covers.ManagedCover
+import com.omnidroid.app.shared.covers.CoverCacheStore
+import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -58,6 +64,9 @@ fun CoverSearchDialog(
     onUpdateCoverOnly: (String) -> Unit,
     onFixFullMatch: (String, String) -> Unit,
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var onlineSearch by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf(game.displayName) }
     var results by remember { mutableStateOf<List<CoverSearchResult>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -80,6 +89,7 @@ fun CoverSearchDialog(
     } else null
 
     LaunchedEffect(game.id, query) {
+        onlineSearch = false
         val trimmed = query.trim()
         if (trimmed.length < 2) {
             results = emptyList()
@@ -119,6 +129,26 @@ fun CoverSearchDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+
+                // Local results remain first. Online discovery requires an explicit action.
+                OmnidroidDialogButton(
+                    onClick = {
+                        if (!isLoading && query.isNotBlank()) {
+                            onlineSearch = true
+                            isLoading = true
+                            val searched = query
+                            scope.launch {
+                                try {
+                                    val online = MetadataRepository.get(context).search(game, searched)
+                                    if (query == searched) results = (results + online).distinctBy { it.coverUrl }
+                                } catch (cancelled: CancellationException) { throw cancelled }
+                                catch (_: Exception) { if (query == searched) searchFailed = true }
+                                finally { if (query == searched) isLoading = false }
+                            }
+                        }
+                    },
+                ) { Text(stringResource(R.string.game_search_online_covers)) }
+                if (onlineSearch) Text(stringResource(R.string.metadata_attribution), style = MaterialTheme.typography.bodySmall)
 
                 Box(
                     modifier =
@@ -187,7 +217,7 @@ fun CoverSearchDialog(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         AsyncImage(
-                            model = candidate.coverUrl,
+                            model = ManagedCover(0, candidate.coverUrl, CoverCacheStore.Tier.GRID),
                             contentDescription = candidate.title,
                             modifier =
                                 Modifier
@@ -264,7 +294,7 @@ private fun CoverCandidateCard(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             AsyncImage(
-                model = candidate.coverUrl,
+                model = ManagedCover(0, candidate.coverUrl, CoverCacheStore.Tier.GRID),
                 contentDescription = candidate.title,
                 modifier =
                     Modifier

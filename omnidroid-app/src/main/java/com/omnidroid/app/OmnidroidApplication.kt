@@ -56,6 +56,7 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
     @SuppressLint("CheckResult")
     override fun onCreate() {
         super.onCreate()
+        CoverUtils.coverCache(this).attachAttempts(retrogradeDb.catalogDao())
 
         // Initialize WorkManager with HiltWorkerFactory before App Startup enqueues any @HiltWorker.
         WorkManager.getInstance(this)
@@ -78,6 +79,7 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
 
         if (isMainProcess()) {
             com.omnidroid.app.shared.library.LibraryPeriodicScanScheduler.syncWithPreference(this)
+            com.omnidroid.app.shared.library.ArtworkEnrichmentWork.schedule(this)
         }
     }
 

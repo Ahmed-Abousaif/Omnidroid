@@ -12,11 +12,6 @@ import java.util.Locale
 object SecureCoverInterceptor : Interceptor {
     private const val MAX_COVER_BYTES = 15L * 1024L * 1024L // 15 MB payload safety limit
 
-    private val ALLOWED_DOMAINS = listOf(
-        "thumbnails.libretro.com",
-        "images.igdb.com",
-    )
-
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val url = request.url
@@ -29,9 +24,7 @@ object SecureCoverInterceptor : Interceptor {
         }
 
         // 2. Enforce strict domain whitelist (SSRF & Arbitrary URL exfiltration defense)
-        val isAllowedHost = ALLOWED_DOMAINS.any { allowed ->
-            host == allowed || host.endsWith(".$allowed")
-        }
+        val isAllowedHost = CoverUtils.isAllowedRemoteCoverUrl(url.toString())
 
         if (!isAllowedHost) {
             throw IOException("Blocked unauthorized remote cover host: $host")

@@ -12,6 +12,7 @@ class LibretroDBManager(private val context: Context) {
 
     val dbInstance: LibretroDatabase by lazy {
         Room.databaseBuilder(context, LibretroDatabase::class.java, DB_NAME)
+            .addMigrations(LibretroDatabase.CATALOG_SEED_MIGRATION)
             .fallbackToDestructiveMigration()
             .build()
     }

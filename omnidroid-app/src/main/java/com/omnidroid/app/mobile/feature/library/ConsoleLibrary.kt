@@ -1251,6 +1251,7 @@ private fun ConsoleStartButton(
 internal fun ConsoleBackdrop(
     game: Game?,
     modifier: Modifier = Modifier,
+    preferredCoverUrl: String? = null,
 ) {
     BoxWithConstraints(modifier = modifier) {
         val context = LocalContext.current
@@ -1258,8 +1259,8 @@ internal fun ConsoleBackdrop(
         val width = (128f * maxWidth.value / longest).roundToInt().coerceIn(1, 128)
         val height = (128f * maxHeight.value / longest).roundToInt().coerceIn(1, 128)
         val radius = (36f * 128f / longest).roundToInt().coerceIn(1, 32)
-        val request = remember(game?.id, game?.coverFrontUrl, game?.customCoverPath, width, height, radius, context) {
-            game?.let { backdropRequest(context, it, width, height, radius) }
+        val request = remember(game?.id, game?.coverFrontUrl, game?.customCoverPath, preferredCoverUrl, width, height, radius, context) {
+            game?.let { backdropRequest(context, it, width, height, radius, preferredCoverUrl) }
         }
         val fallback = ColorPainter(homeChromeColor)
         AsyncImage(

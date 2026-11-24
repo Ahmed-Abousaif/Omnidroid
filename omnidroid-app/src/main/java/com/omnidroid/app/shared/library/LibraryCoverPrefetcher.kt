@@ -53,6 +53,15 @@ object LibraryCoverPrefetcher {
             if (url != null && game.customCoverPath == null && CoverUtils.isAllowedRemoteCoverUrl(url)) {
                 CoverUtils.coverCache(context).ensureGrid(game.id, url)
             }
+            val settings = com.omnidroid.app.shared.metadata.MetadataSettings(context.applicationContext)
+            val network = context.getSystemService(android.net.ConnectivityManager::class.java)
+            val capabilities = network?.getNetworkCapabilities(network.activeNetwork)
+            val allowedNetwork = capabilities?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) == true &&
+                (!settings.wifiOnly || capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED))
+            if (settings.enabled && allowedNetwork && game.customCoverPath == null &&
+                (url == null || CoverUtils.coverCache(context).failure(url)?.state == "missing")) {
+                com.omnidroid.app.shared.metadata.MetadataRepository.get(context).enrich(listOf(game))
+            }
             // Only warm covers already on disk; remote fallbacks are left to the cell.
             if (decodeSize != null && CoverUtils.coverData(game) is File) {
                 context.imageLoader.execute(CoverUtils.coverRequest(context, game, size = decodeSize))

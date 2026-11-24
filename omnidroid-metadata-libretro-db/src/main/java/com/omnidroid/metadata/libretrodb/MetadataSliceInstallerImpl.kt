@@ -50,6 +50,7 @@ class MetadataSliceInstallerImpl(
                                 "DELETE FROM games WHERE system IN ($placeholders)",
                                 systems.toTypedArray(),
                             )
+                            db.execSQL("DELETE FROM catalog_seeds WHERE system IN ($placeholders)", systems.toTypedArray())
                         }
                         db.execSQL("DELETE FROM installed_slices WHERE sliceId = ?", arrayOf(sliceId))
                         db.setTransactionSuccessful()
@@ -213,12 +214,15 @@ class MetadataSliceInstallerImpl(
                 db.beginTransaction()
                 try {
                     db.execSQL("DELETE FROM games WHERE system IN ($systems)")
+                    db.execSQL("DELETE FROM catalog_seeds WHERE system IN ($systems)")
                     db.execSQL(
                         """
                         INSERT INTO games (name, system, crc32, serial, code, size, romHash, normalizedName, rawName, thumbnailPath)
                         SELECT name, system, crc32, serial, code, size, romHash, normalizedName, rawName, thumbnailPath FROM slice.games
                         """.trimIndent(),
                     )
+                    val hasSeeds = db.query("SELECT 1 FROM slice.sqlite_master WHERE type = 'table' AND name = 'catalog_seeds'").use { it.moveToFirst() }
+                    if (hasSeeds) db.execSQL("INSERT OR REPLACE INTO catalog_seeds (system, lookupKey, payload) SELECT system, lookupKey, payload FROM slice.catalog_seeds WHERE system IN ($systems)")
                     db.execSQL(
                         """
                         INSERT OR REPLACE INTO installed_slices
