@@ -21,3 +21,6 @@
 	path = modules/padkit/upstream/omnidroid-padkit
 	url = https://github.com/Ahmed-Abousaif/Omnidroid-padkit.git
 	update = checkout
+[submodule "modules/ps3/upstream/armsx3"]
+	path = modules/ps3/upstream/armsx3
+	url = https://github.com/ARMSX2/ARMSX3.git

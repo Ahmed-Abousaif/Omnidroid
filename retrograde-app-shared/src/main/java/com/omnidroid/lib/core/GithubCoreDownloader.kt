@@ -5,6 +5,8 @@ import android.os.Build
 import com.omnidroid.common.files.safeDelete
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.storage.DirectoriesManager
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import java.io.File
 
@@ -12,37 +14,42 @@ class GithubCoreDownloader(
     private val directoriesManager: DirectoriesManager,
     private val api: CoreUpdater.CoreManagerApi,
 ) {
-    suspend fun retrieve(coreID: CoreID): File {
-        val mainCoresDirectory = directoriesManager.getCoresDirectory()
-        findCached(mainCoresDirectory, coreID)?.let { return it }
+    suspend fun retrieve(coreID: CoreID): File =
+        downloadMutex.withLock {
+            val mainCoresDirectory = directoriesManager.getCoresDirectory()
+            findCached(mainCoresDirectory, coreID)?.let { return@withLock it }
 
-        Timber.i("Downloading core $coreID from github")
-        val coresDirectory =
-            File(mainCoresDirectory, CORES_VERSION).apply {
-                mkdirs()
+            Timber.i("Downloading core $coreID from github")
+            val coresDirectory =
+                File(mainCoresDirectory, CORES_VERSION).apply {
+                    mkdirs()
+                }
+
+            val destFile = File(coresDirectory, coreID.libretroFileName)
+            runCatching {
+                deleteOutdatedCores(mainCoresDirectory)
             }
 
-        val destFile = File(coresDirectory, coreID.libretroFileName)
-        runCatching {
-            deleteOutdatedCores(mainCoresDirectory)
-        }
+            // Use raw.githubusercontent.com so downloads work without relying on github.com redirects.
+            val uri =
+                BASE_URI
+                    .buildUpon()
+                    .appendEncodedPath("$CORES_VERSION/omnidroid_core_${coreID.coreName}/src/main/jniLibs/")
+                    .appendPath(Build.SUPPORTED_ABIS.first())
+                    .appendPath(coreID.libretroFileName)
+                    .build()
 
-        // Use raw.githubusercontent.com so downloads work without relying on github.com redirects.
-        val uri =
-            BASE_URI.buildUpon()
-                .appendEncodedPath("$CORES_VERSION/omnidroid_core_${coreID.coreName}/src/main/jniLibs/")
-                .appendPath(Build.SUPPORTED_ABIS.first())
-                .appendPath(coreID.libretroFileName)
-                .build()
-
-        try {
-            downloadFile(uri, destFile)
-            return destFile
-        } catch (error: Throwable) {
-            destFile.safeDelete()
-            throw error
+            val stagedFile = File(coresDirectory, "${coreID.libretroFileName}.part")
+            try {
+                downloadFile(uri, stagedFile)
+                check(stagedFile.renameTo(destFile)) { "Could not install ${destFile.name}" }
+                destFile
+            } catch (error: Throwable) {
+                destFile.safeDelete()
+                stagedFile.safeDelete()
+                throw error
+            }
         }
-    }
 
     private suspend fun downloadFile(
         uri: Uri,
@@ -71,12 +78,15 @@ class GithubCoreDownloader(
     }
 
     private fun deleteOutdatedCores(mainCoresDirectory: File) {
-        mainCoresDirectory.listFiles()
+        mainCoresDirectory
+            .listFiles()
             ?.filter { it.name != CORES_VERSION }
             ?.forEach { it.deleteRecursively() }
     }
 
     companion object {
+        private val downloadMutex = Mutex()
+
         fun findCached(
             coresDirectory: File,
             coreID: CoreID,

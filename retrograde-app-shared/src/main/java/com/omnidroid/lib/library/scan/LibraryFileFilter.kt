@@ -13,6 +13,7 @@ object LibraryFileFilter {
         size: Long,
     ): Boolean {
         val extension = ScanKeys.extension(name)
+        if (name.equals("ICON0.PNG", ignoreCase = true)) return true
         if (extension in gameExtensions) return true
         if (BiosManager.isKnownBiosName(name)) return true
         return extension == "rom" && size in 1..BiosManager.MAX_BIOS_CANDIDATE_BYTES

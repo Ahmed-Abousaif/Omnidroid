@@ -435,6 +435,8 @@ class OmnidroidLibrary(
                     startedAtMs,
                     metadata,
                     detection.archiveEntry,
+                    detection.title,
+                    detection.cover,
                 )
             is Detection.HashedBin ->
                 saveHashedBin(
@@ -471,6 +473,8 @@ class OmnidroidLibrary(
         startedAtMs: Long,
         metadata: GameMetadataProvider,
         archiveEntry: String? = null,
+        nativeTitle: String? = null,
+        nativeCover: ByteArray? = null,
     ) {
         val primary = group.primaryFile
         if (existing != null && existing.systemId != system.dbname) {
@@ -479,8 +483,15 @@ class OmnidroidLibrary(
             updateDataFiles(group, existing.id, startedAtMs)
             return
         }
+        val nativeInfo =
+            if (system == SystemID.PS3) {
+                com.omnidroid.lib.library.scan.Ps3Content
+                    .read(directoriesManager.context, primary.uri)
+            } else {
+                null
+            }
         val fallbackTitle =
-            archiveEntry
+            nativeTitle ?: nativeInfo?.title ?: archiveEntry
                 ?.substringAfterLast('/')
                 ?.substringAfterLast('\\')
                 ?.substringBeforeLast('.')
@@ -493,6 +504,22 @@ class OmnidroidLibrary(
                 key,
                 primary.size,
             )
+        val nativeCoverPath =
+            nativeCover?.let { bytes ->
+                val directory = File(directoriesManager.context.filesDir, "ps3/covers").apply { mkdirs() }
+                val file = File(directory, "${primary.uri.toString().hashCode().toUInt()}.png")
+                file.writeBytes(bytes)
+                file.toURI().toString()
+            } ?: if (system == SystemID.PS3) {
+                File(
+                    directoriesManager.context.filesDir,
+                    "ps3/covers/${primary.uri.toString().hashCode().toUInt()}.png",
+                ).takeIf { it.isFile }
+                    ?.toURI()
+                    ?.toString()
+            } else {
+                null
+            }
         val gameId =
             upsert(
                 group,
@@ -501,11 +528,14 @@ class OmnidroidLibrary(
                 system,
                 described.name ?: fallbackTitle,
                 described.developer,
-                described.thumbnail,
+                nativeCoverPath ?: described.thumbnail,
                 startedAtMs,
                 archiveEntry,
             )
-        val canonicalTitle = com.omnidroid.lib.library.metadata.catalog.CatalogKeys.cleanTitle(described.name ?: fallbackTitle)
+        val canonicalTitle =
+            com.omnidroid.lib.library.metadata.catalog.CatalogKeys.cleanTitle(
+                described.name ?: fallbackTitle,
+            )
         val keys = com.omnidroid.lib.library.metadata.catalog.CatalogKeys
         retrogradedb.catalogDao().putIdentity(
             com.omnidroid.lib.library.db.entity.GameIdentity(
@@ -514,7 +544,11 @@ class OmnidroidLibrary(
                 lookupKey = keys.lookup(system.dbname, canonicalTitle),
                 system = system.dbname,
                 title = canonicalTitle,
-                alternateTitle = keys.cleanTitle(fallbackTitle).takeIf { keys.normalize(it) != keys.normalize(canonicalTitle) },
+                alternateTitle =
+                    keys.cleanTitle(fallbackTitle).takeIf {
+                        keys.normalize(it) !=
+                            keys.normalize(canonicalTitle)
+                    },
                 region = keys.region(described.rawTitle ?: fallbackTitle),
                 keyType = key?.type?.name,
                 keyValue = key?.value,
@@ -699,8 +733,12 @@ class OmnidroidLibrary(
             val finalTitle = if (current.isManualMatch) current.title else title
             val finalDeveloper = if (current.isManualMatch) current.developer else developer
             val selected = retrogradedb.catalogDao().artwork(current.id)
-            val keepSelected = selected != null && selected.sourceUrl == current.coverFrontUrl &&
-                current.systemId == system.dbname && current.fileSize == primary.size && current.fileLastModified == primary.lastModified
+            val keepSelected =
+                selected != null &&
+                    selected.sourceUrl == current.coverFrontUrl &&
+                    current.systemId == system.dbname &&
+                    current.fileSize == primary.size &&
+                    current.fileLastModified == primary.lastModified
             val finalCover = if (current.isManualMatch || keepSelected) current.coverFrontUrl else cover
             val fileName = archiveEntry ?: current.fileName
             val changed =

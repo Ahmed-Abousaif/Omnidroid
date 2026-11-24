@@ -19,17 +19,22 @@
 
 package com.omnidroid.app
 
+import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.room.Room
+import com.omnidroid.app.mobile.feature.main.MainActivity
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
-import com.omnidroid.app.shared.displays.DisplayClient
+import com.omnidroid.app.shared.GameInteractor
 import com.omnidroid.app.shared.game.GameLauncher
 import com.omnidroid.app.shared.input.InputDeviceManager
+import com.omnidroid.app.shared.library.LibraryIndexScheduler
 import com.omnidroid.app.shared.main.GameLaunchTaskHandler
 import com.omnidroid.app.shared.rumble.RumbleManager
 import com.omnidroid.app.shared.settings.ControllerConfigsManager
+import com.omnidroid.app.shared.settings.SettingsInteractor
 import com.omnidroid.app.tv.channel.ChannelHandler
+import com.omnidroid.app.tv.shared.TVHelper
 import com.omnidroid.app.update.AppUpdater
 import com.omnidroid.app.update.UpdaterProvider
 import com.omnidroid.ext.feature.core.CoreUpdaterImpl
@@ -39,11 +44,11 @@ import com.omnidroid.lib.bios.BiosManager
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.CoreVariablesManager
 import com.omnidroid.lib.core.CoresSelection
-import com.omnidroid.lib.game.GameLoader
 import com.omnidroid.lib.core.MetadataSliceInstaller
 import com.omnidroid.lib.core.SliceInstallListener
-import com.omnidroid.lib.library.SliceStampStore
+import com.omnidroid.lib.game.GameLoader
 import com.omnidroid.lib.library.OmnidroidLibrary
+import com.omnidroid.lib.library.SliceStampStore
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.dao.GameSearchDao
 import com.omnidroid.lib.library.db.dao.Migrations
@@ -60,20 +65,11 @@ import com.omnidroid.lib.storage.StorageProvider
 import com.omnidroid.lib.storage.StorageProviderRegistry
 import com.omnidroid.lib.storage.local.LocalStorageProvider
 import com.omnidroid.lib.storage.local.StorageAccessFrameworkProvider
-import com.omnidroid.app.shared.library.LibraryIndexScheduler
 import com.omnidroid.metadata.libretrodb.CoverSearcher
 import com.omnidroid.metadata.libretrodb.LibretroDBMetadataProvider
 import com.omnidroid.metadata.libretrodb.MetadataSliceInstallerImpl
 import com.omnidroid.metadata.libretrodb.db.LibretroDBManager
-
-
-
 import dagger.Lazy
-import android.app.Activity
-import com.omnidroid.app.mobile.feature.main.MainActivity
-import com.omnidroid.app.shared.GameInteractor
-import com.omnidroid.app.shared.settings.SettingsInteractor
-import com.omnidroid.app.tv.shared.TVHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -137,24 +133,24 @@ object OmnidroidApplicationModule {
     @Singleton
     fun retrogradeDb(
         @ApplicationContext context: Context,
-    ) = Room.databaseBuilder(context, RetrogradeDatabase::class.java, RetrogradeDatabase.DB_NAME)
-            .addCallback(GameSearchDao.CALLBACK)
-            .addMigrations(
-                GameSearchDao.MIGRATION,
-                Migrations.VERSION_8_9,
-                Migrations.VERSION_9_10,
-                Migrations.VERSION_10_11,
-                Migrations.VERSION_11_12,
-                Migrations.VERSION_12_13,
-                Migrations.VERSION_13_14,
-                Migrations.VERSION_14_15,
-                Migrations.VERSION_15_16,
-                Migrations.VERSION_16_17,
-                Migrations.VERSION_17_18,
-                Migrations.VERSION_18_19,
-            )
-            .fallbackToDestructiveMigration()
-            .build()
+    ) = Room
+        .databaseBuilder(context, RetrogradeDatabase::class.java, RetrogradeDatabase.DB_NAME)
+        .addCallback(GameSearchDao.CALLBACK)
+        .addMigrations(
+            GameSearchDao.MIGRATION,
+            Migrations.VERSION_8_9,
+            Migrations.VERSION_9_10,
+            Migrations.VERSION_10_11,
+            Migrations.VERSION_11_12,
+            Migrations.VERSION_12_13,
+            Migrations.VERSION_13_14,
+            Migrations.VERSION_14_15,
+            Migrations.VERSION_15_16,
+            Migrations.VERSION_16_17,
+            Migrations.VERSION_17_18,
+            Migrations.VERSION_18_19,
+        ).fallbackToDestructiveMigration()
+        .build()
 
     @Provides
     @Singleton
@@ -163,8 +159,7 @@ object OmnidroidApplicationModule {
 
     @Provides
     @Singleton
-    fun coverSearcher(libretroDBManager: LibretroDBManager): CoverSearcher =
-        CoverSearcher(libretroDBManager)
+    fun coverSearcher(libretroDBManager: LibretroDBManager): CoverSearcher = CoverSearcher(libretroDBManager)
 
     @Provides
     @Singleton
@@ -220,7 +215,8 @@ object OmnidroidApplicationModule {
     @Provides
     @Singleton
     fun okHttpClient(): OkHttpClient =
-        OkHttpClient.Builder()
+        OkHttpClient
+            .Builder()
             .connectTimeout(1, TimeUnit.MINUTES)
             .readTimeout(1, TimeUnit.MINUTES)
             .build()
@@ -228,11 +224,11 @@ object OmnidroidApplicationModule {
     @Provides
     @Singleton
     fun retrofit(okHttpClient: OkHttpClient): Retrofit =
-        Retrofit.Builder()
+        Retrofit
+            .Builder()
             .client(okHttpClient)
             .baseUrl("https://example.com/")
             .build()
-
 
     @Provides
     @Singleton
@@ -328,9 +324,7 @@ object OmnidroidApplicationModule {
 
     @Provides
     @Singleton
-    fun coresSelection(
-        sharedPreferences: Lazy<SharedPreferences>,
-    ) = CoresSelection(sharedPreferences)
+    fun coresSelection(sharedPreferences: Lazy<SharedPreferences>) = CoresSelection(sharedPreferences)
 
     @Provides
     @Singleton
@@ -361,8 +355,7 @@ object OmnidroidApplicationModule {
 
     @Provides
     @Singleton
-    fun retroControllerManager(sharedPreferences: Lazy<SharedPreferences>) =
-        ControllerConfigsManager(sharedPreferences)
+    fun retroControllerManager(sharedPreferences: Lazy<SharedPreferences>) = ControllerConfigsManager(sharedPreferences)
 
     @Provides
     @Singleton

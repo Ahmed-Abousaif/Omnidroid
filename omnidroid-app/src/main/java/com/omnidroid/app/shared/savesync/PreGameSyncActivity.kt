@@ -18,10 +18,10 @@ import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.savesync.SaveSyncManager
 import com.omnidroid.lib.savesync.SaveSyncRequest
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -40,9 +40,16 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pre_game_sync)
 
-        val game = intent.serializable<Game>(EXTRA_GAME) ?: run { abort(); return }
+        val game =
+            intent.serializable<Game>(EXTRA_GAME) ?: run {
+                abort()
+                return
+            }
         val coreConfig =
-            intent.serializable<SystemCoreConfig>(EXTRA_CORE_CONFIG) ?: run { abort(); return }
+            intent.serializable<SystemCoreConfig>(EXTRA_CORE_CONFIG) ?: run {
+                abort()
+                return
+            }
         val loadSave = intent.getBooleanExtra(EXTRA_LOAD_SAVE, true)
         val leanback = intent.getBooleanExtra(EXTRA_LEANBACK, false)
         isExternalLaunch = intent.getBooleanExtra(EXTRA_EXTERNAL_LAUNCH, false)
@@ -62,17 +69,24 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
                         saveSyncManager.sync(
                             SaveSyncRequest(
                                 cores = setOf(coreConfig.coreID),
-                                gameFileName = game.fileName,
+                                gameFileName =
+                                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                        com.omnidroid.lib.savesync
+                                            .GameCloudSyncPreferences(
+                                                applicationContext,
+                                            ).syncFileName(game)
+                                    },
                                 includeSaves = true,
                                 includeStates = true,
                                 includePreviews = true,
                             ),
                         )
                     }
-                val completed = withTimeoutOrNull(TIMEOUT_MS) {
-                    work.join()
-                    true
-                }
+                val completed =
+                    withTimeoutOrNull(TIMEOUT_MS) {
+                        work.join()
+                        true
+                    }
                 if (completed == true) {
                     proceed(coreConfig, game, loadSave, leanback)
                 }
@@ -143,8 +157,8 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
             loadSave: Boolean,
             leanback: Boolean,
             isExternalLaunch: Boolean = false,
-        ): Intent {
-            return Intent(activity, PreGameSyncActivity::class.java).apply {
+        ): Intent =
+            Intent(activity, PreGameSyncActivity::class.java).apply {
                 val uri = Uri.parse(game.fileUri)
                 if (uri.scheme.equals("content", ignoreCase = true)) {
                     data = uri
@@ -156,6 +170,5 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
                 putExtra(EXTRA_LEANBACK, leanback)
                 putExtra(EXTRA_EXTERNAL_LAUNCH, isExternalLaunch)
             }
-        }
     }
 }

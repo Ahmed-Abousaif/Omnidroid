@@ -22,8 +22,13 @@ abstract class CatalogDao {
     @Query("SELECT * FROM game_identities WHERE gameId = :gameId")
     abstract suspend fun identity(gameId: Int): GameIdentity?
 
-    @Query("SELECT * FROM games WHERE isAvailable = 1 AND isManualMatch = 0 AND (customCoverPath IS NULL OR customCoverOrigin = 'embedded') AND id > :afterId ORDER BY id LIMIT :limit")
-    abstract suspend fun automaticGames(limit: Int, afterId: Int): List<Game>
+    @Query(
+        "SELECT * FROM games WHERE isAvailable = 1 AND isManualMatch = 0 AND (customCoverPath IS NULL OR customCoverOrigin = 'embedded') AND id > :afterId ORDER BY id LIMIT :limit",
+    )
+    abstract suspend fun automaticGames(
+        limit: Int,
+        afterId: Int,
+    ): List<Game>
 
     @Query("SELECT * FROM catalog_lookups WHERE lookupKey = :key")
     abstract suspend fun lookup(key: String): CatalogLookup?
@@ -47,20 +52,34 @@ abstract class CatalogDao {
     protected abstract suspend fun game(id: Int): Game?
 
     @Query("UPDATE games SET coverFrontUrl = :url WHERE id = :id")
-    protected abstract suspend fun setCover(id: Int, url: String)
+    protected abstract suspend fun setCover(
+        id: Int,
+        url: String,
+    )
 
-    @Query("UPDATE games SET developer = :developer WHERE id = :id AND (developer IS NULL OR developer = '') AND isManualMatch = 0 AND EXISTS (SELECT 1 FROM game_identities WHERE gameId = :id AND identityKey = :identityKey)")
-    abstract suspend fun fillDeveloper(id: Int, identityKey: String, developer: String)
+    @Query(
+        "UPDATE games SET developer = :developer WHERE id = :id AND (developer IS NULL OR developer = '') AND isManualMatch = 0 AND EXISTS (SELECT 1 FROM game_identities WHERE gameId = :id AND identityKey = :identityKey)",
+    )
+    abstract suspend fun fillDeveloper(
+        id: Int,
+        identityKey: String,
+        developer: String,
+    )
 
     @Transaction
     open suspend fun applyArtwork(selection: GameArtwork): Boolean {
         val identity = identity(selection.gameId) ?: return false
         val current = game(selection.gameId) ?: return false
-        if (identity.identityKey != selection.identityKey || identity.system != current.systemId ||
+        if (identity.identityKey != selection.identityKey ||
+            identity.system != current.systemId ||
             (identity.fileSize != null && identity.fileSize != current.fileSize) ||
             (identity.fileLastModified != null && identity.fileLastModified != current.fileLastModified) ||
-            !current.isAvailable || current.isManualMatch ||
-            (current.customCoverPath != null && current.customCoverOrigin != "embedded")) return false
+            !current.isAvailable ||
+            current.isManualMatch ||
+            (current.customCoverPath != null && current.customCoverOrigin != "embedded")
+        ) {
+            return false
+        }
         setCover(current.id, selection.sourceUrl)
         putArtwork(selection)
         return true

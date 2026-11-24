@@ -87,11 +87,11 @@ class GameViewModelRetroGameView(
         return gameState.debounce(200)
     }
 
-    fun setLoadingForSwitch(message: String) {
+    fun setLoadingForNative(message: String) {
         gameState.value = GameState.Loading(message)
     }
 
-    fun setReadyForSwitch() {
+    fun setReadyForNative() {
         gameState.value = GameState.Ready
     }
 

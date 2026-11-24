@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ps3_guest_message_title">PlayStation 3</string>
+    <string name="ps3_guest_yes">Yes</string>
+    <string name="ps3_guest_no">No</string>
+    <string name="ps3_guest_savedata_title">PS3 save data</string>
+    <string name="ps3_guest_new_savedata">Create save data</string>
+</resources>

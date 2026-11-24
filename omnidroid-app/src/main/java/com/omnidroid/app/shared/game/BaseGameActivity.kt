@@ -198,13 +198,13 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
         val descriptor = ConsoleBackendRegistry.findDescriptorForCore(systemCoreConfig.coreID)
 
-        if (descriptor?.id == BackendID.SWITCH) {
+        if (descriptor != null && descriptor.id != BackendID.LIBRETRO) {
 
             lifecycleScope.launch {
 
-                baseGameScreenViewModel.loadSwitchGame(
+                baseGameScreenViewModel.loadNativeGame(
 
-                    applicationContext,
+                    this@BaseGameActivity,
 
                     systemCoreConfig,
 

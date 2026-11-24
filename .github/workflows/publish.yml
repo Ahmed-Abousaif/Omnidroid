@@ -26,6 +26,12 @@ jobs:
       - name: Set up Eden Native Build
         uses: ./.github/actions/setup-eden
 
+      - name: Set up PS3 Native Build
+        uses: ./.github/actions/setup-armsx3
+
+      - name: Build Pinned PS3 Libraries
+        run: python3 omnidroid-cores/update_cores.py --cores armsx3 --eden-jobs 2
+
       - name: Build Pinned Eden Libraries
         run: python3 omnidroid-cores/update_cores.py --cores switch --eden-ref pinned --eden-jobs 2
 
@@ -44,6 +50,12 @@ jobs:
           OMNIDROID_KEY_PASSWORD: ${{ secrets.OMNIDROID_KEY_PASSWORD }}
           OMNIDROID_KEY_ALIAS: ${{ secrets.OMNIDROID_KEY_ALIAS }}
         run: ./gradlew assembleFreeDynamic
+
+      - name: Verify PS3 frontend exclusion in APKs
+        run: |
+          find omnidroid-app/build/outputs/apk -name '*.apk' -print0 | while IFS= read -r -d '' apk; do
+            python3 modules/ps3/engine/verify_boundary.py --package "$apk"
+          done
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.0

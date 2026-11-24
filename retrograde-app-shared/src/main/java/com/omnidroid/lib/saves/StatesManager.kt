@@ -17,11 +17,15 @@ import java.util.zip.GZIPOutputStream
 
 class StatesManager(
     private val directoriesManager: DirectoriesManager,
-    private val customSaveStorage: CustomSaveStorage = CustomSaveStorage(directoriesManager.context, directoriesManager),
+    private val customSaveStorage: CustomSaveStorage =
+        CustomSaveStorage(directoriesManager.context, directoriesManager),
 ) {
     private val writes = Mutex()
 
-    data class SlotInfo(val index: Int, val saveInfo: SaveInfo)
+    data class SlotInfo(
+        val index: Int,
+        val saveInfo: SaveInfo,
+    )
 
     suspend fun getSlotSave(
         game: Game,
@@ -91,6 +95,10 @@ class StatesManager(
         coreID: CoreID,
     ): List<SlotInfo> =
         withContext(Dispatchers.IO) {
+            if (coreID == CoreID.ARMSX3) {
+                val slots = Ps3StateSlots.forGame(directoriesManager.context, game)
+                return@withContext slots.indices().map { SlotInfo(it, slots.info(it)) }
+            }
             writes.withLock {
                 getSlotIndices(game, coreID.coreName).map { index ->
                     val slotFileName = getSlotSaveFileName(game, index)
@@ -112,7 +120,12 @@ class StatesManager(
                 customSaveStorage.listSaveFiles("states") +
                 customSaveStorage.listSaveFiles()
         files.forEach { name ->
-            val number = pattern.matchEntire(name)?.groupValues?.get(1)?.toIntOrNull()
+            val number =
+                pattern
+                    .matchEntire(name)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.toIntOrNull()
             if (number != null) {
                 savedIndices.add(number - 1)
             }

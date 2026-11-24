@@ -26,7 +26,10 @@ data class CatalogArtwork(
 )
 
 @Serializable
-data class ProviderLink(val provider: String, val providerGameId: String)
+data class ProviderLink(
+    val provider: String,
+    val providerGameId: String,
+)
 
 @Serializable
 data class CatalogGame(
@@ -48,7 +51,10 @@ data class CatalogGame(
     val providerLinks: List<ProviderLink> = emptyList(),
     val fieldSources: Map<String, String> = emptyMap(),
 ) {
-    fun artwork(kind: String, region: String?): CatalogArtwork? =
+    fun artwork(
+        kind: String,
+        region: String?,
+    ): CatalogArtwork? =
         assets.filter { it.kind == kind }.minByOrNull { asset ->
             when {
                 region != null && asset.region.equals(region, ignoreCase = true) -> 0
@@ -69,49 +75,84 @@ data class CatalogResolution(
 )
 
 @Serializable
-data class CatalogBatch(val identities: List<CatalogIdentity>)
+data class CatalogBatch(
+    val identities: List<CatalogIdentity>,
+)
 
 @Serializable
-data class CatalogSearch(val identity: CatalogIdentity)
+data class CatalogSearch(
+    val identity: CatalogIdentity,
+)
 
 @Serializable
-data class CatalogResponse(val schemaVersion: Int = 1, val results: List<CatalogResolution> = emptyList())
+data class CatalogResponse(
+    val schemaVersion: Int = 1,
+    val results: List<CatalogResolution> = emptyList(),
+)
 
 @Serializable
-data class CatalogChanges(val revision: Long, val hasMore: Boolean = false, val changes: List<CatalogResolution> = emptyList())
+data class CatalogChanges(
+    val revision: Long,
+    val hasMore: Boolean = false,
+    val changes: List<CatalogResolution> = emptyList(),
+)
 
 /** Local evidence is retained, but CRC/serial values and filesystem paths are not uploaded. */
 object CatalogKeys {
     private val tags = Regex("\\(([^)]*)\\)|\\[([^]]*)]")
-    private val noise = Regex(
-        "(?:usa|u|europe|e|japan|j|world|w|asia|australia|korea|china|taiwan|brazil|canada|france|germany|spain|italy|uk|en|ja|fr|de|es|it|pt|ko|zh|en(?:,\\s*[a-z]{2})+|rev(?:ision)?\\s*[\\w.]+|v\\d[\\w.]*|disc\\s*\\d+|disk\\s*\\d+|track\\s*\\d+|\\d+\\s*of\\s*\\d+|!|[abfhopt]\\d*)",
-        RegexOption.IGNORE_CASE,
-    )
+    private val noise =
+        Regex(
+            "(?:usa|u|europe|e|japan|j|world|w|asia|australia|korea|china|taiwan|brazil|canada|france|germany|spain|italy|uk|en|ja|fr|de|es|it|pt|ko|zh|en(?:,\\s*[a-z]{2})+|rev(?:ision)?\\s*[\\w.]+|v\\d[\\w.]*|disc\\s*\\d+|disk\\s*\\d+|track\\s*\\d+|\\d+\\s*of\\s*\\d+|!|[abfhopt]\\d*)",
+            RegexOption.IGNORE_CASE,
+        )
 
-    fun cleanTitle(value: String): String = tags.replace(value) { match ->
-        val tag = match.groupValues[1].ifBlank { match.groupValues[2] }.trim()
-        if (noise.matches(tag)) " " else match.value
-    }.replace(Regex("\\s+"), " ").trim()
+    fun cleanTitle(value: String): String =
+        tags
+            .replace(value) { match ->
+                val tag = match.groupValues[1].ifBlank { match.groupValues[2] }.trim()
+                if (noise.matches(tag)) " " else match.value
+            }.replace(Regex("\\s+"), " ")
+            .trim()
 
     fun normalize(value: String): String =
-        Normalizer.normalize(
-            Normalizer.normalize(cleanTitle(value), Normalizer.Form.NFKD)
-                .replace(Regex("(\\p{IsLatin})\\p{M}+"), "$1"),
-            Normalizer.Form.NFKC,
-        ).lowercase(Locale.ROOT)
-            .replace("&", " and ").replace(Regex("[^\\p{L}\\p{N}]+"), " ")
-            .trim().replace(Regex("\\s+"), " ")
+        Normalizer
+            .normalize(
+                Normalizer
+                    .normalize(cleanTitle(value), Normalizer.Form.NFKD)
+                    .replace(Regex("(\\p{IsLatin})\\p{M}+"), "$1"),
+                Normalizer.Form.NFKC,
+            ).lowercase(Locale.ROOT)
+            .replace("&", " and ")
+            .replace(Regex("[^\\p{L}\\p{N}]+"), " ")
+            .trim()
+            .replace(Regex("\\s+"), " ")
 
     // MAME and FBNeo are backend choices for the same arcade catalog platform.
-    fun lookup(system: String, title: String): String = digest("v1|${if (system == "fbneo" || system == "mame2003plus") "arcade" else system}|${normalize(title)}")
+    fun lookup(
+        system: String,
+        title: String,
+    ): String =
+        digest("v1|${if (system == "fbneo" || system == "mame2003plus") "arcade" else system}|${normalize(title)}")
 
-    fun fingerprint(system: String, title: String, keyType: String?, keyValue: String?): String =
-        digest("$system|${normalize(title)}|${keyType.orEmpty()}|${keyValue.orEmpty()}")
+    fun fingerprint(
+        system: String,
+        title: String,
+        keyType: String?,
+        keyValue: String?,
+    ): String = digest("$system|${normalize(title)}|${keyType.orEmpty()}|${keyValue.orEmpty()}")
 
     fun region(rawName: String): String? {
-        val labels = tags.findAll(rawName).flatMap { match ->
-            match.groupValues[1].ifBlank { match.groupValues[2] }.lowercase(Locale.ROOT).split(',').asSequence()
-        }.map { it.trim() }.toSet()
+        val labels =
+            tags
+                .findAll(rawName)
+                .flatMap { match ->
+                    match.groupValues[1]
+                        .ifBlank { match.groupValues[2] }
+                        .lowercase(Locale.ROOT)
+                        .split(',')
+                        .asSequence()
+                }.map { it.trim() }
+                .toSet()
         return when {
             "usa" in labels || "u" in labels -> "North America"
             "europe" in labels || "e" in labels -> "Europe"
@@ -121,6 +162,9 @@ object CatalogKeys {
         }
     }
 
-    private fun digest(value: String): String = MessageDigest.getInstance("SHA-256")
-        .digest(value.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+    private fun digest(value: String): String =
+        MessageDigest
+            .getInstance("SHA-256")
+            .digest(value.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
 }

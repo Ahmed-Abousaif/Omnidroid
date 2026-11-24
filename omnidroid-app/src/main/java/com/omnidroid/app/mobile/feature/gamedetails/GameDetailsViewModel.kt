@@ -5,20 +5,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
+import com.omnidroid.app.shared.covers.CoverUtils
+import com.omnidroid.app.shared.metadata.MetadataRepository
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.CancellationException
-import com.omnidroid.app.shared.metadata.MetadataRepository
-import com.omnidroid.app.shared.covers.CoverUtils
 
 class GameDetailsViewModel(
     private val appContext: Context,
@@ -34,9 +34,8 @@ class GameDetailsViewModel(
         private val gameId: Int,
         private val initialGame: Game? = null,
     ) : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return GameDetailsViewModel(appContext, retrogradeDb, settingsManager, gameId, initialGame) as T
-        }
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            GameDetailsViewModel(appContext, retrogradeDb, settingsManager, gameId, initialGame) as T
     }
 
     data class UiState(
@@ -80,7 +79,10 @@ class GameDetailsViewModel(
 
     init {
         viewModelScope.launch {
-            retrogradeDb.gameDao().observeById(gameId).filterNotNull()
+            retrogradeDb
+                .gameDao()
+                .observeById(gameId)
+                .filterNotNull()
                 .distinctUntilChangedBy { Triple(it.id, it.systemId, it.title) }
                 .collectLatest { game ->
                     try {
@@ -92,11 +94,22 @@ class GameDetailsViewModel(
                                 releaseDate = it.releaseDate,
                                 publisher = it.publisher,
                                 rating = it.rating?.let { rating -> "${rating.toInt()} / 100" },
-                                backgroundImageUrl = it.artwork("background", null)?.url?.takeIf(CoverUtils::isAllowedRemoteCoverUrl),
+                                backgroundImageUrl =
+                                    it
+                                        .artwork(
+                                            "background",
+                                            null,
+                                        )?.url
+                                        ?.takeIf(CoverUtils::isAllowedRemoteCoverUrl),
                             )
                         } ?: GameRemoteMetadata()
-                    } catch (cancelled: CancellationException) { throw cancelled }
-                    catch (_: Exception) { /* Existing local details remain useful offline. */ }
+                    } catch (
+                        cancelled: CancellationException,
+                    ) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        // Existing local details remain useful offline.
+                    }
                 }
         }
         viewModelScope.launch {
@@ -104,7 +117,8 @@ class GameDetailsViewModel(
                 val url = game?.coverFrontUrl ?: return@collect
                 if (url.isBlank()) return@collect
                 runCatching {
-                    com.omnidroid.app.shared.covers.CoverUtils.coverCache(appContext)
+                    com.omnidroid.app.shared.covers.CoverUtils
+                        .coverCache(appContext)
                         .ensureDetail(game.id, url)
                 }
             }
@@ -112,7 +126,11 @@ class GameDetailsViewModel(
     }
 
     fun toggleTrailer() {
-        if (state.value.metadata.trailerUrl.isNullOrBlank()) return
+        if (state.value.metadata.trailerUrl
+                .isNullOrBlank()
+        ) {
+            return
+        }
         playingTrailerFlow.value = !playingTrailerFlow.value
     }
 

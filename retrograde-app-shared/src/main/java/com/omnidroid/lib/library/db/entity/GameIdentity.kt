@@ -1,7 +1,7 @@
 package com.omnidroid.lib.library.db.entity
 
-import androidx.room.Entity
 import androidx.room.ColumnInfo
+import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -9,7 +9,14 @@ import com.omnidroid.lib.library.metadata.catalog.CatalogIdentity
 
 @Entity(
     tableName = "game_identities",
-    foreignKeys = [ForeignKey(entity = Game::class, parentColumns = ["id"], childColumns = ["gameId"], onDelete = ForeignKey.CASCADE)],
+    foreignKeys = [
+        ForeignKey(
+            entity = Game::class,
+            parentColumns = ["id"],
+            childColumns = ["gameId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
     indices = [Index("lookupKey")],
 )
 data class GameIdentity(
@@ -45,7 +52,14 @@ data class CatalogLookup(
 
 @Entity(
     tableName = "game_artwork",
-    foreignKeys = [ForeignKey(entity = Game::class, parentColumns = ["id"], childColumns = ["gameId"], onDelete = ForeignKey.CASCADE)],
+    foreignKeys = [
+        ForeignKey(
+            entity = Game::class,
+            parentColumns = ["id"],
+            childColumns = ["gameId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
 )
 data class GameArtwork(
     @PrimaryKey val gameId: Int,

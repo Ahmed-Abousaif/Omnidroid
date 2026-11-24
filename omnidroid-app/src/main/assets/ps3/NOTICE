@@ -1,0 +1,5 @@
+PS3 emulation is derived from ARMSX3 / RPCS3.
+Source: https://github.com/ARMSX2/ARMSX3
+Pinned revision: 64175ad2e625ad02b330bf90a9bbc21385b3c379
+The upstream license is included as LICENSE in this directory.
+Omnidroid supplies its own platform host, JNI adapter and application UI.

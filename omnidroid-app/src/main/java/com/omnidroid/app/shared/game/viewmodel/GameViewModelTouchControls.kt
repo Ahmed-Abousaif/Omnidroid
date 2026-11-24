@@ -78,16 +78,18 @@ class GameViewModelTouchControls(
 
     private var loadingMenuJob: Job? = null
     private var touchPreferencesJob: Job? = null
-    private val touchPreferenceKeys = setOf(
-        appContext.getString(R.string.pref_key_haptic_feedback_mode),
-        appContext.getString(R.string.pref_key_vibration_intensity),
-        appContext.getString(R.string.pref_key_virtual_pad_opacity),
-    )
+    private val touchPreferenceKeys =
+        setOf(
+            appContext.getString(R.string.pref_key_haptic_feedback_mode),
+            appContext.getString(R.string.pref_key_vibration_intensity),
+            appContext.getString(R.string.pref_key_virtual_pad_opacity),
+        )
 
-    private val prefListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        screenLayoutRevision.value++
-        if (key == null || key in touchPreferenceKeys) refreshTouchPreferences()
-    }
+    private val prefListener =
+        SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            screenLayoutRevision.value++
+            if (key == null || key in touchPreferenceKeys) refreshTouchPreferences()
+        }
 
     override fun onCreate(owner: LifecycleOwner) {
         sharedPreferences.registerOnSharedPreferenceChangeListener(prefListener)
@@ -101,14 +103,15 @@ class GameViewModelTouchControls(
 
     private fun refreshTouchPreferences() {
         touchPreferencesJob?.cancel()
-        touchPreferencesJob = scope.launch {
-            val mode = HapticFeedbackMode.parse(settingsManager.hapticFeedbackMode())
-            val intensity = settingsManager.vibrationIntensity()
-            val opacity = settingsManager.virtualPadOpacity()
-            hapticFeedbackMode.value = mode
-            vibrationIntensity.value = if (intensity.isFinite()) intensity.coerceIn(0f, 1f) else 0f
-            virtualPadOpacity.value = opacity
-        }
+        touchPreferencesJob =
+            scope.launch {
+                val mode = HapticFeedbackMode.parse(settingsManager.hapticFeedbackMode())
+                val intensity = settingsManager.vibrationIntensity()
+                val opacity = settingsManager.virtualPadOpacity()
+                hapticFeedbackMode.value = mode
+                vibrationIntensity.value = if (intensity.isFinite()) intensity.coerceIn(0f, 1f) else 0f
+                virtualPadOpacity.value = opacity
+            }
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
@@ -117,25 +120,20 @@ class GameViewModelTouchControls(
         super.onDestroy(owner)
     }
 
-    fun getTouchControlsSettings(): Flow<TouchControllerSettingsManager.Settings?> {
-        return combine(
+    fun getTouchControlsSettings(): Flow<TouchControllerSettingsManager.Settings?> =
+        combine(
             touchControlId,
             screenOrientation,
         ) { touchControlId, orientation -> touchControlId to orientation }
             .flatMapLatest { (touchControlId, orientation) ->
                 touchControllerSettingsManager.observeSettings(touchControlId, orientation)
             }
-    }
 
-    fun getTouchHapticFeedbackMode(): Flow<HapticFeedbackMode> {
-        return hapticFeedbackMode
-    }
+    fun getTouchHapticFeedbackMode(): Flow<HapticFeedbackMode> = hapticFeedbackMode
 
     fun getTouchVibrationIntensity(): Flow<Float> = vibrationIntensity
 
-    fun getVirtualPadOpacity(): Flow<Float> {
-        return virtualPadOpacity
-    }
+    fun getVirtualPadOpacity(): Flow<Float> = virtualPadOpacity
 
     fun updateTouchControllerSettings(touchControllerSettings: TouchControllerSettingsManager.Settings) {
         scope.launch {
@@ -156,11 +154,10 @@ class GameViewModelTouchControls(
         }
     }
 
-    fun getGameAspectRatio(): Flow<Float> {
-        return combine(screenOrientation, screenLayoutRevision) { orientation, _ ->
+    fun getGameAspectRatio(): Flow<Float> =
+        combine(screenOrientation, screenLayoutRevision) { orientation, _ ->
             screenLayoutController.getAspectRatio(orientation)
         }.distinctUntilChanged()
-    }
 
     /** DS/3DS single-screen layouts fill the display with pads overlaid, like PSP. */
     fun isSingleScreenLayout(): Flow<Boolean> =
@@ -223,12 +220,12 @@ class GameViewModelTouchControls(
         forceHideTouchControls.value = false
     }
 
-    fun getTouchControllerConfig(): Flow<ControllerConfig> {
-        return inputs.getControllerConfigState()
+    fun getTouchControllerConfig(): Flow<ControllerConfig> =
+        inputs
+            .getControllerConfigState()
             .map { it[0] }
             .filterNotNull()
             .distinctUntilChanged()
-    }
 
     fun handleVirtualInputEvent(events: List<InputEvent>) {
         val menuEvent = events.firstOrNull { it is InputEvent.Button && it.id == KeyEvent.KEYCODE_BUTTON_MODE }
@@ -239,6 +236,9 @@ class GameViewModelTouchControls(
         events.forEach { event ->
             when (event) {
                 is InputEvent.Button -> {
+                    // The menu button belongs to the host. Forwarding it also opens
+                    // an embedded emulator menu on native backends.
+                    if (event.id == KeyEvent.KEYCODE_BUTTON_MODE) return@forEach
                     if (handleHostButton(event)) {
                         return@forEach
                     }
@@ -326,13 +326,9 @@ class GameViewModelTouchControls(
         }
     }
 
-    fun isMenuPressed(): Flow<Boolean> {
-        return menuPressed
-    }
+    fun isMenuPressed(): Flow<Boolean> = menuPressed
 
-    fun isEditControlsShown(): Flow<Boolean> {
-        return showEditControls
-    }
+    fun isEditControlsShown(): Flow<Boolean> = showEditControls
 
     fun showEditControls(show: Boolean) {
         showEditControls.value = show

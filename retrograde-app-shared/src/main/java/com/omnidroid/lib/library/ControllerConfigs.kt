@@ -399,6 +399,12 @@ object ControllerConfigs {
                 ),
         )
 
+    val PS3_DUALSHOCK3 =
+        PS2_DUALSHOCK2.copy(
+            name = "dualshock3",
+            displayName = R.string.controller_dualshock3,
+        )
+
     val GAMECUBE =
         ControllerConfig(
             "gamecube",
@@ -552,4 +558,3 @@ object ControllerConfigs {
                 ),
         )
 }
-

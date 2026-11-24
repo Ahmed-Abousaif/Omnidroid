@@ -27,5 +27,8 @@ interface GameMetadataProvider {
     suspend fun findCartridge(crc: String): GameMetadata?
 
     /** Optional verified provider mapping shipped inside the installed local metadata slice. */
-    suspend fun catalogSeed(systemId: String, lookupKey: String): String? = null
+    suspend fun catalogSeed(
+        systemId: String,
+        lookupKey: String,
+    ): String? = null
 }
