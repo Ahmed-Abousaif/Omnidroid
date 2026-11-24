@@ -91,6 +91,8 @@ internal fun LibraryMaintenanceSettings(
     val clearMissingDialogState = remember { mutableStateOf(false) }
     val autoScan = booleanPreferenceState(R.string.pref_key_auto_library_scan, true)
     val periodicScan = booleanPreferenceState(R.string.pref_key_periodic_library_scan, false)
+    val onlineArtwork = booleanPreferenceState(R.string.pref_key_online_artwork, true)
+    val artworkWifiOnly = booleanPreferenceState(R.string.pref_key_artwork_wifi_only, true)
 
     OmnidroidSettingsGroup(
         titleRes = R.string.settings_section_maintenance,
@@ -107,6 +109,19 @@ internal fun LibraryMaintenanceSettings(
         )
         LaunchedEffect(periodicScan.value) {
             LibraryPeriodicScanScheduler.syncWithPreference(context)
+        }
+        OmnidroidSettingsSwitch(
+            state = onlineArtwork,
+            titleRes = R.string.settings_title_online_artwork,
+            subtitleRes = R.string.settings_description_online_artwork,
+        )
+        OmnidroidSettingsSwitch(
+            state = artworkWifiOnly,
+            titleRes = R.string.settings_title_artwork_wifi_only,
+            subtitleRes = R.string.settings_description_artwork_wifi_only,
+        )
+        LaunchedEffect(onlineArtwork.value, artworkWifiOnly.value) {
+            com.omnidroid.app.shared.library.ArtworkEnrichmentWork.schedule(context, reset = true)
         }
         OmnidroidSettingsMenuLink(
             titleRes = R.string.settings_title_unrecognized_files,

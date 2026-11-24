@@ -16,6 +16,9 @@ import com.omnidroid.metadata.libretrodb.db.entity.LibretroRom
 class LibretroDBMetadataProvider(
     private val ovgdbManager: LibretroDBManager,
 ) : GameMetadataProvider {
+    override suspend fun catalogSeed(systemId: String, lookupKey: String): String? =
+        ovgdbManager.dbInstance.catalogSeedDao().payload(systemId, lookupKey)
+
     override val databaseVersion: Int = LibretroDatabase.VERSION
 
     override suspend fun sliceStamps(): Map<String, String> {
@@ -34,8 +37,9 @@ class LibretroDBMetadataProvider(
         key: MetadataKey?,
         fileSize: Long,
     ): GameMetadata {
+        val direct = key?.let { find(systemId, it, fileSize) }
         val row =
-            key?.let { find(systemId, it, fileSize) }
+            direct
                 ?: findByLooseName(systemId, fallbackTitle)
                 ?: key?.takeIf {
                     it.type == MetadataKeyType.ROM_BASE || it.type == MetadataKeyType.ROM_NAME
@@ -48,6 +52,9 @@ class LibretroDBMetadataProvider(
             romName = null,
             developer = null,
             thumbnail = if (row != null) computeCoverUrl(GameSystem.findById(systemId), coverTitle, row.thumbnailPath) else null,
+            rawTitle = row?.rawName ?: row?.name,
+            matchMethod = if (direct != null) "key:${key?.type}" else if (row != null) "local_title" else "filename",
+            thumbnailIndexed = row?.thumbnailPath != null,
         )
     }
 

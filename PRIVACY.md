@@ -1,6 +1,6 @@
 # Privacy Policy for Omnidroid
 
-**Last updated:** September 17, 2026
+**Last updated:** November 24, 2026
 
 Omnidroid (“the app”) is developed by Ahmed Abousaif. This policy explains what information the app uses and how it is handled.
 
@@ -28,6 +28,14 @@ The app may use the network to:
 - download or update emulation cores
 - fetch optional game metadata or trailers
 - sync cloud saves when you enable that feature
+
+### Artwork and game information
+
+Installed game databases and libretro thumbnails are used first. When online artwork and game details are enabled, unresolved artwork and requested game details can be looked up through the Omnidroid metadata service and IGDB. The service receives a cleaned game title, platform, optional alternate title and region, and an opaque lookup key. ROM files, filesystem paths, save data, CRCs and serials are not uploaded by this feature.
+
+Accepted game-to-provider associations, public game metadata and artwork references are retained in a shared catalog without an expiry. They are not associated with an Omnidroid account. Failed or ambiguous lookups are remembered temporarily to avoid repeated requests. The service uses a salted network-address hash for temporary rate limits and keeps aggregate request counters. Image downloads contact libretro or IGDB image servers directly.
+
+You can disable online artwork and game details in Library settings, and restrict background artwork downloads to unmetered networks. Your manual cover selections and match corrections remain on your device; selecting a candidate does not publish a global correction. Additional game information and artwork are provided by [IGDB.com](https://www.igdb.com).
 
 ### Permissions
 

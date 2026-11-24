@@ -32,6 +32,11 @@ import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.library.db.entity.GameSession
 import com.omnidroid.lib.library.db.entity.ScanDirectory
 import com.omnidroid.lib.library.db.entity.UnrecognizedFile
+import com.omnidroid.lib.library.db.dao.CatalogDao
+import com.omnidroid.lib.library.db.entity.GameIdentity
+import com.omnidroid.lib.library.db.entity.CatalogLookup
+import com.omnidroid.lib.library.db.entity.GameArtwork
+import com.omnidroid.lib.library.db.entity.ArtworkAttempt
 
 @Database(
     entities = [
@@ -40,8 +45,12 @@ import com.omnidroid.lib.library.db.entity.UnrecognizedFile
         GameSession::class,
         UnrecognizedFile::class,
         ScanDirectory::class,
+        GameIdentity::class,
+        CatalogLookup::class,
+        GameArtwork::class,
+        ArtworkAttempt::class,
     ],
-    version = 18,
+    version = 19,
     exportSchema = true,
 )
 abstract class RetrogradeDatabase : RoomDatabase() {
@@ -58,6 +67,8 @@ abstract class RetrogradeDatabase : RoomDatabase() {
     abstract fun unrecognizedFileDao(): UnrecognizedFileDao
 
     abstract fun scanDirectoryDao(): ScanDirectoryDao
+
+    abstract fun catalogDao(): CatalogDao
 
     fun gameSearchDao() = GameSearchDao(gameSearchDaoInternal())
 

@@ -521,6 +521,27 @@ class OmnidroidLibrary(
                 startedAtMs,
                 archiveEntry,
             )
+        val canonicalTitle = com.omnidroid.lib.library.metadata.catalog.CatalogKeys.cleanTitle(described.name ?: fallbackTitle)
+        val keys = com.omnidroid.lib.library.metadata.catalog.CatalogKeys
+        retrogradedb.catalogDao().putIdentity(
+            com.omnidroid.lib.library.db.entity.GameIdentity(
+                gameId = gameId,
+                identityKey = keys.fingerprint(system.dbname, canonicalTitle, key?.type?.name, key?.value),
+                lookupKey = keys.lookup(system.dbname, canonicalTitle),
+                system = system.dbname,
+                title = canonicalTitle,
+                alternateTitle = keys.cleanTitle(fallbackTitle).takeIf { keys.normalize(it) != keys.normalize(canonicalTitle) },
+                region = keys.region(described.rawTitle ?: fallbackTitle),
+                keyType = key?.type?.name,
+                keyValue = key?.value,
+                matchMethod = described.matchMethod,
+                libretroUrl = described.thumbnail,
+                thumbnailIndexed = described.thumbnailIndexed,
+                updatedAt = startedAtMs,
+                fileSize = primary.size,
+                fileLastModified = primary.lastModified,
+            ),
+        )
         updateDataFiles(group, gameId, startedAtMs)
         retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
     }
@@ -677,7 +698,7 @@ class OmnidroidLibrary(
         retrogradedb.gameDao().updateFromScan(updated)
     }
 
-    private fun upsert(
+    private suspend fun upsert(
         group: GroupedStorageFiles,
         existing: Game?,
         insertedId: Int?,
@@ -693,7 +714,10 @@ class OmnidroidLibrary(
         if (current != null) {
             val finalTitle = if (current.isManualMatch) current.title else title
             val finalDeveloper = if (current.isManualMatch) current.developer else developer
-            val finalCover = if (current.isManualMatch) current.coverFrontUrl else cover
+            val selected = retrogradedb.catalogDao().artwork(current.id)
+            val keepSelected = selected != null && selected.sourceUrl == current.coverFrontUrl &&
+                current.systemId == system.dbname && current.fileSize == primary.size && current.fileLastModified == primary.lastModified
+            val finalCover = if (current.isManualMatch || keepSelected) current.coverFrontUrl else cover
             val fileName = archiveEntry ?: current.fileName
             val changed =
                 current.title != finalTitle ||

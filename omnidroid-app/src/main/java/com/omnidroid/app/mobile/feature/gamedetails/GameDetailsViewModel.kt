@@ -14,6 +14,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.CancellationException
+import com.omnidroid.app.shared.metadata.MetadataRepository
+import com.omnidroid.app.shared.covers.CoverUtils
 
 class GameDetailsViewModel(
     private val appContext: Context,
@@ -74,6 +79,26 @@ class GameDetailsViewModel(
         )
 
     init {
+        viewModelScope.launch {
+            retrogradeDb.gameDao().observeById(gameId).filterNotNull()
+                .distinctUntilChangedBy { Triple(it.id, it.systemId, it.title) }
+                .collectLatest { game ->
+                    try {
+                        val metadata = MetadataRepository.get(appContext).details(game)
+                        metadataFlow.value = metadata?.let {
+                            GameRemoteMetadata(
+                                description = it.description,
+                                genre = it.genres.joinToString(", ").ifBlank { null },
+                                releaseDate = it.releaseDate,
+                                publisher = it.publisher,
+                                rating = it.rating?.let { rating -> "${rating.toInt()} / 100" },
+                                backgroundImageUrl = it.artwork("background", null)?.url?.takeIf(CoverUtils::isAllowedRemoteCoverUrl),
+                            )
+                        } ?: GameRemoteMetadata()
+                    } catch (cancelled: CancellationException) { throw cancelled }
+                    catch (_: Exception) { /* Existing local details remain useful offline. */ }
+                }
+        }
         viewModelScope.launch {
             retrogradeDb.gameDao().observeById(gameId).collect { game ->
                 val url = game?.coverFrontUrl ?: return@collect
