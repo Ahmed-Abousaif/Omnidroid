@@ -2,19 +2,22 @@ package com.omnidroid.app.shared.ps3
 
 import com.omnidroid.lib.backend.NormalizedKey
 import com.omnidroid.lib.backend.NormalizedMotionSource
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class Ps3PadStateTest {
     @Test fun faceButtonsMatchPlayStationTouchLabels() {
         // PS2Right (also used for PS3) emits these logical keys for its symbols.
         // Expected bits are CELL_PAD_CTRL_* from the PS3 controller protocol.
-        val buttons = listOf(
-            NormalizedKey.BUTTON_B to 0x40, // Cross
-            NormalizedKey.BUTTON_A to 0x20, // Circle
-            NormalizedKey.BUTTON_X to 0x10, // Triangle
-            NormalizedKey.BUTTON_Y to 0x80, // Square
-        )
+        val buttons =
+            listOf(
+                NormalizedKey.BUTTON_B to 0x40, // Cross
+                NormalizedKey.BUTTON_A to 0x20, // Circle
+                NormalizedKey.BUTTON_X to 0x10, // Triangle
+                NormalizedKey.BUTTON_Y to 0x80, // Square
+            )
         val pad = Ps3PadState()
         for ((key, expected) in buttons) {
             assertTrue(pad.button(key, true))
@@ -32,6 +35,7 @@ class Ps3PadStateTest {
         assertFalse(pad.button(NormalizedKey.BUTTON_HOME, false))
         assertEquals(16, pad.digital1)
     }
+
     @Test fun simultaneousButtonsSurviveStickAndReleaseEvents() {
         val pad = Ps3PadState()
         pad.button(NormalizedKey.BUTTON_A, true)

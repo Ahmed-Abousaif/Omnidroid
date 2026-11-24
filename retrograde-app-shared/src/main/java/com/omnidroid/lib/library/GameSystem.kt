@@ -39,16 +39,17 @@ data class GameSystem(
     val hasTouchScreen: Boolean = false,
 ) {
     val aspectRatio: Float
-        get() = when (id) {
-            SystemID.GB, SystemID.GBC, SystemID.GG -> 10f / 9f
-            SystemID.GBA -> 3f / 2f
-            SystemID.PSP, SystemID.WII_U, SystemID.SWITCH, SystemID.PS3 -> 16f / 9f
-            SystemID.NDS, SystemID.NINTENDO_3DS -> 4f / 6f
-            SystemID.WS, SystemID.WSC -> 14f / 9f
-            SystemID.NGP -> 20f / 19f
-            SystemID.LYNX -> 160f / 102f
-            else -> 4f / 3f
-        }
+        get() =
+            when (id) {
+                SystemID.GB, SystemID.GBC, SystemID.GG -> 10f / 9f
+                SystemID.GBA -> 3f / 2f
+                SystemID.PSP, SystemID.WII_U, SystemID.SWITCH, SystemID.PS3 -> 16f / 9f
+                SystemID.NDS, SystemID.NINTENDO_3DS -> 4f / 6f
+                SystemID.WS, SystemID.WSC -> 14f / 9f
+                SystemID.NGP -> 20f / 19f
+                SystemID.LYNX -> 160f / 102f
+                else -> 4f / 3f
+            }
 
     companion object {
         private val SYSTEMS =
@@ -447,25 +448,25 @@ data class GameSystem(
                             controllerConfigs =
                                 hashMapOf(
                                     0 to
-                                            arrayListOf(
-                                                ControllerConfigs.GENESIS_3,
-                                                ControllerConfigs.GENESIS_6,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.GENESIS_3,
+                                            ControllerConfigs.GENESIS_6,
+                                        ),
                                     1 to
-                                            arrayListOf(
-                                                ControllerConfigs.GENESIS_3,
-                                                ControllerConfigs.GENESIS_6,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.GENESIS_3,
+                                            ControllerConfigs.GENESIS_6,
+                                        ),
                                     2 to
-                                            arrayListOf(
-                                                ControllerConfigs.GENESIS_3,
-                                                ControllerConfigs.GENESIS_6,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.GENESIS_3,
+                                            ControllerConfigs.GENESIS_6,
+                                        ),
                                     3 to
-                                            arrayListOf(
-                                                ControllerConfigs.GENESIS_3,
-                                                ControllerConfigs.GENESIS_6,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.GENESIS_3,
+                                            ControllerConfigs.GENESIS_6,
+                                        ),
                                 ),
                         ),
                     ),
@@ -540,25 +541,25 @@ data class GameSystem(
                             controllerConfigs =
                                 hashMapOf(
                                     0 to
-                                            arrayListOf(
-                                                ControllerConfigs.GENESIS_3,
-                                                ControllerConfigs.GENESIS_6,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.GENESIS_3,
+                                            ControllerConfigs.GENESIS_6,
+                                        ),
                                     1 to
-                                            arrayListOf(
-                                                ControllerConfigs.GENESIS_3,
-                                                ControllerConfigs.GENESIS_6,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.GENESIS_3,
+                                            ControllerConfigs.GENESIS_6,
+                                        ),
                                     2 to
-                                            arrayListOf(
-                                                ControllerConfigs.GENESIS_3,
-                                                ControllerConfigs.GENESIS_6,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.GENESIS_3,
+                                            ControllerConfigs.GENESIS_6,
+                                        ),
                                     3 to
-                                            arrayListOf(
-                                                ControllerConfigs.GENESIS_3,
-                                                ControllerConfigs.GENESIS_6,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.GENESIS_3,
+                                            ControllerConfigs.GENESIS_6,
+                                        ),
                                 ),
                             regionalBIOSFiles =
                                 mapOf(
@@ -994,25 +995,25 @@ data class GameSystem(
                             controllerConfigs =
                                 hashMapOf(
                                     0 to
-                                            arrayListOf(
-                                                ControllerConfigs.PSX_STANDARD,
-                                                ControllerConfigs.PSX_DUALSHOCK,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.PSX_STANDARD,
+                                            ControllerConfigs.PSX_DUALSHOCK,
+                                        ),
                                     1 to
-                                            arrayListOf(
-                                                ControllerConfigs.PSX_STANDARD,
-                                                ControllerConfigs.PSX_DUALSHOCK,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.PSX_STANDARD,
+                                            ControllerConfigs.PSX_DUALSHOCK,
+                                        ),
                                     2 to
-                                            arrayListOf(
-                                                ControllerConfigs.PSX_STANDARD,
-                                                ControllerConfigs.PSX_DUALSHOCK,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.PSX_STANDARD,
+                                            ControllerConfigs.PSX_DUALSHOCK,
+                                        ),
                                     3 to
-                                            arrayListOf(
-                                                ControllerConfigs.PSX_STANDARD,
-                                                ControllerConfigs.PSX_DUALSHOCK,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.PSX_STANDARD,
+                                            ControllerConfigs.PSX_DUALSHOCK,
+                                        ),
                                 ),
                             exposedSettings =
                                 listOf(
@@ -1216,10 +1217,10 @@ data class GameSystem(
                             controllerConfigs =
                                 hashMapOf(
                                     0 to
-                                            arrayListOf(
-                                                ControllerConfigs.MAME_2003_4,
-                                                ControllerConfigs.MAME_2003_6,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.MAME_2003_4,
+                                            ControllerConfigs.MAME_2003_6,
+                                        ),
                                 ),
                         ),
                     ),
@@ -1900,19 +1901,20 @@ data class GameSystem(
                         ),
                     ),
                     uniqueExtensions = listOf(),
-                    supportedExtensions = listOf(
-                        "iso",
-                        "chd",
-                        "cue",
-                        "m3u",
-                        "cso",
-                        "zso",
-                        "gz",
-                        "bin",
-                        "mdf",
-                        "elf",
-                        "irx"
-                    ),
+                    supportedExtensions =
+                        listOf(
+                            "iso",
+                            "chd",
+                            "cue",
+                            "m3u",
+                            "cso",
+                            "zso",
+                            "gz",
+                            "bin",
+                            "mdf",
+                            "elf",
+                            "irx",
+                        ),
                     hasMultiDiskSupport = true,
                 ),
                 GameSystem(
@@ -2007,11 +2009,11 @@ data class GameSystem(
                             controllerConfigs =
                                 hashMapOf(
                                     0 to
-                                            arrayListOf(
-                                                ControllerConfigs.WII_SIDEWAYS,
-                                                ControllerConfigs.WII_REMOTE,
-                                                ControllerConfigs.WII_CLASSIC,
-                                            ),
+                                        arrayListOf(
+                                            ControllerConfigs.WII_SIDEWAYS,
+                                            ControllerConfigs.WII_REMOTE,
+                                            ControllerConfigs.WII_CLASSIC,
+                                        ),
                                 ),
                             rumbleSupported = true,
                             statesSupported = true,
@@ -2368,12 +2370,13 @@ data class GameSystem(
                     listOf(
                         SystemCoreConfig(
                             CoreID.ARMSX3,
-                            controllerConfigs = hashMapOf(
-                                0 to arrayListOf(ControllerConfigs.PS3_DUALSHOCK3),
-                                1 to arrayListOf(ControllerConfigs.PS3_DUALSHOCK3),
-                                2 to arrayListOf(ControllerConfigs.PS3_DUALSHOCK3),
-                                3 to arrayListOf(ControllerConfigs.PS3_DUALSHOCK3),
-                            ),
+                            controllerConfigs =
+                                hashMapOf(
+                                    0 to arrayListOf(ControllerConfigs.PS3_DUALSHOCK3),
+                                    1 to arrayListOf(ControllerConfigs.PS3_DUALSHOCK3),
+                                    2 to arrayListOf(ControllerConfigs.PS3_DUALSHOCK3),
+                                    3 to arrayListOf(ControllerConfigs.PS3_DUALSHOCK3),
+                                ),
                             statesSupported = true,
                             autoSaveSupported = false,
                             supportedOnlyArchitectures = setOf("arm64-v8a"),
@@ -2507,13 +2510,14 @@ data class GameSystem(
 
         fun all() = SYSTEMS
 
-        fun getSupportedExtensions(): List<String> {
-            return SYSTEMS.flatMap { it.supportedExtensions }
-        }
+        fun getSupportedExtensions(): List<String> = SYSTEMS.flatMap { it.supportedExtensions }
 
-        fun findSystemForCore(coreID: CoreID): List<GameSystem> {
-            return all().filter { system -> system.systemCoreConfigs.any { it.coreID == coreID } }
-        }
+        fun findSystemForCore(coreID: CoreID): List<GameSystem> =
+            all().filter { system ->
+                system.systemCoreConfigs.any {
+                    it.coreID == coreID
+                }
+            }
 
         fun findByUniqueFileExtension(fileExtension: String): GameSystem? =
             byExtensionCache[fileExtension.lowercase(Locale.US)]

@@ -160,14 +160,25 @@ interface GameDao {
     fun updateFromScan(scanned: Game) {
         val current = selectByIdBlocking(scanned.id) ?: return
         val selected = selectedArtwork(scanned.id)
-        val keepSelected = selected != null && selected.sourceUrl == current.coverFrontUrl &&
-            current.systemId == scanned.systemId && current.fileSize == scanned.fileSize && current.fileLastModified == scanned.fileLastModified
+        val keepSelected =
+            selected != null &&
+                selected.sourceUrl == current.coverFrontUrl &&
+                current.systemId == scanned.systemId &&
+                current.fileSize == scanned.fileSize &&
+                current.fileLastModified == scanned.fileLastModified
         update(
             listOf(
                 scanned.copy(
                     title = if (current.isManualMatch) current.title else scanned.title,
                     developer = if (current.isManualMatch) current.developer else scanned.developer,
-                    coverFrontUrl = if (current.isManualMatch || keepSelected) current.coverFrontUrl else scanned.coverFrontUrl,
+                    coverFrontUrl =
+                        if (current.isManualMatch ||
+                            keepSelected
+                        ) {
+                            current.coverFrontUrl
+                        } else {
+                            scanned.coverFrontUrl
+                        },
                     systemId = if (current.isManualMatch) current.systemId else scanned.systemId,
                     isManualMatch = current.isManualMatch,
                     customName = current.customName,

@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.Flow
  * Common interface for retro game rendering views (OpenGL ES [GLRetroView] and native Vulkan [VulkanRetroView]).
  */
 interface IRetroGameView : DefaultLifecycleObserver {
-
     var audioEnabled: Boolean
     var frameSpeed: Int
     var shader: ShaderConfig?
@@ -25,45 +24,91 @@ interface IRetroGameView : DefaultLifecycleObserver {
 
     fun asView(): View
 
-    fun sendKeyEvent(action: Int, keyCode: Int, port: Int = 0)
-    fun sendMotionEvent(source: Int, x: Float, y: Float, port: Int = 0)
+    fun sendKeyEvent(
+        action: Int,
+        keyCode: Int,
+        port: Int = 0,
+    )
+
+    fun sendMotionEvent(
+        source: Int,
+        x: Float,
+        y: Float,
+        port: Int = 0,
+    )
+
     fun onTouchEvent(event: MotionEvent): Boolean
 
     fun serializeState(useEmulationThread: Boolean = true): ByteArray?
-    fun unserializeState(state: ByteArray, useEmulationThread: Boolean = true): Boolean
+
+    fun unserializeState(
+        state: ByteArray,
+        useEmulationThread: Boolean = true,
+    ): Boolean
+
     fun serializeSRAM(useEmulationThread: Boolean = true): ByteArray?
-    fun unserializeSRAM(state: ByteArray, useEmulationThread: Boolean = true): Boolean
+
+    fun unserializeSRAM(
+        state: ByteArray,
+        useEmulationThread: Boolean = true,
+    ): Boolean
+
     fun reset(useEmulationThread: Boolean = true)
 
-    fun setCheat(index: Int, enabled: Boolean, code: String, useEmulationThread: Boolean = true)
+    fun setCheat(
+        index: Int,
+        enabled: Boolean,
+        code: String,
+        useEmulationThread: Boolean = true,
+    )
 
     fun getVariables(): Array<Variable>?
+
     fun updateVariables(vararg variables: Variable)
 
     fun getAvailableDisks(useEmulationThread: Boolean = true): Int
-    fun getCurrentDisk(useEmulationThread: Boolean = true): Int
-    fun changeDisk(index: Int, useEmulationThread: Boolean = true)
 
-    fun setControllerType(port: Int, controllerId: Int)
+    fun getCurrentDisk(useEmulationThread: Boolean = true): Int
+
+    fun changeDisk(
+        index: Int,
+        useEmulationThread: Boolean = true,
+    )
+
+    fun setControllerType(
+        port: Int,
+        controllerId: Int,
+    )
+
     fun getControllers(): Array<Array<Controller>>?
 
     fun getGLRetroEvents(): Flow<GLRetroView.GLRetroEvents>
+
     fun getGLRetroErrors(): Flow<Int>
+
     fun getRumbleEvents(): Flow<RumbleEvent>
 
     fun disableTouchEvents()
+
     fun refreshAspectRatio()
 }
 
-suspend fun IRetroGameView.takeScreenshot(maxResolution: Int, retries: Int = 1): android.graphics.Bitmap? {
+suspend fun IRetroGameView.takeScreenshot(
+    maxResolution: Int,
+    retries: Int = 1,
+): android.graphics.Bitmap? {
     if (this is com.omnidroid.lib.backend.ScreenshotSession) {
         val bitmap = captureScreenshot() ?: return null
         val ratio = maxResolution.toFloat() / maxOf(bitmap.width, bitmap.height)
         if (ratio >= 1) return bitmap
-        return android.graphics.Bitmap.createScaledBitmap(bitmap, (bitmap.width * ratio).toInt().coerceAtLeast(1),
-            (bitmap.height * ratio).toInt().coerceAtLeast(1), true).also { if (it !== bitmap) bitmap.recycle() }
+        return android.graphics.Bitmap
+            .createScaledBitmap(
+                bitmap,
+                (bitmap.width * ratio).toInt().coerceAtLeast(1),
+                (bitmap.height * ratio).toInt().coerceAtLeast(1),
+                true,
+            ).also { if (it !== bitmap) bitmap.recycle() }
     }
     val surfaceView = asView() as? SurfaceView ?: return null
     return surfaceView.takeScreenshot(maxResolution, retries)
 }
-

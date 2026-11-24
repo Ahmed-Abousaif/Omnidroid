@@ -17,11 +17,15 @@ import java.util.zip.GZIPOutputStream
 
 class StatesManager(
     private val directoriesManager: DirectoriesManager,
-    private val customSaveStorage: CustomSaveStorage = CustomSaveStorage(directoriesManager.context, directoriesManager),
+    private val customSaveStorage: CustomSaveStorage =
+        CustomSaveStorage(directoriesManager.context, directoriesManager),
 ) {
     private val writes = Mutex()
 
-    data class SlotInfo(val index: Int, val saveInfo: SaveInfo)
+    data class SlotInfo(
+        val index: Int,
+        val saveInfo: SaveInfo,
+    )
 
     suspend fun getSlotSave(
         game: Game,
@@ -116,7 +120,12 @@ class StatesManager(
                 customSaveStorage.listSaveFiles("states") +
                 customSaveStorage.listSaveFiles()
         files.forEach { name ->
-            val number = pattern.matchEntire(name)?.groupValues?.get(1)?.toIntOrNull()
+            val number =
+                pattern
+                    .matchEntire(name)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.toIntOrNull()
             if (number != null) {
                 savedIndices.add(number - 1)
             }

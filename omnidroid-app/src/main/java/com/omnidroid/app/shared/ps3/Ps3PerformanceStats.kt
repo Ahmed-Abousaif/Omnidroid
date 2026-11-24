@@ -1,8 +1,13 @@
 package com.omnidroid.app.shared.ps3
 
 /** Cumulative valid RSX flip timings, not a claim about game simulation speed. */
-class Ps3PerformanceStats(private val values: LongArray) {
-    init { require(values.size == 14) }
+class Ps3PerformanceStats(
+    private val values: LongArray,
+) {
+    init {
+        require(values.size == 14)
+    }
+
     val frames get() = values[0]
     val periodNs get() = values[1]
     val workNs get() = values[2]

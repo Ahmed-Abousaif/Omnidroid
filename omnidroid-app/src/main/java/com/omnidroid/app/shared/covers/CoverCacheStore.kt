@@ -5,14 +5,14 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.util.LruCache
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import com.omnidroid.lib.library.db.dao.CatalogDao
 import com.omnidroid.lib.library.db.entity.ArtworkAttempt
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -40,24 +40,40 @@ class CoverCacheStore(
     private val failureKinds = LruCache<String, String>(512)
     private val sourceLocks = java.util.concurrent.ConcurrentHashMap<String, Mutex>()
     private val downloads = Semaphore(4)
-    private val estimatedBytes = java.util.concurrent.atomic.AtomicLong(-1)
+    private val estimatedBytes =
+        java.util.concurrent.atomic
+            .AtomicLong(-1)
+
     @Volatile private var attempts: CatalogDao? = null
 
-    fun attachAttempts(dao: CatalogDao) { attempts = dao }
+    fun attachAttempts(dao: CatalogDao) {
+        attempts = dao
+    }
 
     suspend fun failure(url: String): ArtworkAttempt? {
         val stored = attempts?.attempt(url)
         if (stored != null) return stored.takeIf { it.retryAt > System.currentTimeMillis() }
         val until = negativeCache.get(url) ?: return null
-        return if (until > System.currentTimeMillis()) ArtworkAttempt(url, failureKinds.get(url) ?: "retry", until) else null
+        return if (until >
+            System.currentTimeMillis()
+        ) {
+            ArtworkAttempt(url, failureKinds.get(url) ?: "retry", until)
+        } else {
+            null
+        }
     }
 
-    private suspend fun failed(url: String, state: String, delay: Long) {
+    private suspend fun failed(
+        url: String,
+        state: String,
+        delay: Long,
+    ) {
         val until = System.currentTimeMillis() + delay
         negativeCache.put(url, until)
         failureKinds.put(url, state)
         attempts?.putAttempt(ArtworkAttempt(url, state, until))
     }
+
     private val prefs =
         context.getSharedPreferences(TELEMETRY_PREFS, Context.MODE_PRIVATE)
 
@@ -145,43 +161,48 @@ class CoverCacheStore(
         sourceUrl: String,
         tier: Tier,
     ): File? =
-        withContext(Dispatchers.IO) { sourceLocks.getOrPut(sourceUrl) { Mutex() }.withLock {
-            existingFile(gameId, sourceUrl, tier)?.let { return@withContext it }
-            if (!CoverUtils.isAllowedRemoteCoverUrl(sourceUrl)) return@withContext null
-            if (failure(sourceUrl) != null) {
-                return@withContext null
-            }
-
-            val bytes =
-                try { downloads.withPermit { download(sourceUrl) } } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (error: Exception) {
-                    Timber.w(error, "Cover download failed")
-                    failed(sourceUrl, "retry", 60_000)
+        withContext(Dispatchers.IO) {
+            sourceLocks.getOrPut(sourceUrl) { Mutex() }.withLock {
+                existingFile(gameId, sourceUrl, tier)?.let { return@withContext it }
+                if (!CoverUtils.isAllowedRemoteCoverUrl(sourceUrl)) return@withContext null
+                if (failure(sourceUrl) != null) {
                     return@withContext null
                 }
-            if (bytes == null) {
-                return@withContext null
-            }
 
-            val maxEdge = if (tier == Tier.GRID) GRID_MAX_EDGE else DETAIL_MAX_EDGE
-            val bitmap = decodeScaled(bytes, maxEdge) ?: run {
-                File(root, "sources/${sha1(sourceUrl)}.source").delete()
-                failed(sourceUrl, "retry", 3_600_000)
-                return@withContext null
+                val bytes =
+                    try {
+                        downloads.withPermit { download(sourceUrl) }
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        Timber.w(error, "Cover download failed")
+                        failed(sourceUrl, "retry", 60_000)
+                        return@withContext null
+                    }
+                if (bytes == null) {
+                    return@withContext null
+                }
+
+                val maxEdge = if (tier == Tier.GRID) GRID_MAX_EDGE else DETAIL_MAX_EDGE
+                val bitmap =
+                    decodeScaled(bytes, maxEdge) ?: run {
+                        File(root, "sources/${sha1(sourceUrl)}.source").delete()
+                        failed(sourceUrl, "retry", 3_600_000)
+                        return@withContext null
+                    }
+                try {
+                    val base = cacheBase(gameId, sourceUrl, tier)
+                    File(base).parentFile?.mkdirs()
+                    val encoded = encode(bitmap, base)
+                    if (encoded == null) failed(sourceUrl, "retry", 60_000)
+                    if (encoded != null && estimatedBytes.get() >= 0) estimatedBytes.addAndGet(encoded.length())
+                    metaMutex.withLock { evictIfNeeded() }
+                    encoded
+                } finally {
+                    bitmap.recycle()
+                }
             }
-            try {
-                val base = cacheBase(gameId, sourceUrl, tier)
-                File(base).parentFile?.mkdirs()
-                val encoded = encode(bitmap, base)
-                if (encoded == null) failed(sourceUrl, "retry", 60_000)
-                if (encoded != null && estimatedBytes.get() >= 0) estimatedBytes.addAndGet(encoded.length())
-                metaMutex.withLock { evictIfNeeded() }
-                encoded
-            } finally {
-                bitmap.recycle()
-            }
-        } }
+        }
 
     private suspend fun download(url: String): ByteArray? {
         val source = File(root, "sources/${sha1(url)}.source")
@@ -189,30 +210,49 @@ class CoverCacheStore(
             touch(source)
             return source.readBytes()
         }
-        val request = Request.Builder().url(url).get().build()
+        val request =
+            Request
+                .Builder()
+                .url(url)
+                .get()
+                .build()
         httpClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
                 val missing = response.code == 404 || response.code == 410
-                val retry = response.header("Retry-After")?.toLongOrNull()?.coerceIn(10, 3600)?.times(1000) ?: 60_000L
+                val retry =
+                    response
+                        .header("Retry-After")
+                        ?.toLongOrNull()
+                        ?.coerceIn(10, 3600)
+                        ?.times(1000) ?: 60_000L
                 failed(url, if (missing) "missing" else "retry", if (missing) NEGATIVE_TTL_MS else retry)
                 return null
             }
-            val body = response.body ?: run { failed(url, "retry", 60_000); return null }
+            val body =
+                response.body ?: run {
+                    failed(url, "retry", 60_000)
+                    return null
+                }
             val type = body.contentType()?.toString().orEmpty()
             if (type.isNotBlank() && !type.startsWith("image/") && !type.contains("octet-stream")) {
-                failed(url, "retry", 3_600_000); return null
+                failed(url, "retry", 3_600_000)
+                return null
             }
-            val bytes = body.byteStream().use { input ->
-                val output = java.io.ByteArrayOutputStream()
-                val buffer = ByteArray(8192)
-                while (output.size() <= MAX_DOWNLOAD_BYTES) {
-                    val count = input.read(buffer, 0, minOf(buffer.size, MAX_DOWNLOAD_BYTES + 1 - output.size()))
-                    if (count < 0) break
-                    output.write(buffer, 0, count)
+            val bytes =
+                body.byteStream().use { input ->
+                    val output = java.io.ByteArrayOutputStream()
+                    val buffer = ByteArray(8192)
+                    while (output.size() <= MAX_DOWNLOAD_BYTES) {
+                        val count = input.read(buffer, 0, minOf(buffer.size, MAX_DOWNLOAD_BYTES + 1 - output.size()))
+                        if (count < 0) break
+                        output.write(buffer, 0, count)
+                    }
+                    output.toByteArray()
                 }
-                output.toByteArray()
+            if (bytes.isEmpty() || bytes.size > MAX_DOWNLOAD_BYTES) {
+                failed(url, "retry", 3_600_000)
+                return null
             }
-            if (bytes.isEmpty() || bytes.size > MAX_DOWNLOAD_BYTES) { failed(url, "retry", 3_600_000); return null }
             source.parentFile?.mkdirs()
             val tmp = File("${source.path}.tmp")
             tmp.writeBytes(bytes)
@@ -332,7 +372,8 @@ class CoverCacheStore(
         // Do not walk the entire cache after every cover in a large library scan.
         if (estimatedBytes.get() in 0..MAX_CACHE_BYTES) return
         val files =
-            root.walkTopDown()
+            root
+                .walkTopDown()
                 .filter { it.isFile && it.extension in setOf("webp", "jpg", "source") }
                 .sortedBy { maxOf(it.lastModified(), accessMarker(it).lastModified()) }
                 .toList()
@@ -357,7 +398,8 @@ class CoverCacheStore(
             knownFiles.clear()
             val stats = EvictionStats(evictedFiles, evictedBytes, total)
             lastEviction = stats
-            prefs.edit()
+            prefs
+                .edit()
                 .putInt(KEY_EVICTED_FILES, prefs.getInt(KEY_EVICTED_FILES, 0) + evictedFiles)
                 .putLong(KEY_EVICTED_BYTES, prefs.getLong(KEY_EVICTED_BYTES, 0L) + evictedBytes)
                 .apply()
@@ -392,7 +434,8 @@ class CoverCacheStore(
         private const val KEY_EVICTED_BYTES = "evicted_bytes"
 
         private fun defaultClient(): OkHttpClient =
-            OkHttpClient.Builder()
+            OkHttpClient
+                .Builder()
                 .addInterceptor(SecureCoverInterceptor)
                 .followRedirects(false)
                 .followSslRedirects(false)

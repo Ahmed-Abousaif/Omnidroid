@@ -28,10 +28,10 @@ import com.omnidroid.common.kotlin.isZipped
 import com.omnidroid.lib.R
 import com.omnidroid.lib.library.db.entity.DataFile
 import com.omnidroid.lib.library.db.entity.Game
-import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.library.scan.ChdSectors
 import com.omnidroid.lib.library.scan.LibraryFileFilter
 import com.omnidroid.lib.library.scan.RandomAccessBytes
+import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.storage.BaseStorageFile
 import com.omnidroid.lib.storage.DirectoriesManager
 import com.omnidroid.lib.storage.RomFiles
@@ -63,9 +63,10 @@ class LocalStorageProvider(
         flow {
             walkDirectory(getExternalFolder() ?: directoriesManager.getInternalRomsDirectory()).collect { emit(it) }
             val installed = File(context.filesDir, "ps3/config/dev_hdd0/game")
-            val descriptors = installed.listFiles().orEmpty().filter { it.isDirectory }.flatMap { title ->
-                listOf(File(title, "PARAM.SFO"), File(title, "ICON0.PNG")).filter { it.isFile }
-            }
+            val descriptors =
+                installed.listFiles().orEmpty().filter { it.isDirectory }.flatMap { title ->
+                    listOf(File(title, "PARAM.SFO"), File(title, "ICON0.PNG")).filter { it.isFile }
+                }
             emit(descriptors.map { BaseStorageFile(it.name, it.length(), it.toUri(), it.path, it.lastModified()) })
         }
 
@@ -78,9 +79,8 @@ class LocalStorageProvider(
 
     override fun openChd(uri: Uri): ChdSectors? = ChdImages.open(context, uri)
 
-    override fun getStorageFile(baseStorageFile: BaseStorageFile): StorageFile? {
-        return DocumentFileParser.parseDocumentFile(context, baseStorageFile)
-    }
+    override fun getStorageFile(baseStorageFile: BaseStorageFile): StorageFile? =
+        DocumentFileParser.parseDocumentFile(context, baseStorageFile)
 
     private fun getExternalFolder(): File? {
         val prefString = context.getString(R.string.pref_key_legacy_external_folder)
@@ -95,7 +95,8 @@ class LocalStorageProvider(
             while (directories.isNotEmpty()) {
                 val directory = directories.removeAt(0)
                 val groups =
-                    directory.listFiles()
+                    directory
+                        .listFiles()
                         ?.filterNot { it.name.startsWith(".") }
                         ?.groupBy { it.isDirectory } ?: mapOf()
 
@@ -149,13 +150,9 @@ class LocalStorageProvider(
         game: Game,
         dataFiles: List<DataFile>,
         allowVirtualFiles: Boolean,
-    ): RomFiles {
-        return RomFiles.Standard(listOf(getGameRom(game)) + dataFiles.map { getDataFile(it) })
-    }
+    ): RomFiles = RomFiles.Standard(listOf(getGameRom(game)) + dataFiles.map { getDataFile(it) })
 
-    override fun getInputStream(uri: Uri): InputStream {
-        return File(uri.path).inputStream()
-    }
+    override fun getInputStream(uri: Uri): InputStream = File(uri.path).inputStream()
 
     companion object {
         const val LOCAL_STORAGE_CACHE_SUBFOLDER = "local-storage-games"

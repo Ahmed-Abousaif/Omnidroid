@@ -16,8 +16,10 @@ import com.omnidroid.metadata.libretrodb.db.entity.LibretroRom
 class LibretroDBMetadataProvider(
     private val ovgdbManager: LibretroDBManager,
 ) : GameMetadataProvider {
-    override suspend fun catalogSeed(systemId: String, lookupKey: String): String? =
-        ovgdbManager.dbInstance.catalogSeedDao().payload(systemId, lookupKey)
+    override suspend fun catalogSeed(
+        systemId: String,
+        lookupKey: String,
+    ): String? = ovgdbManager.dbInstance.catalogSeedDao().payload(systemId, lookupKey)
 
     override val databaseVersion: Int = LibretroDatabase.VERSION
 
@@ -41,9 +43,10 @@ class LibretroDBMetadataProvider(
         val row =
             direct
                 ?: findByLooseName(systemId, fallbackTitle)
-                ?: key?.takeIf {
-                    it.type == MetadataKeyType.ROM_BASE || it.type == MetadataKeyType.ROM_NAME
-                }?.let { findByLooseName(systemId, it.value) }
+                ?: key
+                    ?.takeIf {
+                        it.type == MetadataKeyType.ROM_BASE || it.type == MetadataKeyType.ROM_NAME
+                    }?.let { findByLooseName(systemId, it.value) }
         val title = row?.name?.takeIf(::isLibraryTitle) ?: fallbackTitle
         val coverTitle = row?.rawName ?: row?.name ?: title
         return GameMetadata(
@@ -51,9 +54,23 @@ class LibretroDBMetadataProvider(
             system = systemId,
             romName = null,
             developer = null,
-            thumbnail = if (row != null) computeCoverUrl(GameSystem.findById(systemId), coverTitle, row.thumbnailPath) else null,
+            thumbnail =
+                if (row !=
+                    null
+                ) {
+                    computeCoverUrl(GameSystem.findById(systemId), coverTitle, row.thumbnailPath)
+                } else {
+                    null
+                },
             rawTitle = row?.rawName ?: row?.name,
-            matchMethod = if (direct != null) "key:${key?.type}" else if (row != null) "local_title" else "filename",
+            matchMethod =
+                if (direct != null) {
+                    "key:${key?.type}"
+                } else if (row != null) {
+                    "local_title"
+                } else {
+                    "filename"
+                },
             thumbnailIndexed = row?.thumbnailPath != null,
         )
     }
@@ -120,7 +137,8 @@ class LibretroDBMetadataProvider(
                 if (mameHits > fbneoHits) SystemID.MAME2003PLUS.dbname else SystemID.FBNEO.dbname
             }
 
-        return com.omnidroid.lib.library.metadata.ArcadeResolution(systemId, matchedDriver)
+        return com.omnidroid.lib.library.metadata
+            .ArcadeResolution(systemId, matchedDriver)
     }
 
     override suspend fun findCartridge(crc: String): GameMetadata? {
@@ -170,13 +188,11 @@ class LibretroDBMetadataProvider(
                     val tokenScore = TokenMatcher.bestScore(queryCore, candidateCore)
                     val regionScore = LibretroTitleMatching.regionScore(queryNorm, candidateNorm)
                     candidate to (tokenScore to regionScore)
-                }
-                .filter { it.second.first >= 85 }
+                }.filter { it.second.first >= 85 }
                 .maxWithOrNull(
                     compareBy<Pair<CandidateRom, Pair<Int, Int>>> { it.second.first }
                         .thenBy { it.second.second },
-                )
-                ?.first
+                )?.first
 
         return bestMatch?.let {
             LibretroRom(
@@ -201,7 +217,8 @@ class LibretroDBMetadataProvider(
         queryNorm: String,
     ): LibretroRom? {
         val matches =
-            dao.findAllByNormalizedNamePrefix(systemId, prefix)
+            dao
+                .findAllByNormalizedNamePrefix(systemId, prefix)
                 .filter { isLibraryTitle(it.name) }
         if (matches.isEmpty()) return null
         if (matches.size == 1) return matches.first()

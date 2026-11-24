@@ -247,18 +247,23 @@ class OmnidroidLibraryManualMatchTest {
             .query(
                 "SELECT sql FROM sqlite_master WHERE type IN ('table', 'index') AND sql IS NOT NULL " +
                     "AND name NOT IN ('sqlite_sequence', 'android_metadata', 'room_master_table') " +
-                    "AND name NOT IN ('game_identities', 'catalog_lookups', 'game_artwork', 'artwork_attempts', 'index_game_identities_lookupKey') " +
+                    "AND name NOT IN ('game_identities', 'catalog_lookups', 'game_artwork', " +
+                    "'artwork_attempts', 'index_game_identities_lookupKey') " +
                     "ORDER BY CASE type WHEN 'table' THEN 0 ELSE 1 END",
             ).use { cursor ->
                 while (cursor.moveToNext()) {
                     statements +=
-                        cursor.getString(0).replace(
-                            Regex(",\\s*`customCoverOrigin`\\s+TEXT\\s+NOT NULL\\s+DEFAULT\\s+(?:\\('user'\\)|'user')"),
-                            "",
-                        ).replace(
-                            Regex(",\\s*`isManualMatch`\\s+INTEGER\\s+NOT NULL(?:\\s+DEFAULT\\s+(?:\\(0\\)|0))?"),
-                            "",
-                        )
+                        cursor
+                            .getString(0)
+                            .replace(
+                                Regex(
+                                    ",\\s*`customCoverOrigin`\\s+TEXT\\s+NOT NULL\\s+DEFAULT\\s+(?:\\('user'\\)|'user')",
+                                ),
+                                "",
+                            ).replace(
+                                Regex(",\\s*`isManualMatch`\\s+INTEGER\\s+NOT NULL(?:\\s+DEFAULT\\s+(?:\\(0\\)|0))?"),
+                                "",
+                            )
                 }
             }
         val name = "manual-match-migration-test"

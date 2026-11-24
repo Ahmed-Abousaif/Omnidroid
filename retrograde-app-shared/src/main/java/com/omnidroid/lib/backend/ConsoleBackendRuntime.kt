@@ -23,4 +23,3 @@ interface ConsoleBackendRuntime {
         onExit: (Int) -> Unit,
     ): BackendSession
 }
-

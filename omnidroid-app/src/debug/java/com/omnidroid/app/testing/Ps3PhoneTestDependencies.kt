@@ -11,5 +11,6 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 interface Ps3PhoneTestDependencies {
     fun library(): OmnidroidLibrary
+
     fun database(): RetrogradeDatabase
 }

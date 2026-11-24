@@ -61,9 +61,12 @@ class GameLaunchTaskHandler(
         game: Game? = null,
     ) {
         if (game != null) {
-            val name = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                com.omnidroid.lib.savesync.GameCloudSyncPreferences(context).syncFileName(game)
-            }
+            val name =
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.omnidroid.lib.savesync
+                        .GameCloudSyncPreferences(context)
+                        .syncFileName(game)
+                }
             SaveSyncWork.enqueueGameWork(context, name)
         }
         SaveSyncWork.enqueueAutoWork(context, 5)

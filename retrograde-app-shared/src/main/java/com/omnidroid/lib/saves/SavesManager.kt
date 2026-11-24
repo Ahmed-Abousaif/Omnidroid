@@ -7,11 +7,11 @@ import com.omnidroid.lib.saves.migrators.getSavesMigrator
 import com.omnidroid.lib.storage.DirectoriesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import timber.log.Timber
 
 class SavesManager(
     private val directoriesManager: DirectoriesManager,
-    private val customSaveStorage: CustomSaveStorage = CustomSaveStorage(directoriesManager.context, directoriesManager),
+    private val customSaveStorage: CustomSaveStorage =
+        CustomSaveStorage(directoriesManager.context, directoriesManager),
 ) {
     suspend fun getSaveRAM(
         game: Game,
@@ -82,8 +82,12 @@ class SavesManager(
     /** RetroArch-compatible save file naming */
     private fun getSaveRAMFileName(game: Game): String {
         if (game.systemId == "ps3") {
-            val info = com.omnidroid.lib.library.scan.Ps3Content.read(directoriesManager.context, android.net.Uri.parse(game.fileUri))
-                ?: error("Could not identify this PS3 game's save directory.")
+            val info =
+                com.omnidroid.lib.library.scan.Ps3Content.read(
+                    directoriesManager.context,
+                    android.net.Uri.parse(game.fileUri),
+                )
+                    ?: error("Could not identify this PS3 game's save directory.")
             return "ps3-${info.titleId}.srm"
         }
         return "${game.fileName.substringBeforeLast(".")}.srm"

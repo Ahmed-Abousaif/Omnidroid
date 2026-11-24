@@ -45,7 +45,6 @@ import androidx.core.net.toUri
  * USRDIR too, and the walk collapses to roughly one query per directory per session.
  */
 object ContentUri {
-
     private const val TAG = "ARMSX3-SAF"
 
     /** Where the tree key registry lives. Keys are handed to the core inside paths, and the
@@ -68,7 +67,12 @@ object ContentUri {
 
     private val treeByKey = HashMap<String, String>()
 
-    private class Entry(val docId: String, val isDir: Boolean, val size: Long, val mtime: Long)
+    private class Entry(
+        val docId: String,
+        val isDir: Boolean,
+        val size: Long,
+        val mtime: Long,
+    )
 
     // -----------------------------------------------------------------------------------
     // Setup
@@ -109,7 +113,8 @@ object ContentUri {
             while (treeByKey.containsKey("t$n")) n++
             val key = "t$n"
             treeByKey[key] = uriString
-            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            context
+                .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .edit()
                 .putString(key, uriString)
                 .apply()
@@ -144,16 +149,18 @@ object ContentUri {
      */
     fun devicePathForDocument(documentUri: Uri): String? {
         val context = appContext ?: return null
-        val docId = runCatching {
-            DocumentsContract.getDocumentId(documentUri)
-        }.getOrNull() ?: return null
+        val docId =
+            runCatching {
+                DocumentsContract.getDocumentId(documentUri)
+            }.getOrNull() ?: return null
 
         synchronized(lock) {
             for ((key, treeUriString) in treeByKey) {
                 val treeUri = runCatching { treeUriString.toUri() }.getOrNull() ?: continue
-                val treeDocId = runCatching {
-                    DocumentsContract.getTreeDocumentId(treeUri)
-                }.getOrNull() ?: continue
+                val treeDocId =
+                    runCatching {
+                        DocumentsContract.getTreeDocumentId(treeUri)
+                    }.getOrNull() ?: continue
 
                 if (docId == treeDocId) return "$DEVICE_PREFIX/$key"
                 if (!docId.startsWith("$treeDocId/")) continue
@@ -161,12 +168,14 @@ object ContentUri {
                 // Confirm with the provider rather than trusting the string. Two trees can
                 // share a prefix (Games and Games2 under the same volume) and the shorter
                 // one would otherwise claim the other's documents.
-                val treeDoc = runCatching {
-                    DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocId)
-                }.getOrNull() ?: continue
-                val child = runCatching {
-                    DocumentsContract.isChildDocument(context.contentResolver, treeDoc, documentUri)
-                }.getOrDefault(true)
+                val treeDoc =
+                    runCatching {
+                        DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocId)
+                    }.getOrNull() ?: continue
+                val child =
+                    runCatching {
+                        DocumentsContract.isChildDocument(context.contentResolver, treeDoc, documentUri)
+                    }.getOrDefault(true)
                 if (!child) continue
 
                 return "$DEVICE_PREFIX/$key/" + docId.removePrefix("$treeDocId/")
@@ -179,8 +188,10 @@ object ContentUri {
     /** /storage/... for a document the external storage provider owns, else null. */
     fun sharedStoragePath(uri: Uri): String? {
         if (uri.authority != "com.android.externalstorage.documents") return null
-        val parts = runCatching { android.provider.DocumentsContract.getDocumentId(uri) }
-            .getOrNull()?.split(":", limit = 2)
+        val parts =
+            runCatching { android.provider.DocumentsContract.getDocumentId(uri) }
+                .getOrNull()
+                ?.split(":", limit = 2)
         if (parts == null || parts.size != 2) return null
         val (volume, relative) = parts
         return if (volume == "primary") "/storage/emulated/0/$relative" else "/storage/$volume/$relative"
@@ -194,7 +205,11 @@ object ContentUri {
         synchronized(lock) {
             val key = treeByKey.entries.firstOrNull { it.value == uriString }?.key ?: return
             treeByKey.remove(key)
-            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove(key).apply()
+            context
+                .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .remove(key)
+                .apply()
             invalidateLocked()
         }
         runCatching {
@@ -224,10 +239,11 @@ object ContentUri {
     /** [-1] missing, else [kind, size, mtime] with kind 0 file / 1 directory. */
     @Keep
     @JvmStatic
-    fun statPath(path: String): LongArray = synchronized(lock) {
-        val entry = resolveLocked(path) ?: return longArrayOf(-1)
-        longArrayOf(if (entry.isDir) 1 else 0, entry.size, entry.mtime)
-    }
+    fun statPath(path: String): LongArray =
+        synchronized(lock) {
+            val entry = resolveLocked(path) ?: return longArrayOf(-1)
+            longArrayOf(if (entry.isDir) 1 else 0, entry.size, entry.mtime)
+        }
 
     /**
      * One record per child, as `<D|F>\t<size>\t<mtime>\t<name>`.
@@ -238,15 +254,17 @@ object ContentUri {
      */
     @Keep
     @JvmStatic
-    fun listDir(path: String): Array<String> = synchronized(lock) {
-        val entry = resolveLocked(path) ?: return emptyArray()
-        if (!entry.isDir) return emptyArray()
-        val key = normalize(path)
-        val children = childrenLocked(key, entry) ?: return emptyArray()
-        children.map { (name, child) ->
-            "${if (child.isDir) "D" else "F"}\t${child.size}\t${child.mtime}\t$name"
-        }.toTypedArray()
-    }
+    fun listDir(path: String): Array<String> =
+        synchronized(lock) {
+            val entry = resolveLocked(path) ?: return emptyArray()
+            if (!entry.isDir) return emptyArray()
+            val key = normalize(path)
+            val children = childrenLocked(key, entry) ?: return emptyArray()
+            children
+                .map { (name, child) ->
+                    "${if (child.isDir) "D" else "F"}\t${child.size}\t${child.mtime}\t$name"
+                }.toTypedArray()
+        }
 
     /**
      * A detached file descriptor, or -1.
@@ -257,7 +275,11 @@ object ContentUri {
      */
     @Keep
     @JvmStatic
-    fun openFd(path: String, mode: String, create: Boolean): Int {
+    fun openFd(
+        path: String,
+        mode: String,
+        create: Boolean,
+    ): Int {
         val context = appContext ?: return -1
         synchronized(lock) {
             var entry = resolveLocked(path)
@@ -280,12 +302,13 @@ object ContentUri {
 
     @Keep
     @JvmStatic
-    fun createDir(path: String): Boolean = synchronized(lock) {
-        if (resolveLocked(path) != null) return false
-        val created = createNodeLocked(path, Document.MIME_TYPE_DIR) != null
-        if (created) invalidateLocked()
-        created
-    }
+    fun createDir(path: String): Boolean =
+        synchronized(lock) {
+            if (resolveLocked(path) != null) return false
+            val created = createNodeLocked(path, Document.MIME_TYPE_DIR) != null
+            if (created) invalidateLocked()
+            created
+        }
 
     @Keep
     @JvmStatic
@@ -294,9 +317,10 @@ object ContentUri {
         synchronized(lock) {
             val entry = resolveLocked(path) ?: return false
             val uri = documentUriLocked(path, entry) ?: return false
-            val ok = runCatching {
-                DocumentsContract.deleteDocument(context.contentResolver, uri)
-            }.getOrDefault(false)
+            val ok =
+                runCatching {
+                    DocumentsContract.deleteDocument(context.contentResolver, uri)
+                }.getOrDefault(false)
             if (ok) invalidateLocked()
             return ok
         }
@@ -304,7 +328,10 @@ object ContentUri {
 
     @Keep
     @JvmStatic
-    fun renamePath(from: String, to: String): Boolean {
+    fun renamePath(
+        from: String,
+        to: String,
+    ): Boolean {
         val context = appContext ?: return false
         synchronized(lock) {
             val entry = resolveLocked(from) ?: return false
@@ -324,15 +351,19 @@ object ContentUri {
                 val targetUri = documentUriLocked(toParent, target) ?: return false
                 current = runCatching {
                     DocumentsContract.moveDocument(
-                        context.contentResolver, current, sourceUri, targetUri,
+                        context.contentResolver,
+                        current,
+                        sourceUri,
+                        targetUri,
                     )
                 }.getOrNull() ?: return false
             }
 
             if (normalize(from).substringAfterLast('/') != toName) {
-                val renamed = runCatching {
-                    DocumentsContract.renameDocument(context.contentResolver, current, toName)
-                }.getOrNull() ?: return false
+                val renamed =
+                    runCatching {
+                        DocumentsContract.renameDocument(context.contentResolver, current, toName)
+                    }.getOrNull() ?: return false
                 if (renamed.toString().isEmpty()) return false
             }
 
@@ -355,14 +386,11 @@ object ContentUri {
         missing.clear()
     }
 
-    private fun normalize(path: String): String =
-        path.removePrefix(DEVICE_PREFIX).trim('/')
+    private fun normalize(path: String): String = path.removePrefix(DEVICE_PREFIX).trim('/')
 
-    private fun parentOf(normalized: String): String =
-        normalized.substringBeforeLast('/', "")
+    private fun parentOf(normalized: String): String = normalized.substringBeforeLast('/', "")
 
-    private fun treeUriLocked(key: String): Uri? =
-        treeByKey[key]?.let { runCatching { it.toUri() }.getOrNull() }
+    private fun treeUriLocked(key: String): Uri? = treeByKey[key]?.let { runCatching { it.toUri() }.getOrNull() }
 
     /**
      * Walk a path to the node it names, listing each directory on the way down.
@@ -379,8 +407,9 @@ object ContentUri {
         val treeKey = key.substringBefore('/')
         val treeUri = treeUriLocked(treeKey) ?: return null
 
-        val rootId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
-            ?: return null
+        val rootId =
+            runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
+                ?: return null
         val root = Entry(rootId, isDir = true, size = 0, mtime = 0)
         entries[treeKey] = root
         if (key == treeKey) return root
@@ -402,31 +431,38 @@ object ContentUri {
      * This is the whole performance story. Resolving one file caches its siblings, so the
      * second through thousandth lookup in the same directory cost nothing.
      */
-    private fun childrenLocked(dirKey: String, dir: Entry): List<Pair<String, Entry>>? {
+    private fun childrenLocked(
+        dirKey: String,
+        dir: Entry,
+    ): List<Pair<String, Entry>>? {
         val context = appContext ?: return null
         val treeUri = treeUriLocked(dirKey.substringBefore('/')) ?: return null
 
-        val childrenUri = runCatching {
-            DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, dir.docId)
-        }.getOrNull() ?: return null
+        val childrenUri =
+            runCatching {
+                DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, dir.docId)
+            }.getOrNull() ?: return null
 
-        val projection = arrayOf(
-            Document.COLUMN_DISPLAY_NAME,
-            Document.COLUMN_DOCUMENT_ID,
-            Document.COLUMN_MIME_TYPE,
-            Document.COLUMN_SIZE,
-            Document.COLUMN_LAST_MODIFIED,
-        )
+        val projection =
+            arrayOf(
+                Document.COLUMN_DISPLAY_NAME,
+                Document.COLUMN_DOCUMENT_ID,
+                Document.COLUMN_MIME_TYPE,
+                Document.COLUMN_SIZE,
+                Document.COLUMN_LAST_MODIFIED,
+            )
 
         val result = ArrayList<Pair<String, Entry>>()
-        val queried = runCatching {
-            context.contentResolver.query(childrenUri, projection, null, null, null)
-                ?.use { cursor -> readChildren(cursor, dirKey, result) }
-            true
-        }.getOrElse { failure ->
-            android.util.Log.w(TAG, "list '$dirKey': ${failure.message}")
-            false
-        }
+        val queried =
+            runCatching {
+                context.contentResolver
+                    .query(childrenUri, projection, null, null, null)
+                    ?.use { cursor -> readChildren(cursor, dirKey, result) }
+                true
+            }.getOrElse { failure ->
+                android.util.Log.w(TAG, "list '$dirKey': ${failure.message}")
+                false
+            }
 
         if (!queried) return null
         listed.add(dirKey)
@@ -452,7 +488,10 @@ object ContentUri {
         }
     }
 
-    private fun documentUriLocked(path: String, entry: Entry): Uri? {
+    private fun documentUriLocked(
+        path: String,
+        entry: Entry,
+    ): Uri? {
         val treeUri = treeUriLocked(normalize(path).substringBefore('/')) ?: return null
         return runCatching {
             DocumentsContract.buildDocumentUriUsingTree(treeUri, entry.docId)
@@ -467,7 +506,10 @@ object ContentUri {
         return created
     }
 
-    private fun createNodeLocked(path: String, mimeType: String): Entry? {
+    private fun createNodeLocked(
+        path: String,
+        mimeType: String,
+    ): Entry? {
         val context = appContext ?: return null
         val key = normalize(path)
         val parent = parentOf(key)
@@ -477,12 +519,14 @@ object ContentUri {
         val parentEntry = resolveLocked(parent) ?: return null
         val parentUri = documentUriLocked(parent, parentEntry) ?: return null
 
-        val createdUri = runCatching {
-            DocumentsContract.createDocument(context.contentResolver, parentUri, mimeType, name)
-        }.getOrNull() ?: return null
+        val createdUri =
+            runCatching {
+                DocumentsContract.createDocument(context.contentResolver, parentUri, mimeType, name)
+            }.getOrNull() ?: return null
 
-        val docId = runCatching { DocumentsContract.getDocumentId(createdUri) }.getOrNull()
-            ?: return null
+        val docId =
+            runCatching { DocumentsContract.getDocumentId(createdUri) }.getOrNull()
+                ?: return null
 
         // Some providers quietly rename on collision, so the node that came back is not
         // necessarily at the path that was asked for. Re-listing the parent is the only way

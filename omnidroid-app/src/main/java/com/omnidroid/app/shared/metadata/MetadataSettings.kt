@@ -9,16 +9,24 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class MetadataSettings @Inject constructor(@ApplicationContext private val context: Context) {
-    private val prefs get() = SharedPreferencesHelper.getSharedPreferences(context)
-    val enabled get() = prefs.getBoolean(context.getString(R.string.pref_key_online_artwork), true)
-    val wifiOnly get() = prefs.getBoolean(context.getString(R.string.pref_key_artwork_wifi_only), true)
-    val baseUrl get() = BuildConfig.METADATA_BASE_URL.trimEnd('/')
-    val configured get() = baseUrl.startsWith("https://")
-    var catalogRevision: Long
-        get() = prefs.getLong("metadata_catalog_revision", 0)
-        set(value) { prefs.edit().putLong("metadata_catalog_revision", value).apply() }
-    var cursor: Int
-        get() = prefs.getInt("metadata_enrichment_cursor", 0)
-        set(value) { prefs.edit().putInt("metadata_enrichment_cursor", value).apply() }
-}
+class MetadataSettings
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+    ) {
+        private val prefs get() = SharedPreferencesHelper.getSharedPreferences(context)
+        val enabled get() = prefs.getBoolean(context.getString(R.string.pref_key_online_artwork), true)
+        val wifiOnly get() = prefs.getBoolean(context.getString(R.string.pref_key_artwork_wifi_only), true)
+        val baseUrl get() = BuildConfig.METADATA_BASE_URL.trimEnd('/')
+        val configured get() = baseUrl.startsWith("https://")
+        var catalogRevision: Long
+            get() = prefs.getLong("metadata_catalog_revision", 0)
+            set(value) {
+                prefs.edit().putLong("metadata_catalog_revision", value).apply()
+            }
+        var cursor: Int
+            get() = prefs.getInt("metadata_enrichment_cursor", 0)
+            set(value) {
+                prefs.edit().putInt("metadata_enrichment_cursor", value).apply()
+            }
+    }

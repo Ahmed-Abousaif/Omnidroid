@@ -147,15 +147,14 @@ enum class CoreID(
     ;
 
     companion object {
-        fun getAssetManager(coreID: CoreID): AssetsManager {
-            return when (coreID) {
+        fun getAssetManager(coreID: CoreID): AssetsManager =
+            when (coreID) {
                 PPSSPP -> PPSSPPAssetsManager()
                 ARMSX2 -> PCEE2AssetsManager()
                 DOLPHIN -> DolphinAssetsManager()
                 CEMU -> CemuAssetsManager()
                 else -> NoAssetsManager()
             }
-        }
     }
 
     interface AssetsManager {
@@ -168,7 +167,10 @@ enum class CoreID(
 
         suspend fun isReady(directoriesManager: DirectoriesManager): Boolean
 
-        suspend fun clearAssets(directoriesManager: DirectoriesManager, sharedPreferences: SharedPreferences)
+        suspend fun clearAssets(
+            directoriesManager: DirectoriesManager,
+            sharedPreferences: SharedPreferences,
+        )
     }
 }
 

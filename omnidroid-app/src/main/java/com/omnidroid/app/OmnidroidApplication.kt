@@ -10,16 +10,16 @@ import androidx.work.WorkManager
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import com.google.android.material.color.DynamicColors
-import com.omnidroid.lib.backend.ConsoleBackendRegistry
-import com.omnidroid.lib.backend.libretro.LibretroBackendDescriptor
-import com.omnidroid.lib.backend.switch_backend.SwitchBackendDescriptor
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
-import com.omnidroid.app.shared.displays.DisplayClient
 import com.omnidroid.app.shared.covers.CoverUtils
+import com.omnidroid.app.shared.displays.DisplayClient
 import com.omnidroid.app.shared.startup.GameProcessInitializer
 import com.omnidroid.app.shared.startup.MainProcessInitializer
 import com.omnidroid.app.utils.android.isMainProcess
 import com.omnidroid.ext.feature.context.ContextHandler
+import com.omnidroid.lib.backend.ConsoleBackendRegistry
+import com.omnidroid.lib.backend.libretro.LibretroBackendDescriptor
+import com.omnidroid.lib.backend.switch_backend.SwitchBackendDescriptor
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +28,10 @@ import kotlinx.coroutines.SupervisorJob
 import javax.inject.Inject
 
 @HiltAndroidApp
-class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Configuration.Provider {
+class OmnidroidApplication :
+    android.app.Application(),
+    ImageLoaderFactory,
+    Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
@@ -44,7 +47,8 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
 
     override val workManagerConfiguration: Configuration
         get() =
-            Configuration.Builder()
+            Configuration
+                .Builder()
                 .setWorkerFactory(workerFactory)
                 .build()
 
@@ -76,17 +80,24 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
 
         ConsoleBackendRegistry.registerDescriptor(LibretroBackendDescriptor())
         ConsoleBackendRegistry.registerDescriptor(SwitchBackendDescriptor())
-        ConsoleBackendRegistry.registerDescriptor(com.omnidroid.lib.backend.ps3.Ps3BackendDescriptor())
+        ConsoleBackendRegistry.registerDescriptor(
+            com.omnidroid.lib.backend.ps3
+                .Ps3BackendDescriptor(),
+        )
         ConsoleBackendRegistry.registerRuntimeFactory(com.omnidroid.lib.backend.BackendID.SWITCH) {
-            com.omnidroid.app.shared.game.backend.switch_backend.SwitchBackendRuntime()
+            com.omnidroid.app.shared.game.backend.switch_backend
+                .SwitchBackendRuntime()
         }
         ConsoleBackendRegistry.registerRuntimeFactory(com.omnidroid.lib.backend.BackendID.PS3) {
-            com.omnidroid.app.shared.game.backend.ps3.Ps3BackendRuntime()
+            com.omnidroid.app.shared.game.backend.ps3
+                .Ps3BackendRuntime()
         }
 
         if (isMainProcess()) {
-            com.omnidroid.app.shared.library.LibraryPeriodicScanScheduler.syncWithPreference(this)
-            com.omnidroid.app.shared.library.ArtworkEnrichmentWork.schedule(this)
+            com.omnidroid.app.shared.library.LibraryPeriodicScanScheduler
+                .syncWithPreference(this)
+            com.omnidroid.app.shared.library.ArtworkEnrichmentWork
+                .schedule(this)
         }
     }
 
@@ -95,9 +106,7 @@ class OmnidroidApplication : android.app.Application(), ImageLoaderFactory, Conf
         ContextHandler.attachBaseContext(base)
     }
 
-    override fun newImageLoader(): ImageLoader {
-        return CoverUtils.buildImageLoader(applicationContext)
-    }
+    override fun newImageLoader(): ImageLoader = CoverUtils.buildImageLoader(applicationContext)
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)

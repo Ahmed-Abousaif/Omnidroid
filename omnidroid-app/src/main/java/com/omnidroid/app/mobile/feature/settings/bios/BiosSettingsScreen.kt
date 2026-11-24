@@ -1,38 +1,38 @@
 package com.omnidroid.app.mobile.feature.settings.bios
 import android.content.Context
-import com.omnidroid.lib.backend.ConsoleBackendRegistry
-import com.omnidroid.app.shared.game.backend.RequirementImporter
-import com.omnidroid.lib.backend.RequirementAction
-import com.omnidroid.lib.backend.RequirementDescriptor
-import com.omnidroid.lib.backend.RequirementItem
-import com.omnidroid.lib.library.SystemCoreConfig
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.produceState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import com.omnidroid.app.OmnidroidApplication
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.omnidroid.R
+import com.omnidroid.app.OmnidroidApplication
+import com.omnidroid.app.shared.game.backend.RequirementImporter
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsGroup
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsPage
 import com.omnidroid.app.utils.android.settings.SettingsHorizontalDivider
+import com.omnidroid.lib.backend.ConsoleBackendRegistry
+import com.omnidroid.lib.backend.RequirementAction
+import com.omnidroid.lib.backend.RequirementDescriptor
+import com.omnidroid.lib.backend.RequirementItem
 import com.omnidroid.lib.bios.Bios
 import com.omnidroid.lib.bios.Ps2Bios
+import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.SystemID
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun BiosScreen(
@@ -50,35 +50,47 @@ fun BiosScreen(
                 val action = currentImportAction
                 if (action != null) {
                     OmnidroidApplication.scope(context.applicationContext).launch(Dispatchers.Main) {
-                        val result = withContext(Dispatchers.IO) {
-                            RequirementImporter.import(context.applicationContext, uri, action) { message ->
-                                android.os.Handler(android.os.Looper.getMainLooper()).post { importProgress = message }
+                        val result =
+                            withContext(Dispatchers.IO) {
+                                RequirementImporter.import(context.applicationContext, uri, action) { message ->
+                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                        importProgress =
+                                            message
+                                    }
+                                }
                             }
-                        }
                         revision++
                         importProgress = null
                         if (action is RequirementAction.BackendImport) {
-                            Toast.makeText(context, result.message ?: if (result.success) "Import complete" else "Import failed", Toast.LENGTH_LONG).show()
+                            Toast
+                                .makeText(
+                                    context,
+                                    result.message ?: if (result.success) "Import complete" else "Import failed",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             return@launch
                         }
-                        val isFirmware = when (action) {
-                            is RequirementAction.ArchiveImport -> true
-                            is RequirementAction.FileImport -> action.destinationDir.contains("registered")
-                            else -> false
-                        }
-                        if (result.success) {
-                            val msg = if (isFirmware) {
-                                context.getString(R.string.settings_switch_firmware_import_success)
-                            } else {
-                                context.getString(R.string.settings_switch_keys_import_success)
+                        val isFirmware =
+                            when (action) {
+                                is RequirementAction.ArchiveImport -> true
+                                is RequirementAction.FileImport -> action.destinationDir.contains("registered")
+                                else -> false
                             }
+                        if (result.success) {
+                            val msg =
+                                if (isFirmware) {
+                                    context.getString(R.string.settings_switch_firmware_import_success)
+                                } else {
+                                    context.getString(R.string.settings_switch_keys_import_success)
+                                }
                             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                         } else {
-                            val msg = if (isFirmware) {
-                                context.getString(R.string.settings_switch_firmware_import_failed)
-                            } else {
-                                context.getString(R.string.settings_switch_keys_import_failed)
-                            }
+                            val msg =
+                                if (isFirmware) {
+                                    context.getString(R.string.settings_switch_firmware_import_failed)
+                                } else {
+                                    context.getString(R.string.settings_switch_keys_import_failed)
+                                }
                             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                         }
                     }
@@ -121,7 +133,10 @@ fun BiosScreen(
                 revision = revision,
                 onAction = { item ->
                     when (val action = item.action) {
-                        is RequirementAction.FileImport, is RequirementAction.ArchiveImport, is RequirementAction.BackendImport -> {
+                        is RequirementAction.FileImport,
+                        is RequirementAction.ArchiveImport,
+                        is RequirementAction.BackendImport,
+                        -> {
                             if (importProgress != null) return@RequirementSection
                             importProgress = "Select a file…"
                             currentImportAction = action
@@ -155,9 +170,10 @@ private fun RequirementSection(
     ) {
         descriptor.items.forEach { item ->
             val status by produceState<Pair<Boolean, String?>?>(null, item.id, revision) {
-                value = withContext(Dispatchers.IO) {
-                    item.isFulfilled(context) to item.statusSummary?.invoke(context)
-                }
+                value =
+                    withContext(Dispatchers.IO) {
+                        item.isFulfilled(context) to item.statusSummary?.invoke(context)
+                    }
             }
             val isFulfilled = status?.first == true
             val statusSummary = status?.second

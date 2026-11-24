@@ -89,10 +89,9 @@ object DetectionRules {
     fun identify(
         input: ScanInput,
         beforeExpensiveHash: (SystemID) -> Unit = {},
-    ): Detection {
-        return runCatching { identifyUnsafe(input, beforeExpensiveHash) }
+    ): Detection =
+        runCatching { identifyUnsafe(input, beforeExpensiveHash) }
             .getOrElse { Detection.Rejected("Could not read ${input.name}") }
-    }
 
     private fun identifyUnsafe(
         input: ScanInput,
@@ -107,7 +106,10 @@ object DetectionRules {
         }
         return when (extension) {
             "nds" -> headerSerial(input, SystemID.NDS) { it.ascii(0x0C, 4).takeIf(::isCode) }
-            "3ds", "cci", "zcci", "cxi", "3dsx" -> headerSerial(input, SystemID.NINTENDO_3DS) { it.ascii(0x1150, 10).ifBlank { null } }
+            "3ds", "cci", "zcci", "cxi", "3dsx" ->
+                headerSerial(input, SystemID.NINTENDO_3DS) {
+                    it.ascii(0x1150, 10).ifBlank { null }
+                }
             "gcm" -> nintendo(input) { NintendoDisc.fromIso(it) }
             "tgc" -> nintendo(input) { NintendoDisc.fromTgc(it) }
             "wbfs" -> nintendo(input) { NintendoDisc.fromWbfs(it) }
@@ -174,8 +176,12 @@ object DetectionRules {
             val sectors = DiscImages.userSectors(bytes, SectorLayout(2048, 0))
             Iso9660.readFile(sectors, "PS3_GAME/PARAM.SFO")?.let { sfo ->
                 Ps3Content.parse(sfo)?.takeIf { it.playable }?.let { info ->
-                    return Detection.Ready(SystemID.PS3, MetadataKey(MetadataKeyType.SERIAL, info.titleId),
-                        title = info.title, cover = Iso9660.readFile(sectors, "PS3_GAME/ICON0.PNG"))
+                    return Detection.Ready(
+                        SystemID.PS3,
+                        MetadataKey(MetadataKeyType.SERIAL, info.titleId),
+                        title = info.title,
+                        cover = Iso9660.readFile(sectors, "PS3_GAME/ICON0.PNG"),
+                    )
                 }
             }
             // Encrypted PS3 images still expose their volume label. Native probing
@@ -191,11 +197,17 @@ object DetectionRules {
 
     private fun ps3Folder(input: ScanInput): Detection {
         if (!input.name.equals("PARAM.SFO", ignoreCase = true)) return Detection.Rejected("Not a PS3 game descriptor")
-        val info = input.open()?.use { Ps3Content.parse(it.read(0, minOf(input.size, 1024 * 1024L).toInt())) }
-            ?: return Detection.Rejected("Invalid PS3 game descriptor")
+        val info =
+            input.open()?.use { Ps3Content.parse(it.read(0, minOf(input.size, 1024 * 1024L).toInt())) }
+                ?: return Detection.Rejected("Invalid PS3 game descriptor")
         if (!info.playable) return Detection.Rejected("PS3 update, DLC or system content")
         val cover = input.openNamed("ICON0.PNG")?.use { it.read(0, minOf(it.size, 1024 * 1024L).toInt()) }
-        return Detection.Ready(SystemID.PS3, MetadataKey(MetadataKeyType.SERIAL, info.titleId), title = info.title, cover = cover)
+        return Detection.Ready(
+            SystemID.PS3,
+            MetadataKey(MetadataKeyType.SERIAL, info.titleId),
+            title = info.title,
+            cover = cover,
+        )
     }
 
     private fun bin(input: ScanInput): Detection {
@@ -243,10 +255,12 @@ object DetectionRules {
     }
 
     private fun cue(input: ScanInput): Detection {
-        val sheet = input.open()?.use { it.read(0, minOf(it.size, 256 * 1024).toInt()).toString(Charsets.UTF_8) }
-            ?: return Detection.Rejected("Could not read cue sheet")
-        val track = cueDataTrack(sheet)?.substringAfterLast('/')?.substringAfterLast('\\')
-            ?: return Detection.Rejected("Cue sheet has no data track")
+        val sheet =
+            input.open()?.use { it.read(0, minOf(it.size, 256 * 1024).toInt()).toString(Charsets.UTF_8) }
+                ?: return Detection.Rejected("Could not read cue sheet")
+        val track =
+            cueDataTrack(sheet)?.substringAfterLast('/')?.substringAfterLast('\\')
+                ?: return Detection.Rejected("Cue sheet has no data track")
         val bin = input.openNamed(track) ?: return Detection.Rejected("Cue data track $track is missing")
         bin.use { identifyFlat(it, input.name, 0)?.let { return it } }
         return Detection.Rejected("Cue data track was not a recognised disc")
@@ -322,10 +336,12 @@ object DetectionRules {
         input: ScanInput,
         beforeExpensiveHash: (SystemID) -> Unit,
     ): Detection {
-        val text = input.open()?.use { it.read(0, minOf(it.size, 64 * 1024).toInt()).toString(Charsets.UTF_8) }
-            ?: return Detection.Rejected("Could not read playlist")
-        val first = text.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() && !it.startsWith("#") }
-            ?: return Detection.Rejected("Playlist is empty")
+        val text =
+            input.open()?.use { it.read(0, minOf(it.size, 64 * 1024).toInt()).toString(Charsets.UTF_8) }
+                ?: return Detection.Rejected("Could not read playlist")
+        val first =
+            text.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() && !it.startsWith("#") }
+                ?: return Detection.Rejected("Playlist is empty")
         val name = first.substringAfterLast('/').substringAfterLast('\\')
         val child = input.openNamed(name) ?: return Detection.Rejected("Playlist entry $name is missing")
         return identify(
@@ -439,7 +455,7 @@ object DetectionRules {
             val crc =
                 if (
                     CartridgeHasher.needsNormalisedHash(entry.extension, entry.uncompressedSize) ||
-                        entry.crc == "00000000"
+                    entry.crc == "00000000"
                 ) {
                     ZipEntryHasher.hash(bytes, entry, mode)
                 } else {
@@ -473,8 +489,9 @@ object DetectionRules {
         allowed: Set<SystemID>,
         reason: String,
     ): Detection {
-        val system = FolderHints.systemAmong(input.path, allowed)
-            ?: return Detection.Rejected("Needs a console folder: $reason")
+        val system =
+            FolderHints.systemAmong(input.path, allowed)
+                ?: return Detection.Rejected("Needs a console folder: $reason")
         return Detection.Ready(system, romBase(input.name))
     }
 
@@ -491,9 +508,7 @@ object DetectionRules {
         return MetadataKey(MetadataKeyType.ROM_BASE, ScanKeys.romBase(base))
     }
 
-    private fun isCode(value: String): Boolean {
-        return value.length == 4 && value.all { it.isLetterOrDigit() }
-    }
+    private fun isCode(value: String): Boolean = value.length == 4 && value.all { it.isLetterOrDigit() }
 
     private fun cueDataTrack(sheet: String): String? {
         val lines = sheet.lines()
@@ -501,7 +516,14 @@ object DetectionRules {
         val region = if (highDensity >= 0) lines.drop(highDensity + 1) else lines
         val file = Regex("FILE\\s+\"([^\"]+)\"", RegexOption.IGNORE_CASE)
         if (highDensity >= 0) {
-            return region.firstNotNullOfOrNull { file.find(it)?.groupValues?.get(1)?.substringAfterLast('/')?.substringAfterLast('\\') }
+            return region.firstNotNullOfOrNull {
+                file
+                    .find(it)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.substringAfterLast('/')
+                    ?.substringAfterLast('\\')
+            }
         }
         val dataLine =
             region.indexOfFirst {
@@ -509,10 +531,22 @@ object DetectionRules {
             }
         if (dataLine >= 0) {
             for (index in dataLine downTo 0) {
-                file.find(region[index])?.groupValues?.get(1)?.let { return it.substringAfterLast('/').substringAfterLast('\\') }
+                file
+                    .find(
+                        region[index],
+                    )?.groupValues
+                    ?.get(1)
+                    ?.let { return it.substringAfterLast('/').substringAfterLast('\\') }
             }
         }
-        return region.firstNotNullOfOrNull { file.find(it)?.groupValues?.get(1)?.substringAfterLast('/')?.substringAfterLast('\\') }
+        return region.firstNotNullOfOrNull {
+            file
+                .find(it)
+                ?.groupValues
+                ?.get(1)
+                ?.substringAfterLast('/')
+                ?.substringAfterLast('\\')
+        }
     }
 }
 

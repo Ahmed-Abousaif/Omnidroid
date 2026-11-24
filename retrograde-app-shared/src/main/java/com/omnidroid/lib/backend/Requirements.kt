@@ -29,7 +29,9 @@ sealed class RequirementAction {
         val fileFilterPattern: String? = null,
     ) : RequirementAction()
 
-    data class OpenUrl(val url: String) : RequirementAction()
+    data class OpenUrl(
+        val url: String,
+    ) : RequirementAction()
 
     object Custom : RequirementAction()
 }

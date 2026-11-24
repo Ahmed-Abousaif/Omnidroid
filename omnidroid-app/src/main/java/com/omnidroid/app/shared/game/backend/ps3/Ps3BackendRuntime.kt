@@ -12,28 +12,52 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class Ps3BackendRuntime : ConsoleBackendRuntime {
-    override suspend fun prepare(activity: Activity, game: Game, config: SystemCoreConfig): Result<Unit> =
+    override suspend fun prepare(
+        activity: Activity,
+        game: Game,
+        config: SystemCoreConfig,
+    ): Result<Unit> =
         withContext(Dispatchers.IO) {
             runCatching {
                 val uri = android.net.Uri.parse(game.fileUri)
-                val info = Armsx3Bridge.withDataAccess(activity) {
-                    Armsx3Bridge.initialize(activity.applicationContext)
-                    com.omnidroid.lib.library.scan.Ps3Content.read(activity, uri) ?: Armsx3Bridge.probe(activity, uri)
-                }
+                val info =
+                    Armsx3Bridge.withDataAccess(activity) {
+                        Armsx3Bridge.initialize(activity.applicationContext)
+                        com.omnidroid.lib.library.scan.Ps3Content
+                            .read(activity, uri) ?: Armsx3Bridge.probe(activity, uri)
+                    }
                 val saved = dependencies(activity).savesManager().getSaveRAM(game, config)
                 Armsx3Bridge.withDataAccess(activity) {
-                    if (saved != null) com.omnidroid.lib.saves.Ps3SaveArchive.restore(
-                        java.io.File(Armsx3Bridge.baseDir(activity), "config/dev_hdd0/home/00000001/savedata"), info.titleId, saved,
-                    )
+                    if (saved != null) {
+                        com.omnidroid.lib.saves.Ps3SaveArchive.restore(
+                            java.io.File(Armsx3Bridge.baseDir(activity), "config/dev_hdd0/home/00000001/savedata"),
+                            info.titleId,
+                            saved,
+                        )
+                    }
                     Armsx3Bridge.initialize(activity.applicationContext)
                 }
             }
         }
 
-    override fun createSession(activity: Activity, game: Game, config: SystemCoreConfig, container: ViewGroup, onExit: (Int) -> Unit) =
-        Ps3BackendSession(activity, game, PreferenceManager.getDefaultSharedPreferences(activity), Ps3BackendDescriptor().capabilities(config), dependencies(activity).savesManager(), onExit)
+    override fun createSession(
+        activity: Activity,
+        game: Game,
+        config: SystemCoreConfig,
+        container: ViewGroup,
+        onExit: (Int) -> Unit,
+    ) = Ps3BackendSession(
+        activity,
+        game,
+        PreferenceManager.getDefaultSharedPreferences(activity),
+        Ps3BackendDescriptor().capabilities(config),
+        dependencies(activity).savesManager(),
+        onExit,
+    )
 
-    private fun dependencies(activity: Activity) = dagger.hilt.android.EntryPointAccessors.fromApplication(activity, Ps3RuntimeDependencies::class.java)
+    private fun dependencies(activity: Activity) =
+        dagger.hilt.android.EntryPointAccessors
+            .fromApplication(activity, Ps3RuntimeDependencies::class.java)
 }
 
 @dagger.hilt.EntryPoint

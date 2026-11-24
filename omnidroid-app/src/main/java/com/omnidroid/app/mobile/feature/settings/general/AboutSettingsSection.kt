@@ -150,8 +150,7 @@ private fun rememberAppUpdater(): AppUpdater {
             .fromApplication(
                 context.applicationContext,
                 AppUpdaterEntryPoint::class.java,
-            )
-            .appUpdater()
+            ).appUpdater()
     }
 }
 

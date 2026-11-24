@@ -14,7 +14,6 @@ import org.junit.Before
 import org.junit.Test
 
 class ConsoleBackendRegistryTest {
-
     @Before
     fun setUp() {
         ConsoleBackendRegistry.clear()
@@ -57,17 +56,35 @@ class ConsoleBackendRegistryTest {
     @Test
     fun registersSwitchDescriptorAndResolvesSwitchCoreAndSystem() {
         val libretro = LibretroBackendDescriptor()
-        val switch = com.omnidroid.lib.backend.switch_backend.SwitchBackendDescriptor()
+        val switch =
+            com.omnidroid.lib.backend.switch_backend
+                .SwitchBackendDescriptor()
         ConsoleBackendRegistry.registerDescriptor(libretro)
         ConsoleBackendRegistry.registerDescriptor(switch)
 
         assertEquals(libretro, ConsoleBackendRegistry.findDescriptorForCore(CoreID.SNES9X))
         assertEquals(switch, ConsoleBackendRegistry.findDescriptorForCore(CoreID.SWITCH))
         assertEquals(switch, ConsoleBackendRegistry.findDescriptorForSystem("switch"))
-        assertFalse(switch.capabilities(com.omnidroid.lib.library.SystemCoreConfig(CoreID.SWITCH, hashMapOf())).supportsSaveStates)
-        assertTrue(switch.capabilities(com.omnidroid.lib.library.SystemCoreConfig(CoreID.SWITCH, hashMapOf())).supportsCustomTouchLayout)
+        assertFalse(
+            switch
+                .capabilities(
+                    com.omnidroid.lib.library
+                        .SystemCoreConfig(CoreID.SWITCH, hashMapOf()),
+                ).supportsSaveStates,
+        )
+        assertTrue(
+            switch
+                .capabilities(
+                    com.omnidroid.lib.library
+                        .SystemCoreConfig(CoreID.SWITCH, hashMapOf()),
+                ).supportsCustomTouchLayout,
+        )
 
-        val reqs = switch.requirementsFor(com.omnidroid.lib.library.SystemCoreConfig(CoreID.SWITCH, hashMapOf()))
+        val reqs =
+            switch.requirementsFor(
+                com.omnidroid.lib.library
+                    .SystemCoreConfig(CoreID.SWITCH, hashMapOf()),
+            )
         assertEquals(2, reqs.items.size)
         assertEquals("prod_keys", reqs.items[0].id)
         assertEquals(RequirementSeverity.REQUIRED, reqs.items[0].severity)
@@ -79,23 +96,22 @@ class ConsoleBackendRegistryTest {
     @Test
     fun runtimeFactoryRegistrationAndRetrieval() {
         var factoryCalled = false
-        val dummyRuntime = object : ConsoleBackendRuntime {
-            override suspend fun prepare(
-                activity: android.app.Activity,
-                game: com.omnidroid.lib.library.db.entity.Game,
-                config: com.omnidroid.lib.library.SystemCoreConfig,
-            ): Result<Unit> = Result.success(Unit)
+        val dummyRuntime =
+            object : ConsoleBackendRuntime {
+                override suspend fun prepare(
+                    activity: android.app.Activity,
+                    game: com.omnidroid.lib.library.db.entity.Game,
+                    config: com.omnidroid.lib.library.SystemCoreConfig,
+                ): Result<Unit> = Result.success(Unit)
 
-            override fun createSession(
-                activity: android.app.Activity,
-                game: com.omnidroid.lib.library.db.entity.Game,
-                config: com.omnidroid.lib.library.SystemCoreConfig,
-                container: android.view.ViewGroup,
-                onExit: (Int) -> Unit,
-            ): BackendSession {
-                throw UnsupportedOperationException()
+                override fun createSession(
+                    activity: android.app.Activity,
+                    game: com.omnidroid.lib.library.db.entity.Game,
+                    config: com.omnidroid.lib.library.SystemCoreConfig,
+                    container: android.view.ViewGroup,
+                    onExit: (Int) -> Unit,
+                ): BackendSession = throw UnsupportedOperationException()
             }
-        }
 
         ConsoleBackendRegistry.registerRuntimeFactory(BackendID.LIBRETRO) {
             factoryCalled = true

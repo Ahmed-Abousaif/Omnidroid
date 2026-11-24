@@ -54,10 +54,20 @@ class GameViewModelSaves(
     suspend fun saveNewSlot() {
         if (retroGameView.retroGameView is com.omnidroid.lib.backend.NativeStateSession) {
             try {
-                val index = withContext(Dispatchers.IO) { com.omnidroid.lib.saves.Ps3StateSlots.forGame(appContext, game).nextIndex() }
+                val index =
+                    withContext(
+                        Dispatchers.IO,
+                    ) {
+                        com.omnidroid.lib.saves.Ps3StateSlots
+                            .forGame(appContext, game)
+                            .nextIndex()
+                    }
                 saveNativeSlot(index)
-            } catch (e: CancellationException) { throw e }
-            catch (e: Exception) { showSaveError(e) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                showSaveError(e)
+            }
             return
         }
         saveManualState { statesManager.setNewSlotSave(game, systemCoreConfig.coreID, it) }
@@ -66,21 +76,53 @@ class GameViewModelSaves(
     private suspend fun saveNativeSlot(index: Int): Boolean {
         val session = retroGameView.retroGameView as? com.omnidroid.lib.backend.NativeStateSession ?: return false
         try {
-            val previewSize = GraphicsUtils.convertDpToPixel(StatesPreviewManager.PREVIEW_SIZE_DP, appContext).roundToInt()
-            val preview = try {
-                if (index == com.omnidroid.lib.saves.Ps3StateSlots.QUICK_SLOT) null else retroGameView.retroGameView?.takeScreenshot(previewSize, 3)
-            } catch (e: CancellationException) { throw e }
-            catch (e: Exception) { Timber.w(e, "Cannot capture state preview"); null }
+            val previewSize =
+                GraphicsUtils
+                    .convertDpToPixel(
+                        StatesPreviewManager.PREVIEW_SIZE_DP,
+                        appContext,
+                    ).roundToInt()
+            val preview =
+                try {
+                    if (index ==
+                        com.omnidroid.lib.saves.Ps3StateSlots.QUICK_SLOT
+                    ) {
+                        null
+                    } else {
+                        retroGameView.retroGameView?.takeScreenshot(previewSize, 3)
+                    }
+                } catch (
+                    e: CancellationException,
+                ) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.w(e, "Cannot capture state preview")
+                    null
+                }
             try {
                 if (!session.saveNativeState(index)) throw IOException("Core rejected state capture")
                 try {
-                    if (preview != null) statesPreviewManager.setPreviewForSlot(game, preview, systemCoreConfig.coreID, index)
-                } catch (e: CancellationException) { throw e }
-                catch (e: Exception) { Timber.w(e, "State saved, but preview failed") }
-            } finally { preview?.recycle() }
+                    if (preview !=
+                        null
+                    ) {
+                        statesPreviewManager.setPreviewForSlot(game, preview, systemCoreConfig.coreID, index)
+                    }
+                } catch (
+                    e: CancellationException,
+                ) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.w(e, "State saved, but preview failed")
+                }
+            } finally {
+                preview?.recycle()
+            }
             sideEffects.showToast(appContext.getString(R.string.game_toast_save_state_saved))
-        } catch (e: CancellationException) { throw e }
-        catch (e: Exception) { showSaveError(e) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            showSaveError(e)
+        }
         return true
     }
 
@@ -263,9 +305,8 @@ class GameViewModelSaves(
         )
     }
 
-    private suspend fun isAutoSaveEnabled(): Boolean {
-        return systemCoreConfig.statesSupported && systemCoreConfig.autoSaveSupported && settingsManager.autoSave()
-    }
+    private suspend fun isAutoSaveEnabled(): Boolean =
+        systemCoreConfig.statesSupported && systemCoreConfig.autoSaveSupported && settingsManager.autoSave()
 
     private suspend fun takeScreenshotPreview(index: Int) {
         val sizeInDp = StatesPreviewManager.PREVIEW_SIZE_DP

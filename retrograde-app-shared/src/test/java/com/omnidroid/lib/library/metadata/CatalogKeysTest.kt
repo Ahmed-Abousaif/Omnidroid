@@ -1,15 +1,22 @@
 package com.omnidroid.lib.library.metadata
 
 import com.omnidroid.lib.library.metadata.catalog.CatalogKeys
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class CatalogKeysTest {
     @Test fun regionalDumpsAndDiscsShareLookupButPreserveReleaseDistinctions() {
-        assertEquals(CatalogKeys.lookup("psx", "Final Fantasy VII"), CatalogKeys.lookup("psx", "Final Fantasy VII (USA) (Disc 2) [!]"))
+        assertEquals(
+            CatalogKeys.lookup("psx", "Final Fantasy VII"),
+            CatalogKeys.lookup("psx", "Final Fantasy VII (USA) (Disc 2) [!]"),
+        )
         assertNotEquals(CatalogKeys.lookup("psx", "Final Fantasy VII"), CatalogKeys.lookup("psx", "Final Fantasy VIII"))
         assertNotEquals(CatalogKeys.lookup("psx", "Final Fantasy VII"), CatalogKeys.lookup("ps2", "Final Fantasy VII"))
-        assertNotEquals(CatalogKeys.lookup("psx", "Final Fantasy VII"), CatalogKeys.lookup("psx", "Final Fantasy VII (Remastered)"))
+        assertNotEquals(
+            CatalogKeys.lookup("psx", "Final Fantasy VII"),
+            CatalogKeys.lookup("psx", "Final Fantasy VII (Remastered)"),
+        )
     }
 
     @Test fun localizedNamesRetainUnicodeAndNormalizeAccents() {
@@ -20,11 +27,17 @@ class CatalogKeysTest {
     }
 
     @Test fun replacementContentInvalidatesInFlightArtworkEvenWithSameTitle() {
-        assertNotEquals(CatalogKeys.fingerprint("psx", "Example", "SERIAL", "A"), CatalogKeys.fingerprint("psx", "Example", "SERIAL", "B"))
+        assertNotEquals(
+            CatalogKeys.fingerprint("psx", "Example", "SERIAL", "A"),
+            CatalogKeys.fingerprint("psx", "Example", "SERIAL", "B"),
+        )
     }
 
     @Test fun arcadeBackendsShareCatalogLookupsWithoutSharingLocalIdentity() {
         assertEquals(CatalogKeys.lookup("fbneo", "Example"), CatalogKeys.lookup("mame2003plus", "Example"))
-        assertNotEquals(CatalogKeys.fingerprint("fbneo", "Example", null, null), CatalogKeys.fingerprint("mame2003plus", "Example", null, null))
+        assertNotEquals(
+            CatalogKeys.fingerprint("fbneo", "Example", null, null),
+            CatalogKeys.fingerprint("mame2003plus", "Example", null, null),
+        )
     }
 }

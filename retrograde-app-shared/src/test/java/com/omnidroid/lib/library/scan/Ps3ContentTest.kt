@@ -1,6 +1,9 @@
 package com.omnidroid.lib.library.scan
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -13,12 +16,24 @@ class Ps3ContentTest {
         val keyStart = 20 + fields.size * 16
         val dataStart = keyStart + keys.size
         val bytes = ByteBuffer.allocate(dataStart + data.size).order(ByteOrder.LITTLE_ENDIAN)
-        bytes.put(byteArrayOf(0, 0x50, 0x53, 0x46)).putInt(0x101).putInt(keyStart).putInt(dataStart).putInt(fields.size)
+        bytes
+            .put(byteArrayOf(0, 0x50, 0x53, 0x46))
+            .putInt(0x101)
+            .putInt(keyStart)
+            .putInt(dataStart)
+            .putInt(fields.size)
         var keyOffset = 0
         var dataOffset = 0
         fields.forEach { (key, value) ->
-            bytes.putShort(keyOffset.toShort()).putShort(0x204).putInt(value.length + 1).putInt(value.length + 1).putInt(dataOffset)
-            keyOffset += key.length + 1; dataOffset += value.length + 1
+            bytes
+                .putShort(
+                    keyOffset.toShort(),
+                ).putShort(0x204)
+                .putInt(value.length + 1)
+                .putInt(value.length + 1)
+                .putInt(dataOffset)
+            keyOffset += key.length + 1
+            dataOffset += value.length + 1
         }
         bytes.put(keys).put(data)
         return bytes.array()
@@ -41,7 +56,13 @@ class Ps3ContentTest {
 
     @Test fun detectsFolderDescriptorsWithoutConsoleFolderHints() {
         val bytes = descriptor()
-        val result = DetectionRules.identify(ScanInput("PARAM.SFO", bytes.size.toLong(), "/Games/Test/PS3_GAME/PARAM.SFO", { ByteArraySource(bytes) }))
+        val result =
+            DetectionRules
+                .identify(
+                    ScanInput("PARAM.SFO", bytes.size.toLong(), "/Games/Test/PS3_GAME/PARAM.SFO", {
+                        ByteArraySource(bytes)
+                    }),
+                )
         assertTrue(result is Detection.Ready)
         result as Detection.Ready
         assertEquals(com.omnidroid.lib.library.SystemID.PS3, result.system)

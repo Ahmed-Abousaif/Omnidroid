@@ -60,8 +60,8 @@ object SliceCatalog {
         return installedSha != sha || installedSchema != schema
     }
 
-    fun displayName(sliceId: String): String {
-        return when (sliceId.lowercase()) {
+    fun displayName(sliceId: String): String =
+        when (sliceId.lowercase()) {
             "arcade" -> "Arcade"
             "dos" -> "DOS"
             "snes" -> "SNES"
@@ -95,7 +95,6 @@ object SliceCatalog {
             "wsc" -> "WonderSwan Color"
             else -> sliceId.uppercase()
         }
-    }
 }
 
 interface MetadataSliceInstaller {

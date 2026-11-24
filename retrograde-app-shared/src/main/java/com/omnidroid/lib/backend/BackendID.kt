@@ -1,7 +1,9 @@
 package com.omnidroid.lib.backend
 
 @JvmInline
-value class BackendID(val value: String) {
+value class BackendID(
+    val value: String,
+) {
     companion object {
         val LIBRETRO = BackendID("libretro")
         val SWITCH = BackendID("switch")
@@ -10,4 +12,3 @@ value class BackendID(val value: String) {
 
     override fun toString(): String = value
 }
-

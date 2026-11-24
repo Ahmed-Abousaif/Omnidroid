@@ -1,6 +1,5 @@
 package com.omnidroid.app.mobile.feature.settings.general
 
-import com.omnidroid.app.mobile.shared.compose.dialog.DialogActionRole
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.size
@@ -23,6 +22,7 @@ import com.omnidroid.app.mobile.feature.library.LibraryStartupStore
 import com.omnidroid.app.mobile.feature.library.StartupDestinationPickerDialog
 import com.omnidroid.app.mobile.feature.library.startupDestinationLabel
 import com.omnidroid.app.mobile.feature.library.startupDestinations
+import com.omnidroid.app.mobile.shared.compose.dialog.DialogActionRole
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.shared.library.LibraryIndexScheduler
@@ -32,10 +32,10 @@ import com.omnidroid.app.utils.android.settings.OmnidroidSettingsMenuLink
 import com.omnidroid.app.utils.android.settings.OmnidroidSettingsSwitch
 import com.omnidroid.app.utils.android.settings.booleanPreferenceState
 import com.omnidroid.lib.library.MetaSystemID
-import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 @Composable
 internal fun LibraryLayoutSettings() {
@@ -83,9 +83,7 @@ internal fun StartupScreenSettings(availableConsoles: List<MetaSystemID>) {
 }
 
 @Composable
-internal fun LibraryMaintenanceSettings(
-    onNavigateSubscreen: (SettingsSubscreen) -> Unit,
-) {
+internal fun LibraryMaintenanceSettings(onNavigateSubscreen: (SettingsSubscreen) -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val clearMissingDialogState = remember { mutableStateOf(false) }
@@ -121,7 +119,8 @@ internal fun LibraryMaintenanceSettings(
             subtitleRes = R.string.settings_description_artwork_wifi_only,
         )
         LaunchedEffect(onlineArtwork.value, artworkWifiOnly.value) {
-            com.omnidroid.app.shared.library.ArtworkEnrichmentWork.schedule(context, reset = true)
+            com.omnidroid.app.shared.library.ArtworkEnrichmentWork
+                .schedule(context, reset = true)
         }
         OmnidroidSettingsMenuLink(
             titleRes = R.string.settings_title_unrecognized_files,
@@ -198,11 +197,12 @@ internal fun RomsSettings(
     val emptyDirectory = stringResource(R.string.none)
 
     val currentDirectoryName by produceState(emptyDirectory, context, currentDirectory, emptyDirectory) {
-        value = withContext(Dispatchers.IO) {
-            runCatching {
-                DocumentFile.fromTreeUri(context, Uri.parse(currentDirectory))?.name
-            }.getOrNull() ?: emptyDirectory
-        }
+        value =
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    DocumentFile.fromTreeUri(context, Uri.parse(currentDirectory))?.name
+                }.getOrNull() ?: emptyDirectory
+            }
     }
 
     OmnidroidSettingsGroup(

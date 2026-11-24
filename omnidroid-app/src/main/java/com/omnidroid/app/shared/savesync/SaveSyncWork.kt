@@ -51,7 +51,8 @@ class SaveSyncWork
             displayNotification()
 
             val coresToSync =
-                settingsManager.syncStatesCores()
+                settingsManager
+                    .syncStatesCores()
                     .mapNotNull { findByName(it) }
                     .toSet()
 
@@ -103,12 +104,14 @@ class SaveSyncWork
             val isGameSync = inputData.getString(GAME_FILE_NAME) != null
             val isManualSync = !isAutoSync && !isGameSync
             val syncPreferences = GameCloudSyncPreferences(applicationContext)
-            val gameAlways = inputData.getString(GAME_FILE_NAME)?.let { fileName ->
-                val game = retrogradeDb.gameDao().selectAll().firstOrNull {
-                    it.fileName == fileName || syncPreferences.syncFileName(it) == fileName
-                }
-                game != null && syncPreferences.shouldSyncGame(game, settingsManager.syncSaves())
-            } ?: true
+            val gameAlways =
+                inputData.getString(GAME_FILE_NAME)?.let { fileName ->
+                    val game =
+                        retrogradeDb.gameDao().selectAll().firstOrNull {
+                            it.fileName == fileName || syncPreferences.syncFileName(it) == fileName
+                        }
+                    game != null && syncPreferences.shouldSyncGame(game, settingsManager.syncSaves())
+                } ?: true
             return when {
                 isGameSync -> gameAlways
                 isAutoSync ->
@@ -119,9 +122,13 @@ class SaveSyncWork
                                     .partitionGames(retrogradeDb.gameDao().selectAll())
                                     .alwaysFileNames
                                     .isNotEmpty()
-                            )
-                isManualSync -> settingsManager.syncSaves() || GameCloudSyncPreferences(applicationContext)
-                    .partitionGames(retrogradeDb.gameDao().selectAll()).alwaysFileNames.isNotEmpty()
+                        )
+                isManualSync ->
+                    settingsManager.syncSaves() ||
+                        GameCloudSyncPreferences(applicationContext)
+                            .partitionGames(retrogradeDb.gameDao().selectAll())
+                            .alwaysFileNames
+                            .isNotEmpty()
                 else -> false
             }
         }
@@ -161,7 +168,11 @@ class SaveSyncWork
                 delayMinutes: Long = 0,
             ) {
                 val prefs = SharedPreferencesHelper.getSharedPreferences(applicationContext)
-                val autoEnabled = prefs.getBoolean(applicationContext.getString(R.string.pref_key_save_sync_auto), false)
+                val autoEnabled =
+                    prefs.getBoolean(
+                        applicationContext.getString(R.string.pref_key_save_sync_auto),
+                        false,
+                    )
                 if (!autoEnabled) {
                     cancelAutoWork(applicationContext)
                     return
@@ -180,12 +191,12 @@ class SaveSyncWork
                     ExistingPeriodicWorkPolicy.REPLACE,
                     PeriodicWorkRequestBuilder<SaveSyncWork>(repeat, unit)
                         .setConstraints(
-                            Constraints.Builder()
+                            Constraints
+                                .Builder()
                                 .setRequiredNetworkType(NetworkType.UNMETERED)
                                 .setRequiresBatteryNotLow(true)
                                 .build(),
-                        )
-                        .setInputData(workDataOf(IS_AUTO to true))
+                        ).setInputData(workDataOf(IS_AUTO to true))
                         .setInitialDelay(delayMinutes, TimeUnit.MINUTES)
                         .build(),
                 )

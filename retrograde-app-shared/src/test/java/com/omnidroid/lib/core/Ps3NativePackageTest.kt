@@ -1,7 +1,8 @@
 package com.omnidroid.lib.core
 
 import com.omnidroid.lib.library.CoreID
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder

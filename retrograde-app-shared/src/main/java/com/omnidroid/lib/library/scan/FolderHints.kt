@@ -85,7 +85,8 @@ object FolderHints {
     fun system(path: String?): SystemID? {
         if (path.isNullOrBlank()) return null
         val segments =
-            path.split('/', '\\')
+            path
+                .split('/', '\\')
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
                 .dropLast(1)
@@ -97,11 +98,7 @@ object FolderHints {
     fun systemAmong(
         path: String?,
         allowed: Set<SystemID>,
-    ): SystemID? {
-        return system(path)?.takeIf { it in allowed }
-    }
+    ): SystemID? = system(path)?.takeIf { it in allowed }
 
-    private fun normalise(segment: String): String {
-        return segment.lowercase(Locale.US).replace(Regex("[^a-z0-9]"), "")
-    }
+    private fun normalise(segment: String): String = segment.lowercase(Locale.US).replace(Regex("[^a-z0-9]"), "")
 }

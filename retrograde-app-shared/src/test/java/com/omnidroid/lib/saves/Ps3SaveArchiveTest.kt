@@ -1,6 +1,8 @@
 package com.omnidroid.lib.saves
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -14,8 +16,14 @@ class Ps3SaveArchiveTest {
 
     @Test fun roundTripsOneTitleWithoutIncludingOtherGames() {
         val source = temporary.newFolder("source")
-        File(source, "BLUS31426-SAVE/PARAM.SFO").apply { parentFile!!.mkdirs(); writeText("saved game") }
-        File(source, "BLES00001-SAVE/DATA").apply { parentFile!!.mkdirs(); writeText("other game") }
+        File(source, "BLUS31426-SAVE/PARAM.SFO").apply {
+            parentFile!!.mkdirs()
+            writeText("saved game")
+        }
+        File(source, "BLES00001-SAVE/DATA").apply {
+            parentFile!!.mkdirs()
+            writeText("other game")
+        }
         val archive = Ps3SaveArchive.capture(source, "BLUS31426")!!
         val destination = temporary.newFolder("destination")
         Ps3SaveArchive.restore(destination, "BLUS31426", archive)
@@ -26,11 +34,17 @@ class Ps3SaveArchiveTest {
     @Test fun rejectsTraversalBeforeReplacingAnySave() {
         val output = ByteArrayOutputStream()
         ZipOutputStream(output).use { zip ->
-            zip.putNextEntry(ZipEntry("BLUS31426-SAVE/DATA")); zip.write("old".toByteArray()); zip.closeEntry()
-            zip.putNextEntry(ZipEntry("BLUS31426-SAVE/../../escape")); zip.write(1); zip.closeEntry()
+            zip.putNextEntry(ZipEntry("BLUS31426-SAVE/DATA"))
+            zip.write("old".toByteArray())
+            zip.closeEntry()
+            zip.putNextEntry(ZipEntry("BLUS31426-SAVE/../../escape"))
+            zip.write(1)
+            zip.closeEntry()
         }
         val destination = temporary.newFolder("destination")
-        assertThrows(IllegalArgumentException::class.java) { Ps3SaveArchive.restore(destination, "BLUS31426", output.toByteArray()) }
+        assertThrows(IllegalArgumentException::class.java) {
+            Ps3SaveArchive.restore(destination, "BLUS31426", output.toByteArray())
+        }
         assertFalse(File(destination, "BLUS31426-SAVE/DATA").exists())
         assertFalse(File(destination.parentFile, "escape").exists())
     }

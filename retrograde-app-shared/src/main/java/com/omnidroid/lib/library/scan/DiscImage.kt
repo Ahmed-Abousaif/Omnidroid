@@ -131,25 +131,45 @@ internal object Iso9660 {
         return findFile(sectors, extent, length, wanted.split('/').filter { it.isNotBlank() })
     }
 
-    private fun findFile(sectors: UserSectors, extent: Int, length: Int, components: List<String>): ByteArray? {
+    private fun findFile(
+        sectors: UserSectors,
+        extent: Int,
+        length: Int,
+        components: List<String>,
+    ): ByteArray? {
         if (components.isEmpty() || length !in 1..(1024 * 1024)) return null
         val directory = readExtent(sectors, extent, length) ?: return null
         var cursor = 0
         while (cursor + 33 < directory.size) {
             val recordLength = directory[cursor].toInt() and 0xff
-            if (recordLength == 0) { cursor = ((cursor / 2048) + 1) * 2048; continue }
+            if (recordLength == 0) {
+                cursor = ((cursor / 2048) + 1) * 2048
+                continue
+            }
             if (recordLength < 34 || cursor + recordLength > directory.size) return null
             val nameLength = directory[cursor + 32].toInt() and 0xff
             if (33 + nameLength > recordLength) return null
-            val name = directory.copyOfRange(cursor + 33, cursor + 33 + nameLength).toString(Charsets.US_ASCII).substringBefore(';')
+            val name =
+                directory
+                    .copyOfRange(
+                        cursor + 33,
+                        cursor + 33 + nameLength,
+                    ).toString(Charsets.US_ASCII)
+                    .substringBefore(';')
             if (name.equals(components.first(), ignoreCase = true)) {
                 val fileExtent = le32(directory, cursor + 2)
                 val fileLength = le32(directory, cursor + 10)
                 if (fileExtent < 0 || fileLength !in 1..(1024 * 1024)) return null
                 val isDirectory = directory[cursor + 25].toInt() and 2 != 0
-                return if (components.size > 1 && isDirectory) findFile(sectors, fileExtent, fileLength, components.drop(1))
-                    else if (components.size == 1 && !isDirectory) readExtent(sectors, fileExtent, fileLength)
-                    else null
+                return if (components.size > 1 &&
+                    isDirectory
+                ) {
+                    findFile(sectors, fileExtent, fileLength, components.drop(1))
+                } else if (components.size == 1 && !isDirectory) {
+                    readExtent(sectors, fileExtent, fileLength)
+                } else {
+                    null
+                }
             }
             cursor += recordLength
         }
@@ -253,12 +273,11 @@ internal object CsoImage {
     private fun le32(
         bytes: ByteArray,
         offset: Int,
-    ): Int {
-        return (bytes[offset].toInt() and 0xFF) or
+    ): Int =
+        (bytes[offset].toInt() and 0xFF) or
             ((bytes[offset + 1].toInt() and 0xFF) shl 8) or
             ((bytes[offset + 2].toInt() and 0xFF) shl 16) or
             ((bytes[offset + 3].toInt() and 0xFF) shl 24)
-    }
 }
 
 internal object Lz4 {

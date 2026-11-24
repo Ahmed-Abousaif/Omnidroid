@@ -1,3 +1,6 @@
+// Retain the established backend package for existing imports.
+@file:Suppress("ktlint:standard:package-name")
+
 package com.omnidroid.app.shared.game.backend.switch_backend
 
 import android.app.Activity
@@ -12,9 +15,23 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class SwitchBackendRuntime : ConsoleBackendRuntime {
-    override suspend fun prepare(activity: Activity, game: Game, config: SystemCoreConfig): Result<Unit> =
-        withContext(Dispatchers.IO) { runCatching { EdenBridge.initialize(activity.applicationContext) } }
+    override suspend fun prepare(
+        activity: Activity,
+        game: Game,
+        config: SystemCoreConfig,
+    ): Result<Unit> = withContext(Dispatchers.IO) { runCatching { EdenBridge.initialize(activity.applicationContext) } }
 
-    override fun createSession(activity: Activity, game: Game, config: SystemCoreConfig, container: ViewGroup, onExit: (Int) -> Unit) =
-        SwitchBackendSession(activity, game, PreferenceManager.getDefaultSharedPreferences(activity), SwitchBackendDescriptor().capabilities(config), onExit)
+    override fun createSession(
+        activity: Activity,
+        game: Game,
+        config: SystemCoreConfig,
+        container: ViewGroup,
+        onExit: (Int) -> Unit,
+    ) = SwitchBackendSession(
+        activity,
+        game,
+        PreferenceManager.getDefaultSharedPreferences(activity),
+        SwitchBackendDescriptor().capabilities(config),
+        onExit,
+    )
 }
