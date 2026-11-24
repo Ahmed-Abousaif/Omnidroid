@@ -199,6 +199,7 @@ fun GameDetailsScreen(
         ConsoleBackdrop(
             game = game,
             modifier = backdropModifier,
+            preferredCoverUrl = state.metadata.backgroundImageUrl,
         )
         BoxWithConstraints(
             modifier =
@@ -746,6 +747,28 @@ private fun GameDetailsInfoContent(
             modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 16.dp),
             label = stringResource(R.string.game_sessions),
             value = "${state.sessionCount}",
+        )
+        listOf(
+            R.string.game_metadata_developer to game.developer,
+            R.string.game_metadata_publisher to state.metadata.publisher,
+            R.string.game_metadata_genre to state.metadata.genre,
+            R.string.game_metadata_release_date to state.metadata.releaseDate,
+            R.string.game_metadata_rating to state.metadata.rating,
+        ).forEach { (label, value) ->
+            if (!value.isNullOrBlank()) GameStat(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                label = stringResource(label), value = value,
+            )
+        }
+        state.metadata.description?.takeIf { it.isNotBlank() }?.let { description ->
+            Text(text = description, style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp, bottom = 12.dp))
+        }
+        if (state.metadata != GameRemoteMetadata()) Text(
+            text = stringResource(R.string.metadata_attribution),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

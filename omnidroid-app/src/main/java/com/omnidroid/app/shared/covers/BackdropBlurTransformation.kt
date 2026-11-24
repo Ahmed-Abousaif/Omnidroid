@@ -14,9 +14,9 @@ import com.omnidroid.lib.library.db.entity.Game
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-internal fun backdropRequest(context: Context, game: Game, width: Int, height: Int, radius: Int): ImageRequest {
+internal fun backdropRequest(context: Context, game: Game, width: Int, height: Int, radius: Int, preferredCoverUrl: String? = null): ImageRequest {
     val blur = BackdropBlurTransformation(width, height, radius)
-    val cover = CoverUtils.coverRequest(context, game, size = Size(width, height))
+    val cover = CoverUtils.coverRequest(context, game, preferredCoverUrl = preferredCoverUrl, size = Size(width, height))
     return cover.newBuilder()
         // Never let a blurred thumbnail replace the sharp cover in Coil's shared cache.
         .memoryCacheKey("backdrop:${cover.memoryCacheKey}:${blur.cacheKey}")

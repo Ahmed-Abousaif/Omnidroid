@@ -51,6 +51,15 @@ internal fun AboutSettings() {
     UpdateSettings()
     SettingsHorizontalDivider()
 
+    OmnidroidSettingsGroup(titleRes = R.string.settings_title_metadata_sources) {
+        OmnidroidSettingsMenuLink(
+            titleRes = R.string.settings_title_igdb,
+            subtitleRes = R.string.metadata_attribution,
+            onClick = { openExternalUrl(context, "https://www.igdb.com") },
+        )
+    }
+    SettingsHorizontalDivider()
+
     OmnidroidSettingsGroup(
         titleRes = R.string.settings_section_community,
     ) {
