@@ -57,7 +57,7 @@ android {
     defaultConfig {
         // Public service address only. IGDB credentials remain exclusively on the server.
         val metadataBaseUrl = providers.gradleProperty("omnidroid.metadataBaseUrl")
-            .orElse(providers.environmentVariable("OMNIDROID_METADATA_BASE_URL")).getOrElse("https://omnidroid.game")
+            .orElse(providers.environmentVariable("OMNIDROID_METADATA_BASE_URL")).getOrElse("https://omnidroid.site")
         require(metadataBaseUrl.isEmpty() || metadataBaseUrl.startsWith("https://")) { "Metadata service must use HTTPS" }
         buildConfigField("String", "METADATA_BASE_URL", "\"${metadataBaseUrl.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
 

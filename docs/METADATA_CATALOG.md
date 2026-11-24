@@ -61,11 +61,11 @@ not uploaded.
 Supply the deployed server's HTTPS origin at build time:
 
 ```powershell
-$env:OMNIDROID_METADATA_BASE_URL = 'https://omnidroid.game'
+$env:OMNIDROID_METADATA_BASE_URL = 'https://omnidroid.site'
 .\gradlew.bat :omnidroid-app:assembleFreeDynamicRelease
 ```
 
-The default origin is `https://omnidroid.game`. The equivalent override is
+The default origin is `https://omnidroid.site`. The equivalent override is
 `-Pomnidroid.metadataBaseUrl=https://...`.
 Only the public service address enters `BuildConfig`; provider secrets/tokens do
 not. An unset origin keeps remote resolution disabled while offline scanning,
@@ -152,7 +152,7 @@ use must satisfy the provider's applicable partnership/attribution terms.
 
 ### Shipping permanent matches in existing metadata slices
 
-Run the existing `libretro-db-builder` with `OMNIDROID_CATALOG_ORIGIN=https://omnidroid.game`
+Run the existing `libretro-db-builder` with `OMNIDROID_CATALOG_ORIGIN=https://omnidroid.site`
 or its optional `--catalog-origin` argument. It downloads only the public accepted
 catalog export, embeds mappings in an optional `catalog_seeds` table inside each
 system's SQLite payload, then uses the existing gzip/checksum/manifest pipeline.
@@ -222,7 +222,7 @@ adb shell am instrument -w -e class com.omnidroid.app.testing.MetadataEndToEndTe
 ```
 
 The injected test transport and loopback cleartext allowance are test/debug
-facilities; the release service URL remains `https://omnidroid.game`. The static
+facilities; the release service URL remains `https://omnidroid.site`. The static
 server check is `pnpm exec tsc --noEmit -p .nuxt/tsconfig.server.json`.
 
 ### Validated locally on 2026-11-24
