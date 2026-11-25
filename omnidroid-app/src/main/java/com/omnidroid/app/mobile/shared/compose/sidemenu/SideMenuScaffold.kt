@@ -11,6 +11,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -42,15 +43,21 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -58,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
+import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.utils.android.settings.LocalSettingsRowContainerColor
 
@@ -81,6 +89,20 @@ fun SideMenuScaffold(
         }
     }
     BackHandler { if (canGoBack) onBack() else state.closeThen() }
+    // Once open, controller focus belongs in the menu, not on the button that opened it. A menu opened
+    // by touch can't hold focus yet, so the first controller press would land on the screen behind it:
+    // pull focus in as soon as the controller is used.
+    val controller = LocalControllerNavigation.current
+    val inputModeManager = LocalInputModeManager.current
+    var panelHasFocus by remember { mutableStateOf(false) }
+    LaunchedEffect(transition.currentState) {
+        if (!transition.currentState) return@LaunchedEffect
+        snapshotFlow { inputModeManager.inputMode }.collect { mode ->
+            if (mode != InputMode.Touch && !panelHasFocus) {
+                runCatching { controller?.contentFocusRequester?.requestFocus() }
+            }
+        }
+    }
     val scrimAlpha by animateFloatAsState(
         targetValue = if (transition.targetState) 0.58f else 0f,
         animationSpec = tween(if (transition.targetState) 280 else 220),
@@ -108,6 +130,7 @@ fun SideMenuScaffold(
                 Column(
                     Modifier
                         .fillMaxSize()
+                        .menuFocusTrap { panelHasFocus = it }
                         .windowInsetsPadding(WindowInsets.safeDrawing.only(insetSides))
                         .padding(bottom = maxOf(currentBottomReserved, bottomInset)),
                 ) {
@@ -222,3 +245,24 @@ private fun SideMenuHeader(title: String, canGoBack: Boolean, onClick: () -> Uni
         )
     }
 }
+
+/**
+ * Keeps D-pad focus inside the open menu: moving past an edge stays put, and only Back or Close
+ * leaves. Focus requested by code (closing the menu, opening a dialog) still moves freely.
+ */
+private fun Modifier.menuFocusTrap(onHasFocus: (Boolean) -> Unit): Modifier =
+    onFocusChanged { onHasFocus(it.hasFocus) }
+        .focusProperties {
+            onExit = {
+                val direction = requestedFocusDirection
+                if (direction == FocusDirection.Left ||
+                    direction == FocusDirection.Right ||
+                    direction == FocusDirection.Up ||
+                    direction == FocusDirection.Down ||
+                    direction == FocusDirection.Next ||
+                    direction == FocusDirection.Previous
+                ) {
+                    cancelFocusChange()
+                }
+            }
+        }.focusGroup()

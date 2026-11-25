@@ -27,7 +27,7 @@ object CoreLibraryLocator {
     ): File? {
         return File(context.applicationInfo.nativeLibraryDir)
             .walkBottomUp()
-            .firstOrNull { it.name == coreID.libretroFileName }
+            .firstOrNull { it.name == coreID.libretroFileName && it.isFile && it.length() > 0L }
     }
 
     /** Cores previously downloaded into app files storage. */
@@ -35,8 +35,10 @@ object CoreLibraryLocator {
         context: Context,
         coreID: CoreID,
     ): File? {
+        GithubCoreDownloader.findCached(File(context.filesDir, "cores"), coreID)?.let { return it }
         return context.filesDir
-            .walkBottomUp()
-            .firstOrNull { it.name == coreID.libretroFileName }
+            .walkTopDown()
+            .onEnter { it != File(context.filesDir, "ps3") }
+            .firstOrNull { it.name == coreID.libretroFileName && it.isFile && it.length() > 0L }
     }
 }

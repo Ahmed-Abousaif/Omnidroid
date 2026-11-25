@@ -651,4 +651,19 @@
 
     <string name="game_menu_appearance">Appearance</string>
     <string name="dialog_more_below">More below</string>
+    <string name="pref_key_online_artwork" translatable="false">online_artwork_enabled</string>
+    <string name="pref_key_artwork_wifi_only" translatable="false">artwork_background_wifi_only</string>
+    <string name="settings_title_online_artwork">Online artwork and game details</string>
+    <string name="settings_description_online_artwork">Use IGDB for missing artwork and game details. Local game databases and libretro artwork take priority.</string>
+    <string name="settings_title_artwork_wifi_only">Background artwork on unmetered networks</string>
+    <string name="settings_description_artwork_wifi_only">Download missing artwork in the background only on Wi-Fi or another unmetered connection.</string>
+    <string name="game_search_online_covers">Search online covers</string>
+    <string name="metadata_attribution">Additional game information and artwork provided by IGDB.com.</string>
+    <string name="settings_title_metadata_sources">Game information sources</string>
+    <string name="settings_title_igdb" translatable="false">IGDB.com</string>
+    <string name="game_metadata_developer">Developer</string>
+    <string name="game_metadata_publisher">Publisher</string>
+    <string name="game_metadata_genre">Genre</string>
+    <string name="game_metadata_release_date">Release date</string>
+    <string name="game_metadata_rating">Rating</string>
 </resources>

@@ -87,7 +87,7 @@ class SwitchIconExtractionWork
 
                             if (bytes != null && bytes.isNotEmpty()) {
                                 val path = coverManager.saveFromBytes(game.id, bytes, cropToSquare = true)
-                                val updated = game.copy(customCoverPath = path)
+                                val updated = game.copy(customCoverPath = path, customCoverOrigin = "embedded")
                                 retrogradeDatabase.gameDao().update(updated)
                                 Timber.i("SwitchIconExtractionWork: Extracted cover for '${game.title}' -> $path")
                             } else {

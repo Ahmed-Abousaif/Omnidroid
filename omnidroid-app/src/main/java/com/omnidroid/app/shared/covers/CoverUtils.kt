@@ -1,6 +1,7 @@
 package com.omnidroid.app.shared.covers
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.imageLoader
@@ -13,9 +14,7 @@ import com.omnidroid.common.drawable.TextDrawable
 import com.omnidroid.common.graphics.ColorUtils
 import com.omnidroid.lib.library.db.entity.Game
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
-import android.graphics.BitmapFactory
 import java.io.File
 import java.util.Locale
 
@@ -42,22 +41,38 @@ object CoverUtils {
         val scheme = uri.scheme?.lowercase() ?: return false
         if (scheme != "http" && scheme != "https") return false
         val host = uri.host?.lowercase() ?: return false
+        if (host == "raw.githubusercontent.com") {
+            val parts = uri.pathSegments
+            return scheme == "https" &&
+                uri.query == null &&
+                parts.size in 5..6 &&
+                parts[0] == "libretro-thumbnails" &&
+                parts[1].matches(Regex("[A-Za-z0-9_-]+")) &&
+                parts[2] == "master" &&
+                parts[3] in setOf("Named_Boxarts", "Named_Titles", "Named_Snaps") &&
+                parts.none { it == "." || it == ".." } &&
+                parts.last().endsWith(".png", ignoreCase = true)
+        }
         return ALLOWED_COVER_HOSTS.any { host == it || host.endsWith(".$it") }
     }
 
     fun coverData(game: Game): Any? =
-        resolveCustomCoverFile(game)
+        resolvePreferredLocalCover(game)
             ?: resolveProcessedCover(game)
             ?: game.coverFrontUrl?.takeIf(::isAllowedRemoteCoverUrl)
+            ?: resolveCustomCoverFile(game)
+            ?: resolveEmbeddedCover(game)
 
     fun coverData(
         game: Game,
         preferredCoverUrl: String?,
     ): Any? =
-        resolveCustomCoverFile(game)
+        resolvePreferredLocalCover(game)
             ?: resolveProcessedCover(game, preferredCoverUrl)
             ?: preferredCoverUrl?.takeIf(::isAllowedRemoteCoverUrl)
             ?: game.coverFrontUrl?.takeIf(::isAllowedRemoteCoverUrl)
+            ?: resolveCustomCoverFile(game)
+            ?: resolveEmbeddedCover(game)
 
     private fun resolveProcessedCover(
         game: Game,
@@ -72,7 +87,7 @@ object CoverUtils {
         game: Game,
         preferredCoverUrl: String? = null,
     ): String {
-        val file = resolveCustomCoverFile(game)
+        val file = resolvePreferredLocalCover(game)
         if (file != null) {
             return "custom:${game.id}:${file.absolutePath}:${file.lastModified()}"
         }
@@ -97,7 +112,7 @@ object CoverUtils {
     ): ImageRequest {
         val cache = coverCache(context)
         val url = preferredCoverUrl ?: game.coverFrontUrl
-        val custom = resolveCustomCoverFile(game)
+        val custom = resolvePreferredLocalCover(game)
         val detail =
             if (custom == null && tier == CoverCacheStore.Tier.DETAIL) {
                 cache.preferredCoverFile(game.id, url, CoverCacheStore.Tier.DETAIL)
@@ -106,29 +121,21 @@ object CoverUtils {
             }
         val processed = custom ?: detail ?: cache.preferredCoverFile(game.id, url, CoverCacheStore.Tier.GRID)
         val data =
-            processed
-                ?: url?.takeIf(::isAllowedRemoteCoverUrl)
+            processed ?: url?.takeIf(::isAllowedRemoteCoverUrl)?.let { ManagedCover(game.id, it, tier) }
+                ?: resolveCustomCoverFile(game) ?: resolveEmbeddedCover(game)
         val key =
             if (detail != null) {
                 "processed-detail:${game.id}:${detail.absolutePath}:${detail.lastModified()}"
             } else {
                 coverCacheKey(game, preferredCoverUrl)
             }
-        return ImageRequest.Builder(context)
+        return ImageRequest
+            .Builder(context)
             .data(data)
             .memoryCacheKey(key)
             .diskCacheKey(key)
             .size(size)
             .precision(Precision.INEXACT)
-            .listener(
-                onStart = {
-                    if (processed == null && !url.isNullOrBlank()) {
-                        com.omnidroid.app.OmnidroidApplication.scope(context).launch(Dispatchers.IO) {
-                            coverCache(context).ensureGrid(game.id, url)
-                        }
-                    }
-                },
-            )
             .build()
     }
 
@@ -137,7 +144,7 @@ object CoverUtils {
         game: Game,
         preferredCoverUrl: String? = null,
     ): Float? {
-        val file = resolveCustomCoverFile(game)
+        val file = resolvePreferredLocalCover(game)
         if (file != null && file.isFile && file.length() > 0L) {
             val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             BitmapFactory.decodeFile(file.absolutePath, options)
@@ -161,35 +168,51 @@ object CoverUtils {
         return null
     }
 
-    fun hasCustomCover(game: Game): Boolean = resolveCustomCoverFile(game) != null
+    fun hasCustomCover(game: Game): Boolean =
+        game.customCoverOrigin != "embedded" && resolveCustomCoverFile(game) != null
 
-    fun resolveCustomCoverFile(game: Game): File? {
-        return game.customCoverPath
+    private fun resolvePreferredLocalCover(game: Game): File? =
+        resolveCustomCoverFile(game)?.takeIf {
+            game.customCoverOrigin != "embedded" ||
+                !isAllowedRemoteCoverUrl(game.coverFrontUrl)
+        }
+
+    private fun resolveEmbeddedCover(game: Game): File? =
+        game.coverFrontUrl
+            ?.takeIf { it.startsWith("file:") }
+            ?.let { runCatching { File(java.net.URI(it)) }.getOrNull() }
+            ?.takeIf { it.isFile && it.length() > 0 }
+
+    fun resolveCustomCoverFile(game: Game): File? =
+        game.customCoverPath
             ?.let(CustomCoverManager::fileForStoredPath)
             ?.takeIf { it.isFile && it.length() > 0L }
-    }
 
     fun buildImageLoader(applicationContext: Context): ImageLoader {
         coverCache(applicationContext)
-        return ImageLoader.Builder(applicationContext)
+        return ImageLoader
+            .Builder(applicationContext)
             .diskCache(
-                DiskCache.Builder()
+                DiskCache
+                    .Builder()
                     .directory(applicationContext.cacheDir.resolve("image_cache"))
                     .maxSizePercent(0.10)
                     .build(),
-            )
-            .memoryCache {
+            ).memoryCache {
                 // Coil's default share; room for the visible grid plus the prefetched rows ahead.
-                MemoryCache.Builder(applicationContext)
+                MemoryCache
+                    .Builder(applicationContext)
                     .maxSizePercent(0.25)
                     .build()
-            }
-            .okHttpClient {
-                OkHttpClient.Builder()
+            }.okHttpClient {
+                OkHttpClient
+                    .Builder()
                     .addInterceptor(SecureCoverInterceptor)
                     .addNetworkInterceptor(ThrottleFailedThumbnailsInterceptor)
+                    .followRedirects(false)
+                    .followSslRedirects(false)
                     .build()
-            }
+            }.components { add(ManagedCoverFetcher.Factory()) }
             .crossfade(true)
             .interceptorDispatcher(Dispatchers.IO)
             .diskCachePolicy(CachePolicy.ENABLED)
@@ -200,7 +223,10 @@ object CoverUtils {
 
     fun trimMemory(context: Context) {
         runCatching {
-            coil.Coil.imageLoader(context).memoryCache?.clear()
+            coil.Coil
+                .imageLoader(context)
+                .memoryCache
+                ?.clear()
         }
     }
 
@@ -217,7 +243,8 @@ object CoverUtils {
             game.title
                 .replace(Regex("\\(.*\\)"), "")
 
-        return sanitizedName.asSequence()
+        return sanitizedName
+            .asSequence()
             .filter { it.isDigit() or it.isUpperCase() or (it == '&') }
             .take(3)
             .joinToString("")
@@ -225,8 +252,5 @@ object CoverUtils {
             .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     }
 
-    private fun computeColor(game: Game): Int {
-        return ColorUtils.randomColor(game.title)
-    }
-
+    private fun computeColor(game: Game): Int = ColorUtils.randomColor(game.title)
 }

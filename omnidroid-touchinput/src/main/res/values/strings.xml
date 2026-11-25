@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="touch_control_game_menu">Game menu</string>
     <string name="touch_customize_title">Edit Controls &amp; Screen</string>
     <string name="touch_customize_button_done">Save</string>
     <string name="touch_customize_button_save">Save</string>

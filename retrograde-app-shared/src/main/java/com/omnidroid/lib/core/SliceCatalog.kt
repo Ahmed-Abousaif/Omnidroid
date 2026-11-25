@@ -38,6 +38,7 @@ object SliceCatalog {
             Slice("wsc", listOf("wsc"), listOf("mednafen_wswan")),
             Slice("dos", listOf("dos"), listOf("dosbox_pure")),
             Slice("ps2", listOf("ps2"), listOf("armsx2")),
+            Slice("ps3", listOf("ps3"), listOf("armsx3")),
             Slice("gamecube", listOf("gamecube"), listOf("dolphin")),
             Slice("wii", listOf("wii"), listOf("dolphin")),
             Slice("wiiu", listOf("wiiu"), listOf("cemu")),
@@ -59,8 +60,8 @@ object SliceCatalog {
         return installedSha != sha || installedSchema != schema
     }
 
-    fun displayName(sliceId: String): String {
-        return when (sliceId.lowercase()) {
+    fun displayName(sliceId: String): String =
+        when (sliceId.lowercase()) {
             "arcade" -> "Arcade"
             "dos" -> "DOS"
             "snes" -> "SNES"
@@ -75,6 +76,7 @@ object SliceCatalog {
             "n64" -> "Nintendo 64"
             "psx" -> "PlayStation"
             "ps2" -> "PlayStation 2"
+            "ps3" -> "PlayStation 3"
             "psp" -> "PSP"
             "nds" -> "Nintendo DS"
             "3ds" -> "Nintendo 3DS"
@@ -93,7 +95,6 @@ object SliceCatalog {
             "wsc" -> "WonderSwan Color"
             else -> sliceId.uppercase()
         }
-    }
 }
 
 interface MetadataSliceInstaller {

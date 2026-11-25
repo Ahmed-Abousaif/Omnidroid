@@ -1,0 +1,40 @@
+{
+  "profile": "omnidroid-engine-only",
+  "abi_version": 1,
+  "exports": [
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_cpuError",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_open",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_initialize",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_boot",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_state",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_control",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_surface",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_pad",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_setting",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_settings",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_probe",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_stateSlot",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_install",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_dialogResult",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_displayRate",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_performanceStats",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_performanceOptions",
+    "Java_com_omnidroid_app_shared_ps3_Armsx3Native_stateOperationFailed"
+  ],
+  "forbidden_sources": [
+    "android/src/armsx3-core.cpp",
+    "android/src/remote_play.cpp",
+    "android/src/remote_play_upnp.cpp",
+    "android/src/xmb-media.cpp",
+    "android/src/xmb-player.cpp",
+    "android/armsx3-ui/",
+    "rpcs3/rpcs3qt/",
+    "RSX/Overlays/HomeMenu/",
+    "RSX/Overlays/BigPicture/"
+  ],
+  "forbidden_package_paths": [
+    "assets/ps3/Icons/",
+    "com/armsx2/",
+    "com/armsx3/"
+  ]
+}
