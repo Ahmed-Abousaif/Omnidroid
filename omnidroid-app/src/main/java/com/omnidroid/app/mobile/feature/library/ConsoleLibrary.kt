@@ -66,21 +66,16 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -120,6 +115,7 @@ import com.omnidroid.app.mobile.shared.compose.ui.gameCoverSharedBounds
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
 import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
 import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
+import com.omnidroid.app.mobile.shared.compose.ui.selectionGlow
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.shared.covers.backdropRequest
 import com.omnidroid.app.shared.library.GameStatsCache
@@ -145,14 +141,11 @@ private val ConsoleActionHeight = 40.dp
 private val ConsoleActionShape = RoundedCornerShape(8.dp)
 private val ConsoleActionShadowPadding = 12.dp
 private val ConsoleStartMinWidth = 168.dp
-private val GlowSpread = 14.dp
-private const val GLOW_LAYERS = 14
-private const val GLOW_LAYER_ALPHA = 0.016f
-private const val PortraitMaxRotation = 32f
-private const val MaxOverscroll = 0.35f
-private const val OverscrollResistance = 0.35f
-private const val FlingProjectionSeconds = 0.28f
-private const val MaxFlingItemsPerSecond = 40f
+private const val PORTRAIT_MAX_ROTATION = 32f
+private const val MAX_OVERSCROLL = 0.35f
+private const val OVERSCROLL_RESISTANCE = 0.35f
+private const val FLING_PROJECTION_SECONDS = 0.28f
+private const val MAX_FLING_ITEMS_PER_SECOND = 40f
 
 @Stable
 internal class ConsoleCarouselState(
@@ -178,16 +171,16 @@ internal class ConsoleCarouselState(
     fun dragBy(deltaItems: Float) {
         settleJob?.cancel()
         val outside = position < 0f || position > lastIndex
-        val delta = if (outside) deltaItems * OverscrollResistance else deltaItems
-        position = (position + delta).coerceIn(-MaxOverscroll, lastIndex + MaxOverscroll)
+        val delta = if (outside) deltaItems * OVERSCROLL_RESISTANCE else deltaItems
+        position = (position + delta).coerceIn(-MAX_OVERSCROLL, lastIndex + MAX_OVERSCROLL)
     }
 
     fun fling(
         scope: CoroutineScope,
         velocityItems: Float,
     ) {
-        val velocity = velocityItems.coerceIn(-MaxFlingItemsPerSecond, MaxFlingItemsPerSecond)
-        animateTo(scope, (position + velocity * FlingProjectionSeconds).roundToInt(), velocity)
+        val velocity = velocityItems.coerceIn(-MAX_FLING_ITEMS_PER_SECOND, MAX_FLING_ITEMS_PER_SECOND)
+        animateTo(scope, (position + velocity * FLING_PROJECTION_SECONDS).roundToInt(), velocity)
     }
 
     fun animateTo(
@@ -594,7 +587,7 @@ private fun ConsoleLandscapeCard(
         modifier =
             Modifier
                 .fillMaxSize()
-                .consoleSelectionGlow(libraryAccentColor, LandscapeCardCorner, focus)
+                .selectionGlow(libraryAccentColor, LandscapeCardCorner, focus)
                 .then(sharedModifier)
                 .shadow(elevation = 6.dp, shape = shape)
                 .background(chromeColors.listRow)
@@ -843,7 +836,7 @@ private fun ConsolePortraitCarousel(
                         scaleX = scale
                         scaleY = scale
                         // Side cards turn their inner edge away, cover-flow style.
-                        rotationY = -distance.coerceIn(-1f, 1f) * PortraitMaxRotation
+                        rotationY = -distance.coerceIn(-1f, 1f) * PORTRAIT_MAX_ROTATION
                         cameraDistance = camera
                         alpha = (2.6f - magnitude).coerceIn(0f, 1f)
                     }
@@ -874,7 +867,7 @@ private fun ConsolePortraitCard(
         modifier =
             Modifier
                 .fillMaxSize()
-                .consoleSelectionGlow(libraryAccentColor, PortraitCardCorner, focus)
+                .selectionGlow(libraryAccentColor, PortraitCardCorner, focus)
                 .then(sharedModifier)
                 .shadow(
                     elevation = 20.dp,
@@ -1363,41 +1356,6 @@ internal fun Modifier.bleedTop(amount: Dp): Modifier =
         layout(constraints.maxWidth, constraints.maxHeight) {
             placeable.place(0, -extra)
         }
-    }
-
-/** Gentle accent halo and outline that fade in as the card becomes selected. */
-private fun Modifier.consoleSelectionGlow(
-    accent: Color,
-    corner: Dp,
-    amount: () -> Float,
-): Modifier =
-    drawBehind {
-        val selected = amount()
-        if (selected <= 0.01f) return@drawBehind
-        val strength = selected * selected
-        val spread = GlowSpread.toPx()
-        val radius = corner.toPx()
-        for (layer in GLOW_LAYERS downTo 1) {
-            val grow = spread * layer / GLOW_LAYERS
-            drawRoundRect(
-                color = accent.copy(alpha = GLOW_LAYER_ALPHA * strength),
-                topLeft = Offset(-grow, -grow),
-                size = Size(size.width + grow * 2, size.height + grow * 2),
-                cornerRadius = CornerRadius(radius + grow),
-            )
-        }
-    }.drawWithContent {
-        drawContent()
-        val selected = amount()
-        if (selected <= 0.01f) return@drawWithContent
-        val stroke = 1.5.dp.toPx()
-        drawRoundRect(
-            color = accent.copy(alpha = selected),
-            topLeft = Offset(stroke / 2, stroke / 2),
-            size = Size(size.width - stroke, size.height - stroke),
-            cornerRadius = CornerRadius(corner.toPx() - stroke / 2),
-            style = Stroke(width = stroke),
-        )
     }
 
 /**

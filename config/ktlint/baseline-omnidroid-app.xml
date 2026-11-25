@@ -1666,76 +1666,74 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/ConsoleLibrary.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="115" column="1" source="standard:no-unused-imports" />
-        <error line="135" column="1" source="standard:no-unused-imports" />
-        <error line="151" column="19" source="standard:property-naming" />
-        <error line="152" column="19" source="standard:property-naming" />
-        <error line="153" column="19" source="standard:property-naming" />
-        <error line="154" column="19" source="standard:property-naming" />
-        <error line="155" column="19" source="standard:property-naming" />
-        <error line="156" column="19" source="standard:property-naming" />
-        <error line="157" column="19" source="standard:property-naming" />
-        <error line="160" column="37" source="standard:class-signature" />
-        <error line="160" column="54" source="standard:class-signature" />
-        <error line="326" column="17" source="standard:chain-method-continuation" />
-        <error line="432" column="33" source="standard:class-signature" />
-        <error line="432" column="47" source="standard:class-signature" />
-        <error line="432" column="60" source="standard:class-signature" />
-        <error line="437" column="5" source="standard:spacing-between-declarations-with-comments" />
-        <error line="493" column="62" source="standard:wrapping" />
-        <error line="493" column="62" source="standard:argument-list-wrapping" />
-        <error line="493" column="85" source="standard:argument-list-wrapping" />
-        <error line="493" column="110" source="standard:argument-list-wrapping" />
-        <error line="493" column="114" source="standard:argument-list-wrapping" />
-        <error line="493" column="121" source="standard:max-line-length" />
-        <error line="494" column="62" source="standard:argument-list-wrapping" />
-        <error line="494" column="67" source="standard:argument-list-wrapping" />
-        <error line="494" column="121" source="standard:max-line-length" />
-        <error line="494" column="122" source="standard:wrapping" />
-        <error line="494" column="123" source="standard:argument-list-wrapping" />
-        <error line="494" column="123" source="standard:trailing-comma-on-call-site" />
-        <error line="609" column="19" source="standard:property-naming" />
-        <error line="698" column="31" source="standard:class-signature" />
-        <error line="698" column="45" source="standard:class-signature" />
-        <error line="698" column="60" source="standard:class-signature" />
-        <error line="698" column="87" source="standard:class-signature" />
-        <error line="702" column="25" source="standard:argument-list-wrapping" />
-        <error line="702" column="43" source="standard:argument-list-wrapping" />
-        <error line="702" column="114" source="standard:argument-list-wrapping" />
-        <error line="702" column="115" source="standard:chain-method-continuation" />
-        <error line="702" column="121" source="standard:max-line-length" />
-        <error line="702" column="130" source="standard:argument-list-wrapping" />
-        <error line="702" column="132" source="standard:chain-method-continuation" />
-        <error line="702" column="135" source="standard:argument-list-wrapping" />
-        <error line="750" column="62" source="standard:wrapping" />
-        <error line="750" column="62" source="standard:argument-list-wrapping" />
-        <error line="750" column="85" source="standard:argument-list-wrapping" />
-        <error line="750" column="110" source="standard:argument-list-wrapping" />
-        <error line="750" column="114" source="standard:argument-list-wrapping" />
-        <error line="750" column="121" source="standard:max-line-length" />
-        <error line="751" column="62" source="standard:argument-list-wrapping" />
-        <error line="751" column="67" source="standard:argument-list-wrapping" />
-        <error line="751" column="121" source="standard:max-line-length" />
-        <error line="751" column="122" source="standard:wrapping" />
-        <error line="751" column="123" source="standard:argument-list-wrapping" />
-        <error line="751" column="123" source="standard:trailing-comma-on-call-site" />
-        <error line="762" column="54" source="standard:argument-list-wrapping" />
-        <error line="762" column="67" source="standard:argument-list-wrapping" />
-        <error line="762" column="121" source="standard:max-line-length" />
-        <error line="843" column="17" source="standard:chain-method-continuation" />
-        <error line="876" column="25" source="standard:chain-method-continuation" />
-        <error line="1026" column="52" source="standard:argument-list-wrapping" />
-        <error line="1026" column="73" source="standard:argument-list-wrapping" />
-        <error line="1026" column="89" source="standard:argument-list-wrapping" />
-        <error line="1026" column="93" source="standard:argument-list-wrapping" />
-        <error line="1026" column="95" source="standard:argument-list-wrapping" />
-        <error line="1026" column="98" source="standard:argument-list-wrapping" />
-        <error line="1026" column="113" source="standard:argument-list-wrapping" />
-        <error line="1026" column="121" source="standard:max-line-length" />
-        <error line="1047" column="1" source="standard:no-consecutive-blank-lines" />
-        <error line="1089" column="17" source="standard:chain-method-continuation" />
-        <error line="1144" column="121" source="standard:max-line-length" />
-        <error line="1261" column="23" source="standard:multiline-expression-wrapping" />
+        <error line="110" column="1" source="standard:no-unused-imports" />
+        <error line="131" column="1" source="standard:no-unused-imports" />
+        <error line="146" column="19" source="standard:property-naming" />
+        <error line="147" column="19" source="standard:property-naming" />
+        <error line="148" column="19" source="standard:property-naming" />
+        <error line="149" column="19" source="standard:property-naming" />
+        <error line="150" column="19" source="standard:property-naming" />
+        <error line="153" column="37" source="standard:class-signature" />
+        <error line="153" column="54" source="standard:class-signature" />
+        <error line="319" column="17" source="standard:chain-method-continuation" />
+        <error line="425" column="33" source="standard:class-signature" />
+        <error line="425" column="47" source="standard:class-signature" />
+        <error line="425" column="60" source="standard:class-signature" />
+        <error line="430" column="5" source="standard:spacing-between-declarations-with-comments" />
+        <error line="486" column="62" source="standard:wrapping" />
+        <error line="486" column="62" source="standard:argument-list-wrapping" />
+        <error line="486" column="85" source="standard:argument-list-wrapping" />
+        <error line="486" column="110" source="standard:argument-list-wrapping" />
+        <error line="486" column="114" source="standard:argument-list-wrapping" />
+        <error line="486" column="121" source="standard:max-line-length" />
+        <error line="487" column="62" source="standard:argument-list-wrapping" />
+        <error line="487" column="67" source="standard:argument-list-wrapping" />
+        <error line="487" column="121" source="standard:max-line-length" />
+        <error line="487" column="122" source="standard:wrapping" />
+        <error line="487" column="123" source="standard:argument-list-wrapping" />
+        <error line="487" column="123" source="standard:trailing-comma-on-call-site" />
+        <error line="602" column="19" source="standard:property-naming" />
+        <error line="691" column="31" source="standard:class-signature" />
+        <error line="691" column="45" source="standard:class-signature" />
+        <error line="691" column="60" source="standard:class-signature" />
+        <error line="691" column="87" source="standard:class-signature" />
+        <error line="695" column="25" source="standard:argument-list-wrapping" />
+        <error line="695" column="43" source="standard:argument-list-wrapping" />
+        <error line="695" column="114" source="standard:argument-list-wrapping" />
+        <error line="695" column="115" source="standard:chain-method-continuation" />
+        <error line="695" column="121" source="standard:max-line-length" />
+        <error line="695" column="130" source="standard:argument-list-wrapping" />
+        <error line="695" column="132" source="standard:chain-method-continuation" />
+        <error line="695" column="135" source="standard:argument-list-wrapping" />
+        <error line="743" column="62" source="standard:wrapping" />
+        <error line="743" column="62" source="standard:argument-list-wrapping" />
+        <error line="743" column="85" source="standard:argument-list-wrapping" />
+        <error line="743" column="110" source="standard:argument-list-wrapping" />
+        <error line="743" column="114" source="standard:argument-list-wrapping" />
+        <error line="743" column="121" source="standard:max-line-length" />
+        <error line="744" column="62" source="standard:argument-list-wrapping" />
+        <error line="744" column="67" source="standard:argument-list-wrapping" />
+        <error line="744" column="121" source="standard:max-line-length" />
+        <error line="744" column="122" source="standard:wrapping" />
+        <error line="744" column="123" source="standard:argument-list-wrapping" />
+        <error line="744" column="123" source="standard:trailing-comma-on-call-site" />
+        <error line="755" column="54" source="standard:argument-list-wrapping" />
+        <error line="755" column="67" source="standard:argument-list-wrapping" />
+        <error line="755" column="121" source="standard:max-line-length" />
+        <error line="836" column="17" source="standard:chain-method-continuation" />
+        <error line="869" column="25" source="standard:chain-method-continuation" />
+        <error line="1019" column="52" source="standard:argument-list-wrapping" />
+        <error line="1019" column="73" source="standard:argument-list-wrapping" />
+        <error line="1019" column="89" source="standard:argument-list-wrapping" />
+        <error line="1019" column="93" source="standard:argument-list-wrapping" />
+        <error line="1019" column="95" source="standard:argument-list-wrapping" />
+        <error line="1019" column="98" source="standard:argument-list-wrapping" />
+        <error line="1019" column="113" source="standard:argument-list-wrapping" />
+        <error line="1019" column="121" source="standard:max-line-length" />
+        <error line="1040" column="1" source="standard:no-consecutive-blank-lines" />
+        <error line="1082" column="17" source="standard:chain-method-continuation" />
+        <error line="1137" column="121" source="standard:max-line-length" />
+        <error line="1254" column="23" source="standard:multiline-expression-wrapping" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/LibraryEmptyStates.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -1746,17 +1744,16 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/LibraryGameCells.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="39" column="1" source="standard:no-unused-imports" />
-        <error line="74" column="31" source="standard:multiline-expression-wrapping" />
-        <error line="75" column="32" source="standard:argument-list-wrapping" />
-        <error line="75" column="57" source="standard:argument-list-wrapping" />
-        <error line="75" column="66" source="standard:argument-list-wrapping" />
-        <error line="107" column="31" source="standard:multiline-expression-wrapping" />
-        <error line="108" column="32" source="standard:argument-list-wrapping" />
-        <error line="108" column="57" source="standard:argument-list-wrapping" />
-        <error line="108" column="66" source="standard:argument-list-wrapping" />
-        <error line="233" column="16" source="standard:multiline-expression-wrapping" />
-        <error line="233" column="16" source="standard:function-signature" />
+        <error line="73" column="31" source="standard:multiline-expression-wrapping" />
+        <error line="74" column="32" source="standard:argument-list-wrapping" />
+        <error line="74" column="57" source="standard:argument-list-wrapping" />
+        <error line="74" column="66" source="standard:argument-list-wrapping" />
+        <error line="106" column="31" source="standard:multiline-expression-wrapping" />
+        <error line="107" column="32" source="standard:argument-list-wrapping" />
+        <error line="107" column="57" source="standard:argument-list-wrapping" />
+        <error line="107" column="66" source="standard:argument-list-wrapping" />
+        <error line="232" column="16" source="standard:multiline-expression-wrapping" />
+        <error line="232" column="16" source="standard:function-signature" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/feature/library/LibraryPagedContent.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -3510,11 +3507,11 @@
         <error line="24" column="15" source="standard:function-signature" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/ui/OmnidroidGameCard.kt">
-        <error line="43" column="11" source="standard:property-naming" />
-        <error line="112" column="80" source="standard:binary-expression-wrapping" />
-        <error line="112" column="121" source="standard:max-line-length" />
-        <error line="215" column="21" source="standard:chain-method-continuation" />
-        <error line="283" column="33" source="standard:chain-method-continuation" />
+        <error line="42" column="11" source="standard:property-naming" />
+        <error line="111" column="80" source="standard:binary-expression-wrapping" />
+        <error line="111" column="121" source="standard:max-line-length" />
+        <error line="214" column="21" source="standard:chain-method-continuation" />
+        <error line="282" column="33" source="standard:chain-method-continuation" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/ui/Segmented.kt">
         <error line="61" column="25" source="standard:chain-method-continuation" />
