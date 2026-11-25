@@ -52,6 +52,31 @@ data class GameSystem(
             }
 
     companion object {
+        private fun picoDriveConfig(cd: Boolean = false) =
+            SystemCoreConfig(
+                CoreID.PICODRIVE,
+                controllerConfigs =
+                    hashMapOf(
+                        0 to arrayListOf(ControllerConfigs.GENESIS_6.copy(libretroDescriptor = null, libretroId = 1)),
+                        1 to arrayListOf(ControllerConfigs.GENESIS_6.copy(libretroDescriptor = null, libretroId = 1)),
+                    ),
+                defaultSettings =
+                    listOf(
+                        CoreVariable("picodrive_input1", "6 button pad"),
+                        CoreVariable("picodrive_input2", "6 button pad"),
+                    ),
+                regionalBIOSFiles =
+                    if (cd) {
+                        mapOf(
+                            "Europe" to "bios_CD_E.bin",
+                            "Japan" to "bios_CD_J.bin",
+                            "USA" to "bios_CD_U.bin",
+                        )
+                    } else {
+                        emptyMap()
+                    },
+            )
+
         private val SYSTEMS =
             listOf(
                 GameSystem(
@@ -469,8 +494,18 @@ data class GameSystem(
                                         ),
                                 ),
                         ),
+                        picoDriveConfig(),
                     ),
                     uniqueExtensions = listOf("gen", "smd", "md"),
+                ),
+                GameSystem(
+                    SystemID.SEGA32X,
+                    "Sega - 32X",
+                    R.string.game_system_title_32x,
+                    R.string.game_system_abbr_32x,
+                    listOf(picoDriveConfig()),
+                    uniqueExtensions = listOf("32x"),
+                    supportedExtensions = listOf("32x", "bin", "gen", "md", "smd"),
                 ),
                 GameSystem(
                     SystemID.SEGACD,
@@ -568,6 +603,7 @@ data class GameSystem(
                                     "USA" to "bios_CD_U.bin",
                                 ),
                         ),
+                        picoDriveConfig(cd = true),
                     ),
                     uniqueExtensions = listOf(),
                     supportedExtensions = listOf("cue", "iso", "chd"),

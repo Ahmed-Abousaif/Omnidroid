@@ -45,7 +45,7 @@ object ShaderChooser {
             SystemID.GB -> ShaderConfig.LCD
             SystemID.N64 -> ShaderConfig.CRT
             SystemID.GENESIS -> ShaderConfig.CRT
-            SystemID.SEGACD -> ShaderConfig.CRT
+            SystemID.SEGACD, SystemID.SEGA32X -> ShaderConfig.CRT
             SystemID.NES -> ShaderConfig.CRT
             SystemID.SNES -> ShaderConfig.CRT
             SystemID.FBNEO -> ShaderConfig.CRT
@@ -274,6 +274,7 @@ object ShaderChooser {
             SystemID.N64 -> upscale32Bits
             SystemID.GENESIS -> upscale16Bits
             SystemID.SEGACD -> upscale16Bits
+            SystemID.SEGA32X -> upscale32Bits
             SystemID.NES -> upscale8Bits
             SystemID.SNES -> upscale16Bits
             SystemID.FBNEO -> upscale32Bits

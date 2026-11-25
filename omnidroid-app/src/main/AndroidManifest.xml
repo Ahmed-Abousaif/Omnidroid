@@ -222,6 +222,8 @@
                 <data android:pathSuffix=".gen" />
                 <data android:pathSuffix=".GEN" />
                 <data android:pathSuffix=".smd" />
+                <data android:pathSuffix=".32x" />
+                <data android:pathSuffix=".32X" />
                 <data android:pathSuffix=".SMD" />
                 <data android:pathPattern=".*\\.nes" />
                 <data android:pathPattern=".*\\.NES" />
@@ -248,6 +250,8 @@
                 <data android:pathPattern=".*\\.gen" />
                 <data android:pathPattern=".*\\.GEN" />
                 <data android:pathPattern=".*\\.smd" />
+                <data android:pathPattern=".*\\.32x" />
+                <data android:pathPattern=".*\\.32X" />
                 <data android:pathPattern=".*\\.SMD" />
             </intent-filter>
         </activity>

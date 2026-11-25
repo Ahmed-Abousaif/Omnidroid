@@ -30,6 +30,11 @@ enum class CoreID(
         "Snes9x",
         "libsnes9x_libretro_android.so",
     ),
+    PICODRIVE(
+        "picodrive",
+        "PicoDrive",
+        "libpicodrive_libretro_android.so",
+    ),
     GENESIS_PLUS_GX(
         "genesis_plus_gx",
         "Genesis Plus GX",
@@ -150,7 +155,7 @@ enum class CoreID(
     companion object {
         fun getAssetManager(coreID: CoreID): AssetsManager =
             when (coreID) {
-                GENESIS_PLUS_GX -> SegaCdAssetsManager()
+                GENESIS_PLUS_GX, PICODRIVE -> SegaCdAssetsManager()
                 PPSSPP -> PPSSPPAssetsManager()
                 ARMSX2 -> PCEE2AssetsManager()
                 DOLPHIN -> DolphinAssetsManager()

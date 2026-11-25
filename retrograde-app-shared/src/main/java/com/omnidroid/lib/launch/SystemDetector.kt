@@ -4,6 +4,7 @@ import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemID
 import com.omnidroid.lib.library.scan.ByteArraySource
 import com.omnidroid.lib.library.scan.NintendoDisc
+import com.omnidroid.lib.library.scan.SegaCartridge
 import java.io.InputStream
 import java.util.Locale
 
@@ -60,6 +61,9 @@ object SystemDetector {
             "turbografx" to SystemID.PC_ENGINE,
             "scd" to SystemID.SEGACD,
             "segacd" to SystemID.SEGACD,
+            "32x" to SystemID.SEGA32X,
+            "sega32x" to SystemID.SEGA32X,
+            "sega_32x" to SystemID.SEGA32X,
             "mega_cd" to SystemID.SEGACD,
             "atari2600" to SystemID.ATARI2600,
             "atari7800" to SystemID.ATARI7800,
@@ -124,6 +128,23 @@ object SystemDetector {
                     return candidateSystem
                 }
             }
+        }
+
+        if (openStream != null && extension in setOf("bin", "gen", "md", "smd")) {
+            val is32x =
+                runCatching {
+                    openStream()?.use { stream ->
+                        val header = ByteArray(if (extension == "smd") 512 + 16 * 1024 else 0x110)
+                        var count = 0
+                        while (count < header.size) {
+                            val read = stream.read(header, count, header.size - count)
+                            if (read <= 0) break
+                            count += read
+                        }
+                        SegaCartridge.is32x(ByteArraySource(header.copyOf(count)), extension == "smd")
+                    } == true
+                }.getOrDefault(false)
+            if (is32x) return GameSystem.findById(SystemID.SEGA32X.dbname)
         }
 
         if (openStream != null && extension in setOf("iso", "sfo")) {

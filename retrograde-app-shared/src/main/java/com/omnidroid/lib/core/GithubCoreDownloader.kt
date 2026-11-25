@@ -20,8 +20,9 @@ class GithubCoreDownloader(
             findCached(mainCoresDirectory, coreID)?.let { return@withLock it }
 
             Timber.i("Downloading core $coreID from github")
+            val version = versionFor(coreID)
             val coresDirectory =
-                File(mainCoresDirectory, CORES_VERSION).apply {
+                File(mainCoresDirectory, version).apply {
                     mkdirs()
                 }
 
@@ -34,7 +35,7 @@ class GithubCoreDownloader(
             val uri =
                 BASE_URI
                     .buildUpon()
-                    .appendEncodedPath("$CORES_VERSION/omnidroid_core_${coreID.coreName}/src/main/jniLibs/")
+                    .appendEncodedPath("$version/omnidroid_core_${coreID.coreName}/src/main/jniLibs/")
                     .appendPath(Build.SUPPORTED_ABIS.first())
                     .appendPath(coreID.libretroFileName)
                     .build()
@@ -80,7 +81,7 @@ class GithubCoreDownloader(
     private fun deleteOutdatedCores(mainCoresDirectory: File) {
         mainCoresDirectory
             .listFiles()
-            ?.filter { it.name != CORES_VERSION }
+            ?.filter { it.name !in CoreID.values().map(::versionFor).toSet() }
             ?.forEach { it.deleteRecursively() }
     }
 
@@ -91,8 +92,14 @@ class GithubCoreDownloader(
             coresDirectory: File,
             coreID: CoreID,
         ): File? =
-            File(File(coresDirectory, CORES_VERSION), coreID.libretroFileName)
+            File(File(coresDirectory, versionFor(coreID)), coreID.libretroFileName)
                 .takeIf { it.isFile && it.length() > 0L }
+
+        // This between-release addition joins the normal tag-based packages in the next core release.
+        fun versionFor(coreID: CoreID): String =
+            if (coreID == CoreID.PICODRIVE && CORES_VERSION == "3.1.0") PICODRIVE_REVISION else CORES_VERSION
+
+        private const val PICODRIVE_REVISION = "015fd632193153560edb293e221d272b2b726b8c"
 
         // Keep in sync with omnidroid-app versionName / OmnidroidCores git tags.
         const val CORES_VERSION = "3.1.0"

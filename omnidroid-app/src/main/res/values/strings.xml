@@ -1,4 +1,5 @@
 <resources>
+    <string name="core_name_picodrive">PicoDrive</string>
     <string name="title_home">Home</string>
     <string name="title_search">Search</string>
     <string name="title_settings">Settings</string>

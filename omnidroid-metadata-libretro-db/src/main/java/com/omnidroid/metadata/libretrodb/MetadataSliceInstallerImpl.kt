@@ -135,7 +135,7 @@ class MetadataSliceInstallerImpl(
             expected.any { slice ->
                 dao.find(slice.id)?.takeIf { it.schemaVersion == SliceCatalog.SCHEMA_VERSION } == null
             }
-        if (!force && !missing && dao.verified(core.coreName, GithubCoreDownloader.CORES_VERSION) != null) {
+        if (!force && !missing && dao.verified(core.coreName, GithubCoreDownloader.versionFor(core)) != null) {
             return emptySet()
         }
         val bundle = openBundle(context, core)
@@ -186,7 +186,7 @@ class MetadataSliceInstallerImpl(
                 dao.insertVerified(
                     VerifiedManifest(
                         coreName = core.coreName,
-                        coresVersion = GithubCoreDownloader.CORES_VERSION,
+                        coresVersion = GithubCoreDownloader.versionFor(core),
                         manifestSha = manifest.manifestSha,
                     ),
                 )
@@ -314,11 +314,12 @@ class MetadataSliceInstallerImpl(
     }
 
     private suspend fun githubBundle(core: CoreID): SliceBundle? {
+        val revision = GithubCoreDownloader.versionFor(core)
         val base =
             GithubCoreDownloader.BASE_URI
                 .buildUpon()
                 .appendEncodedPath(
-                    "${GithubCoreDownloader.CORES_VERSION}/omnidroid_core_${core.coreName}/src/main/assets/libretro-db/${core.coreName}",
+                    "$revision/omnidroid_core_${core.coreName}/src/main/assets/libretro-db/${core.coreName}",
                 ).build()
                 .toString()
                 .trimEnd('/')

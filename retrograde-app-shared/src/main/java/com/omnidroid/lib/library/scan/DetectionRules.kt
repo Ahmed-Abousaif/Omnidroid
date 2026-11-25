@@ -63,6 +63,7 @@ object DetectionRules {
             "gen" to (SystemID.GENESIS to HashMode.RAW),
             "md" to (SystemID.GENESIS to HashMode.RAW),
             "smd" to (SystemID.GENESIS to HashMode.SMD),
+            "32x" to (SystemID.SEGA32X to HashMode.RAW),
             "n64" to (SystemID.N64 to HashMode.N64),
             "z64" to (SystemID.N64 to HashMode.N64),
             "v64" to (SystemID.N64 to HashMode.N64),
@@ -139,11 +140,12 @@ object DetectionRules {
         mode: HashMode,
         beforeExpensiveHash: (SystemID) -> Unit,
     ): Detection {
-        beforeExpensiveHash(system)
         val source = input.open() ?: return Detection.Rejected("Could not open ${input.name}")
         source.use {
+            val resolved = segaSystem(it, system, mode)
+            beforeExpensiveHash(resolved)
             val crc = CartridgeHasher.hash(it, mode)
-            return Detection.Ready(system, MetadataKey(MetadataKeyType.CRC, crc))
+            return Detection.Ready(resolved, MetadataKey(MetadataKeyType.CRC, crc))
         }
     }
 
@@ -219,7 +221,10 @@ object DetectionRules {
             }
             if (isGenesis(bytes)) {
                 val crc = CartridgeHasher.hash(bytes, HashMode.RAW)
-                return Detection.Ready(SystemID.GENESIS, MetadataKey(MetadataKeyType.CRC, crc))
+                return Detection.Ready(
+                    segaSystem(bytes, SystemID.GENESIS, HashMode.RAW),
+                    MetadataKey(MetadataKeyType.CRC, crc),
+                )
             }
             if (isInes(bytes)) {
                 val crc = CartridgeHasher.hash(bytes, HashMode.RAW)
@@ -236,6 +241,15 @@ object DetectionRules {
     private fun isGenesis(source: RandomAccessBytes): Boolean {
         val name = source.ascii(0x100, 16).uppercase()
         return name.startsWith("SEGA GENESIS") || name.startsWith("SEGA MEGA DRIVE") || name.startsWith("SEGA 32X")
+    }
+
+    private fun segaSystem(
+        source: RandomAccessBytes,
+        fallback: SystemID,
+        mode: HashMode,
+    ): SystemID {
+        if (fallback != SystemID.GENESIS) return fallback
+        return if (SegaCartridge.is32x(source, mode == HashMode.SMD)) SystemID.SEGA32X else fallback
     }
 
     private fun isInes(source: RandomAccessBytes): Boolean {
@@ -451,7 +465,13 @@ object DetectionRules {
         beforeExpensiveHash: (SystemID) -> Unit,
     ): Detection {
         cartridge[entry.extension]?.let { (system, mode) ->
-            beforeExpensiveHash(system)
+            val resolved =
+                if (system == SystemID.GENESIS) {
+                    ZipEntryHasher.open(bytes, entry)?.use { segaSystem(it, system, mode) } ?: system
+                } else {
+                    system
+                }
+            beforeExpensiveHash(resolved)
             val crc =
                 if (
                     CartridgeHasher.needsNormalisedHash(entry.extension, entry.uncompressedSize) ||
@@ -461,7 +481,7 @@ object DetectionRules {
                 } else {
                     entry.crc
                 }
-            return Detection.Ready(system, crc?.let { MetadataKey(MetadataKeyType.CRC, it) }, entry.name)
+            return Detection.Ready(resolved, crc?.let { MetadataKey(MetadataKeyType.CRC, it) }, entry.name)
         }
         val nestedName = entry.name.substringAfterLast('/').substringAfterLast('\\')
         val result =

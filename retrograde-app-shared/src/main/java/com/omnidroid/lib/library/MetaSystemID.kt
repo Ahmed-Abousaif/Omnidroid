@@ -25,7 +25,7 @@ enum class MetaSystemID(
     GENESIS(
         R.string.game_system_title_genesis,
         R.drawable.game_system_genesis,
-        listOf(SystemID.GENESIS, SystemID.SEGACD),
+        listOf(SystemID.GENESIS, SystemID.SEGACD, SystemID.SEGA32X),
     ),
     GB(
         R.string.game_system_title_gb,
@@ -167,6 +167,7 @@ enum class MetaSystemID(
                 SystemID.GBA -> GBA
                 SystemID.GENESIS -> GENESIS
                 SystemID.SEGACD -> GENESIS
+                SystemID.SEGA32X -> GENESIS
                 SystemID.GG -> GG
                 SystemID.N64 -> N64
                 SystemID.NDS -> NDS

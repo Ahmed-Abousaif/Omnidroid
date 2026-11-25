@@ -17,8 +17,9 @@ object SliceCatalog {
             Slice("nes", listOf("nes"), listOf("fceumm")),
             Slice("snes", listOf("snes"), listOf("snes9x")),
             Slice("sms", listOf("sms"), listOf("genesis_plus_gx")),
-            Slice("md", listOf("md"), listOf("genesis_plus_gx")),
-            Slice("scd", listOf("scd"), listOf("genesis_plus_gx")),
+            Slice("md", listOf("md"), listOf("genesis_plus_gx", "picodrive")),
+            Slice("scd", listOf("scd"), listOf("genesis_plus_gx", "picodrive")),
+            Slice("32x", listOf("32x"), listOf("picodrive")),
             Slice("gg", listOf("gg"), listOf("genesis_plus_gx")),
             Slice("gb", listOf("gb"), listOf("gambatte")),
             Slice("gbc", listOf("gbc"), listOf("gambatte")),
@@ -68,6 +69,7 @@ object SliceCatalog {
             "nes" -> "NES"
             "md" -> "Genesis / Mega Drive"
             "scd" -> "Sega CD"
+            "32x" -> "Sega 32X"
             "sms" -> "Master System"
             "gg" -> "Game Gear"
             "gb" -> "Game Boy"
