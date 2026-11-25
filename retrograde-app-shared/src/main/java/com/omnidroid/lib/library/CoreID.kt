@@ -7,6 +7,7 @@ import com.omnidroid.lib.core.assetsmanager.DolphinAssetsManager
 import com.omnidroid.lib.core.assetsmanager.NoAssetsManager
 import com.omnidroid.lib.core.assetsmanager.PCEE2AssetsManager
 import com.omnidroid.lib.core.assetsmanager.PPSSPPAssetsManager
+import com.omnidroid.lib.core.assetsmanager.SegaCdAssetsManager
 import com.omnidroid.lib.storage.DirectoriesManager
 
 enum class CoreID(
@@ -149,6 +150,7 @@ enum class CoreID(
     companion object {
         fun getAssetManager(coreID: CoreID): AssetsManager =
             when (coreID) {
+                GENESIS_PLUS_GX -> SegaCdAssetsManager()
                 PPSSPP -> PPSSPPAssetsManager()
                 ARMSX2 -> PCEE2AssetsManager()
                 DOLPHIN -> DolphinAssetsManager()
