@@ -38,7 +38,7 @@ PowerShell, from the repository root (`adb` must be on PATH):
 ```powershell
 $serial = 'YOUR_DEVICE_SERIAL'
 .\gradlew.bat :omnidroid-app:assembleFreeDynamicNonMinifiedRelease :baselineprofile:assembleFreeDynamicNonMinifiedRelease -PabiFilters=arm64-v8a
-adb -s $serial install -r -t omnidroid-app/build/outputs/apk/freeDynamic/nonMinifiedRelease/Omnidroid-dynamic-arm64-v8a-nonMinifiedRelease-v3.1.0.apk
+adb -s $serial install -r -t omnidroid-app/build/outputs/apk/freeDynamic/nonMinifiedRelease/Omnidroid-dynamic-arm64-v8a-nonMinifiedRelease-v3.2.0.apk
 adb -s $serial install -r -t baselineprofile/build/outputs/apk/freeDynamic/nonMinifiedRelease/baselineprofile-free-dynamic-nonMinifiedRelease.apk
 adb -s $serial shell am instrument --user 0 -w -r -e class com.omnidroid.baselineprofile.BaselineProfileGenerator com.omnidroid.baselineprofile/androidx.test.runner.AndroidJUnitRunner
 ```
@@ -59,7 +59,7 @@ Build and install the minified benchmark target and matching producer:
 
 ```powershell
 .\gradlew.bat :omnidroid-app:assembleFreeDynamicBenchmarkRelease :baselineprofile:assembleFreeDynamicBenchmarkRelease -PabiFilters=arm64-v8a
-adb -s $serial install -r -t omnidroid-app/build/outputs/apk/freeDynamic/benchmarkRelease/Omnidroid-dynamic-arm64-v8a-benchmarkRelease-v3.1.0.apk
+adb -s $serial install -r -t omnidroid-app/build/outputs/apk/freeDynamic/benchmarkRelease/Omnidroid-dynamic-arm64-v8a-benchmarkRelease-v3.2.0.apk
 adb -s $serial install -r -t baselineprofile/build/outputs/apk/freeDynamic/benchmarkRelease/baselineprofile-free-dynamic-benchmarkRelease.apk
 adb -s $serial shell am instrument --user 0 -w -r -e class com.omnidroid.baselineprofile.StartupBenchmarks,com.omnidroid.baselineprofile.LibraryBenchmarks -e iterations 5 com.omnidroid.baselineprofile/androidx.test.runner.AndroidJUnitRunner
 ```

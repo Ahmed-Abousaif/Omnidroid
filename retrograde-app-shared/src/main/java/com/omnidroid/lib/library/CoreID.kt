@@ -7,6 +7,7 @@ import com.omnidroid.lib.core.assetsmanager.DolphinAssetsManager
 import com.omnidroid.lib.core.assetsmanager.NoAssetsManager
 import com.omnidroid.lib.core.assetsmanager.PCEE2AssetsManager
 import com.omnidroid.lib.core.assetsmanager.PPSSPPAssetsManager
+import com.omnidroid.lib.core.assetsmanager.SegaCdAssetsManager
 import com.omnidroid.lib.storage.DirectoriesManager
 
 enum class CoreID(
@@ -28,6 +29,11 @@ enum class CoreID(
         "snes9x",
         "Snes9x",
         "libsnes9x_libretro_android.so",
+    ),
+    PICODRIVE(
+        "picodrive",
+        "PicoDrive",
+        "libpicodrive_libretro_android.so",
     ),
     GENESIS_PLUS_GX(
         "genesis_plus_gx",
@@ -139,18 +145,23 @@ enum class CoreID(
         "Eden",
         "libyuzu-android.so",
     ),
+    ARMSX3(
+        "armsx3",
+        "ARMSX3",
+        "libomnidroid-armsx3.so",
+    ),
     ;
 
     companion object {
-        fun getAssetManager(coreID: CoreID): AssetsManager {
-            return when (coreID) {
+        fun getAssetManager(coreID: CoreID): AssetsManager =
+            when (coreID) {
+                GENESIS_PLUS_GX, PICODRIVE -> SegaCdAssetsManager()
                 PPSSPP -> PPSSPPAssetsManager()
                 ARMSX2 -> PCEE2AssetsManager()
                 DOLPHIN -> DolphinAssetsManager()
                 CEMU -> CemuAssetsManager()
                 else -> NoAssetsManager()
             }
-        }
     }
 
     interface AssetsManager {
@@ -163,7 +174,10 @@ enum class CoreID(
 
         suspend fun isReady(directoriesManager: DirectoriesManager): Boolean
 
-        suspend fun clearAssets(directoriesManager: DirectoriesManager, sharedPreferences: SharedPreferences)
+        suspend fun clearAssets(
+            directoriesManager: DirectoriesManager,
+            sharedPreferences: SharedPreferences,
+        )
     }
 }
 

@@ -17,6 +17,8 @@ sealed class Detection {
         val system: SystemID,
         val key: MetadataKey?,
         val archiveEntry: String? = null,
+        val title: String? = null,
+        val cover: ByteArray? = null,
     ) : Detection()
 
     data class HashedBin(
@@ -61,6 +63,7 @@ object DetectionRules {
             "gen" to (SystemID.GENESIS to HashMode.RAW),
             "md" to (SystemID.GENESIS to HashMode.RAW),
             "smd" to (SystemID.GENESIS to HashMode.SMD),
+            "32x" to (SystemID.SEGA32X to HashMode.RAW),
             "n64" to (SystemID.N64 to HashMode.N64),
             "z64" to (SystemID.N64 to HashMode.N64),
             "v64" to (SystemID.N64 to HashMode.N64),
@@ -87,10 +90,9 @@ object DetectionRules {
     fun identify(
         input: ScanInput,
         beforeExpensiveHash: (SystemID) -> Unit = {},
-    ): Detection {
-        return runCatching { identifyUnsafe(input, beforeExpensiveHash) }
+    ): Detection =
+        runCatching { identifyUnsafe(input, beforeExpensiveHash) }
             .getOrElse { Detection.Rejected("Could not read ${input.name}") }
-    }
 
     private fun identifyUnsafe(
         input: ScanInput,
@@ -105,7 +107,10 @@ object DetectionRules {
         }
         return when (extension) {
             "nds" -> headerSerial(input, SystemID.NDS) { it.ascii(0x0C, 4).takeIf(::isCode) }
-            "3ds", "cci", "zcci", "cxi", "3dsx" -> headerSerial(input, SystemID.NINTENDO_3DS) { it.ascii(0x1150, 10).ifBlank { null } }
+            "3ds", "cci", "zcci", "cxi", "3dsx" ->
+                headerSerial(input, SystemID.NINTENDO_3DS) {
+                    it.ascii(0x1150, 10).ifBlank { null }
+                }
             "gcm" -> nintendo(input) { NintendoDisc.fromIso(it) }
             "tgc" -> nintendo(input) { NintendoDisc.fromTgc(it) }
             "wbfs" -> nintendo(input) { NintendoDisc.fromWbfs(it) }
@@ -113,6 +118,7 @@ object DetectionRules {
             "rvz", "wia" -> nintendo(input) { NintendoDisc.fromRvz(it) }
             "ciso" -> nintendo(input) { NintendoDisc.fromCiso(it) }
             "iso" -> iso(input)
+            "sfo" -> ps3Folder(input)
             "bin" -> bin(input)
             "cue" -> cue(input)
             "chd" -> chd(input)
@@ -134,11 +140,12 @@ object DetectionRules {
         mode: HashMode,
         beforeExpensiveHash: (SystemID) -> Unit,
     ): Detection {
-        beforeExpensiveHash(system)
         val source = input.open() ?: return Detection.Rejected("Could not open ${input.name}")
         source.use {
+            val resolved = segaSystem(it, system, mode)
+            beforeExpensiveHash(resolved)
             val crc = CartridgeHasher.hash(it, mode)
-            return Detection.Ready(system, MetadataKey(MetadataKeyType.CRC, crc))
+            return Detection.Ready(resolved, MetadataKey(MetadataKeyType.CRC, crc))
         }
     }
 
@@ -168,12 +175,41 @@ object DetectionRules {
     private fun iso(input: ScanInput): Detection {
         val source = input.open() ?: return Detection.Rejected("Could not open ${input.name}")
         source.use { bytes ->
+            val sectors = DiscImages.userSectors(bytes, SectorLayout(2048, 0))
+            Iso9660.readFile(sectors, "PS3_GAME/PARAM.SFO")?.let { sfo ->
+                Ps3Content.parse(sfo)?.takeIf { it.playable }?.let { info ->
+                    return Detection.Ready(
+                        SystemID.PS3,
+                        MetadataKey(MetadataKeyType.SERIAL, info.titleId),
+                        title = info.title,
+                        cover = Iso9660.readFile(sectors, "PS3_GAME/ICON0.PNG"),
+                    )
+                }
+            }
+            // Encrypted PS3 images still expose their volume label. Native probing
+            // resolves their metadata using the user's disc key before launch.
+            if (bytes.ascii(0x8028, 32) == "PS3VOLUME") return Detection.Ready(SystemID.PS3, romBase(input.name))
             NintendoDisc.fromIso(bytes)?.let { id ->
                 return Detection.Ready(id.system, id.code?.let { MetadataKey(MetadataKeyType.CODE, it) })
             }
             identifyFlat(bytes, input.name, 0)?.let { return it }
         }
         return folderOrReject(input, ".iso was not a recognised disc")
+    }
+
+    private fun ps3Folder(input: ScanInput): Detection {
+        if (!input.name.equals("PARAM.SFO", ignoreCase = true)) return Detection.Rejected("Not a PS3 game descriptor")
+        val info =
+            input.open()?.use { Ps3Content.parse(it.read(0, minOf(input.size, 1024 * 1024L).toInt())) }
+                ?: return Detection.Rejected("Invalid PS3 game descriptor")
+        if (!info.playable) return Detection.Rejected("PS3 update, DLC or system content")
+        val cover = input.openNamed("ICON0.PNG")?.use { it.read(0, minOf(it.size, 1024 * 1024L).toInt()) }
+        return Detection.Ready(
+            SystemID.PS3,
+            MetadataKey(MetadataKeyType.SERIAL, info.titleId),
+            title = info.title,
+            cover = cover,
+        )
     }
 
     private fun bin(input: ScanInput): Detection {
@@ -185,7 +221,10 @@ object DetectionRules {
             }
             if (isGenesis(bytes)) {
                 val crc = CartridgeHasher.hash(bytes, HashMode.RAW)
-                return Detection.Ready(SystemID.GENESIS, MetadataKey(MetadataKeyType.CRC, crc))
+                return Detection.Ready(
+                    segaSystem(bytes, SystemID.GENESIS, HashMode.RAW),
+                    MetadataKey(MetadataKeyType.CRC, crc),
+                )
             }
             if (isInes(bytes)) {
                 val crc = CartridgeHasher.hash(bytes, HashMode.RAW)
@@ -202,6 +241,15 @@ object DetectionRules {
     private fun isGenesis(source: RandomAccessBytes): Boolean {
         val name = source.ascii(0x100, 16).uppercase()
         return name.startsWith("SEGA GENESIS") || name.startsWith("SEGA MEGA DRIVE") || name.startsWith("SEGA 32X")
+    }
+
+    private fun segaSystem(
+        source: RandomAccessBytes,
+        fallback: SystemID,
+        mode: HashMode,
+    ): SystemID {
+        if (fallback != SystemID.GENESIS) return fallback
+        return if (SegaCartridge.is32x(source, mode == HashMode.SMD)) SystemID.SEGA32X else fallback
     }
 
     private fun isInes(source: RandomAccessBytes): Boolean {
@@ -221,10 +269,12 @@ object DetectionRules {
     }
 
     private fun cue(input: ScanInput): Detection {
-        val sheet = input.open()?.use { it.read(0, minOf(it.size, 256 * 1024).toInt()).toString(Charsets.UTF_8) }
-            ?: return Detection.Rejected("Could not read cue sheet")
-        val track = cueDataTrack(sheet)?.substringAfterLast('/')?.substringAfterLast('\\')
-            ?: return Detection.Rejected("Cue sheet has no data track")
+        val sheet =
+            input.open()?.use { it.read(0, minOf(it.size, 256 * 1024).toInt()).toString(Charsets.UTF_8) }
+                ?: return Detection.Rejected("Could not read cue sheet")
+        val track =
+            cueDataTrack(sheet)?.substringAfterLast('/')?.substringAfterLast('\\')
+                ?: return Detection.Rejected("Cue sheet has no data track")
         val bin = input.openNamed(track) ?: return Detection.Rejected("Cue data track $track is missing")
         bin.use { identifyFlat(it, input.name, 0)?.let { return it } }
         return Detection.Rejected("Cue data track was not a recognised disc")
@@ -300,10 +350,12 @@ object DetectionRules {
         input: ScanInput,
         beforeExpensiveHash: (SystemID) -> Unit,
     ): Detection {
-        val text = input.open()?.use { it.read(0, minOf(it.size, 64 * 1024).toInt()).toString(Charsets.UTF_8) }
-            ?: return Detection.Rejected("Could not read playlist")
-        val first = text.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() && !it.startsWith("#") }
-            ?: return Detection.Rejected("Playlist is empty")
+        val text =
+            input.open()?.use { it.read(0, minOf(it.size, 64 * 1024).toInt()).toString(Charsets.UTF_8) }
+                ?: return Detection.Rejected("Could not read playlist")
+        val first =
+            text.lineSequence().map { it.trim() }.firstOrNull { it.isNotEmpty() && !it.startsWith("#") }
+                ?: return Detection.Rejected("Playlist is empty")
         val name = first.substringAfterLast('/').substringAfterLast('\\')
         val child = input.openNamed(name) ?: return Detection.Rejected("Playlist entry $name is missing")
         return identify(
@@ -413,17 +465,23 @@ object DetectionRules {
         beforeExpensiveHash: (SystemID) -> Unit,
     ): Detection {
         cartridge[entry.extension]?.let { (system, mode) ->
-            beforeExpensiveHash(system)
+            val resolved =
+                if (system == SystemID.GENESIS) {
+                    ZipEntryHasher.open(bytes, entry)?.use { segaSystem(it, system, mode) } ?: system
+                } else {
+                    system
+                }
+            beforeExpensiveHash(resolved)
             val crc =
                 if (
                     CartridgeHasher.needsNormalisedHash(entry.extension, entry.uncompressedSize) ||
-                        entry.crc == "00000000"
+                    entry.crc == "00000000"
                 ) {
                     ZipEntryHasher.hash(bytes, entry, mode)
                 } else {
                     entry.crc
                 }
-            return Detection.Ready(system, crc?.let { MetadataKey(MetadataKeyType.CRC, it) }, entry.name)
+            return Detection.Ready(resolved, crc?.let { MetadataKey(MetadataKeyType.CRC, it) }, entry.name)
         }
         val nestedName = entry.name.substringAfterLast('/').substringAfterLast('\\')
         val result =
@@ -451,8 +509,9 @@ object DetectionRules {
         allowed: Set<SystemID>,
         reason: String,
     ): Detection {
-        val system = FolderHints.systemAmong(input.path, allowed)
-            ?: return Detection.Rejected("Needs a console folder: $reason")
+        val system =
+            FolderHints.systemAmong(input.path, allowed)
+                ?: return Detection.Rejected("Needs a console folder: $reason")
         return Detection.Ready(system, romBase(input.name))
     }
 
@@ -469,9 +528,7 @@ object DetectionRules {
         return MetadataKey(MetadataKeyType.ROM_BASE, ScanKeys.romBase(base))
     }
 
-    private fun isCode(value: String): Boolean {
-        return value.length == 4 && value.all { it.isLetterOrDigit() }
-    }
+    private fun isCode(value: String): Boolean = value.length == 4 && value.all { it.isLetterOrDigit() }
 
     private fun cueDataTrack(sheet: String): String? {
         val lines = sheet.lines()
@@ -479,7 +536,14 @@ object DetectionRules {
         val region = if (highDensity >= 0) lines.drop(highDensity + 1) else lines
         val file = Regex("FILE\\s+\"([^\"]+)\"", RegexOption.IGNORE_CASE)
         if (highDensity >= 0) {
-            return region.firstNotNullOfOrNull { file.find(it)?.groupValues?.get(1)?.substringAfterLast('/')?.substringAfterLast('\\') }
+            return region.firstNotNullOfOrNull {
+                file
+                    .find(it)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.substringAfterLast('/')
+                    ?.substringAfterLast('\\')
+            }
         }
         val dataLine =
             region.indexOfFirst {
@@ -487,10 +551,22 @@ object DetectionRules {
             }
         if (dataLine >= 0) {
             for (index in dataLine downTo 0) {
-                file.find(region[index])?.groupValues?.get(1)?.let { return it.substringAfterLast('/').substringAfterLast('\\') }
+                file
+                    .find(
+                        region[index],
+                    )?.groupValues
+                    ?.get(1)
+                    ?.let { return it.substringAfterLast('/').substringAfterLast('\\') }
             }
         }
-        return region.firstNotNullOfOrNull { file.find(it)?.groupValues?.get(1)?.substringAfterLast('/')?.substringAfterLast('\\') }
+        return region.firstNotNullOfOrNull {
+            file
+                .find(it)
+                ?.groupValues
+                ?.get(1)
+                ?.substringAfterLast('/')
+                ?.substringAfterLast('\\')
+        }
     }
 }
 

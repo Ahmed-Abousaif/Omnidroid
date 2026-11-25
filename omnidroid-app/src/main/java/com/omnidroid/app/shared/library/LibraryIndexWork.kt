@@ -66,6 +66,9 @@ class LibraryIndexWork
             // Stash for CoreUpdateWork / UI: whether this pass was "noisy".
             LastLibraryIndexResult.set(indexResult)
 
+            // Independent connected work: provider availability never delays local scanning.
+            ArtworkEnrichmentWork.schedule(applicationContext, reset = true)
+
             return Result.success()
         }
 

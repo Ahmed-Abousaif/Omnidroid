@@ -6,18 +6,18 @@ import okhttp3.Response
 import java.io.IOException
 
 object ThrottleFailedThumbnailsInterceptor : Interceptor {
-    private val failedThumbnailsStatusCode = LruCache<String, Int>(256 * 1024)
+    private val missingUntil = LruCache<String, Long>(512)
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val requestUrl = chain.request().url.toString()
-        val previousFailure = failedThumbnailsStatusCode[requestUrl]
-        if (previousFailure != null) {
-            throw IOException("Thumbnail previously failed with code: $previousFailure")
+        val until = missingUntil[requestUrl]
+        if (until != null && until > System.currentTimeMillis()) {
+            throw IOException("Artwork resource is temporarily recorded as missing")
         }
 
         val response = chain.proceed(chain.request())
-        if (!response.isSuccessful) {
-            failedThumbnailsStatusCode.put(chain.request().url.toString(), response.code)
+        if (response.code == 404 || response.code == 410) {
+            missingUntil.put(requestUrl, System.currentTimeMillis() + 86_400_000)
         }
 
         return response

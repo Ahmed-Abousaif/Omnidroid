@@ -4,6 +4,8 @@ import android.view.KeyEvent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.omnidroid.touchinput.R
 import com.omnidroid.touchinput.radial.controls.OmnidroidControlAnalog
 import com.omnidroid.touchinput.radial.controls.OmnidroidControlButton
@@ -95,8 +97,14 @@ fun SecondaryButtonStart(position: Int = 0) {
 context(PadKitScope, LayoutRadialSecondaryDialsScope)
 @Composable
 fun SecondaryButtonMenu(settings: TouchControllerSettingsManager.Settings) {
+    val menuLabel =
+        androidx.compose.ui.res
+            .stringResource(R.string.touch_control_game_menu)
     OmnidroidControlButton(
-        modifier = Modifier.radialPosition(-60f + 2f * settings.rotation * TouchControllerSettingsManager.MAX_ROTATION),
+        modifier =
+            Modifier
+                .radialPosition(-60f + 2f * settings.rotation * TouchControllerSettingsManager.MAX_ROTATION)
+                .semantics { contentDescription = menuLabel },
         id = Id.Key(KeyEvent.KEYCODE_BUTTON_MODE),
         icon = R.drawable.button_menu,
     )

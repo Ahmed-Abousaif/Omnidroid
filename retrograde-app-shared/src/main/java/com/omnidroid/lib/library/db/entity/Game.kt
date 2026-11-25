@@ -58,6 +58,7 @@ data class Game(
     val isAvailable: Boolean = true,
     val partialHash: String? = null,
     @ColumnInfo(defaultValue = "0") val isManualMatch: Boolean = false,
+    @ColumnInfo(defaultValue = "'user'") val customCoverOrigin: String = "user",
 ) : Serializable {
     @get:Ignore
     val displayName: String

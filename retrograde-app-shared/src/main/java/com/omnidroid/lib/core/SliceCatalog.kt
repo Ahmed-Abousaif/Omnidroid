@@ -17,8 +17,9 @@ object SliceCatalog {
             Slice("nes", listOf("nes"), listOf("fceumm")),
             Slice("snes", listOf("snes"), listOf("snes9x")),
             Slice("sms", listOf("sms"), listOf("genesis_plus_gx")),
-            Slice("md", listOf("md"), listOf("genesis_plus_gx")),
-            Slice("scd", listOf("scd"), listOf("genesis_plus_gx")),
+            Slice("md", listOf("md"), listOf("genesis_plus_gx", "picodrive")),
+            Slice("scd", listOf("scd"), listOf("genesis_plus_gx", "picodrive")),
+            Slice("32x", listOf("32x"), listOf("picodrive")),
             Slice("gg", listOf("gg"), listOf("genesis_plus_gx")),
             Slice("gb", listOf("gb"), listOf("gambatte")),
             Slice("gbc", listOf("gbc"), listOf("gambatte")),
@@ -38,6 +39,7 @@ object SliceCatalog {
             Slice("wsc", listOf("wsc"), listOf("mednafen_wswan")),
             Slice("dos", listOf("dos"), listOf("dosbox_pure")),
             Slice("ps2", listOf("ps2"), listOf("armsx2")),
+            Slice("ps3", listOf("ps3"), listOf("armsx3")),
             Slice("gamecube", listOf("gamecube"), listOf("dolphin")),
             Slice("wii", listOf("wii"), listOf("dolphin")),
             Slice("wiiu", listOf("wiiu"), listOf("cemu")),
@@ -59,14 +61,15 @@ object SliceCatalog {
         return installedSha != sha || installedSchema != schema
     }
 
-    fun displayName(sliceId: String): String {
-        return when (sliceId.lowercase()) {
+    fun displayName(sliceId: String): String =
+        when (sliceId.lowercase()) {
             "arcade" -> "Arcade"
             "dos" -> "DOS"
             "snes" -> "SNES"
             "nes" -> "NES"
             "md" -> "Genesis / Mega Drive"
             "scd" -> "Sega CD"
+            "32x" -> "Sega 32X"
             "sms" -> "Master System"
             "gg" -> "Game Gear"
             "gb" -> "Game Boy"
@@ -75,6 +78,7 @@ object SliceCatalog {
             "n64" -> "Nintendo 64"
             "psx" -> "PlayStation"
             "ps2" -> "PlayStation 2"
+            "ps3" -> "PlayStation 3"
             "psp" -> "PSP"
             "nds" -> "Nintendo DS"
             "3ds" -> "Nintendo 3DS"
@@ -93,7 +97,6 @@ object SliceCatalog {
             "wsc" -> "WonderSwan Color"
             else -> sliceId.uppercase()
         }
-    }
 }
 
 interface MetadataSliceInstaller {

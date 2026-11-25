@@ -28,4 +28,5 @@ data class SystemCoreConfig(
     val asyncVulkanPresentation: Boolean = true,
     val supportedOnlyArchitectures: Set<String>? = null,
     val supportsMicrophone: Boolean = false,
+    val autoSaveSupported: Boolean = true,
 ) : Serializable

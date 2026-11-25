@@ -88,3 +88,7 @@
 -keep interface org.yuzu.yuzu_emu.** { *; }
 -keep class org.libsdl.app.** { *; }
 -keep class kotlin.Pair { *; }
+## Omnidroid's PS3 adapter receives these callback classes explicitly.
+-keep class com.omnidroid.app.shared.ps3.Ps3HostCallbacks { *; }
+-keep class com.omnidroid.app.shared.ps3.ContentUri { *; }
+-keep class com.omnidroid.app.shared.ps3.Armsx3Native { *; }

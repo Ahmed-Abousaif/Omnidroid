@@ -3,6 +3,7 @@ package com.omnidroid.lib.bios
 import com.omnidroid.common.files.safeDelete
 import com.omnidroid.common.kotlin.associateByNotNull
 import com.omnidroid.common.kotlin.writeToFile
+import com.omnidroid.lib.core.assetsmanager.SegaCdAssetsManager
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.SystemID
 import com.omnidroid.lib.library.db.entity.Game
@@ -79,6 +80,7 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
         SUPPORTED_BIOS
             .map { File(systemDir, it.libretroFileName) }
             .filter { it.exists() && it.lastModified() < normalizeTimestamp(timestampMs) }
+            .filterNot { SegaCdAssetsManager.isPublishedBios(systemDir, it) }
             .forEach {
                 Timber.d("Pruning old bios file: ${it.path}")
                 it.safeDelete()

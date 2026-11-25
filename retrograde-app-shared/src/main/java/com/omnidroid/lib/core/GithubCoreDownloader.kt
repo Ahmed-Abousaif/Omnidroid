@@ -5,6 +5,8 @@ import android.os.Build
 import com.omnidroid.common.files.safeDelete
 import com.omnidroid.lib.library.CoreID
 import com.omnidroid.lib.storage.DirectoriesManager
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import java.io.File
 
@@ -12,37 +14,43 @@ class GithubCoreDownloader(
     private val directoriesManager: DirectoriesManager,
     private val api: CoreUpdater.CoreManagerApi,
 ) {
-    suspend fun retrieve(coreID: CoreID): File {
-        val mainCoresDirectory = directoriesManager.getCoresDirectory()
-        findCached(mainCoresDirectory, coreID)?.let { return it }
+    suspend fun retrieve(coreID: CoreID): File =
+        downloadMutex.withLock {
+            val mainCoresDirectory = directoriesManager.getCoresDirectory()
+            findCached(mainCoresDirectory, coreID)?.let { return@withLock it }
 
-        Timber.i("Downloading core $coreID from github")
-        val coresDirectory =
-            File(mainCoresDirectory, CORES_VERSION).apply {
-                mkdirs()
+            Timber.i("Downloading core $coreID from github")
+            val version = versionFor(coreID)
+            val coresDirectory =
+                File(mainCoresDirectory, version).apply {
+                    mkdirs()
+                }
+
+            val destFile = File(coresDirectory, coreID.libretroFileName)
+            runCatching {
+                deleteOutdatedCores(mainCoresDirectory)
             }
 
-        val destFile = File(coresDirectory, coreID.libretroFileName)
-        runCatching {
-            deleteOutdatedCores(mainCoresDirectory)
-        }
+            // Use raw.githubusercontent.com so downloads work without relying on github.com redirects.
+            val uri =
+                BASE_URI
+                    .buildUpon()
+                    .appendEncodedPath("$version/omnidroid_core_${coreID.coreName}/src/main/jniLibs/")
+                    .appendPath(Build.SUPPORTED_ABIS.first())
+                    .appendPath(coreID.libretroFileName)
+                    .build()
 
-        // Use raw.githubusercontent.com so downloads work without relying on github.com redirects.
-        val uri =
-            BASE_URI.buildUpon()
-                .appendEncodedPath("$CORES_VERSION/omnidroid_core_${coreID.coreName}/src/main/jniLibs/")
-                .appendPath(Build.SUPPORTED_ABIS.first())
-                .appendPath(coreID.libretroFileName)
-                .build()
-
-        try {
-            downloadFile(uri, destFile)
-            return destFile
-        } catch (error: Throwable) {
-            destFile.safeDelete()
-            throw error
+            val stagedFile = File(coresDirectory, "${coreID.libretroFileName}.part")
+            try {
+                downloadFile(uri, stagedFile)
+                check(stagedFile.renameTo(destFile)) { "Could not install ${destFile.name}" }
+                destFile
+            } catch (error: Throwable) {
+                destFile.safeDelete()
+                stagedFile.safeDelete()
+                throw error
+            }
         }
-    }
 
     private suspend fun downloadFile(
         uri: Uri,
@@ -71,21 +79,26 @@ class GithubCoreDownloader(
     }
 
     private fun deleteOutdatedCores(mainCoresDirectory: File) {
-        mainCoresDirectory.listFiles()
-            ?.filter { it.name != CORES_VERSION }
+        mainCoresDirectory
+            .listFiles()
+            ?.filter { it.name !in CoreID.values().map(::versionFor).toSet() }
             ?.forEach { it.deleteRecursively() }
     }
 
     companion object {
+        private val downloadMutex = Mutex()
+
         fun findCached(
             coresDirectory: File,
             coreID: CoreID,
         ): File? =
-            File(File(coresDirectory, CORES_VERSION), coreID.libretroFileName)
+            File(File(coresDirectory, versionFor(coreID)), coreID.libretroFileName)
                 .takeIf { it.isFile && it.length() > 0L }
 
+        fun versionFor(coreID: CoreID): String = CORES_VERSION
+
         // Keep in sync with omnidroid-app versionName / OmnidroidCores git tags.
-        const val CORES_VERSION = "3.1.0"
+        const val CORES_VERSION = "3.2.0"
         val BASE_URI = Uri.parse("https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/")
     }
 }

@@ -21,6 +21,9 @@ object FolderHints {
             "megadrive" to SystemID.GENESIS,
             "md" to SystemID.GENESIS,
             "segacd" to SystemID.SEGACD,
+            "32x" to SystemID.SEGA32X,
+            "sega32x" to SystemID.SEGA32X,
+            "sega_32x" to SystemID.SEGA32X,
             "megacd" to SystemID.SEGACD,
             "scd" to SystemID.SEGACD,
             "gg" to SystemID.GG,
@@ -66,6 +69,8 @@ object FolderHints {
             "wonderswancolor" to SystemID.WSC,
             "dos" to SystemID.DOS,
             "ps2" to SystemID.PS2,
+            "ps3" to SystemID.PS3,
+            "playstation3" to SystemID.PS3,
             "playstation2" to SystemID.PS2,
             "gc" to SystemID.GAMECUBE,
             "gamecube" to SystemID.GAMECUBE,
@@ -83,7 +88,8 @@ object FolderHints {
     fun system(path: String?): SystemID? {
         if (path.isNullOrBlank()) return null
         val segments =
-            path.split('/', '\\')
+            path
+                .split('/', '\\')
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
                 .dropLast(1)
@@ -95,11 +101,7 @@ object FolderHints {
     fun systemAmong(
         path: String?,
         allowed: Set<SystemID>,
-    ): SystemID? {
-        return system(path)?.takeIf { it in allowed }
-    }
+    ): SystemID? = system(path)?.takeIf { it in allowed }
 
-    private fun normalise(segment: String): String {
-        return segment.lowercase(Locale.US).replace(Regex("[^a-z0-9]"), "")
-    }
+    private fun normalise(segment: String): String = segment.lowercase(Locale.US).replace(Regex("[^a-z0-9]"), "")
 }

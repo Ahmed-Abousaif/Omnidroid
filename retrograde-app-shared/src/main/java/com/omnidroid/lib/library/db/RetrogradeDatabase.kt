@@ -21,14 +21,19 @@ package com.omnidroid.lib.library.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.omnidroid.lib.library.db.dao.CatalogDao
 import com.omnidroid.lib.library.db.dao.DataFileDao
 import com.omnidroid.lib.library.db.dao.GameDao
 import com.omnidroid.lib.library.db.dao.GameSearchDao
 import com.omnidroid.lib.library.db.dao.GameSessionDao
 import com.omnidroid.lib.library.db.dao.ScanDirectoryDao
 import com.omnidroid.lib.library.db.dao.UnrecognizedFileDao
+import com.omnidroid.lib.library.db.entity.ArtworkAttempt
+import com.omnidroid.lib.library.db.entity.CatalogLookup
 import com.omnidroid.lib.library.db.entity.DataFile
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.library.db.entity.GameArtwork
+import com.omnidroid.lib.library.db.entity.GameIdentity
 import com.omnidroid.lib.library.db.entity.GameSession
 import com.omnidroid.lib.library.db.entity.ScanDirectory
 import com.omnidroid.lib.library.db.entity.UnrecognizedFile
@@ -40,8 +45,12 @@ import com.omnidroid.lib.library.db.entity.UnrecognizedFile
         GameSession::class,
         UnrecognizedFile::class,
         ScanDirectory::class,
+        GameIdentity::class,
+        CatalogLookup::class,
+        GameArtwork::class,
+        ArtworkAttempt::class,
     ],
-    version = 18,
+    version = 19,
     exportSchema = true,
 )
 abstract class RetrogradeDatabase : RoomDatabase() {
@@ -58,6 +67,8 @@ abstract class RetrogradeDatabase : RoomDatabase() {
     abstract fun unrecognizedFileDao(): UnrecognizedFileDao
 
     abstract fun scanDirectoryDao(): ScanDirectoryDao
+
+    abstract fun catalogDao(): CatalogDao
 
     fun gameSearchDao() = GameSearchDao(gameSearchDaoInternal())
 

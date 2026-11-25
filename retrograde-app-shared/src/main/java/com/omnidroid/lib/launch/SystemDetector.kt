@@ -4,6 +4,7 @@ import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemID
 import com.omnidroid.lib.library.scan.ByteArraySource
 import com.omnidroid.lib.library.scan.NintendoDisc
+import com.omnidroid.lib.library.scan.SegaCartridge
 import java.io.InputStream
 import java.util.Locale
 
@@ -11,77 +12,83 @@ import java.util.Locale
  * Detects the GameSystem for an external launch file from its extension and optional SYSTEM hint.
  */
 object SystemDetector {
+    private val SYSTEM_ALIASES =
+        mapOf(
+            "genesis" to SystemID.GENESIS,
+            "megadrive" to SystemID.GENESIS,
+            "mega_drive" to SystemID.GENESIS,
+            "md" to SystemID.GENESIS,
+            "playstation" to SystemID.PSX,
+            "ps1" to SystemID.PSX,
+            "psx" to SystemID.PSX,
+            "ps" to SystemID.PSX,
+            "ps2" to SystemID.PS2,
+            "ps3" to SystemID.PS3,
+            "playstation3" to SystemID.PS3,
+            "playstation2" to SystemID.PS2,
+            "psp" to SystemID.PSP,
+            "n64" to SystemID.N64,
+            "nes" to SystemID.NES,
+            "famicom" to SystemID.NES,
+            "snes" to SystemID.SNES,
+            "sfc" to SystemID.SNES,
+            "super_nintendo" to SystemID.SNES,
+            "gb" to SystemID.GB,
+            "gameboy" to SystemID.GB,
+            "gbc" to SystemID.GBC,
+            "gameboy_color" to SystemID.GBC,
+            "gba" to SystemID.GBA,
+            "gameboy_advance" to SystemID.GBA,
+            "nds" to SystemID.NDS,
+            "ds" to SystemID.NDS,
+            "3ds" to SystemID.NINTENDO_3DS,
+            "nintendo_3ds" to SystemID.NINTENDO_3DS,
+            "gamecube" to SystemID.GAMECUBE,
+            "gc" to SystemID.GAMECUBE,
+            "wii" to SystemID.WII,
+            "wiiu" to SystemID.WII_U,
+            "wii_u" to SystemID.WII_U,
+            "switch" to SystemID.SWITCH,
+            "nswitch" to SystemID.SWITCH,
+            "nintendo_switch" to SystemID.SWITCH,
+            "dreamcast" to SystemID.DREAMCAST,
+            "dc" to SystemID.DREAMCAST,
+            "fbneo" to SystemID.FBNEO,
+            "arcade" to SystemID.FBNEO,
+            "mame" to SystemID.MAME2003PLUS,
+            "pce" to SystemID.PC_ENGINE,
+            "pc_engine" to SystemID.PC_ENGINE,
+            "turbografx" to SystemID.PC_ENGINE,
+            "scd" to SystemID.SEGACD,
+            "segacd" to SystemID.SEGACD,
+            "32x" to SystemID.SEGA32X,
+            "sega32x" to SystemID.SEGA32X,
+            "sega_32x" to SystemID.SEGA32X,
+            "mega_cd" to SystemID.SEGACD,
+            "atari2600" to SystemID.ATARI2600,
+            "atari7800" to SystemID.ATARI7800,
+            "lynx" to SystemID.LYNX,
+            "sms" to SystemID.SMS,
+            "gg" to SystemID.GG,
+            "ws" to SystemID.WS,
+            "wsc" to SystemID.WSC,
+            "ngp" to SystemID.NGP,
+            "dos" to SystemID.DOS,
+        )
 
-    private val SYSTEM_ALIASES = mapOf(
-        "genesis" to SystemID.GENESIS,
-        "megadrive" to SystemID.GENESIS,
-        "mega_drive" to SystemID.GENESIS,
-        "md" to SystemID.GENESIS,
-        "playstation" to SystemID.PSX,
-        "ps1" to SystemID.PSX,
-        "psx" to SystemID.PSX,
-        "ps" to SystemID.PSX,
-        "ps2" to SystemID.PS2,
-        "playstation2" to SystemID.PS2,
-        "psp" to SystemID.PSP,
-        "n64" to SystemID.N64,
-        "nes" to SystemID.NES,
-        "famicom" to SystemID.NES,
-        "snes" to SystemID.SNES,
-        "sfc" to SystemID.SNES,
-        "super_nintendo" to SystemID.SNES,
-        "gb" to SystemID.GB,
-        "gameboy" to SystemID.GB,
-        "gbc" to SystemID.GBC,
-        "gameboy_color" to SystemID.GBC,
-        "gba" to SystemID.GBA,
-        "gameboy_advance" to SystemID.GBA,
-        "nds" to SystemID.NDS,
-        "ds" to SystemID.NDS,
-        "3ds" to SystemID.NINTENDO_3DS,
-        "nintendo_3ds" to SystemID.NINTENDO_3DS,
-        "gamecube" to SystemID.GAMECUBE,
-        "gc" to SystemID.GAMECUBE,
-        "wii" to SystemID.WII,
-        "wiiu" to SystemID.WII_U,
-        "wii_u" to SystemID.WII_U,
-        "switch" to SystemID.SWITCH,
-        "nswitch" to SystemID.SWITCH,
-        "nintendo_switch" to SystemID.SWITCH,
-        "dreamcast" to SystemID.DREAMCAST,
-        "dc" to SystemID.DREAMCAST,
-        "fbneo" to SystemID.FBNEO,
-        "arcade" to SystemID.FBNEO,
-        "mame" to SystemID.MAME2003PLUS,
-        "pce" to SystemID.PC_ENGINE,
-        "pc_engine" to SystemID.PC_ENGINE,
-        "turbografx" to SystemID.PC_ENGINE,
-        "scd" to SystemID.SEGACD,
-        "segacd" to SystemID.SEGACD,
-        "mega_cd" to SystemID.SEGACD,
-        "atari2600" to SystemID.ATARI2600,
-        "atari7800" to SystemID.ATARI7800,
-        "lynx" to SystemID.LYNX,
-        "sms" to SystemID.SMS,
-        "gg" to SystemID.GG,
-        "ws" to SystemID.WS,
-        "wsc" to SystemID.WSC,
-        "ngp" to SystemID.NGP,
-        "dos" to SystemID.DOS,
-    )
-
-    private val DEFAULT_COLLISION_DEFAULTS = mapOf(
-        "chd" to SystemID.PSX,
-        "iso" to SystemID.PSX,
-        "cue" to SystemID.PSX,
-        "pbp" to SystemID.PSX,
-        "bin" to SystemID.GENESIS,
-        "zip" to SystemID.FBNEO,
-        "rvz" to SystemID.WII,
-        "wia" to SystemID.WII,
-        "gcz" to SystemID.GAMECUBE,
-        "ciso" to SystemID.GAMECUBE,
-    )
+    private val DEFAULT_COLLISION_DEFAULTS =
+        mapOf(
+            "chd" to SystemID.PSX,
+            "iso" to SystemID.PSX,
+            "cue" to SystemID.PSX,
+            "pbp" to SystemID.PSX,
+            "bin" to SystemID.GENESIS,
+            "zip" to SystemID.FBNEO,
+            "rvz" to SystemID.WII,
+            "wia" to SystemID.WII,
+            "gcz" to SystemID.GAMECUBE,
+            "ciso" to SystemID.GAMECUBE,
+        )
 
     /**
      * Identifies the system given a file extension and optional system extra.
@@ -101,15 +108,19 @@ object SystemDetector {
 
         // 1. If systemHint is provided, attempt to match it to a known SystemID
         if (!systemHint.isNullOrBlank()) {
-            val normalizedHint = systemHint.trim().lowercase(Locale.US)
-                .replace("-", "_")
-                .replace(" ", "_")
+            val normalizedHint =
+                systemHint
+                    .trim()
+                    .lowercase(Locale.US)
+                    .replace("-", "_")
+                    .replace(" ", "_")
 
-            val targetSystemId = SYSTEM_ALIASES[normalizedHint]
-                ?: SystemID.values().firstOrNull {
-                    it.dbname.equals(normalizedHint, ignoreCase = true) ||
-                        it.name.equals(normalizedHint, ignoreCase = true)
-                }
+            val targetSystemId =
+                SYSTEM_ALIASES[normalizedHint]
+                    ?: SystemID.values().firstOrNull {
+                        it.dbname.equals(normalizedHint, ignoreCase = true) ||
+                            it.name.equals(normalizedHint, ignoreCase = true)
+                    }
 
             if (targetSystemId != null) {
                 val candidateSystem = runCatching { GameSystem.findById(targetSystemId.dbname) }.getOrNull()
@@ -119,22 +130,67 @@ object SystemDetector {
             }
         }
 
+        if (openStream != null && extension in setOf("bin", "gen", "md", "smd")) {
+            val is32x =
+                runCatching {
+                    openStream()?.use { stream ->
+                        val header = ByteArray(if (extension == "smd") 512 + 16 * 1024 else 0x110)
+                        var count = 0
+                        while (count < header.size) {
+                            val read = stream.read(header, count, header.size - count)
+                            if (read <= 0) break
+                            count += read
+                        }
+                        SegaCartridge.is32x(ByteArraySource(header.copyOf(count)), extension == "smd")
+                    } == true
+                }.getOrDefault(false)
+            if (is32x) return GameSystem.findById(SystemID.SEGA32X.dbname)
+        }
+
+        if (openStream != null && extension in setOf("iso", "sfo")) {
+            val isPs3 =
+                runCatching {
+                    openStream()?.use { stream ->
+                        val buffer = ByteArray(if (extension == "iso") 0x9000 else 1024 * 1024)
+                        var count = 0
+                        while (count < buffer.size) {
+                            val read = stream.read(buffer, count, buffer.size - count)
+                            if (read <= 0) break
+                            count += read
+                        }
+                        if (extension == "sfo") {
+                            com.omnidroid.lib.library.scan.Ps3Content
+                                .parse(buffer.copyOf(count))
+                                ?.playable == true
+                        } else {
+                            count >= 0x8048 &&
+                                buffer.copyOfRange(0x8001, 0x8006).toString(Charsets.US_ASCII) == "CD001" &&
+                                buffer.copyOfRange(0x8028, 0x8048).toString(Charsets.US_ASCII).trim() == "PS3VOLUME"
+                        }
+                    } == true
+                }.getOrDefault(false)
+            if (isPs3) return GameSystem.findById(SystemID.PS3.dbname)
+        }
+
         // 2. Sniff header for Nintendo disc images (RVZ / WIA) if stream is available
         if (openStream != null && (extension == "rvz" || extension == "wia")) {
-            val discSystem = runCatching {
-                openStream()?.use { stream ->
-                    val buffer = ByteArray(0x100)
-                    var read = 0
-                    while (read < buffer.size) {
-                        val r = stream.read(buffer, read, buffer.size - read)
-                        if (r <= 0) break
-                        read += r
+            val discSystem =
+                runCatching {
+                    openStream()?.use { stream ->
+                        val buffer = ByteArray(0x100)
+                        var read = 0
+                        while (read < buffer.size) {
+                            val r = stream.read(buffer, read, buffer.size - read)
+                            if (r <= 0) break
+                            read += r
+                        }
+                        if (read >= 0x50) {
+                            NintendoDisc.fromRvz(ByteArraySource(buffer.copyOf(read)))?.system
+                        } else {
+                            null
+                        }
                     }
-                    if (read >= 0x50) {
-                        NintendoDisc.fromRvz(ByteArraySource(buffer.copyOf(read)))?.system
-                    } else null
-                }
-            }.getOrNull()
+                }.getOrNull()
 
             if (discSystem != null) {
                 val candidate = runCatching { GameSystem.findById(discSystem.dbname) }.getOrNull()

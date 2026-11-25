@@ -108,7 +108,7 @@ class GameMenuStatesViewModel(
                     }
 
                 val autoSave =
-                    if (disableMissingEntries) {
+                    if (disableMissingEntries && gameMenuRequest.coreConfig.autoSaveSupported) {
                         val info =
                             statesManager.getAutoSaveInfo(
                                 gameMenuRequest.game,
