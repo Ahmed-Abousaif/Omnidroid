@@ -141,6 +141,7 @@ object ControllerConfigs {
             TouchControllerID.N64,
             allowTouchRotation = true,
             hasAnalogStick = true,
+            libretroId = 1,
             tiltConfigurations =
                 listOf(
                     TILT_CONFIGURATION_DISABLED,

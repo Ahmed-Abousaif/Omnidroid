@@ -977,6 +977,9 @@ data class GameSystem(
                             controllerConfigs =
                                 hashMapOf(
                                     0 to arrayListOf(ControllerConfigs.N64),
+                                    1 to arrayListOf(ControllerConfigs.N64),
+                                    2 to arrayListOf(ControllerConfigs.N64),
+                                    3 to arrayListOf(ControllerConfigs.N64),
                                 ),
                             rumbleSupported = true,
                             skipDuplicateFrames = false,
