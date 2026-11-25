@@ -95,14 +95,10 @@ class GithubCoreDownloader(
             File(File(coresDirectory, versionFor(coreID)), coreID.libretroFileName)
                 .takeIf { it.isFile && it.length() > 0L }
 
-        // This between-release addition joins the normal tag-based packages in the next core release.
-        fun versionFor(coreID: CoreID): String =
-            if (coreID == CoreID.PICODRIVE && CORES_VERSION == "3.1.0") PICODRIVE_REVISION else CORES_VERSION
-
-        private const val PICODRIVE_REVISION = "015fd632193153560edb293e221d272b2b726b8c"
+        fun versionFor(coreID: CoreID): String = CORES_VERSION
 
         // Keep in sync with omnidroid-app versionName / OmnidroidCores git tags.
-        const val CORES_VERSION = "3.1.0"
+        const val CORES_VERSION = "3.2.0"
         val BASE_URI = Uri.parse("https://raw.githubusercontent.com/Ahmed-Abousaif/OmnidroidCores/")
     }
 }

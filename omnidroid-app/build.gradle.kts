@@ -45,9 +45,9 @@ android {
             "\"${metadataBaseUrl.replace("\\", "\\\\").replace("\"", "\\\"")}\"",
         )
 
-        versionCode = 310
+        versionCode = 320
 
-        versionName = "3.1.0" // Keep in sync with OmnidroidCores when you cut version tags
+        versionName = "3.2.0" // Keep in sync with OmnidroidCores when you cut version tags
 
         applicationId = "com.omnidroid"
 
