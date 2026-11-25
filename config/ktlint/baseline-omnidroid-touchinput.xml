@@ -346,8 +346,6 @@
     <file name="src/main/java/com/omnidroid/touchinput/radial/settings/TouchControllerSettingsManager.kt">
         <error line="14" column="38" source="standard:class-signature" />
         <error line="14" column="86" source="standard:class-signature" />
-        <error line="59" column="38" source="standard:chain-method-continuation" />
-        <error line="126" column="15" source="standard:function-expression-body" />
     </file>
     <file name="src/test/java/com/omnidroid/touchinput/radial/sensors/SimulatedTiltInputTest.kt">
         <error line="33" column="35" source="standard:chain-method-continuation" />

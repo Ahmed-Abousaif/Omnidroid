@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Height
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -125,7 +126,9 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 Id.Key(ComposeTouchLayouts.HOST_KEY_CLOSE_LID),
             )
         }
-        val padOpacity = viewModel.getVirtualPadOpacity().collectAsState(1f).value
+        val globalPadOpacity = viewModel.getVirtualPadOpacity().collectAsState(1f).value
+        val touchControllerSettings = touchControllerSettingsState.value
+        val padOpacity = resolvePadOpacity(touchControllerSettings?.opacity, globalPadOpacity)
         val gamepadColor =
             stringPreferenceState(
                 id = com.omnidroid.R.string.pref_key_gamepad_color,
@@ -137,8 +140,6 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
             remember(gamepadColor, currentAccent, currentOnAccent) {
                 GamepadColor.padTheme(gamepadColor, currentAccent, currentOnAccent)
             }
-
-        val touchControllerSettings = touchControllerSettingsState.value
         val currentControllerConfig = controllerConfigState.value
 
         // DS/3DS showing one screen fill the display with pads overlaid (like PSP) instead of
@@ -339,6 +340,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 viewModel = viewModel,
                 controllerConfig = currentControllerConfig,
                 touchControllerSettings = touchControllerSettings,
+                defaultOpacity = globalPadOpacity,
                 isTouchControlsVisible = isVisible,
             )
         }
@@ -431,6 +433,7 @@ private fun MenuEditTouchControls(
     viewModel: BaseGameScreenViewModel,
     controllerConfig: ControllerConfig?,
     touchControllerSettings: TouchControllerSettingsManager.Settings,
+    defaultOpacity: Float,
     isTouchControlsVisible: Boolean,
 ) {
     val originalSettings = remember { touchControllerSettings }
@@ -481,6 +484,22 @@ private fun MenuEditTouchControls(
                             onValueChange = {
                                 viewModel.updateTouchControllerSettings(
                                     touchControllerSettings.copy(scale = it),
+                                )
+                            },
+                        )
+                    }
+
+                    MenuEditTouchControlSlider(
+                        icon = Icons.Default.Visibility,
+                        label = stringResource(R.string.touch_customize_opacity),
+                        rotation = 0f,
+                    ) {
+                        Slider(
+                            value = resolvePadOpacity(touchControllerSettings.opacity, defaultOpacity),
+                            valueRange = 0f..1f,
+                            onValueChange = {
+                                viewModel.updateTouchControllerSettings(
+                                    touchControllerSettings.copy(opacity = it),
                                 )
                             },
                         )
@@ -639,3 +658,10 @@ private fun MenuEditTouchControlSlider(
         slider()
     }
 }
+
+private fun resolvePadOpacity(
+    perLayoutOpacity: Float?,
+    globalDefaultOpacity: Float,
+): Float =
+    (perLayoutOpacity ?: globalDefaultOpacity)
+        .let { if (it.isFinite()) it.coerceIn(0f, 1f) else TouchControllerSettingsManager.DEFAULT_OPACITY }

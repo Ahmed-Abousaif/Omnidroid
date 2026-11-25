@@ -110,7 +110,7 @@ class GameViewModelTouchControls(
                 val opacity = settingsManager.virtualPadOpacity()
                 hapticFeedbackMode.value = mode
                 vibrationIntensity.value = if (intensity.isFinite()) intensity.coerceIn(0f, 1f) else 0f
-                virtualPadOpacity.value = opacity
+                virtualPadOpacity.value = if (opacity.isFinite()) opacity.coerceIn(0f, 1f) else DEFAULT_PAD_OPACITY
             }
     }
 

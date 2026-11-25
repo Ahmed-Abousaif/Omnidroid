@@ -9,6 +9,7 @@
     <string name="touch_customize_section_screen">Screen</string>
     <string name="touch_customize_section_controls">Virtual Controller</string>
     <string name="touch_customize_screen_position">Screen Position</string>
+    <string name="touch_customize_opacity">Opacity</string>
     <string name="touch_customize_scale">Button Scale</string>
     <string name="touch_customize_margin_x">Horizontal Margin</string>
     <string name="touch_customize_margin_y">Vertical Margin</string>
