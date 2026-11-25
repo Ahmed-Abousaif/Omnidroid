@@ -23,7 +23,8 @@ class CoreAssetsException(val coreID: CoreID, cause: Throwable) :
 object CoreAssets {
     private val changes = MutableStateFlow(0)
     val revision = changes.asStateFlow()
-    fun hasAssets(coreID: CoreID): Boolean = coreID in setOf(CoreID.PPSSPP, CoreID.ARMSX2, CoreID.DOLPHIN, CoreID.CEMU)
+    fun hasAssets(coreID: CoreID): Boolean =
+        coreID in setOf(CoreID.GENESIS_PLUS_GX, CoreID.PPSSPP, CoreID.ARMSX2, CoreID.DOLPHIN, CoreID.CEMU)
 
     suspend fun isReady(context: Context, coreID: CoreID): Boolean =
         withContext(Dispatchers.IO) {
