@@ -9,10 +9,12 @@ import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.library.db.entity.UnrecognizedFile
 import com.omnidroid.lib.library.metadata.GameMetadataProvider
 import com.omnidroid.lib.library.metadata.LibretroTitles
+import com.omnidroid.lib.library.scan.CartridgeHasher
 import com.omnidroid.lib.library.scan.ChdOpener
 import com.omnidroid.lib.library.scan.Detection
 import com.omnidroid.lib.library.scan.DetectionRules
 import com.omnidroid.lib.library.scan.FolderHints
+import com.omnidroid.lib.library.scan.HashMode
 import com.omnidroid.lib.library.scan.LibraryDiff
 import com.omnidroid.lib.library.scan.LibraryDiffEntry
 import com.omnidroid.lib.library.scan.MetadataKey
@@ -74,7 +76,11 @@ class OmnidroidLibrary(
                 }
             }
             if (completed) {
-                kotlin.runCatching { biosManager.deleteBiosBefore(startedAtMs) }
+                // Cached subtrees can contain BIOS sources that were not re-listed.
+                // Only a complete walk can prove that an imported BIOS was removed.
+                if (providers.none { it.lastSkippedDocumentIds().isNotEmpty() }) {
+                    kotlin.runCatching { biosManager.deleteBiosBefore(startedAtMs) }
+                }
                 kotlin.runCatching { retrogradedb.unrecognizedFileDao().deleteOlderThan(startedAtMs) }
                 sliceStamps.set(currentStamps)
             }
@@ -248,6 +254,7 @@ class OmnidroidLibrary(
             )
             return
         }
+        if (importBiosByName(provider, entry.group.primaryFile, startedAtMs, game)) return
         val stampChanged =
             currentStamps[game.systemId] != null &&
                 currentStamps[game.systemId] != savedStamps[game.systemId]
@@ -285,6 +292,7 @@ class OmnidroidLibrary(
         startedAtMs: Long,
     ) {
         val primary = group.primaryFile
+        if (!game.isManualMatch && importBiosByName(provider, primary, startedAtMs, game)) return
         val newFileName = primary.name
         if (game.fileName != newFileName) {
             val renamedOk =
@@ -392,6 +400,7 @@ class OmnidroidLibrary(
             retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
             return
         }
+        if (importBiosByName(provider, primary, startedAtMs, existing)) return
         val stampChanged =
             existing != null &&
                 currentStamps[existing.systemId] != null &&
@@ -412,11 +421,6 @@ class OmnidroidLibrary(
             return
         }
 
-        if (importBiosByName(provider, primary, startedAtMs)) {
-            retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
-            return
-        }
-
         var insertedId = existing?.id
         val detection =
             DetectionRules.identify(scanInput(provider, group)) { system ->
@@ -425,7 +429,15 @@ class OmnidroidLibrary(
                 }
             }
         when (detection) {
-            is Detection.Ready ->
+            is Detection.Ready -> {
+                // Boot ROMs can carry cartridge headers, so check their CRC before saving
+                // a detected cartridge as a game, including BIOS files with other names.
+                if (detection.archiveEntry == null &&
+                    detection.key?.type == MetadataKeyType.CRC &&
+                    importBiosByCrc(provider, primary, detection.key.value, startedAtMs, insertedId)
+                ) {
+                    return
+                }
                 saveGame(
                     group,
                     existing,
@@ -438,6 +450,7 @@ class OmnidroidLibrary(
                     detection.title,
                     detection.cover,
                 )
+            }
             is Detection.HashedBin ->
                 saveHashedBin(
                     provider,
@@ -574,17 +587,7 @@ class OmnidroidLibrary(
         metadata: GameMetadataProvider,
     ) {
         val primary = group.primaryFile
-        if (biosManager.matchesBiosCrc(crc)) {
-            provider.getInputStream(primary.uri)?.use { stream ->
-                biosManager.tryAddBiosAfter(
-                    StorageFile(primary.name, primary.size, crc, null, primary.uri, primary.path, null),
-                    stream,
-                    startedAtMs,
-                )
-            }
-            retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
-            return
-        }
+        if (archiveEntry == null && importBiosByCrc(provider, primary, crc, startedAtMs, existing?.id)) return
         val cartridge = metadata.findCartridge(crc)
         if (cartridge?.system != null) {
             saveGame(
@@ -822,16 +825,64 @@ class OmnidroidLibrary(
         provider: StorageProvider,
         primary: BaseStorageFile,
         startedAtMs: Long,
+        existing: Game?,
     ): Boolean {
         if (!BiosManager.isKnownBiosName(primary.name)) return false
+        // A canonical BIOS name is a hint, not proof. Compute its raw checksum even when
+        // the normal scanner would identify its header as a Genesis cartridge.
+        val crc =
+            if (primary.size in 1..BiosManager.MAX_BIOS_CANDIDATE_BYTES) {
+                provider.openRandomAccess(primary.uri)?.use { source ->
+                    if (source.size in
+                        1..BiosManager.MAX_BIOS_CANDIDATE_BYTES
+                    ) {
+                        CartridgeHasher.hash(source, HashMode.RAW)
+                    } else {
+                        null
+                    }
+                }
+            } else {
+                null
+            }
         val stream = provider.getInputStream(primary.uri) ?: return false
-        return stream.use {
-            biosManager.tryAddBiosAfter(
-                StorageFile(primary.name, primary.size, null, null, primary.uri, primary.path, null),
-                it,
-                startedAtMs,
-            )
-        }
+        val imported =
+            stream.use {
+                biosManager.tryAddBiosAfter(
+                    StorageFile(primary.name, primary.size, crc, null, primary.uri, primary.path, null),
+                    it,
+                    startedAtMs,
+                )
+            }
+        if (imported) finishBiosImport(primary, existing?.id)
+        return imported
+    }
+
+    private fun importBiosByCrc(
+        provider: StorageProvider,
+        primary: BaseStorageFile,
+        crc: String,
+        startedAtMs: Long,
+        existingId: Int?,
+    ): Boolean {
+        if (!biosManager.matchesBiosCrc(crc)) return false
+        val imported =
+            provider.getInputStream(primary.uri)?.use { stream ->
+                biosManager.tryAddBiosAfter(
+                    StorageFile(primary.name, primary.size, crc, null, primary.uri, primary.path, null),
+                    stream,
+                    startedAtMs,
+                )
+            } ?: false
+        if (imported) finishBiosImport(primary, existingId)
+        return imported
+    }
+
+    private fun finishBiosImport(
+        primary: BaseStorageFile,
+        existingId: Int?,
+    ) {
+        existingId?.let { retrogradedb.gameDao().deleteAutomaticMatch(it) }
+        retrogradedb.unrecognizedFileDao().deleteByUri(primary.uri.toString())
     }
 
     private fun systemByName(systemId: String): SystemID = SystemID.entries.first { it.dbname == systemId }
