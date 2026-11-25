@@ -126,8 +126,9 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 Id.Key(ComposeTouchLayouts.HOST_KEY_CLOSE_LID),
             )
         }
+        val globalPadOpacity = viewModel.getVirtualPadOpacity().collectAsState(1f).value
         val touchControllerSettings = touchControllerSettingsState.value
-        val padOpacity = touchControllerSettings?.opacity ?: TouchControllerSettingsManager.DEFAULT_OPACITY
+        val padOpacity = resolvePadOpacity(touchControllerSettings?.opacity, globalPadOpacity)
         val gamepadColor =
             stringPreferenceState(
                 id = com.omnidroid.R.string.pref_key_gamepad_color,
@@ -339,6 +340,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 viewModel = viewModel,
                 controllerConfig = currentControllerConfig,
                 touchControllerSettings = touchControllerSettings,
+                defaultOpacity = globalPadOpacity,
                 isTouchControlsVisible = isVisible,
             )
         }
@@ -431,6 +433,7 @@ private fun MenuEditTouchControls(
     viewModel: BaseGameScreenViewModel,
     controllerConfig: ControllerConfig?,
     touchControllerSettings: TouchControllerSettingsManager.Settings,
+    defaultOpacity: Float,
     isTouchControlsVisible: Boolean,
 ) {
     val originalSettings = remember { touchControllerSettings }
@@ -492,9 +495,8 @@ private fun MenuEditTouchControls(
                         rotation = 0f,
                     ) {
                         Slider(
-                            value = touchControllerSettings.opacity,
+                            value = resolvePadOpacity(touchControllerSettings.opacity, defaultOpacity),
                             valueRange = 0f..1f,
-                            steps = 99,
                             onValueChange = {
                                 viewModel.updateTouchControllerSettings(
                                     touchControllerSettings.copy(opacity = it),
@@ -656,3 +658,10 @@ private fun MenuEditTouchControlSlider(
         slider()
     }
 }
+
+private fun resolvePadOpacity(
+    perLayoutOpacity: Float?,
+    globalDefaultOpacity: Float,
+): Float =
+    (perLayoutOpacity ?: globalDefaultOpacity)
+        .let { if (it.isFinite()) it.coerceIn(0f, 1f) else TouchControllerSettingsManager.DEFAULT_OPACITY }
