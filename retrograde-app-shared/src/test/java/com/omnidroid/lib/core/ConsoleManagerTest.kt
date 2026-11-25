@@ -11,7 +11,7 @@ class ConsoleManagerTest {
     @Test
     fun genesisMapsToMdAndScdSlices() {
         val ids = ConsoleManager.sliceIdsFor(MetaSystemID.GENESIS)
-        assertEquals(listOf("md", "scd"), ids)
+        assertEquals(listOf("md", "scd", "32x"), ids)
     }
 
     @Test
@@ -21,7 +21,7 @@ class ConsoleManagerTest {
 
     @Test
     fun systemDbNamesMatchMetaSystems() {
-        assertEquals(listOf("md", "scd"), ConsoleManager.systemDbNames(MetaSystemID.GENESIS))
+        assertEquals(listOf("md", "scd", "32x"), ConsoleManager.systemDbNames(MetaSystemID.GENESIS))
         assertEquals(listOf("ngp", "ngc"), ConsoleManager.systemDbNames(MetaSystemID.NGP))
         assertEquals(listOf("ws", "wsc"), ConsoleManager.systemDbNames(MetaSystemID.WS))
         assertEquals(listOf("fbneo", "mame2003plus"), ConsoleManager.systemDbNames(MetaSystemID.ARCADE))
@@ -94,7 +94,7 @@ class ConsoleManagerTest {
         assertEquals(listOf("sms"), smsSystems)
 
         val genesisSystems = ConsoleManager.slicesFor(MetaSystemID.GENESIS).flatMap { it.systems }
-        assertEquals(listOf("md", "scd"), genesisSystems)
+        assertEquals(listOf("md", "scd", "32x"), genesisSystems)
         assertFalse("sms" in genesisSystems)
     }
 

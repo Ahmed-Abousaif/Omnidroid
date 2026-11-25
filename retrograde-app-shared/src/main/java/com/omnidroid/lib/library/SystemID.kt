@@ -20,6 +20,7 @@ enum class SystemID(val dbname: String) {
     LYNX("lynx"),
     ATARI7800("atari7800"),
     SEGACD("scd"),
+    SEGA32X("32x"),
     NGP("ngp"),
     NGC("ngc"),
     WS("ws"),

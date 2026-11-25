@@ -107,6 +107,7 @@ android {
                 ":omnidroid_core_fceumm",
                 ":omnidroid_core_gambatte",
                 ":omnidroid_core_genesis_plus_gx",
+                ":omnidroid_core_picodrive",
                 ":omnidroid_core_handy",
                 ":omnidroid_core_mame2003_plus",
                 ":omnidroid_core_mednafen_ngp",
