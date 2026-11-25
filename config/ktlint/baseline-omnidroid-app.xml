@@ -3398,60 +3398,47 @@
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/sidemenu/SideMenuPage.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="36" column="46" source="standard:class-signature" />
-        <error line="36" column="88" source="standard:class-signature" />
-        <error line="41" column="31" source="standard:function-signature" />
-        <error line="41" column="43" source="standard:function-signature" />
-        <error line="41" column="61" source="standard:function-signature" />
-        <error line="41" column="79" source="standard:function-signature" />
-        <error line="49" column="18" source="standard:function-signature" />
-        <error line="49" column="30" source="standard:function-signature" />
-        <error line="49" column="79" source="standard:function-signature" />
-        <error line="54" column="76" source="standard:chain-method-continuation" />
-        <error line="97" column="53" source="standard:argument-list-wrapping" />
-        <error line="97" column="68" source="standard:argument-list-wrapping" />
-        <error line="97" column="89" source="standard:argument-list-wrapping" />
-        <error line="98" column="24" source="standard:argument-list-wrapping" />
+        <error line="37" column="46" source="standard:class-signature" />
+        <error line="37" column="88" source="standard:class-signature" />
+        <error line="42" column="31" source="standard:function-signature" />
+        <error line="42" column="43" source="standard:function-signature" />
+        <error line="42" column="61" source="standard:function-signature" />
+        <error line="42" column="79" source="standard:function-signature" />
+        <error line="50" column="18" source="standard:function-signature" />
+        <error line="50" column="30" source="standard:function-signature" />
+        <error line="50" column="79" source="standard:function-signature" />
+        <error line="55" column="76" source="standard:chain-method-continuation" />
         <error line="101" column="26" source="standard:class-signature" />
         <error line="101" column="40" source="standard:class-signature" />
         <error line="101" column="57" source="standard:class-signature" />
-        <error line="127" column="20" source="standard:argument-list-wrapping" />
-        <error line="127" column="54" source="standard:argument-list-wrapping" />
-        <error line="128" column="24" source="standard:argument-list-wrapping" />
-        <error line="128" column="45" source="standard:argument-list-wrapping" />
-        <error line="128" column="58" source="standard:argument-list-wrapping" />
-        <error line="142" column="53" source="standard:argument-list-wrapping" />
-        <error line="142" column="68" source="standard:argument-list-wrapping" />
-        <error line="143" column="24" source="standard:argument-list-wrapping" />
-        <error line="143" column="37" source="standard:argument-list-wrapping" />
-        <error line="147" column="32" source="standard:parameter-list-wrapping" />
-        <error line="147" column="32" source="standard:function-signature" />
-        <error line="147" column="44" source="standard:parameter-list-wrapping" />
-        <error line="147" column="44" source="standard:function-signature" />
-        <error line="147" column="78" source="standard:parameter-list-wrapping" />
-        <error line="147" column="78" source="standard:function-signature" />
-        <error line="147" column="91" source="standard:parameter-list-wrapping" />
-        <error line="147" column="110" source="standard:parameter-list-wrapping" />
-        <error line="147" column="119" source="standard:parameter-list-wrapping" />
-        <error line="147" column="119" source="standard:function-signature" />
-        <error line="147" column="121" source="standard:max-line-length" />
-        <error line="147" column="122" source="standard:function-signature" />
+        <error line="152" column="32" source="standard:parameter-list-wrapping" />
+        <error line="152" column="32" source="standard:function-signature" />
+        <error line="152" column="44" source="standard:parameter-list-wrapping" />
+        <error line="152" column="44" source="standard:function-signature" />
+        <error line="152" column="78" source="standard:parameter-list-wrapping" />
+        <error line="152" column="78" source="standard:function-signature" />
+        <error line="152" column="91" source="standard:parameter-list-wrapping" />
+        <error line="152" column="110" source="standard:parameter-list-wrapping" />
+        <error line="152" column="119" source="standard:parameter-list-wrapping" />
+        <error line="152" column="119" source="standard:function-signature" />
+        <error line="152" column="121" source="standard:max-line-length" />
+        <error line="152" column="122" source="standard:function-signature" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/sidemenu/SideMenuScaffold.kt">
-        <error line="140" column="21" source="standard:chain-method-continuation" />
-        <error line="140" column="35" source="standard:chain-method-continuation" />
-        <error line="200" column="28" source="standard:function-signature" />
-        <error line="200" column="43" source="standard:function-signature" />
-        <error line="200" column="63" source="standard:function-signature" />
-        <error line="200" column="82" source="standard:function-signature" />
-        <error line="201" column="9" source="standard:argument-list-wrapping" />
-        <error line="201" column="40" source="standard:argument-list-wrapping" />
-        <error line="201" column="45" source="standard:argument-list-wrapping" />
-        <error line="201" column="55" source="standard:argument-list-wrapping" />
-        <error line="201" column="72" source="standard:argument-list-wrapping" />
-        <error line="201" column="75" source="standard:argument-list-wrapping" />
-        <error line="201" column="121" source="standard:argument-list-wrapping" />
-        <error line="201" column="121" source="standard:max-line-length" />
+        <error line="163" column="21" source="standard:chain-method-continuation" />
+        <error line="163" column="35" source="standard:chain-method-continuation" />
+        <error line="223" column="28" source="standard:function-signature" />
+        <error line="223" column="43" source="standard:function-signature" />
+        <error line="223" column="63" source="standard:function-signature" />
+        <error line="223" column="82" source="standard:function-signature" />
+        <error line="224" column="9" source="standard:argument-list-wrapping" />
+        <error line="224" column="40" source="standard:argument-list-wrapping" />
+        <error line="224" column="45" source="standard:argument-list-wrapping" />
+        <error line="224" column="55" source="standard:argument-list-wrapping" />
+        <error line="224" column="72" source="standard:argument-list-wrapping" />
+        <error line="224" column="75" source="standard:argument-list-wrapping" />
+        <error line="224" column="121" source="standard:argument-list-wrapping" />
+        <error line="224" column="121" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/omnidroid/app/mobile/shared/compose/ui/AdaptiveDimensions.kt">
         <error line="30" column="32" source="standard:multiline-expression-wrapping" />
