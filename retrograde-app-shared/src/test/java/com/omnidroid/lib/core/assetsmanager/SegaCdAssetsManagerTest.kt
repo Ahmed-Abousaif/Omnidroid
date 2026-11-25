@@ -32,7 +32,12 @@ class SegaCdAssetsManagerTest {
     private val context: Context get() = RuntimeEnvironment.getApplication()
     private val directories get() = DirectoriesManager(context)
     private val preferences get() = context.getSharedPreferences("sega-cd-assets-test", Context.MODE_PRIVATE)
-    private val archive = File("../omnidroid-cores/assets/sega-cd.zip")
+    private val archive by lazy {
+        File.createTempFile("sega-cd-test", ".zip").apply {
+            val resource = checkNotNull(SegaCdAssetsManagerTest::class.java.getResourceAsStream("/sega-cd.zip"))
+            resource.use { input -> outputStream().use { input.copyTo(it) } }
+        }
+    }
     private val manager = SegaCdAssetsManager()
     private val expected =
         mapOf(
@@ -65,6 +70,7 @@ class SegaCdAssetsManagerTest {
     @After
     fun clean() {
         directories.getSystemDirectory().deleteRecursively()
+        archive.delete()
     }
 
     @Test
