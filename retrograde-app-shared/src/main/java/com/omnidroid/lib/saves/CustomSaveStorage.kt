@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import com.omnidroid.lib.R
+import com.omnidroid.lib.library.db.dao.GameDao
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.storage.DirectoriesManager
 import kotlinx.coroutines.Dispatchers
@@ -21,10 +22,16 @@ import java.io.File
 class CustomSaveStorage(
     private val context: Context,
     private val directoriesManager: DirectoriesManager = DirectoriesManager(context),
+    private val gameDao: GameDao? = null,
 ) {
+    private val stashLock = Any()
+
     sealed class MigrationResult {
         object Success : MigrationResult()
-        data class Failure(val error: String) : MigrationResult()
+
+        data class Failure(
+            val error: String,
+        ) : MigrationResult()
     }
 
     private fun getPreferenceKey(): String =
@@ -80,28 +87,32 @@ class CustomSaveStorage(
 
     // --- Offline Stash Store ---
 
-    private fun getOfflineStashedPaths(): MutableSet<String> {
-        val prefs = SharedPreferencesHelper.getLegacySharedPreferences(context)
-        return prefs.getStringSet(PREF_KEY_OFFLINE_STASH, emptySet())?.toMutableSet() ?: mutableSetOf()
-    }
+    private fun getOfflineStashedPaths(): MutableSet<String> =
+        synchronized(stashLock) {
+            val prefs = SharedPreferencesHelper.getLegacySharedPreferences(context)
+            prefs.getStringSet(PREF_KEY_OFFLINE_STASH, emptySet())?.toMutableSet() ?: mutableSetOf()
+        }
 
     private fun markStashedLocally(relativePath: String) {
-        val prefs = SharedPreferencesHelper.getLegacySharedPreferences(context)
-        val current = getOfflineStashedPaths()
-        current.add(relativePath)
-        prefs.edit().putStringSet(PREF_KEY_OFFLINE_STASH, current).apply()
-    }
-
-    private fun unmarkStashedLocally(relativePath: String) {
-        val prefs = SharedPreferencesHelper.getLegacySharedPreferences(context)
-        val current = getOfflineStashedPaths()
-        if (current.remove(relativePath)) {
-            prefs.edit().putStringSet(PREF_KEY_OFFLINE_STASH, current).apply()
+        synchronized(stashLock) {
+            val prefs = SharedPreferencesHelper.getLegacySharedPreferences(context)
+            val current = prefs.getStringSet(PREF_KEY_OFFLINE_STASH, emptySet())?.toMutableSet() ?: mutableSetOf()
+            current.add(relativePath)
+            prefs.edit().putStringSet(PREF_KEY_OFFLINE_STASH, current.toSet()).apply()
         }
     }
 
-    fun isStashedLocally(relativePath: String): Boolean =
-        getOfflineStashedPaths().contains(relativePath)
+    private fun unmarkStashedLocally(relativePath: String) {
+        synchronized(stashLock) {
+            val prefs = SharedPreferencesHelper.getLegacySharedPreferences(context)
+            val current = prefs.getStringSet(PREF_KEY_OFFLINE_STASH, emptySet())?.toMutableSet() ?: mutableSetOf()
+            if (current.remove(relativePath)) {
+                prefs.edit().putStringSet(PREF_KEY_OFFLINE_STASH, current.toSet()).apply()
+            }
+        }
+    }
+
+    fun isStashedLocally(relativePath: String): Boolean = getOfflineStashedPaths().contains(relativePath)
 
     // --- Unified File Operations ---
 
@@ -203,13 +214,55 @@ class CustomSaveStorage(
         if (folderStr != null) {
             val uri = Uri.parse(folderStr)
             val customFiles = listFromTarget(uri, folderStr, subPath)
+            val normalizedSub = subPath?.trim('/')?.takeIf { it.isNotEmpty() }
             val stashed =
-                getOfflineStashedPaths().filter {
-                    if (subPath.isNullOrBlank()) true else it.startsWith("$subPath/")
-                }.map { it.substringAfterLast('/') }
+                getOfflineStashedPaths().mapNotNull { path ->
+                    val rel =
+                        when {
+                            normalizedSub == null -> path
+                            path.startsWith("$normalizedSub/") -> path.removePrefix("$normalizedSub/")
+                            else -> return@mapNotNull null
+                        }
+                    rel.takeIf { '/' !in it }
+                }
             return (customFiles + stashed).distinct()
         }
         return listInternal(subPath)
+    }
+
+    suspend fun canSafelyDeleteLegacySave(
+        srmFileName: String,
+        systemId: String,
+    ): Boolean {
+        if (systemId == "ps3") return true
+        val dao = gameDao ?: return false
+        val stem = srmFileName.substringBeforeLast('.')
+        val matchingSystems =
+            runCatching { dao.selectAll() }
+                .getOrNull()
+                ?.filter { it.fileName.substringBeforeLast('.') == stem }
+                ?.map { it.systemId }
+                ?.toSet()
+                ?: return false
+        return matchingSystems.size == 1 && systemId in matchingSystems
+    }
+
+    suspend fun canSafelyDeleteLegacyState(
+        coreName: String,
+        romFileName: String,
+        systemId: String,
+    ): Boolean {
+        if (SaveConsoleFolders.isUnambiguousStateOwner(coreName, romFileName, systemId)) {
+            return true
+        }
+        val dao = gameDao ?: return false
+        val matchingSystems =
+            runCatching { dao.selectByFileName(romFileName) }
+                .getOrNull()
+                ?.map { it.systemId }
+                ?.toSet()
+                ?: return false
+        return SaveConsoleFolders.isUnambiguousStateOwner(coreName, romFileName, systemId, matchingSystems)
     }
 
     // --- Deferred Sync for Stashed Files ---
@@ -238,10 +291,12 @@ class CustomSaveStorage(
             }
         }
         if (toRemove.isNotEmpty()) {
-            val prefs = SharedPreferencesHelper.getLegacySharedPreferences(context)
-            val current = getOfflineStashedPaths()
-            current.removeAll(toRemove.toSet())
-            prefs.edit().putStringSet(PREF_KEY_OFFLINE_STASH, current).apply()
+            synchronized(stashLock) {
+                val prefs = SharedPreferencesHelper.getLegacySharedPreferences(context)
+                val current = prefs.getStringSet(PREF_KEY_OFFLINE_STASH, emptySet())?.toMutableSet() ?: mutableSetOf()
+                current.removeAll(toRemove.toSet())
+                prefs.edit().putStringSet(PREF_KEY_OFFLINE_STASH, current.toSet()).apply()
+            }
 
             cleanEmptyDirectories(directoriesManager.getSavesDirectory())
             cleanEmptyDirectories(directoriesManager.getStatesDirectory())
@@ -267,40 +322,115 @@ class CustomSaveStorage(
                 return@withContext MigrationResult.Failure("Destination storage is not reachable or writable")
             }
 
-            // 1. Collect all files from source location
+            // 1. Collect all files from source location and build console-aware transfer plan
             val filesToMove = listAllFiles(fromUriString)
             if (filesToMove.isEmpty()) {
                 setCustomFolderPreference(toUriString)
                 return@withContext MigrationResult.Success
             }
 
-            // 2. Copy and verify each file
-            val successfullyCopied = mutableListOf<String>()
-            for (relativePath in filesToMove) {
-                val data = readFromLocation(fromUriString, relativePath)
-                if (data == null) {
-                    cleanupPartialDestination(toUriString, successfullyCopied)
-                    return@withContext MigrationResult.Failure("Failed to read $relativePath from source")
+            val games =
+                if (toUriString != null) {
+                    runCatching { gameDao?.selectAll() }.getOrNull().orEmpty()
+                } else {
+                    emptyList()
                 }
-                val writeOk = writeToLocation(toUriString, relativePath, data)
-                if (!writeOk) {
-                    cleanupPartialDestination(toUriString, successfullyCopied)
-                    return@withContext MigrationResult.Failure("Failed to write $relativePath to destination")
+            val gamesByStem =
+                games
+                    .groupBy({ it.fileName.substringBeforeLast('.') }, { it.systemId })
+                    .mapValues { it.value.toSet() }
+            val gamesByFileName =
+                games
+                    .groupBy({ it.fileName }, { it.systemId })
+                    .mapValues { it.value.toSet() }
+
+            val sortedFiles =
+                filesToMove.sortedWith(
+                    compareBy<String>(
+                        { SaveConsoleFolders.pathPriority(it) },
+                        { it },
+                    ),
+                )
+
+            val claimedDestinations = mutableMapOf<String, String>()
+            val transferPlan = mutableListOf<Pair<String, String>>()
+            for (sourcePath in sortedFiles) {
+                val preferredDest =
+                    if (toUriString != null) {
+                        SaveConsoleFolders.toConsoleScopedPath(sourcePath, gamesByStem, gamesByFileName)
+                    } else {
+                        SaveConsoleFolders.toInternalPath(sourcePath)
+                    }
+
+                val existingClaim = claimedDestinations[preferredDest]
+                val destPath =
+                    if (existingClaim == null) {
+                        preferredDest
+                    } else if (toUriString == null &&
+                        SaveConsoleFolders.isConsoleScoped(sourcePath) &&
+                        SaveConsoleFolders.isConsoleScoped(existingClaim) &&
+                        sourcePath != existingClaim
+                    ) {
+                        // Distinct consoles colliding on flat internal storage: keep console subfolder
+                        sourcePath
+                    } else {
+                        Timber.i("Skipping legacy save superseded during migration: $sourcePath ($existingClaim)")
+                        continue
+                    }
+
+                claimedDestinations[destPath] = sourcePath
+                transferPlan.add(sourcePath to destPath)
+            }
+
+            // 2. Copy and verify each planned transfer
+            val successfullyCopied = mutableListOf<Pair<String, String>>()
+            val rollbackableDestinations = mutableListOf<String>()
+            for ((sourcePath, destPath) in transferPlan) {
+                val isSameInternalFile =
+                    toUriString == null &&
+                        fromUriString != null &&
+                        isStashedLocally(sourcePath) &&
+                        getInternalFile(sourcePath).canonicalPath == getInternalFile(destPath).canonicalPath
+
+                if (!isSameInternalFile) {
+                    val data = readFromLocation(fromUriString, sourcePath)
+                    if (data == null) {
+                        cleanupPartialDestination(toUriString, rollbackableDestinations)
+                        return@withContext MigrationResult.Failure("Failed to read $sourcePath from source")
+                    }
+                    val writeOk = writeToLocation(toUriString, destPath, data)
+                    if (!writeOk) {
+                        cleanupPartialDestination(toUriString, rollbackableDestinations)
+                        return@withContext MigrationResult.Failure("Failed to write $destPath to destination")
+                    }
+                    val info = getInfoFromLocation(toUriString, destPath)
+                    if (info == null || !info.exists) {
+                        cleanupPartialDestination(toUriString, rollbackableDestinations)
+                        return@withContext MigrationResult.Failure(
+                            "Verification failed for $destPath at destination",
+                        )
+                    }
+                    rollbackableDestinations.add(destPath)
                 }
-                val info = getInfoFromLocation(toUriString, relativePath)
-                if (info == null || !info.exists) {
-                    cleanupPartialDestination(toUriString, successfullyCopied)
-                    return@withContext MigrationResult.Failure("Verification failed for $relativePath at destination")
-                }
-                successfullyCopied.add(relativePath)
+                successfullyCopied.add(sourcePath to destPath)
             }
 
             // 3. Only delete from previous location if EVERY file was moved and verified
-            for (relativePath in successfullyCopied) {
-                deleteFromLocation(fromUriString, relativePath)
+            for ((sourcePath, destPath) in successfullyCopied) {
+                val isSameInternalFile =
+                    toUriString == null &&
+                        fromUriString != null &&
+                        isStashedLocally(sourcePath) &&
+                        getInternalFile(sourcePath).canonicalPath == getInternalFile(destPath).canonicalPath
+                if (isSameInternalFile) {
+                    unmarkStashedLocally(sourcePath)
+                    deleteFromTarget(Uri.parse(fromUriString), fromUriString, sourcePath)
+                } else {
+                    deleteFromLocation(fromUriString, sourcePath)
+                }
             }
 
-            if (fromUriString == null) {
+            if (fromUriString == null || toUriString == null) {
                 cleanEmptyDirectories(directoriesManager.getSavesDirectory())
                 cleanEmptyDirectories(directoriesManager.getStatesDirectory())
                 cleanEmptyDirectories(directoriesManager.getStatesPreviewDirectory())
@@ -390,12 +520,18 @@ class CustomSaveStorage(
     fun getInternalFile(relativePath: String): File {
         val clean = relativePath.trimStart('/')
         return when {
-            clean == "saves" || clean.startsWith("saves/") ->
-                File(directoriesManager.getSavesDirectory(), clean.removePrefix("saves/").removePrefix("saves"))
-            clean == "states" || clean.startsWith("states/") ->
-                File(directoriesManager.getStatesDirectory(), clean.removePrefix("states/").removePrefix("states"))
-            clean == "state-previews" || clean.startsWith("state-previews/") ->
-                File(directoriesManager.getStatesPreviewDirectory(), clean.removePrefix("state-previews/").removePrefix("state-previews"))
+            clean == "saves" -> directoriesManager.getSavesDirectory()
+            clean.startsWith("saves/") ->
+                File(directoriesManager.getSavesDirectory(), clean.removePrefix("saves/"))
+            clean == "states" -> directoriesManager.getStatesDirectory()
+            clean.startsWith("states/") ->
+                File(directoriesManager.getStatesDirectory(), clean.removePrefix("states/"))
+            clean == "state-previews" -> directoriesManager.getStatesPreviewDirectory()
+            clean.startsWith("state-previews/") ->
+                File(
+                    directoriesManager.getStatesPreviewDirectory(),
+                    clean.removePrefix("state-previews/"),
+                )
             clean.endsWith(".srm") || clean.endsWith(".sav") ->
                 File(directoriesManager.getSavesDirectory(), clean)
             clean.contains(".state") || clean.contains(".slot") ->
@@ -466,8 +602,20 @@ class CustomSaveStorage(
     private fun listInternal(subPath: String?): List<String> =
         runCatching {
             if (subPath.isNullOrBlank()) {
-                val saves = directoriesManager.getSavesDirectory().listFiles()?.filter { it.isFile }?.map { it.name } ?: emptyList()
-                val states = directoriesManager.getStatesDirectory().listFiles()?.filter { it.isFile }?.map { it.name } ?: emptyList()
+                val saves =
+                    directoriesManager
+                        .getSavesDirectory()
+                        .listFiles()
+                        ?.filter { it.isFile }
+                        ?.map { it.name }
+                        ?: emptyList()
+                val states =
+                    directoriesManager
+                        .getStatesDirectory()
+                        .listFiles()
+                        ?.filter { it.isFile }
+                        ?.map { it.name }
+                        ?: emptyList()
                 saves + states
             } else {
                 val dir = getInternalFile(subPath)
@@ -537,6 +685,7 @@ class CustomSaveStorage(
                     true
                 } else {
                     file.writeBytes(data)
+                    tempFile.delete()
                     true
                 }
             }

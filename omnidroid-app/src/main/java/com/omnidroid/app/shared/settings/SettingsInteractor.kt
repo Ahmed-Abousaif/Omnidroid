@@ -13,6 +13,7 @@ import com.omnidroid.lib.storage.DirectoriesManager
 class SettingsInteractor(
     private val context: Context,
     private val directoriesManager: DirectoriesManager,
+    private val customSaveStorage: CustomSaveStorage = CustomSaveStorage(context, directoriesManager),
 ) {
     fun changeLocalStorageFolder() {
         StorageFrameworkPickerLauncher.pickFolder(context)
@@ -23,9 +24,9 @@ class SettingsInteractor(
     }
 
     suspend fun resetCustomSavesFolder(): CustomSaveStorage.MigrationResult {
-        val customSaveStorage = CustomSaveStorage(context, directoriesManager)
-        val currentUri = customSaveStorage.getCustomSavesFolderUriString()
-            ?: return CustomSaveStorage.MigrationResult.Success
+        val currentUri =
+            customSaveStorage.getCustomSavesFolderUriString()
+                ?: return CustomSaveStorage.MigrationResult.Success
 
         val result = customSaveStorage.migrateStorage(currentUri, null)
         if (result is CustomSaveStorage.MigrationResult.Success) {
@@ -57,7 +58,8 @@ class SettingsInteractor(
     }
 
     private fun deleteDownloadedCores() {
-        directoriesManager.getCoresDirectory()
+        directoriesManager
+            .getCoresDirectory()
             .listFiles()
             ?.forEach { runCatching { it.deleteRecursively() } }
     }
