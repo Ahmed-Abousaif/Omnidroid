@@ -40,6 +40,9 @@ class CoverSearcher(
         private const val BASE_THUMBNAIL_URL = "https://thumbnails.libretro.com"
         private const val IMAGE_TYPE = "Named_Boxarts"
 
+        /** Ordered libretro sources: primary thumbnail host first, then the official GitHub mirror. */
+        fun libretroSources(url: String): List<String> = listOfNotNull(url, libretroMirrorUrl(url))
+
         /** Exact same indexed file in libretro's official source repository. */
         fun libretroMirrorUrl(url: String): String? {
             val uri = runCatching { java.net.URI(url) }.getOrNull() ?: return null

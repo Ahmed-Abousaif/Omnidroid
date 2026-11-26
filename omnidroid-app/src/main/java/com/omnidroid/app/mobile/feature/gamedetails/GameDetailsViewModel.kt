@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
+import com.omnidroid.app.shared.covers.CoverCacheStore
 import com.omnidroid.app.shared.covers.CoverUtils
 import com.omnidroid.app.shared.metadata.MetadataRepository
 import com.omnidroid.lib.library.db.RetrogradeDatabase
@@ -117,9 +118,12 @@ class GameDetailsViewModel(
                 val url = game?.coverFrontUrl ?: return@collect
                 if (url.isBlank()) return@collect
                 runCatching {
-                    com.omnidroid.app.shared.covers.CoverUtils
-                        .coverCache(appContext)
-                        .ensureDetail(game.id, url)
+                    CoverUtils.ensureWithMirror(
+                        CoverUtils.coverCache(appContext),
+                        game.id,
+                        url,
+                        CoverCacheStore.Tier.DETAIL,
+                    )
                 }
             }
         }

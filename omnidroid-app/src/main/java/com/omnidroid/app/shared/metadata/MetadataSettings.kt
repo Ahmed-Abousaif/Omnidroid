@@ -10,12 +10,18 @@ import javax.inject.Singleton
 
 @Singleton
 class MetadataSettings
-    @Inject
-    constructor(
-        @ApplicationContext private val context: Context,
+    internal constructor(
+        private val context: Context,
+        private val enabledOverride: Boolean?,
     ) {
+        @Inject
+        constructor(
+            @ApplicationContext context: Context,
+        ) : this(context, null)
+
         private val prefs get() = SharedPreferencesHelper.getSharedPreferences(context)
-        val enabled get() = prefs.getBoolean(context.getString(R.string.pref_key_online_artwork), true)
+        val enabled
+            get() = enabledOverride ?: prefs.getBoolean(context.getString(R.string.pref_key_online_artwork), true)
         val wifiOnly get() = prefs.getBoolean(context.getString(R.string.pref_key_artwork_wifi_only), true)
         val baseUrl get() = BuildConfig.METADATA_BASE_URL.trimEnd('/')
         val configured get() = baseUrl.startsWith("https://")

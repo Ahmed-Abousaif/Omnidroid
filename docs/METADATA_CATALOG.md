@@ -19,10 +19,11 @@ Generated libretro URLs are not proof of availability. An actual image GET is
 reused for display; HTTP 404/410 permits fallback. Offline errors, 429 and 5xx
 defer work instead of causing a library-wide provider cascade. Indexed thumbnail
 paths are retained. Embedded Switch icons have separate provenance from user art.
-When the thumbnail host definitively misses an indexed file, its exact path in
-the official `libretro-thumbnails` GitHub repository is attempted before IGDB.
-This does not search or guess a different filename. Only libretro image paths
-under that GitHub organization are permitted by the image policy.
+When the thumbnail host misses or fails for a libretro thumbnail, its exact path in
+the official `libretro-thumbnails` GitHub repository is always attempted before IGDB.
+IGDB fallback still proceeds only after a definitive 404/410 miss rather than offline,
+429, or 5xx failures. This does not search or guess a different filename. Only libretro
+image paths under that GitHub organization are permitted by the image policy.
 Existing covers are conservatively treated as user artwork during upgrade.
 
 `ArtworkEnrichmentWork` is independent connected WorkManager work. It pages the

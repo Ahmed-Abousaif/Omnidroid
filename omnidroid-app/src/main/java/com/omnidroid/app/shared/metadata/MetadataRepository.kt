@@ -31,17 +31,26 @@ import javax.inject.Singleton
 
 @Singleton
 class MetadataRepository
-    @Inject
-    constructor(
-        @ApplicationContext private val context: Context,
+    internal constructor(
+        private val context: Context,
         private val database: RetrogradeDatabase,
         private val local: GameMetadataProvider,
         private val client: CatalogClient,
         private val settings: MetadataSettings,
+        private val cacheProvider: () -> CoverCacheStore,
     ) {
+        @Inject
+        constructor(
+            @ApplicationContext context: Context,
+            database: RetrogradeDatabase,
+            local: GameMetadataProvider,
+            client: CatalogClient,
+            settings: MetadataSettings,
+        ) : this(context, database, local, client, settings, { CoverUtils.coverCache(context) })
+
         private val dao get() = database.catalogDao()
         private val locks = java.util.concurrent.ConcurrentHashMap<String, Mutex>()
-        private val cache: CoverCacheStore get() = CoverUtils.coverCache(context).also { it.attachAttempts(dao) }
+        private val cache: CoverCacheStore get() = cacheProvider().also { it.attachAttempts(dao) }
 
         suspend fun syncCorrections() {
             if (!settings.enabled || !settings.configured) return
@@ -123,10 +132,12 @@ class MetadataRepository
                     keyValue = null,
                     matchMethod = if (game.isManualMatch) "manual" else described?.matchMethod ?: "filename",
                     libretroUrl =
-                        described?.thumbnail ?: CoverSearcher.computeCoverUrl(
-                            GameSystem.findById(game.systemId),
-                            title,
-                        ),
+                        described?.thumbnail
+                            ?: game.coverFrontUrl?.takeIf { CoverSearcher.libretroMirrorUrl(it) != null }
+                            ?: CoverSearcher.computeCoverUrl(
+                                GameSystem.findById(game.systemId),
+                                title,
+                            ),
                     thumbnailIndexed = described?.thumbnailIndexed ?: false,
                     updatedAt = System.currentTimeMillis(),
                     fileSize = game.fileSize,
@@ -176,25 +187,13 @@ class MetadataRepository
                 val identity = identity(game)
                 val localUrl = identity.libretroUrl
                 if (localUrl != null) {
-                    var applied = false
-                    var deferred = false
-                    val sources = listOfNotNull(localUrl, CoverSearcher.libretroMirrorUrl(localUrl))
-                    for (source in sources) {
-                        if (cache.ensureGrid(game.id, source) != null) {
-                            dao.applyArtwork(GameArtwork(game.id, identity.identityKey, "libretro", source))
-                            applied = true
-                            break
+                    when (resolveLibretroArtwork(game, identity, localUrl)) {
+                        LibretroOutcome.APPLIED -> continue
+                        LibretroOutcome.DEFERRED -> {
+                            retry = true
+                            continue
                         }
-                        // Only a definitive miss permits the next libretro source/provider.
-                        if (cache.failure(source)?.state != "missing") {
-                            deferred = true
-                            break
-                        }
-                    }
-                    if (applied) continue
-                    if (deferred) {
-                        retry = true
-                        continue
+                        LibretroOutcome.MISSING -> Unit
                     }
                 }
                 val cached = lookup(identity)
@@ -232,6 +231,36 @@ class MetadataRepository
                 }
             }
             return retry
+        }
+
+        private enum class LibretroOutcome { APPLIED, DEFERRED, MISSING }
+
+        private suspend fun resolveLibretroArtwork(
+            game: Game,
+            identity: GameIdentity,
+            localUrl: String,
+        ): LibretroOutcome {
+            val resolved = CoverUtils.ensureWithMirror(cache, game.id, localUrl, CoverCacheStore.Tier.GRID)
+            if (resolved != null) {
+                val (source, _) = resolved
+                val artwork = dao.artwork(game.id)
+                if (game.coverFrontUrl != source ||
+                    artwork?.source != "libretro" ||
+                    artwork.sourceUrl != source ||
+                    artwork.identityKey != identity.identityKey
+                ) {
+                    dao.applyArtwork(GameArtwork(game.id, identity.identityKey, "libretro", source))
+                }
+                return LibretroOutcome.APPLIED
+            }
+            // Always try the official GitHub mirror first; only a definitive miss there (or on the
+            // primary URL when no mirror applies) permits falling back to IGDB.
+            val terminalSource = CoverSearcher.libretroSources(localUrl).last()
+            return if (cache.failure(terminalSource)?.state == "missing") {
+                LibretroOutcome.MISSING
+            } else {
+                LibretroOutcome.DEFERRED
+            }
         }
 
         private suspend fun fetch(identities: List<CatalogIdentity>): List<CatalogResolution> {

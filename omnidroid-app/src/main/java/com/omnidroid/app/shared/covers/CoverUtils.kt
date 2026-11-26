@@ -13,6 +13,7 @@ import coil.size.Size
 import com.omnidroid.common.drawable.TextDrawable
 import com.omnidroid.common.graphics.ColorUtils
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.metadata.libretrodb.CoverSearcher
 import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
 import java.io.File
@@ -28,6 +29,45 @@ object CoverUtils {
             coverCacheStore ?: CoverCacheStore(context.applicationContext).also { coverCacheStore = it }
         }
     }
+
+    /**
+     * Ensures [url] (or its official GitHub libretro mirror if [url] fails for any reason) is
+     * downloaded and prepared for [tier], returning the source URL and cached file.
+     */
+    internal suspend fun ensureWithMirror(
+        store: CoverCacheStore,
+        gameId: Int,
+        url: String,
+        tier: CoverCacheStore.Tier,
+    ): Pair<String, File>? {
+        val sources = CoverSearcher.libretroSources(url)
+        val cachedSource =
+            sources.firstOrNull { source ->
+                when (tier) {
+                    CoverCacheStore.Tier.GRID -> store.gridFile(gameId, source) != null
+                    CoverCacheStore.Tier.DETAIL ->
+                        store.detailFile(gameId, source) != null || store.gridFile(gameId, source) != null
+                }
+            }
+        if (cachedSource != null) {
+            ensureTier(store, gameId, cachedSource, tier)?.let { return cachedSource to it }
+        }
+        for (source in sources) {
+            ensureTier(store, gameId, source, tier)?.let { return source to it }
+        }
+        return null
+    }
+
+    private suspend fun ensureTier(
+        store: CoverCacheStore,
+        gameId: Int,
+        url: String,
+        tier: CoverCacheStore.Tier,
+    ): File? =
+        when (tier) {
+            CoverCacheStore.Tier.GRID -> store.ensureGrid(gameId, url)
+            CoverCacheStore.Tier.DETAIL -> store.ensureDetail(gameId, url)
+        }
 
     private val ALLOWED_COVER_HOSTS =
         setOf(
