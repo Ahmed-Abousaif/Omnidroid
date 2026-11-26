@@ -61,8 +61,8 @@ fun CoverSearchDialog(
     game: Game,
     coverSearcher: CoverSearcher,
     onDismiss: () -> Unit,
-    onUpdateCoverOnly: (String) -> Unit,
-    onFixFullMatch: (String, String) -> Unit,
+    onUpdateCoverOnly: (CoverSearchResult) -> Unit,
+    onFixFullMatch: (CoverSearchResult) -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -141,17 +141,21 @@ fun CoverSearchDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                // Local results remain first. Online discovery requires an explicit action.
+                // Online IGDB results are placed at the top of the list when requested.
                 OmnidroidDialogButton(
                     onClick = {
                         if (!isLoading && query.isNotBlank()) {
                             onlineSearch = true
+                            searchFailed = false
                             isLoading = true
                             val searched = query
                             scope.launch {
                                 try {
                                     val online = MetadataRepository.get(context).search(game, searched)
-                                    if (query == searched) results = (results + online).distinctBy { it.coverUrl }
+                                    if (query == searched) {
+                                        results = mergeOnlineCoverResults(results, online)
+                                        if (online.isNotEmpty()) gridState.scrollToItem(0)
+                                    }
                                 } catch (
                                     cancelled: CancellationException,
                                 ) {
@@ -275,7 +279,7 @@ fun CoverSearchDialog(
                     onClick = {
                         val chosen = candidate
                         selectedCandidate = null
-                        onFixFullMatch(chosen.title, chosen.coverUrl)
+                        onFixFullMatch(chosen)
                         onDismiss()
                     },
                 ) {
@@ -290,7 +294,7 @@ fun CoverSearchDialog(
                     onClick = {
                         val chosen = candidate
                         selectedCandidate = null
-                        onUpdateCoverOnly(chosen.coverUrl)
+                        onUpdateCoverOnly(chosen)
                         onDismiss()
                     },
                 ) {
@@ -342,3 +346,8 @@ private fun CoverCandidateCard(
         }
     }
 }
+
+internal fun mergeOnlineCoverResults(
+    existing: List<CoverSearchResult>,
+    online: List<CoverSearchResult>,
+): List<CoverSearchResult> = (online + existing).distinctBy { it.coverUrl }

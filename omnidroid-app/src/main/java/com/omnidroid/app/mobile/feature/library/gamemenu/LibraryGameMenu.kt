@@ -191,7 +191,7 @@ fun LibraryGameMenu(
                 CoverSearchDialog(
                     game, coverSearcher, onDismiss = { searchCover = false },
                     onUpdateCoverOnly = { latestActions.setCoverUrl(game, it) },
-                    onFixFullMatch = { title, url -> latestActions.fixMatch(game, title, url) },
+                    onFixFullMatch = { latestActions.fixMatch(game, it) },
                 )
             }
             nameDraft?.let { draft ->

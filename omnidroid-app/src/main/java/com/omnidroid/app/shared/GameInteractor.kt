@@ -14,16 +14,19 @@ import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.app.shared.covers.CustomCoverManager
 import com.omnidroid.app.shared.game.GameLauncher
 import com.omnidroid.app.shared.main.BusyActivity
+import com.omnidroid.app.shared.metadata.MetadataRepository
 import com.omnidroid.app.shared.savesync.SaveSyncWork
 import com.omnidroid.app.tv.shared.TVHelper
 import com.omnidroid.common.displayDetailsSettingsScreen
 import com.omnidroid.common.displayToast
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.library.metadata.catalog.CatalogGame
 import com.omnidroid.lib.savesync.GameCloudSyncOverride
 import com.omnidroid.lib.savesync.GameCloudSyncPreferences
 import com.omnidroid.lib.savesync.GameFrameSpeedPreferences
 import com.omnidroid.lib.savesync.SaveSyncManager
+import com.omnidroid.metadata.libretrodb.CoverSearchResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -107,18 +110,23 @@ class GameInteractor(
 
     fun onSetCoverUrl(
         game: Game,
+        result: CoverSearchResult,
+    ) = onSetCoverUrl(game, result.coverUrl, result.catalogMatch)
+
+    fun onSetCoverUrl(
+        game: Game,
         newCoverUrl: String,
+        catalogMatch: CatalogGame? = null,
     ) {
         appScope.launch {
-            CustomCoverManager(activity.activity()).deleteCustomCover(game.id, game.customCoverPath)
-            val current = retrogradeDb.gameDao().selectById(game.id) ?: game
-            retrogradeDb.gameDao().update(
-                current.copy(
-                    coverFrontUrl = newCoverUrl,
-                    customCoverPath = null,
-                    isManualMatch = true,
-                ),
-            )
+            MetadataRepository
+                .get(activity.activity().applicationContext)
+                .applyManualMatch(
+                    game = game,
+                    newTitle = null,
+                    newCoverUrl = newCoverUrl,
+                    catalogMatch = catalogMatch,
+                )
             withContext(Dispatchers.Main) {
                 activity.activity().displayToast(R.string.game_cover_updated_success)
             }
@@ -127,21 +135,24 @@ class GameInteractor(
 
     fun onFixGameMatch(
         game: Game,
+        result: CoverSearchResult,
+    ) = onFixGameMatch(game, result.title, result.coverUrl, result.catalogMatch)
+
+    fun onFixGameMatch(
+        game: Game,
         newTitle: String,
         newCoverUrl: String,
+        catalogMatch: CatalogGame? = null,
     ) {
         appScope.launch {
-            CustomCoverManager(activity.activity()).deleteCustomCover(game.id, game.customCoverPath)
-            val current = retrogradeDb.gameDao().selectById(game.id) ?: game
-            retrogradeDb.gameDao().update(
-                current.copy(
-                    title = newTitle,
-                    coverFrontUrl = newCoverUrl,
-                    customCoverPath = null,
-                    customName = null,
-                    isManualMatch = true,
-                ),
-            )
+            MetadataRepository
+                .get(activity.activity().applicationContext)
+                .applyManualMatch(
+                    game = game,
+                    newTitle = newTitle,
+                    newCoverUrl = newCoverUrl,
+                    catalogMatch = catalogMatch,
+                )
             runCatching {
                 com.omnidroid.app.shared.library.LibraryIndexScheduler.scheduleLibrarySync(
                     activity.activity().applicationContext,
@@ -225,12 +236,11 @@ class GameInteractor(
         }
     }
 
-    private fun hasNotificationsPermission(context: Context): Boolean {
-        return ContextCompat.checkSelfPermission(
+    private fun hasNotificationsPermission(context: Context): Boolean =
+        ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.POST_NOTIFICATIONS,
         ) == PackageManager.PERMISSION_GRANTED
-    }
 
     private fun openNotificationSettings(context: Context) {
         val intent =

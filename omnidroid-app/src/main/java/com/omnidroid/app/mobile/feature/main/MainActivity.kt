@@ -627,8 +627,8 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                     searched,
                                     coverSearcher,
                                     onDismiss = { coverSearchGame = null },
-                                    onUpdateCoverOnly = { url -> gameInteractor.onSetCoverUrl(searched, url) },
-                                    onFixFullMatch = { title, url -> gameInteractor.onFixGameMatch(searched, title, url) },
+                                    onUpdateCoverOnly = { gameInteractor.onSetCoverUrl(searched, it) },
+                                    onFixFullMatch = { gameInteractor.onFixGameMatch(searched, it) },
                                 )
                             }
                             GameDetailsScreen(
@@ -817,8 +817,8 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     syncNow = { gameInteractor.syncGameNow(it) },
                     setThumbnail = { game, uri -> gameInteractor.onSetCustomCover(game, uri) },
                     removeThumbnail = { gameInteractor.onRemoveCustomCover(it) },
-                    setCoverUrl = { game, url -> gameInteractor.onSetCoverUrl(game, url) },
-                    fixMatch = { game, title, url -> gameInteractor.onFixGameMatch(game, title, url) },
+                    setCoverUrl = { game, result -> gameInteractor.onSetCoverUrl(game, result) },
+                    fixMatch = { game, result -> gameInteractor.onFixGameMatch(game, result) },
                     setName = { game, name -> gameInteractor.onSetCustomName(game, name) },
                     removeName = { gameInteractor.onRemoveCustomName(it) },
                 ),

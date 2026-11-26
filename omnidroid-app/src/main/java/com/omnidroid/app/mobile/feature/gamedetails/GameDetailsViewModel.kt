@@ -84,7 +84,7 @@ class GameDetailsViewModel(
                 .gameDao()
                 .observeById(gameId)
                 .filterNotNull()
-                .distinctUntilChangedBy { Triple(it.id, it.systemId, it.title) }
+                .distinctUntilChangedBy { listOf(it.id, it.systemId, it.title, it.coverFrontUrl, it.isManualMatch) }
                 .collectLatest { game ->
                     try {
                         val metadata = MetadataRepository.get(appContext).details(game)

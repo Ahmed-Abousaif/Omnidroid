@@ -48,6 +48,12 @@ abstract class CatalogDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     protected abstract suspend fun putArtwork(artwork: GameArtwork)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun putManualArtwork(artwork: GameArtwork)
+
+    @Query("DELETE FROM game_artwork WHERE gameId = :gameId")
+    abstract suspend fun deleteArtwork(gameId: Int)
+
     @Query("SELECT * FROM games WHERE id = :id")
     protected abstract suspend fun game(id: Int): Game?
 

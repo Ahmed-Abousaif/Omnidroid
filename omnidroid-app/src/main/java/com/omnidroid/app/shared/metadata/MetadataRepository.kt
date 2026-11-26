@@ -3,6 +3,7 @@ package com.omnidroid.app.shared.metadata
 import android.content.Context
 import com.omnidroid.app.shared.covers.CoverCacheStore
 import com.omnidroid.app.shared.covers.CoverUtils
+import com.omnidroid.app.shared.covers.CustomCoverManager
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.CatalogLookup
@@ -370,12 +371,147 @@ class MetadataRepository
                 ) {
                     return@withLock stored
                 }
-                fetch(listOf(id.request(details = true)))
+                val request =
+                    if (game.isManualMatch && stored != null) {
+                        id.request(details = true).copy(
+                            title = CatalogKeys.cleanTitle(stored.title),
+                            alternateTitle = null,
+                        )
+                    } else {
+                        id.request(details = true)
+                    }
+                fetch(listOf(request))
                 decode(dao.lookup(id.lookupKey))?.match?.also { match ->
-                    match.developer?.takeIf { it.isNotBlank() }?.let { dao.fillDeveloper(game.id, id.identityKey, it) }
+                    match.developer?.takeIf { it.isNotBlank() }?.let { developer ->
+                        if (game.isManualMatch) {
+                            val latest = database.gameDao().selectById(game.id)
+                            if (latest != null && latest.developer.isNullOrBlank()) {
+                                database.gameDao().update(latest.copy(developer = developer))
+                            }
+                        } else {
+                            dao.fillDeveloper(game.id, id.identityKey, developer)
+                        }
+                    }
                 }
             }
         }
+
+        /**
+         * Applies a user-selected match locally. When [catalogMatch] comes from online discovery,
+         * its catalog lookup, artwork provenance, developer, and full details are persisted just
+         * like an automatic server match for both cover-only and full-match selections.
+         */
+        suspend fun applyManualMatch(
+            game: Game,
+            newTitle: String?,
+            newCoverUrl: String,
+            catalogMatch: CatalogGame? = null,
+        ) {
+            CustomCoverManager(context).deleteCustomCover(game.id, game.customCoverPath)
+            val current = database.gameDao().selectById(game.id) ?: game
+            val updatedGame =
+                current.copy(
+                    title = newTitle ?: current.title,
+                    coverFrontUrl = newCoverUrl,
+                    developer = catalogMatch?.developer?.takeIf { it.isNotBlank() } ?: current.developer,
+                    customCoverPath = null,
+                    customName = if (newTitle != null) null else current.customName,
+                    isManualMatch = true,
+                )
+            database.gameDao().update(updatedGame)
+            val identity = identity(updatedGame)
+            if (catalogMatch == null) {
+                dao.deleteArtwork(updatedGame.id)
+                return
+            }
+            saveManualCatalogMatch(updatedGame, identity, newCoverUrl, catalogMatch)
+            runCatching {
+                cache.ensureGrid(updatedGame.id, newCoverUrl)
+            }
+            if (!catalogMatch.detailsComplete && settings.enabled && settings.configured) {
+                locks.getOrPut("batch") { Mutex() }.withLock {
+                    val hydrated = hydrateManualMatch(identity, catalogMatch)
+                    if (hydrated != null) {
+                        saveManualCatalogMatch(updatedGame, identity, newCoverUrl, hydrated)
+                        val hydratedDeveloper = hydrated.developer?.takeIf { it.isNotBlank() }
+                        if (hydratedDeveloper != null) {
+                            val latest = database.gameDao().selectById(updatedGame.id)
+                            if (latest != null && latest.developer != hydratedDeveloper) {
+                                database.gameDao().update(latest.copy(developer = hydratedDeveloper))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private suspend fun saveManualCatalogMatch(
+            game: Game,
+            identity: GameIdentity,
+            coverUrl: String,
+            match: CatalogGame,
+        ) {
+            val now = System.currentTimeMillis()
+            val resolution =
+                CatalogResolution(
+                    key = identity.lookupKey,
+                    state = "matched",
+                    match = match,
+                )
+            dao.putLookup(
+                CatalogLookup(
+                    lookupKey = identity.lookupKey,
+                    state = "matched",
+                    payload = client.json.encodeToString(resolution),
+                    retryAt = 0L,
+                    fetchedAt = now,
+                    assetRetryAt =
+                        if (match.assets.none { it.kind == "cover" }) {
+                            now + 14 * 86_400_000L
+                        } else {
+                            0L
+                        },
+                ),
+            )
+            val artworkProvider =
+                match.artwork("cover", identity.region)?.provider ?: match.provider
+            dao.putManualArtwork(
+                GameArtwork(
+                    gameId = game.id,
+                    identityKey = identity.identityKey,
+                    source = artworkProvider,
+                    sourceUrl = coverUrl,
+                ),
+            )
+        }
+
+        private suspend fun hydrateManualMatch(
+            identity: GameIdentity,
+            catalogMatch: CatalogGame,
+        ): CatalogGame? =
+            try {
+                val request =
+                    identity.request(details = true).copy(
+                        key = CatalogKeys.lookup(identity.system, catalogMatch.title),
+                        title = CatalogKeys.cleanTitle(catalogMatch.title),
+                        alternateTitle = null,
+                    )
+                val match =
+                    client
+                        .resolve(listOf(request))
+                        .results
+                        .firstOrNull { it.state == "matched" }
+                        ?.match
+                match?.takeIf {
+                    catalogMatch.providerGameId.isBlank() ||
+                        it.providerGameId.isBlank() ||
+                        it.providerGameId == catalogMatch.providerGameId
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                null
+            }
 
         /** Invoked explicitly, never on every keystroke. A selected candidate remains user-local. */
         suspend fun search(
@@ -431,6 +567,7 @@ class MetadataRepository
                             } else {
                                 0
                             },
+                            catalogMatch = record,
                         )
                     }
                 }.filter { CoverUtils.isAllowedRemoteCoverUrl(it.coverUrl) }

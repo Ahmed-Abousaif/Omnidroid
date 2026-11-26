@@ -1,6 +1,7 @@
 package com.omnidroid.metadata.libretrodb
 
 import com.omnidroid.lib.library.GameSystem
+import com.omnidroid.lib.library.metadata.catalog.CatalogGame
 import com.omnidroid.metadata.libretrodb.db.LibretroDBManager
 import java.net.URLEncoder
 
@@ -8,6 +9,7 @@ data class CoverSearchResult(
     val title: String,
     val coverUrl: String,
     val score: Int,
+    val catalogMatch: CatalogGame? = null,
 )
 
 class CoverSearcher(
