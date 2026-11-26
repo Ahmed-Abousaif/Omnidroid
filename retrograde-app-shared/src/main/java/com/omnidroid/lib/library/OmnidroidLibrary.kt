@@ -294,7 +294,8 @@ class OmnidroidLibrary(
                     directoriesManager.getStatesPreviewDirectory(),
                     game.fileName,
                     newFileName,
-                    CustomSaveStorage(directoriesManager.context),
+                    CustomSaveStorage(directoriesManager.context, directoriesManager, retrogradedb.gameDao()),
+                    game.systemId,
                 )
             if (!renamedOk) {
                 Timber.w("Save rename collision for ${game.fileName}; keeping URIs but marking conflict")

@@ -54,6 +54,7 @@ import com.omnidroid.lib.library.db.dao.GameSearchDao
 import com.omnidroid.lib.library.db.dao.Migrations
 import com.omnidroid.lib.library.metadata.GameMetadataProvider
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
+import com.omnidroid.lib.saves.CustomSaveStorage
 import com.omnidroid.lib.saves.SavesCoherencyEngine
 import com.omnidroid.lib.saves.SavesManager
 import com.omnidroid.lib.saves.StatesManager
@@ -98,7 +99,8 @@ object OmnidroidActivityModule {
     fun settingsInteractor(
         activity: Activity,
         directoriesManager: DirectoriesManager,
-    ) = SettingsInteractor(activity, directoriesManager)
+        customSaveStorage: CustomSaveStorage,
+    ) = SettingsInteractor(activity, directoriesManager, customSaveStorage)
 
     @Provides
     @ActivityScoped
@@ -238,15 +240,32 @@ object OmnidroidApplicationModule {
 
     @Provides
     @Singleton
-    fun statesManager(directoriesManager: DirectoriesManager) = StatesManager(directoriesManager)
+    fun customSaveStorage(
+        @ApplicationContext context: Context,
+        directoriesManager: DirectoriesManager,
+        retrogradeDatabase: RetrogradeDatabase,
+    ) = CustomSaveStorage(context, directoriesManager, retrogradeDatabase.gameDao())
 
     @Provides
     @Singleton
-    fun savesManager(directoriesManager: DirectoriesManager) = SavesManager(directoriesManager)
+    fun statesManager(
+        directoriesManager: DirectoriesManager,
+        customSaveStorage: CustomSaveStorage,
+    ) = StatesManager(directoriesManager, customSaveStorage)
 
     @Provides
     @Singleton
-    fun statesPreviewManager(directoriesManager: DirectoriesManager) = StatesPreviewManager(directoriesManager)
+    fun savesManager(
+        directoriesManager: DirectoriesManager,
+        customSaveStorage: CustomSaveStorage,
+    ) = SavesManager(directoriesManager, customSaveStorage)
+
+    @Provides
+    @Singleton
+    fun statesPreviewManager(
+        directoriesManager: DirectoriesManager,
+        customSaveStorage: CustomSaveStorage,
+    ) = StatesPreviewManager(directoriesManager, customSaveStorage)
 
     @Provides
     @Singleton
