@@ -148,7 +148,9 @@ class ProfileViewModel(
             }
             .launchIn(viewModelScope)
 
-        retrogradeDb.raGameCacheDao().observeAll()
+        retrogradeDb
+            .raGameCacheDao()
+            .observeAll()
             .onEach { entries ->
                 val aggregate =
                     withContext(Dispatchers.Default) {
@@ -157,8 +159,7 @@ class ProfileViewModel(
                 _uiState.update { current ->
                     current.copy(raAggregate = aggregate)
                 }
-            }
-            .launchIn(viewModelScope)
+            }.launchIn(viewModelScope)
 
         refreshRetroAchievements()
     }

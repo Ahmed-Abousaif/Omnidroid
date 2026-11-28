@@ -1,6 +1,6 @@
 # Cross-Repo Summary: `omnidroid-cores`
 
-RetroAchievements native module (`omni_ra`) merged into `Ahmed-Abousaif/OmnidroidCores` `master` at commit `de076c80f80116f3c434be19a18a66802f7f0278` via [PR #6](https://github.com/Ahmed-Abousaif/OmnidroidCores/pull/6):
+RetroAchievements native module (`omni_ra`) merged into `Ahmed-Abousaif/OmnidroidCores` `master` via [PR #6](https://github.com/Ahmed-Abousaif/OmnidroidCores/pull/6) and [PR #7](https://github.com/Ahmed-Abousaif/OmnidroidCores/pull/7) (commit `779c8c3506a56f83d5a5be9237a1ade32ed34170`):
 
 - **Pure-C ABI `1.0` (`modules/omni_ra`)**:
   - Vendored `RetroAchievements/rcheevos` release `v12.5.0` (`1433173220a7eaede6a9ed7a18e94117be1821e0`) under `modules/omni_ra/third_party/rcheevos`.

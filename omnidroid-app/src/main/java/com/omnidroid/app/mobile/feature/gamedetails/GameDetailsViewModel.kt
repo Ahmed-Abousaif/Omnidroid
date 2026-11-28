@@ -8,6 +8,7 @@ import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.app.shared.covers.CoverCacheStore
 import com.omnidroid.app.shared.covers.CoverUtils
 import com.omnidroid.app.shared.metadata.MetadataRepository
+import com.omnidroid.common.coroutines.combine
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.library.db.entity.RaGameCache
@@ -16,7 +17,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
@@ -54,7 +54,7 @@ class GameDetailsViewModel(
     private val playingTrailerFlow = MutableStateFlow(false)
 
     val state: StateFlow<UiState> =
-        com.omnidroid.common.coroutines.combine(
+        combine(
             retrogradeDb.gameDao().observeById(gameId).filterNotNull(),
             metadataFlow,
             playTimeStore.observe(gameId),

@@ -119,7 +119,6 @@ abstract class BaseGameActivity : ImmersiveActivity() {
     lateinit var retrogradeDatabase: RetrogradeDatabase
 
     @Inject
-
     lateinit var raCoordinator: RetroAchievementsCoordinator
 
     private lateinit var baseGameScreenViewModel: BaseGameScreenViewModel
@@ -190,9 +189,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                 coreVariablesManager,
 
                 rumbleManager,
-
                 raCoordinator,
-
             )
 
         }
@@ -978,13 +975,10 @@ abstract class BaseGameActivity : ImmersiveActivity() {
             }
 
             if (data?.hasExtra(GameMenuContract.RESULT_SET_HARDCORE) == true) {
-
                 baseGameScreenViewModel.setHardcoreModeEnabled(
                     data.getBooleanExtra(GameMenuContract.RESULT_SET_HARDCORE, true),
                 )
-
             }
-
         }
 
     }

@@ -69,7 +69,11 @@ fun GameMenuCoreOptionsScreen(
                     val prefKey = CoreVariablesManager.computeSharedPreferenceKey(option.getKey(), request.game.systemId)
                     if (values.toSet() == CoreOptionsPreferenceHelper.BOOLEAN_SET) {
                         val pref = booleanPreferenceState(prefKey, option.getCurrentValue() == "enabled")
-                        MenuToggle(id = "core-${option.getKey()}", title = { Text(option.getDisplayName(context)) }, value = pref.value) { checked ->
+                        MenuToggle(
+                            id = "core-${option.getKey()}",
+                            title = { Text(option.getDisplayName(context)) },
+                            value = pref.value,
+                        ) { checked ->
                             val nextVal = if (checked) "enabled" else "disabled"
                             if (canApplyCoreOption(option.getKey(), nextVal) is HardcoreDecision.Blocked) {
                                 val message =

@@ -225,7 +225,10 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                                     gameMenuRequest,
                                     onCommand = { requestClose(it) },
                                     saveSyncSupported = saveSyncManager.isSupported(),
-                                    raVisible = raSessionState.moduleLoaded && raSessionState.loggedIn && raResolution?.supported == true,
+                                    raVisible =
+                                        raSessionState.moduleLoaded &&
+                                            raSessionState.loggedIn &&
+                                            raResolution?.supported == true,
                                     hardcoreActive = hardcoreActive,
                                     raSummarySubtitle = raSummaryText,
                                 )
