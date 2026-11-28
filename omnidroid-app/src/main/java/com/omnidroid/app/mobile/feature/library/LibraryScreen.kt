@@ -961,12 +961,14 @@ internal fun LibraryLayoutToggle(
     layout: LibraryLayout,
     onLayoutChange: (LibraryLayout) -> Unit,
     modifier: Modifier = Modifier,
+    height: Dp = 28.dp * LocalAdaptiveLayout.current.uiScale,
 ) {
     val scale = LocalAdaptiveLayout.current.uiScale
+    val segment = height - 4.dp * scale
     Row(
         modifier =
             modifier
-                .height(28.dp * scale)
+                .height(height)
                 .background(chromeColors.panel, CircleShape)
                 .border(BorderStroke(1.dp, chromeColors.panelBorder), CircleShape)
                 .padding(2.dp * scale),
@@ -977,7 +979,7 @@ internal fun LibraryLayoutToggle(
             icon = Icons.Outlined.ViewCarousel,
             contentDescription = stringResource(R.string.library_view_console),
             onClick = { onLayoutChange(LibraryLayout.CONSOLE) },
-            boxSize = 24.dp * scale,
+            boxSize = segment,
             iconSize = 16.dp * scale,
         )
         LayoutToggleIcon(
@@ -985,7 +987,7 @@ internal fun LibraryLayoutToggle(
             icon = Icons.Filled.GridView,
             contentDescription = stringResource(R.string.library_view_grid),
             onClick = { onLayoutChange(LibraryLayout.GRID) },
-            boxSize = 24.dp * scale,
+            boxSize = segment,
             iconSize = 16.dp * scale,
         )
         LayoutToggleIcon(
@@ -993,7 +995,7 @@ internal fun LibraryLayoutToggle(
             icon = Icons.AutoMirrored.Outlined.ViewList,
             contentDescription = stringResource(R.string.library_view_list),
             onClick = { onLayoutChange(LibraryLayout.LIST) },
-            boxSize = 24.dp * scale,
+            boxSize = segment,
             iconSize = 16.dp * scale,
         )
     }

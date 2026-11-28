@@ -73,6 +73,7 @@ fun SystemStatusIndicators(
     val battery = rememberBatteryStatus()
     val connection = rememberConnectionStatus()
     val clock = rememberCurrentTime()
+    val scale = LocalAdaptiveLayout.current.uiScale
 
     Row(
         modifier = modifier.padding(horizontal = 4.dp),
@@ -84,7 +85,7 @@ fun SystemStatusIndicators(
             Icon(
                 imageVector = Icons.Filled.SportsEsports,
                 contentDescription = stringResource(R.string.status_gamepad_connected),
-                modifier = Modifier.size(13.5.dp),
+                modifier = Modifier.size(13.5.dp * scale),
                 tint = LocalContentColor.current.copy(alpha = StatusMutedAlpha),
             )
         }
@@ -93,7 +94,7 @@ fun SystemStatusIndicators(
             text = clock,
             style =
                 MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 11.sp,
+                    fontSize = chromeTextSize(),
                     fontWeight = FontWeight.Medium,
                     letterSpacing = (-0.2).sp,
                 ),
@@ -160,7 +161,7 @@ private fun ConnectionStatusIcon(status: ConnectionStatus) {
             text = cellularLabel,
             style =
                 MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 10.5.sp,
+                    fontSize = chromeTextSize(),
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = (-0.2).sp,
                 ),
@@ -184,6 +185,7 @@ private fun WifiStatusIcon(status: WifiStatus) {
     val inactive = LocalContentColor.current.copy(alpha = 0.28f)
 
     WifiArcsIcon(
+        modifier = Modifier.size(14.5.dp * LocalAdaptiveLayout.current.uiScale),
         level = status.level,
         connected = status.connected,
         enabled = status.enabled,
@@ -209,6 +211,7 @@ private fun BatteryStatusIcon(status: BatteryStatus) {
             else -> stringResource(R.string.status_battery_level, status.percent)
         }
 
+    val scale = LocalAdaptiveLayout.current.uiScale
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -217,13 +220,14 @@ private fun BatteryStatusIcon(status: BatteryStatus) {
             text = "${status.percent}%",
             style =
                 MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 10.5.sp,
+                    fontSize = chromeTextSize(),
                     fontWeight = FontWeight.Medium,
                     letterSpacing = (-0.2).sp,
                 ),
             color = color,
         )
         BatteryLevelIcon(
+            modifier = Modifier.size(18.dp * scale, 10.dp * scale),
             percent = status.percent,
             charging = status.charging,
             color = color,
