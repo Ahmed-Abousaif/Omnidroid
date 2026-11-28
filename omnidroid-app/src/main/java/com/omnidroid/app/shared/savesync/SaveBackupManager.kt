@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.OpenableColumns
 import androidx.documentfile.provider.DocumentFile
+import com.omnidroid.lib.saves.Ps2MemoryCards
 import com.omnidroid.lib.savesync.CloudSaveFolder
 import com.omnidroid.lib.savesync.ConflictStore
 import com.omnidroid.lib.savesync.SaveConflict
@@ -156,7 +157,7 @@ class SaveBackupManager(
     /**
      * Resolves an arbitrary path inside a ZIP or folder into a target folder & relative path.
      * Supports standard Omnidroid backups, raw Lemuroid dumps (com.swordfish.lemuroid/files/...),
-     * subfolders, and loose .srm / .sav / .state files.
+     * subfolders, and loose .srm / .sav / .state / .ps2 files.
      *
      * Standalone emulator battery saves (PizzaBoy, My Boy!, mGBA, etc.) commonly use `.sav`.
      * Omnidroid/RetroArch use `.srm` for the same raw SRAM data, so `.sav` is rewritten to `.srm`
@@ -165,8 +166,13 @@ class SaveBackupManager(
     private fun resolveDestination(name: String): Pair<CloudSaveFolder, String>? {
         val normalized = name.replace('\\', '/').trimStart('/')
 
+        val ps2Card = Ps2MemoryCards.importPath(normalized)
         val destination =
             when {
+                // PS2 memory cards hold every PS2 game's saves, wherever they came from (PCSX2's
+                // memcards folder, a loose card, a backup).
+                ps2Card != null -> CloudSaveFolder.SAVES to ps2Card
+
                 normalized.startsWith("saves/") ->
                     CloudSaveFolder.SAVES to normalized.substringAfter("saves/")
                 normalized.contains("/saves/") ->

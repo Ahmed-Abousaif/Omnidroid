@@ -121,7 +121,7 @@ class GameSessionCoordinator(
                     ),
                 )
                 PlayTimeStore(activity).add(game.id, duration)
-                SaveSyncWork.enqueueGameWork(activity.applicationContext, game.fileName)
+                SaveSyncWork.enqueueGameWork(activity.applicationContext, game.fileName, game.systemId)
             }
             SaveSyncWork.enqueueAutoWork(activity.applicationContext, 5)
             CacheCleanerWork.enqueueCleanCacheLRU(activity.applicationContext)

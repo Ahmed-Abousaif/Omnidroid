@@ -79,6 +79,7 @@ class PreGameSyncActivity : RetrogradeComponentActivity() {
                                 includeSaves = true,
                                 includeStates = true,
                                 includePreviews = true,
+                                gameSystemId = game.systemId,
                             ),
                         )
                     }
