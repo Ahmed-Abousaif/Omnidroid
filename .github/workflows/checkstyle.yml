@@ -52,6 +52,12 @@ jobs:
     - name: Test Core Updater
       run: python3 -m unittest discover -s omnidroid-cores -p 'test_*.py'
 
+    - name: Test Native 7z Core
+      run: |
+        cmake -S omnidroid-7z/src/main/cpp -B build-7z-host
+        cmake --build build-7z-host
+        ctest --test-dir build-7z-host --output-on-failure
+
     - name: Check Kotlin formatting
       run: ./gradlew ktlintCheck --no-daemon
 

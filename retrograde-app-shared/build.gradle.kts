@@ -8,6 +8,7 @@ plugins {
 dependencies {
     implementation(project(":retrograde-util"))
     implementation(project(":omnidroid-chd"))
+    implementation(project(":omnidroid-7z"))
     implementation(project(":omnidroid-touchinput"))
 
     api(deps.libs.androidx.lifecycle.commonJava8)

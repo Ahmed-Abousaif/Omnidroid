@@ -22,7 +22,12 @@ object GameCacheUtils {
         game: Game,
     ): File {
         val gamesCacheDir = getCacheDirForGame(folderName, game, context)
-        return File(gamesCacheDir, game.fileName)
+        val safeName =
+            game.fileName
+                .replace('\\', '/')
+                .substringAfterLast('/')
+                .ifBlank { "rom.bin" }
+        return File(gamesCacheDir, safeName)
     }
 
     private fun getCacheDirForGame(
@@ -36,7 +41,5 @@ object GameCacheUtils {
         return gamesCacheDir
     }
 
-    private fun buildPath(vararg chunks: String): String {
-        return chunks.joinToString(separator = File.separator)
-    }
+    private fun buildPath(vararg chunks: String): String = chunks.joinToString(separator = File.separator)
 }

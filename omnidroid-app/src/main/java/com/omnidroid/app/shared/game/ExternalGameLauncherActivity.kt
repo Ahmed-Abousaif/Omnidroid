@@ -21,6 +21,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import android.provider.OpenableColumns
 import com.omnidroid.lib.library.GameSystem
+import com.omnidroid.sevenzip.ArchiveExtractor
 import java.io.BufferedInputStream
 import java.io.File
 import java.util.Locale
@@ -34,7 +35,6 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class ExternalGameLauncherActivity : AppCompatActivity() {
-
     @Inject
     lateinit var gameLauncher: GameLauncher
 
@@ -70,16 +70,17 @@ class ExternalGameLauncherActivity : AppCompatActivity() {
             }
 
             withContext(Dispatchers.Main) {
-                val launched = gameLauncher.launchGameAsync(
-                    activity = this@ExternalGameLauncherActivity,
-                    game = game,
-                    loadSave = true,
-                    leanback = TVHelper.isTV(applicationContext),
-                    isExternalLaunch = true,
-                    onLaunched = {
-                        finish()
-                    },
-                )
+                val launched =
+                    gameLauncher.launchGameAsync(
+                        activity = this@ExternalGameLauncherActivity,
+                        game = game,
+                        loadSave = true,
+                        leanback = TVHelper.isTV(applicationContext),
+                        isExternalLaunch = true,
+                        onLaunched = {
+                            finish()
+                        },
+                    )
                 if (!launched) {
                     Timber.e("ExternalGameLauncherActivity: GameLauncher could not launch game")
                     finish()
@@ -92,18 +93,21 @@ class ExternalGameLauncherActivity : AppCompatActivity() {
         val uri = Uri.parse(resolved.normalizedUriString)
         if (uri.scheme.equals("content", ignoreCase = true)) {
             try {
-                val flags = intent.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                val flags =
+                    intent.flags and
+                        (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                 contentResolver.takePersistableUriPermission(uri, flags)
             } catch (e: SecurityException) {
                 Timber.d("takePersistableUriPermission not offered or not allowed: %s", e.message)
             }
 
-            val readable = try {
-                contentResolver.openInputStream(uri)?.use { true } ?: false
-            } catch (e: Exception) {
-                Timber.e(e, "Cannot open stream for content URI: %s", uri)
-                false
-            }
+            val readable =
+                try {
+                    contentResolver.openInputStream(uri)?.use { true } ?: false
+                } catch (e: Exception) {
+                    Timber.e(e, "Cannot open stream for content URI: %s", uri)
+                    false
+                }
             if (!readable) {
                 Timber.e("Content URI cannot be read: %s", uri)
                 displayToast(R.string.game_loader_error_load_game)
@@ -123,9 +127,10 @@ class ExternalGameLauncherActivity : AppCompatActivity() {
 
     private fun resolveDisplayName(uri: Uri): String? {
         if (uri.scheme?.equals("content", ignoreCase = true) == true) {
-            val cursor = runCatching {
-                contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
-            }.getOrNull()
+            val cursor =
+                runCatching {
+                    contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                }.getOrNull()
             cursor?.use {
                 if (it.moveToFirst()) {
                     val idx = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
@@ -139,9 +144,26 @@ class ExternalGameLauncherActivity : AppCompatActivity() {
         return null
     }
 
-    private data class ZipInnerRomInfo(val entryName: String, val extension: String, val system: GameSystem)
+    private data class ArchiveInnerRomInfo(
+        val entryName: String,
+        val extension: String,
+        val system: GameSystem,
+    )
 
-    private fun peekZipInnerRom(uri: Uri): ZipInnerRomInfo? {
+    private fun peekArchiveInnerRom(
+        uri: Uri,
+        archiveExt: String,
+    ): ArchiveInnerRomInfo? {
+        if (archiveExt.equals("7z", ignoreCase = true)) {
+            return peekSevenZipInnerRom(uri)
+        }
+        if (archiveExt.equals("zip", ignoreCase = true)) {
+            return peekZipInnerRom(uri)
+        }
+        return null
+    }
+
+    private fun peekZipInnerRom(uri: Uri): ArchiveInnerRomInfo? {
         return runCatching {
             val inputStream = contentResolver.openInputStream(uri) ?: return@runCatching null
             ZipInputStream(BufferedInputStream(inputStream)).use { zipStream ->
@@ -149,13 +171,12 @@ class ExternalGameLauncherActivity : AppCompatActivity() {
                 var count = 0
                 while (entry != null && count < 25) {
                     if (!entry.isDirectory) {
-                        val fullName = entry.name
-                        val simpleName = fullName.substringAfterLast('/')
+                        val simpleName = entry.name.substringAfterLast('/')
                         val ext = simpleName.substringAfterLast('.', "").lowercase(Locale.US)
-                        if (ext.isNotEmpty() && ext != "txt" && ext != "nfo" && ext != "diz" && ext != "xml" && ext != "png" && ext != "jpg") {
+                        if (isCandidateRomExtension(ext)) {
                             val candidateSystem = SystemDetector.detectSystem(ext)
                             if (candidateSystem != null) {
-                                return@runCatching ZipInnerRomInfo(
+                                return@runCatching ArchiveInnerRomInfo(
                                     entryName = simpleName,
                                     extension = ext,
                                     system = candidateSystem,
@@ -171,23 +192,59 @@ class ExternalGameLauncherActivity : AppCompatActivity() {
         }.getOrNull()
     }
 
+    private fun peekSevenZipInnerRom(uri: Uri): ArchiveInnerRomInfo? {
+        return runCatching {
+            val peekTempDir = File(cacheDir, "7z-ext-peek").apply { mkdirs() }
+            ArchiveExtractor.withSeekableArchiveBlocking(
+                openSourceFd = { contentResolver.openFileDescriptor(uri, "r") },
+                tempDir = peekTempDir,
+                openStreamFallback = { contentResolver.openInputStream(uri) },
+            ) { archive ->
+                for (entry in archive.entries()) {
+                    if (entry.isDirectory || entry.isEncrypted || !entry.isSupportedCoder || entry.size <= 0L) {
+                        continue
+                    }
+                    val simpleName = entry.simpleName
+                    val ext = entry.extension
+                    if (isCandidateRomExtension(ext)) {
+                        val candidateSystem = SystemDetector.detectSystem(ext)
+                        if (candidateSystem != null) {
+                            return@withSeekableArchiveBlocking ArchiveInnerRomInfo(
+                                entryName = simpleName,
+                                extension = ext,
+                                system = candidateSystem,
+                            )
+                        }
+                    }
+                }
+                null
+            }
+        }.getOrNull()
+    }
+
+    private fun isCandidateRomExtension(ext: String): Boolean =
+        ext.isNotEmpty() && ext !in setOf("txt", "nfo", "diz", "xml", "png", "jpg", "zip", "7z")
+
     private suspend fun lookupOrBuildGame(resolved: ResolvedLaunchInput): Game? {
         val gameDao = retrogradeDatabase.gameDao()
         val parsedUri = Uri.parse(resolved.uriString)
         val contentDisplayName = resolveDisplayName(parsedUri)
         val rawFileName = contentDisplayName ?: FileUriNormalizer.extractFileName(resolved.uriString)
-        val rawExt = rawFileName?.let { FileUriNormalizer.extractExtension(it) }
-            ?: FileUriNormalizer.extractExtension(resolved.uriString)
+        val rawExt =
+            rawFileName?.let { FileUriNormalizer.extractExtension(it) }
+                ?: FileUriNormalizer.extractExtension(resolved.uriString)
 
-        val innerRom = if (rawExt.equals("zip", ignoreCase = true)) {
-            peekZipInnerRom(parsedUri)
-        } else {
-            null
-        }
+        val innerRom =
+            if (rawExt != null) {
+                peekArchiveInnerRom(parsedUri, rawExt)
+            } else {
+                null
+            }
 
         // 1. Direct match on exact stored fileUri
-        var matched = gameDao.asyncSelectByFileUri(resolved.uriString)
-            ?: gameDao.asyncSelectByFileUri(resolved.normalizedUriString)
+        var matched =
+            gameDao.asyncSelectByFileUri(resolved.uriString)
+                ?: gameDao.asyncSelectByFileUri(resolved.normalizedUriString)
 
         // 2. Fallback: match candidates by fileName (using raw file name OR inner ROM entry name)
         if (matched == null) {
@@ -210,21 +267,27 @@ class ExternalGameLauncherActivity : AppCompatActivity() {
             return matched
         }
 
+        if (rawExt.equals("7z", ignoreCase = true) && innerRom == null) {
+            return null
+        }
+
         // 4. Not in library: detect system from inner ROM or outer file extension + optional SYSTEM extra
         val fileName = innerRom?.entryName ?: rawFileName ?: "Unknown"
-        val extension = innerRom?.extension
-            ?: rawExt
-            ?: return null
+        val extension =
+            innerRom?.extension
+                ?: rawExt
+                ?: return null
 
-        val system = innerRom?.system?.takeIf { resolved.systemExtra.isNullOrBlank() }
-            ?: SystemDetector.detectSystem(extension, resolved.systemExtra) {
-                try {
-                    contentResolver.openInputStream(parsedUri)
-                } catch (e: Throwable) {
-                    null
+        val system =
+            innerRom?.system?.takeIf { resolved.systemExtra.isNullOrBlank() }
+                ?: SystemDetector.detectSystem(extension, resolved.systemExtra) {
+                    try {
+                        contentResolver.openInputStream(parsedUri)
+                    } catch (e: Throwable) {
+                        null
+                    }
                 }
-            }
-            ?: return null
+                ?: return null
 
         val title = (rawFileName ?: fileName).substringBeforeLast('.')
 

@@ -21,10 +21,12 @@ import com.omnidroid.lib.backend.ConsoleBackendRegistry
 import com.omnidroid.lib.backend.libretro.LibretroBackendDescriptor
 import com.omnidroid.lib.backend.switch_backend.SwitchBackendDescriptor
 import com.omnidroid.lib.library.db.RetrogradeDatabase
+import com.omnidroid.sevenzip.ArchiveExtractor
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -94,6 +96,9 @@ class OmnidroidApplication :
         }
 
         if (isMainProcess()) {
+            applicationScope.launch(Dispatchers.IO) {
+                ArchiveExtractor.sweepStaleTempFiles(cacheDir)
+            }
             com.omnidroid.app.shared.library.LibraryPeriodicScanScheduler
                 .syncWithPreference(this)
             com.omnidroid.app.shared.library.ArtworkEnrichmentWork

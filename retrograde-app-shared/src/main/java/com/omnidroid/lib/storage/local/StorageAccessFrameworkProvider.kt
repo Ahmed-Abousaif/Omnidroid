@@ -6,6 +6,7 @@ import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import androidx.leanback.preference.LeanbackPreferenceFragment
 import com.omnidroid.common.kotlin.extractEntryToFile
+import com.omnidroid.common.kotlin.isSevenZipped
 import com.omnidroid.common.kotlin.isZipped
 import com.omnidroid.common.kotlin.writeToFile
 import com.omnidroid.lib.R
@@ -15,6 +16,7 @@ import com.omnidroid.lib.library.scan.ChdSectors
 import com.omnidroid.lib.library.scan.LibraryFileFilter
 import com.omnidroid.lib.library.scan.RandomAccessBytes
 import com.omnidroid.lib.library.scan.SafDirectorySkipCache
+import com.omnidroid.lib.library.scan.SevenZipReader
 import com.omnidroid.lib.library.scan.SkippedSubtreeTracker
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.storage.BaseStorageFile
@@ -22,6 +24,7 @@ import com.omnidroid.lib.storage.RomFiles
 import com.omnidroid.lib.storage.StorageFile
 import com.omnidroid.lib.storage.StorageListOptions
 import com.omnidroid.lib.storage.StorageProvider
+import com.omnidroid.sevenzip.ArchiveExtractor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
@@ -47,11 +50,10 @@ class StorageAccessFrameworkProvider(
 
     private val skippedTracker = SkippedSubtreeTracker()
 
-    override fun listBaseStorageFiles(options: StorageListOptions): Flow<List<BaseStorageFile>> {
-        return getExternalFolder()?.let { folder ->
+    override fun listBaseStorageFiles(options: StorageListOptions): Flow<List<BaseStorageFile>> =
+        getExternalFolder()?.let { folder ->
             traverseDirectoryEntries(Uri.parse(folder), options)
         } ?: emptyFlow()
-    }
 
     override fun lastSkippedDocumentIds(): Set<String> = skippedTracker.snapshot()
 
@@ -61,13 +63,14 @@ class StorageAccessFrameworkProvider(
             val rootUri = Uri.parse(folder)
             val documentId = DocumentsContract.getTreeDocumentId(rootUri) ?: return false
             val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(rootUri, documentId)
-            context.contentResolver.query(
-                childrenUri,
-                arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID),
-                null,
-                null,
-                null,
-            )?.use { true } ?: false
+            context.contentResolver
+                .query(
+                    childrenUri,
+                    arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID),
+                    null,
+                    null,
+                    null,
+                )?.use { true } ?: false
         }.getOrDefault(false)
     }
 
@@ -75,9 +78,10 @@ class StorageAccessFrameworkProvider(
 
     override fun openChd(uri: Uri): ChdSectors? = ChdImages.open(context, uri)
 
-    override fun getStorageFile(baseStorageFile: BaseStorageFile): StorageFile? {
-        return DocumentFileParser.parseDocumentFile(context, baseStorageFile)
-    }
+    override fun openSevenZip(uri: Uri): SevenZipReader? = SevenZipImages.open(context, uri)
+
+    override fun getStorageFile(baseStorageFile: BaseStorageFile): StorageFile? =
+        DocumentFileParser.parseDocumentFile(context, baseStorageFile)
 
     private fun getExternalFolder(): String? {
         val prefString = context.getString(R.string.pref_key_extenral_folder)
@@ -106,7 +110,10 @@ class StorageAccessFrameworkProvider(
                 Timber.i("SAF deep listing for $treeUriString (force=${options.forceDeep}, reliability=$reliability)")
             }
 
-            data class DirJob(val documentId: String, val knownMtime: Long)
+            data class DirJob(
+                val documentId: String,
+                val knownMtime: Long,
+            )
 
             val queue = ArrayDeque<DirJob>()
             queue.add(DirJob(rootId, knownMtime = 0L))
@@ -167,7 +174,10 @@ class StorageAccessFrameworkProvider(
             SkippedSubtreeTracker.lastSkipped = skippedTracker.snapshot()
         }
 
-    private data class DirEntry(val documentId: String, val lastModified: Long)
+    private data class DirEntry(
+        val documentId: String,
+        val lastModified: Long,
+    )
 
     private data class Listing(
         val files: List<BaseStorageFile>,
@@ -233,6 +243,20 @@ class StorageAccessFrameworkProvider(
         val originalDocumentUri = Uri.parse(game.fileUri)
         val originalDocument = DocumentFile.fromSingleUri(context, originalDocumentUri)!!
 
+        if (originalDocument.isSevenZipped()) {
+            val cacheFile = GameCacheUtils.getCacheFileForGame(SAF_CACHE_SUBFOLDER, context, game)
+            if (!cacheFile.exists() || cacheFile.length() == 0L) {
+                ArchiveExtractor.extractEntryToFileBlocking(
+                    openSourceFd = { context.contentResolver.openFileDescriptor(originalDocument.uri, "r") },
+                    entryName = game.fileName,
+                    destFile = cacheFile,
+                    openStreamFallback = { context.contentResolver.openInputStream(originalDocument.uri) },
+                )
+            }
+            val dataEntries = dataFiles.map { getDataFileStandard(game, it) }
+            return RomFiles.Standard(listOf(cacheFile) + dataEntries)
+        }
+
         val isZipped =
             originalDocument.isZipped() &&
                 originalDocument.name != game.fileName &&
@@ -243,6 +267,31 @@ class StorageAccessFrameworkProvider(
             allowVirtualFiles -> getGameRomFilesVirtual(game, dataFiles)
             else -> getGameRomFilesStandard(game, dataFiles, originalDocument)
         }
+    }
+
+    override suspend fun getGameRomFilesSuspend(
+        game: Game,
+        dataFiles: List<DataFile>,
+        allowVirtualFiles: Boolean,
+        onProgress: ((decodedBytes: Long, totalBytes: Long) -> Unit)?,
+    ): RomFiles {
+        val originalDocumentUri = Uri.parse(game.fileUri)
+        val originalDocument = DocumentFile.fromSingleUri(context, originalDocumentUri)!!
+        if (originalDocument.isSevenZipped()) {
+            val cacheFile = GameCacheUtils.getCacheFileForGame(SAF_CACHE_SUBFOLDER, context, game)
+            if (!cacheFile.exists() || cacheFile.length() == 0L) {
+                ArchiveExtractor.extractEntryToFile(
+                    openSourceFd = { context.contentResolver.openFileDescriptor(originalDocument.uri, "r") },
+                    entryName = game.fileName,
+                    destFile = cacheFile,
+                    openStreamFallback = { context.contentResolver.openInputStream(originalDocument.uri) },
+                    onProgress = onProgress,
+                )
+            }
+            val dataEntries = dataFiles.map { getDataFileStandard(game, it) }
+            return RomFiles.Standard(listOf(cacheFile) + dataEntries)
+        }
+        return getGameRomFiles(game, dataFiles, allowVirtualFiles)
     }
 
     private fun getGameRomFilesStandard(
@@ -264,8 +313,9 @@ class StorageAccessFrameworkProvider(
             return RomFiles.Standard(listOf(cacheFile))
         }
 
-        val rawStream = context.contentResolver.openInputStream(originalDocument.uri)
-            ?: error("Cannot open stream for ${originalDocument.uri}")
+        val rawStream =
+            context.contentResolver.openInputStream(originalDocument.uri)
+                ?: error("Cannot open stream for ${originalDocument.uri}")
         val stream = ZipInputStream(BufferedInputStream(rawStream))
         stream.extractEntryToFile(game.fileName, cacheFile)
         return RomFiles.Standard(listOf(cacheFile))
@@ -280,12 +330,11 @@ class StorageAccessFrameworkProvider(
         return RomFiles.Virtual(listOf(gameEntry) + dataEntries)
     }
 
-    private fun getDataFileVirtual(dataFile: DataFile): RomFiles.Virtual.Entry {
-        return RomFiles.Virtual.Entry(
+    private fun getDataFileVirtual(dataFile: DataFile): RomFiles.Virtual.Entry =
+        RomFiles.Virtual.Entry(
             "$VIRTUAL_FILE_PATH/${dataFile.fileName}",
             context.contentResolver.openFileDescriptor(Uri.parse(dataFile.fileUri), "r")!!,
         )
-    }
 
     private fun getDataFileStandard(
         game: Game,
@@ -308,12 +357,11 @@ class StorageAccessFrameworkProvider(
         return cacheFile
     }
 
-    private fun getGameRomVirtual(game: Game): RomFiles.Virtual.Entry {
-        return RomFiles.Virtual.Entry(
+    private fun getGameRomVirtual(game: Game): RomFiles.Virtual.Entry =
+        RomFiles.Virtual.Entry(
             "$VIRTUAL_FILE_PATH/${game.fileName}",
             context.contentResolver.openFileDescriptor(Uri.parse(game.fileUri), "r")!!,
         )
-    }
 
     private fun getGameRomStandard(
         game: Game,
@@ -330,9 +378,7 @@ class StorageAccessFrameworkProvider(
         return cacheFile
     }
 
-    override fun getInputStream(uri: Uri): InputStream? {
-        return context.contentResolver.openInputStream(uri)
-    }
+    override fun getInputStream(uri: Uri): InputStream? = context.contentResolver.openInputStream(uri)
 
     companion object {
         const val SAF_CACHE_SUBFOLDER = "storage-framework-games"

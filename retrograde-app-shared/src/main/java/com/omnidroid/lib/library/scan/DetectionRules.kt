@@ -10,6 +10,7 @@ data class ScanInput(
     val openNamed: (String) -> RandomAccessBytes? = { null },
     val openChd: ChdOpener? = null,
     val openNamedChd: (String) -> ChdOpener? = { null },
+    val openSevenZip: SevenZipOpener? = null,
 )
 
 sealed class Detection {
@@ -136,6 +137,7 @@ object DetectionRules {
             "elf" -> elf(input)
             "dol" -> folderOnly(input, setOf(SystemID.GAMECUBE, SystemID.WII), ".dol can be GameCube or Wii")
             "zip" -> zip(input, beforeExpensiveHash)
+            "7z" -> sevenZip(input, beforeExpensiveHash)
             else -> Detection.Rejected("Unsupported file")
         }
     }
@@ -461,6 +463,40 @@ object DetectionRules {
         }
     }
 
+    private fun sevenZip(
+        input: ScanInput,
+        beforeExpensiveHash: (SystemID) -> Unit,
+    ): Detection {
+        val reader = input.openSevenZip?.open() ?: return Detection.Rejected("Could not open ${input.name}")
+        return reader.use { sz ->
+            val entries = sz.entries()
+            if (entries.isEmpty()) {
+                return@use Detection.Rejected("${input.name} is not a valid or supported 7z archive")
+            }
+            val game =
+                chooseArchiveCandidate(
+                    entries = entries,
+                    archiveName = input.name,
+                    archivePath = input.path,
+                    isDir = { it.isDirectory },
+                    sizeOf = { it.size },
+                    extensionOf = { it.extension },
+                    nameOf = { it.name },
+                ) ?: return@use Detection.Rejected(
+                    "No supported ROM found in ${input.name} (arcade sets require .zip)",
+                )
+
+            if (game.isEncrypted) {
+                return@use Detection.Rejected("${input.name} is encrypted")
+            }
+            if (!game.isSupportedCoder) {
+                return@use Detection.Rejected("${input.name} uses an unsupported 7z compression method")
+            }
+
+            identifySevenZipEntry(input, sz, game, beforeExpensiveHash)
+        }
+    }
+
     private fun <T> chooseArchiveCandidate(
         entries: List<T>,
         archiveName: String,
@@ -472,7 +508,7 @@ object DetectionRules {
     ): T? {
         val files =
             entries.filter {
-                !isDir(it) && sizeOf(it) > 0 && extensionOf(it) != "zip"
+                !isDir(it) && sizeOf(it) > 0 && extensionOf(it) !in setOf("zip", "7z")
             }
         val games =
             files.filter {
@@ -497,6 +533,50 @@ object DetectionRules {
             return only
         }
         return null
+    }
+
+    private fun identifySevenZipEntry(
+        input: ScanInput,
+        reader: SevenZipReader,
+        entry: SevenZipScanEntry,
+        beforeExpensiveHash: (SystemID) -> Unit,
+    ): Detection {
+        val nestedName = entry.name.replace('\\', '/').substringAfterLast('/')
+        val ext = entry.extension
+        cartridge[ext]?.let { (system, mode) ->
+            val resolved =
+                if (system == SystemID.GENESIS) {
+                    reader.openEntryHeader(entry.index, 64L * 1024L)?.use { segaSystem(it, system, mode) } ?: system
+                } else {
+                    system
+                }
+            beforeExpensiveHash(resolved)
+            val crc =
+                if (CartridgeHasher.needsNormalisedHash(ext, entry.size) || entry.crc == null) {
+                    reader.computeEntryCrc(entry.index, mode)
+                } else {
+                    entry.crc
+                }
+            return Detection.Ready(resolved, crc?.let { MetadataKey(MetadataKeyType.CRC, it) }, entry.name)
+        }
+        val result =
+            identify(
+                ScanInput(
+                    name = nestedName,
+                    size = entry.size,
+                    path = input.path,
+                    open = { reader.openEntryHeader(entry.index, 2L * 1024L * 1024L) },
+                    openNamed = input.openNamed,
+                    openChd = null,
+                    openNamedChd = input.openNamedChd,
+                ),
+                beforeExpensiveHash,
+            )
+        return when (result) {
+            is Detection.Ready -> result.copy(archiveEntry = entry.name)
+            is Detection.HashedBin -> result.copy(archiveEntry = entry.name)
+            else -> result
+        }
     }
 
     private fun identifyArchiveEntry(

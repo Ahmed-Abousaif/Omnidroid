@@ -466,6 +466,8 @@ dependencies {
 
     implementation(project(":retrograde-app-shared"))
 
+    implementation(project(":omnidroid-7z"))
+
     implementation(project(":omnidroid-ra"))
 
     implementation(project(":omnidroid-metadata-libretro-db"))

@@ -95,12 +95,22 @@ fun ZipInputStream.extractEntryToFile(
 
 fun File.isZipped() = extension.equals("zip", ignoreCase = true)
 
+fun File.isSevenZipped() = extension.equals("7z", ignoreCase = true)
+
 fun DocumentFile.isZipped(): Boolean {
     val t = type?.lowercase()
     if (t == "application/zip" || t == "application/x-zip" || t == "application/x-zip-compressed") {
         return true
     }
     return name?.endsWith(".zip", ignoreCase = true) == true || uri.path?.endsWith(".zip", ignoreCase = true) == true
+}
+
+fun DocumentFile.isSevenZipped(): Boolean {
+    val t = type?.lowercase()
+    if (t == "application/x-7z-compressed" || t == "application/7z") {
+        return true
+    }
+    return name?.endsWith(".7z", ignoreCase = true) == true || uri.path?.endsWith(".7z", ignoreCase = true) == true
 }
 
 /** Returns the uncompressed input stream if gzip compressed. */
