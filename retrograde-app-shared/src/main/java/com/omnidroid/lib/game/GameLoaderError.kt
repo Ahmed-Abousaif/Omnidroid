@@ -1,6 +1,8 @@
 package com.omnidroid.lib.game
 
-class GameLoaderException(val error: GameLoaderError) : RuntimeException("Game Loader error: $error")
+class GameLoaderException(
+    val error: GameLoaderError,
+) : RuntimeException("Game Loader error: $error")
 
 sealed class GameLoaderError {
     object GLIncompatible : GameLoaderError()
@@ -11,7 +13,9 @@ sealed class GameLoaderError {
 
     object LoadGame : GameLoaderError()
 
-    data class MissingAssets(val coreID: com.omnidroid.lib.library.CoreID) : GameLoaderError()
+    data class MissingAssets(
+        val coreID: com.omnidroid.lib.library.CoreID,
+    ) : GameLoaderError()
 
     object CoreUninstalled : GameLoaderError()
 
@@ -19,5 +23,11 @@ sealed class GameLoaderError {
 
     object UnsupportedArchitecture : GameLoaderError()
 
-    data class MissingBiosFiles(val missingFiles: List<String>) : GameLoaderError()
+    data class MissingBiosFiles(
+        val missingFiles: List<String>,
+    ) : GameLoaderError()
+
+    data class ArchiveError(
+        val reason: String,
+    ) : GameLoaderError()
 }

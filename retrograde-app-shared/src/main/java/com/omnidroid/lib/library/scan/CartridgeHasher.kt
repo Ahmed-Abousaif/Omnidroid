@@ -2,7 +2,7 @@ package com.omnidroid.lib.library.scan
 
 import java.util.zip.CRC32
 
-internal enum class HashMode {
+enum class HashMode {
     RAW,
     SNES,
     SMD,
@@ -32,13 +32,12 @@ internal object CartridgeHasher {
     fun needsNormalisedHash(
         extension: String,
         uncompressedSize: Long,
-    ): Boolean {
-        return when (extension) {
+    ): Boolean =
+        when (extension) {
             "n64", "v64", "smd" -> true
             "smc", "sfc", "fig", "swc", "bs" -> uncompressedSize % 1024L == 512L
             else -> false
         }
-    }
 
     private fun hashSmd(
         source: RandomAccessBytes,

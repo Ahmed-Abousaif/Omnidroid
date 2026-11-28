@@ -23,9 +23,9 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
 import com.omnidroid.lib.bios.BiosManager
-import com.omnidroid.lib.core.CoreLibraryLocator
 import com.omnidroid.lib.core.ConsoleInstallPreferences
 import com.omnidroid.lib.core.CoreAssetsException
+import com.omnidroid.lib.core.CoreLibraryLocator
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.CoreVariable
 import com.omnidroid.lib.core.CoreVariablesManager
@@ -34,18 +34,19 @@ import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.OmnidroidLibrary
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.SystemID
-import com.omnidroid.lib.library.metaSystemID
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.library.metaSystemID
 import com.omnidroid.lib.saves.SaveState
 import com.omnidroid.lib.saves.SavesCoherencyEngine
 import com.omnidroid.lib.saves.SavesManager
 import com.omnidroid.lib.saves.StatesManager
 import com.omnidroid.lib.storage.DirectoriesManager
 import com.omnidroid.lib.storage.RomFiles
+import com.omnidroid.sevenzip.SevenZipException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.channelFlow
 import timber.log.Timber
 import java.io.File
 
@@ -67,7 +68,13 @@ class GameLoader(
 
         object LoadingGame : LoadingState()
 
-        class Ready(val gameData: GameData) : LoadingState()
+        data class ExtractingGame(
+            val percent: Int,
+        ) : LoadingState()
+
+        class Ready(
+            val gameData: GameData,
+        ) : LoadingState()
     }
 
     fun load(
@@ -77,9 +84,9 @@ class GameLoader(
         systemCoreConfig: SystemCoreConfig,
         directLoad: Boolean,
     ): Flow<LoadingState> =
-        flow {
+        channelFlow {
             try {
-                emit(LoadingState.LoadingCore)
+                send(LoadingState.LoadingCore)
 
                 val system = GameSystem.findById(game.systemId)
                 if (system.metaSystemID() in ConsoleInstallPreferences(appContext).uninstalled()) {
@@ -96,12 +103,13 @@ class GameLoader(
                     }.getOrElse {
                         when (it) {
                             is CancellationException -> throw it
-                            is CoreAssetsException -> throw GameLoaderException(GameLoaderError.MissingAssets(it.coreID))
+                            is CoreAssetsException ->
+                                throw GameLoaderException(GameLoaderError.MissingAssets(it.coreID))
                             else -> throw GameLoaderException(GameLoaderError.LoadCore)
                         }
                     }
 
-                emit(LoadingState.LoadingGame)
+                send(LoadingState.LoadingGame)
 
                 if (system.id == SystemID.PS2) {
                     biosManager.stageActivePs2Bios(game)
@@ -112,12 +120,27 @@ class GameLoader(
                     throw GameLoaderException(GameLoaderError.MissingBiosFiles(missingBiosFiles))
                 }
 
+                var lastReportedPercent = -1
                 val gameFiles =
                     runCatching {
                         val useVFS = systemCoreConfig.supportsLibretroVFS && directLoad
                         val dataFiles = retrogradeDatabase.dataFileDao().selectDataFilesForGame(game.id)
-                        omnidroidLibrary.getGameFiles(game, dataFiles, useVFS)
-                    }.getOrElse { throw it }
+                        omnidroidLibrary.getGameFilesSuspend(game, dataFiles, useVFS) { decoded, total ->
+                            if (total > 0L) {
+                                val percent = ((decoded * 100L) / total).toInt().coerceIn(0, 100)
+                                if (percent != lastReportedPercent) {
+                                    lastReportedPercent = percent
+                                    trySend(LoadingState.ExtractingGame(percent))
+                                }
+                            }
+                        }
+                    }.getOrElse {
+                        when (it) {
+                            is SevenZipException ->
+                                throw GameLoaderException(GameLoaderError.ArchiveError(it.error.message))
+                            else -> throw it
+                        }
+                    }
 
                 val saveRAMData =
                     runCatching {
@@ -126,7 +149,8 @@ class GameLoader(
 
                 val quickSaveResult =
                     runCatching {
-                        if (systemCoreConfig.statesSupported && loadSave &&
+                        if (systemCoreConfig.statesSupported &&
+                            loadSave &&
                             !savesCoherencyEngine.shouldDiscardAutoSaveState(
                                 game,
                                 systemCoreConfig.coreID,
@@ -143,13 +167,14 @@ class GameLoader(
                 }
 
                 val coreVariables =
-                    coreVariablesManager.getOptionsForCore(system.id, systemCoreConfig)
+                    coreVariablesManager
+                        .getOptionsForCore(system.id, systemCoreConfig)
                         .toTypedArray()
 
                 val systemDirectory = directoriesManager.getSystemDirectory()
                 val savesDirectory = directoriesManager.getSavesDirectory()
 
-                emit(
+                send(
                     LoadingState.Ready(
                         GameData(
                             game,
@@ -190,7 +215,10 @@ class GameLoader(
 
     private fun isArchitectureSupported(systemCoreConfig: SystemCoreConfig): Boolean {
         val supportedOnlyArchitectures = systemCoreConfig.supportedOnlyArchitectures ?: return true
-        return Build.SUPPORTED_ABIS.toSet().intersect(supportedOnlyArchitectures).isNotEmpty()
+        return Build.SUPPORTED_ABIS
+            .toSet()
+            .intersect(supportedOnlyArchitectures)
+            .isNotEmpty()
     }
 
     private suspend fun resolveCoreLibrary(

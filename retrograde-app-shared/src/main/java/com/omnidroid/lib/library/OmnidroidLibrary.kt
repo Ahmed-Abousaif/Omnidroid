@@ -19,6 +19,7 @@ import com.omnidroid.lib.library.scan.MetadataKey
 import com.omnidroid.lib.library.scan.MetadataKeyType
 import com.omnidroid.lib.library.scan.PartialContentHasher
 import com.omnidroid.lib.library.scan.ScanInput
+import com.omnidroid.lib.library.scan.SevenZipOpener
 import com.omnidroid.lib.library.scan.SkippedSubtreeTracker
 import com.omnidroid.lib.saves.CustomSaveStorage
 import com.omnidroid.lib.saves.SaveFileRenamer
@@ -860,6 +861,12 @@ class OmnidroidLibrary(
                     ChdOpener { provider.openChd(file.uri) }
                 }
             },
+            openSevenZip =
+                if (primary.extension == "7z") {
+                    SevenZipOpener { provider.openSevenZip(primary.uri) }
+                } else {
+                    null
+                },
         )
     }
 
@@ -870,6 +877,16 @@ class OmnidroidLibrary(
     ): RomFiles {
         val provider = storageProviderRegistry.get()
         return provider.getProvider(game).getGameRomFiles(game, dataFiles, allowVirtualFiles)
+    }
+
+    suspend fun getGameFilesSuspend(
+        game: Game,
+        dataFiles: List<DataFile>,
+        allowVirtualFiles: Boolean,
+        onProgress: ((decodedBytes: Long, totalBytes: Long) -> Unit)? = null,
+    ): RomFiles {
+        val provider = storageProviderRegistry.get()
+        return provider.getProvider(game).getGameRomFilesSuspend(game, dataFiles, allowVirtualFiles, onProgress)
     }
 
     private fun entryLabel(entry: LibraryDiffEntry): String =

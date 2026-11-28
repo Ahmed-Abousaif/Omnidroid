@@ -336,6 +336,10 @@ class GameViewModelRetroGameView(
                 appContext.getString(R.string.game_loading_preparing_game)
             }
 
+            is GameLoader.LoadingState.ExtractingGame -> {
+                "${appContext.getString(R.string.game_loading_preparing_game)} (${loadingState.percent}%)"
+            }
+
             else -> ""
         }
     }
@@ -487,6 +491,9 @@ class GameViewModelRetroGameView(
                 }
                 is GameLoaderError.MissingBiosFiles -> {
                     appContext.getString(R.string.game_loader_error_missing_bios, gameError.missingFiles)
+                }
+                is GameLoaderError.ArchiveError -> {
+                    gameError.reason
                 }
             }
 

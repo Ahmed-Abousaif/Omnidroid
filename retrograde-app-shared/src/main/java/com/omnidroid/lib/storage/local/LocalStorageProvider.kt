@@ -21,9 +21,11 @@ package com.omnidroid.lib.storage.local
 
 import android.content.Context
 import android.net.Uri
+import android.os.ParcelFileDescriptor
 import androidx.core.net.toUri
 import androidx.leanback.preference.LeanbackPreferenceFragment
 import com.omnidroid.common.kotlin.extractEntryToFile
+import com.omnidroid.common.kotlin.isSevenZipped
 import com.omnidroid.common.kotlin.isZipped
 import com.omnidroid.lib.R
 import com.omnidroid.lib.library.db.entity.DataFile
@@ -31,12 +33,14 @@ import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.library.scan.ChdSectors
 import com.omnidroid.lib.library.scan.LibraryFileFilter
 import com.omnidroid.lib.library.scan.RandomAccessBytes
+import com.omnidroid.lib.library.scan.SevenZipReader
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
 import com.omnidroid.lib.storage.BaseStorageFile
 import com.omnidroid.lib.storage.DirectoriesManager
 import com.omnidroid.lib.storage.RomFiles
 import com.omnidroid.lib.storage.StorageFile
 import com.omnidroid.lib.storage.StorageProvider
+import com.omnidroid.sevenzip.ArchiveExtractor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.io.File
@@ -78,6 +82,8 @@ class LocalStorageProvider(
     override fun openRandomAccess(uri: Uri): RandomAccessBytes? = ChannelBytes.open(context, uri)
 
     override fun openChd(uri: Uri): ChdSectors? = ChdImages.open(context, uri)
+
+    override fun openSevenZip(uri: Uri): SevenZipReader? = SevenZipImages.open(context, uri)
 
     override fun getStorageFile(baseStorageFile: BaseStorageFile): StorageFile? =
         DocumentFileParser.parseDocumentFile(context, baseStorageFile)
@@ -124,6 +130,18 @@ class LocalStorageProvider(
     private fun getGameRom(game: Game): File {
         val gamePath = Uri.parse(game.fileUri).path
         val originalFile = File(gamePath)
+        if (originalFile.isSevenZipped()) {
+            val cacheFile = GameCacheUtils.getCacheFileForGame(LOCAL_STORAGE_CACHE_SUBFOLDER, context, game)
+            if (cacheFile.exists() && cacheFile.length() > 0L) {
+                return cacheFile
+            }
+            ArchiveExtractor.extractEntryToFileBlocking(
+                openSourceFd = { ParcelFileDescriptor.open(originalFile, ParcelFileDescriptor.MODE_READ_ONLY) },
+                entryName = game.fileName,
+                destFile = cacheFile,
+            )
+            return cacheFile
+        }
         if (!originalFile.isZipped() || originalFile.name == game.fileName) {
             return originalFile
         }
@@ -151,6 +169,29 @@ class LocalStorageProvider(
         dataFiles: List<DataFile>,
         allowVirtualFiles: Boolean,
     ): RomFiles = RomFiles.Standard(listOf(getGameRom(game)) + dataFiles.map { getDataFile(it) })
+
+    override suspend fun getGameRomFilesSuspend(
+        game: Game,
+        dataFiles: List<DataFile>,
+        allowVirtualFiles: Boolean,
+        onProgress: ((decodedBytes: Long, totalBytes: Long) -> Unit)?,
+    ): RomFiles {
+        val gamePath = Uri.parse(game.fileUri).path
+        val originalFile = gamePath?.let { File(it) }
+        if (originalFile != null && originalFile.isSevenZipped()) {
+            val cacheFile = GameCacheUtils.getCacheFileForGame(LOCAL_STORAGE_CACHE_SUBFOLDER, context, game)
+            if (!cacheFile.exists() || cacheFile.length() == 0L) {
+                ArchiveExtractor.extractEntryToFile(
+                    openSourceFd = { ParcelFileDescriptor.open(originalFile, ParcelFileDescriptor.MODE_READ_ONLY) },
+                    entryName = game.fileName,
+                    destFile = cacheFile,
+                    onProgress = onProgress,
+                )
+            }
+            return RomFiles.Standard(listOf(cacheFile) + dataFiles.map { getDataFile(it) })
+        }
+        return getGameRomFiles(game, dataFiles, allowVirtualFiles)
+    }
 
     override fun getInputStream(uri: Uri): InputStream = File(uri.path).inputStream()
 

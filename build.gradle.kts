@@ -42,8 +42,8 @@ subprojects {
     tasks.matching {
         it.name.contains("AarMetadata") &&
             !it.path.startsWith(":omni-libretrodroid") && !it.path.startsWith(":libretrodroid") &&
-            !it.path.startsWith(":omnidroid-chd") && !it.path.startsWith(":omnidroid-ra") &&
-            !it.path.startsWith(":omnidroid-padkit")
+            !it.path.startsWith(":omnidroid-chd") && !it.path.startsWith(":omnidroid-7z") &&
+            !it.path.startsWith(":omnidroid-ra") && !it.path.startsWith(":omnidroid-padkit")
     }.configureEach {
         enabled = false
     }

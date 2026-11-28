@@ -24,6 +24,7 @@ import androidx.leanback.preference.LeanbackPreferenceFragment
 import com.omnidroid.lib.library.db.entity.DataFile
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.lib.library.scan.ChdSectors
+import com.omnidroid.lib.library.scan.SevenZipReader
 import kotlinx.coroutines.flow.Flow
 import java.io.InputStream
 
@@ -52,6 +53,8 @@ interface StorageProvider {
 
     fun openChd(uri: Uri): ChdSectors? = null
 
+    fun openSevenZip(uri: Uri): SevenZipReader? = null
+
     fun getStorageFile(baseStorageFile: BaseStorageFile): StorageFile?
 
     fun getGameRomFiles(
@@ -59,4 +62,11 @@ interface StorageProvider {
         dataFiles: List<DataFile>,
         allowVirtualFiles: Boolean,
     ): RomFiles
+
+    suspend fun getGameRomFilesSuspend(
+        game: Game,
+        dataFiles: List<DataFile>,
+        allowVirtualFiles: Boolean,
+        onProgress: ((decodedBytes: Long, totalBytes: Long) -> Unit)? = null,
+    ): RomFiles = getGameRomFiles(game, dataFiles, allowVirtualFiles)
 }

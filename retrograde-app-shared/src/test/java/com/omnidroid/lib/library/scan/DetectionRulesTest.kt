@@ -46,7 +46,10 @@ class DetectionRulesTest {
     @Test
     fun playstationDiscIsIdentifiedFromSystemCnf() {
         val image = playstationImage("BOOT = cdrom:\\SLUS_005.94;1\n")
-        val hit = DiscIdentifier.identify(DiscImages.userSectors(ByteArraySource(image), DiscImages.layout(ByteArraySource(image))))
+        val hit =
+            DiscIdentifier.identify(
+                DiscImages.userSectors(ByteArraySource(image), DiscImages.layout(ByteArraySource(image))),
+            )
         assertEquals(SystemID.PSX, hit?.system)
         assertEquals("SLUS-00594", hit?.serial)
     }
@@ -94,9 +97,22 @@ class DetectionRulesTest {
     fun mipsElfIsPs2AndPowerPcNeedsAFolder() {
         val mips = elf(ElfHeader.MACHINE_MIPS)
         val ppc = elf(ElfHeader.MACHINE_PPC)
-        val mipsResult = DetectionRules.identify(ScanInput("game.elf", mips.size.toLong(), null, { ByteArraySource(mips) }))
-        val ppcResult = DetectionRules.identify(ScanInput("game.elf", ppc.size.toLong(), "storage/wiiu/game.elf", { ByteArraySource(ppc) }))
-        val ppcLoose = DetectionRules.identify(ScanInput("game.elf", ppc.size.toLong(), "storage/roms/game.elf", { ByteArraySource(ppc) }))
+        val mipsResult =
+            DetectionRules.identify(
+                ScanInput("game.elf", mips.size.toLong(), null, { ByteArraySource(mips) }),
+            )
+        val ppcResult =
+            DetectionRules.identify(
+                ScanInput("game.elf", ppc.size.toLong(), "storage/wiiu/game.elf", {
+                    ByteArraySource(ppc)
+                }),
+            )
+        val ppcLoose =
+            DetectionRules.identify(
+                ScanInput("game.elf", ppc.size.toLong(), "storage/roms/game.elf", {
+                    ByteArraySource(ppc)
+                }),
+            )
         assertEquals(SystemID.PS2, (mipsResult as Detection.Ready).system)
         assertEquals(SystemID.WII_U, (ppcResult as Detection.Ready).system)
         assertTrue(ppcLoose is Detection.Rejected)
@@ -106,7 +122,10 @@ class DetectionRulesTest {
     fun dolRequiresAConsoleFolder() {
         val bytes = ByteArray(16)
         val missing = DetectionRules.identify(ScanInput("game.dol", 16, "games/game.dol", { ByteArraySource(bytes) }))
-        val hinted = DetectionRules.identify(ScanInput("game.dol", 16, "games/gamecube/game.dol", { ByteArraySource(bytes) }))
+        val hinted =
+            DetectionRules.identify(
+                ScanInput("game.dol", 16, "games/gamecube/game.dol", { ByteArraySource(bytes) }),
+            )
         assertTrue(missing is Detection.Rejected)
         assertEquals(SystemID.GAMECUBE, (hinted as Detection.Ready).system)
     }
@@ -252,7 +271,10 @@ class DetectionRulesTest {
         val entries = ZipDirectory.read(ByteArraySource(zip))!!
         assertEquals(1, entries.size)
         assertEquals(crc(payload), entries[0].crc)
-        val detection = DetectionRules.identify(ScanInput("game.zip", zip.size.toLong(), null, { ByteArraySource(zip) }))
+        val detection =
+            DetectionRules.identify(
+                ScanInput("game.zip", zip.size.toLong(), null, { ByteArraySource(zip) }),
+            )
         val ready = detection as Detection.Ready
         assertEquals(SystemID.NES, ready.system)
         assertEquals(crc(payload), ready.key?.value)
@@ -497,4 +519,164 @@ class DetectionRulesTest {
         assertEquals(com.omnidroid.lib.library.CoreID.SWITCH, coreConfig.coreID)
         assertEquals(setOf("arm64-v8a"), coreConfig.supportedOnlyArchitectures)
     }
+
+    @Test
+    fun sevenZipIsAcceptedByFilterAndIdentifiesCartridgeAndDiscEntries() {
+        assertTrue(LibraryFileFilter.accept("Super Mario World.7z", 1024))
+
+        val gbaPayload = "gba-rom".toByteArray()
+        val gbaCrc = crc(gbaPayload)
+        val cartridgeDetection =
+            DetectionRules.identify(
+                ScanInput(
+                    name = "Pokemon - Emerald Version (U).7z",
+                    size = 512L,
+                    path = null,
+                    open = { null },
+                    openSevenZip = {
+                        fakeSevenZipReader(
+                            "1986 - Pokemon Emerald (U)(TrashMan).gba" to "trash".toByteArray(),
+                            "Pokemon - Emerald Version (U).gba" to gbaPayload,
+                        )
+                    },
+                ),
+            ) as Detection.Ready
+        assertEquals(SystemID.GBA, cartridgeDetection.system)
+        assertEquals(gbaCrc, cartridgeDetection.key?.value)
+        assertEquals("Pokemon - Emerald Version (U).gba", cartridgeDetection.archiveEntry)
+
+        val ndsRom = ByteArray(0x40)
+        "NTRJ".toByteArray().copyInto(ndsRom, 0x0C)
+        val ndsDetection =
+            DetectionRules.identify(
+                ScanInput(
+                    name = "New Super Mario Bros. (USA).7z",
+                    size = 512L,
+                    path = null,
+                    open = { null },
+                    openSevenZip = {
+                        fakeSevenZipReader("nested/New Super Mario Bros. (USA).nds" to ndsRom)
+                    },
+                ),
+            ) as Detection.Ready
+        assertEquals(SystemID.NDS, ndsDetection.system)
+        assertEquals("NTRJ", ndsDetection.key?.value)
+        assertEquals("nested/New Super Mario Bros. (USA).nds", ndsDetection.archiveEntry)
+    }
+
+    @Test
+    fun sevenZipRejectsEncryptedUnsupportedAndArcadeOnlyArchives() {
+        val encrypted =
+            DetectionRules.identify(
+                ScanInput(
+                    name = "encrypted.7z",
+                    size = 512L,
+                    path = null,
+                    open = { null },
+                    openSevenZip = {
+                        fakeSevenZipReaderWithFlags(
+                            SevenZipScanEntry(
+                                index = 0,
+                                name = "Mario.nes",
+                                size = 1024L,
+                                crc = "12345678",
+                                isDirectory = false,
+                                isEncrypted = true,
+                                isSupportedCoder = false,
+                            ),
+                        )
+                    },
+                ),
+            )
+        assertTrue(encrypted is Detection.Rejected)
+
+        val unsupported =
+            DetectionRules.identify(
+                ScanInput(
+                    name = "bcj.7z",
+                    size = 512L,
+                    path = null,
+                    open = { null },
+                    openSevenZip = {
+                        fakeSevenZipReaderWithFlags(
+                            SevenZipScanEntry(
+                                index = 0,
+                                name = "Mario.nes",
+                                size = 1024L,
+                                crc = "12345678",
+                                isDirectory = false,
+                                isEncrypted = false,
+                                isSupportedCoder = false,
+                            ),
+                        )
+                    },
+                ),
+            )
+        assertTrue(unsupported is Detection.Rejected)
+
+        val arcadeOnly =
+            DetectionRules.identify(
+                ScanInput(
+                    name = "ddragon.7z",
+                    size = 512L,
+                    path = null,
+                    open = { null },
+                    openSevenZip = {
+                        fakeSevenZipReader("rom.1" to byteArrayOf(1, 2, 3), "rom.2" to byteArrayOf(4, 5, 6))
+                    },
+                ),
+            )
+        assertTrue(arcadeOnly is Detection.Rejected)
+    }
+
+    private fun fakeSevenZipReader(vararg items: Pair<String, ByteArray>): SevenZipReader {
+        val entries =
+            items.mapIndexed { idx, (name, bytes) ->
+                SevenZipScanEntry(
+                    index = idx,
+                    name = name,
+                    size = bytes.size.toLong(),
+                    crc = crc(bytes),
+                    isDirectory = false,
+                    isEncrypted = false,
+                    isSupportedCoder = true,
+                )
+            }
+        val payloads = items.map { it.second }
+        return object : SevenZipReader {
+            override fun entries(): List<SevenZipScanEntry> = entries
+
+            override fun openEntryHeader(
+                index: Int,
+                maxBytes: Long,
+            ): RandomAccessBytes? = payloads.getOrNull(index)?.let { ByteArraySource(it) }
+
+            override fun computeEntryCrc(
+                index: Int,
+                mode: HashMode,
+            ): String? =
+                payloads.getOrNull(index)?.let {
+                    CartridgeHasher.hash(ByteArraySource(it), mode)
+                }
+
+            override fun close() = Unit
+        }
+    }
+
+    private fun fakeSevenZipReaderWithFlags(vararg entries: SevenZipScanEntry): SevenZipReader =
+        object : SevenZipReader {
+            override fun entries(): List<SevenZipScanEntry> = entries.toList()
+
+            override fun openEntryHeader(
+                index: Int,
+                maxBytes: Long,
+            ): RandomAccessBytes? = null
+
+            override fun computeEntryCrc(
+                index: Int,
+                mode: HashMode,
+            ): String? = null
+
+            override fun close() = Unit
+        }
 }
