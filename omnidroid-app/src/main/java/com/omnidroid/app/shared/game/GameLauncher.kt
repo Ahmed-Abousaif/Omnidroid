@@ -36,6 +36,8 @@ class GameLauncher(
     private val gameCloudSyncPreferences: GameCloudSyncPreferences,
     private val inputDeviceManager: InputDeviceManager,
 ) {
+    private var launchInProgress = false
+
     fun launchGameAsync(
         activity: Activity,
         game: Game,
@@ -72,12 +74,6 @@ class GameLauncher(
             return false
         }
 
-        if (GameProcessLock.isHeldByAnotherProcess(activity.applicationContext)) {
-            activity.displayToast(R.string.game_process_another_game_running)
-
-            return false
-        }
-
         if (TVHelper.isTV(activity) && !inputDeviceManager.hasEnabledGamePad()) {
             activity.displayToast(R.string.tv_game_message_missing_gamepad)
 
@@ -90,55 +86,66 @@ class GameLauncher(
 
                 ?: OmnidroidApplication.scope(activity)
 
+        if (launchInProgress) return false
+        launchInProgress = true
         scope.launch(Dispatchers.Main) {
-            val coreConfig = coresSelection.getCoreConfigForSystem(system)
+            try {
+                val coreConfig = coresSelection.getCoreConfigForSystem(system)
 
-            val descriptor = ConsoleBackendRegistry.findDescriptorForCore(coreConfig.coreID)
+                val descriptor = ConsoleBackendRegistry.findDescriptorForCore(coreConfig.coreID)
 
-            val coreReqs = descriptor?.requirementsFor(coreConfig)
+                val coreReqs = descriptor?.requirementsFor(coreConfig)
 
-            val coreUnfulfilled =
-                coreReqs?.items?.filter {
-                    it.severity == RequirementSeverity.REQUIRED &&
-                        !it.isFulfilled(activity)
+                val coreUnfulfilled =
+                    coreReqs?.items?.filter {
+                        it.severity == RequirementSeverity.REQUIRED &&
+                            !it.isFulfilled(activity)
+                    }
+
+                if (!coreUnfulfilled.isNullOrEmpty()) {
+                    showMissingRequirementsDialog(activity, coreReqs, coreUnfulfilled)
+
+                    return@launch
                 }
 
-            if (!coreUnfulfilled.isNullOrEmpty()) {
-                showMissingRequirementsDialog(activity, coreReqs, coreUnfulfilled)
+                if (!GameProcessLock.stopPreviousGame(activity.applicationContext)) {
+                    activity.displayToast(R.string.game_process_cleanup_failed)
+                    return@launch
+                }
 
-                return@launch
-            }
+                val shouldPreSync =
 
-            val shouldPreSync =
+                    saveSyncManager.isSupported() &&
 
-                saveSyncManager.isSupported() &&
+                        saveSyncManager.isConfigured() &&
 
-                    saveSyncManager.isConfigured() &&
+                        settingsManager.syncBeforeGame() &&
 
-                    settingsManager.syncBeforeGame() &&
+                        gameCloudSyncPreferences.shouldSyncGame(game, settingsManager.syncSaves())
 
-                    gameCloudSyncPreferences.shouldSyncGame(game, settingsManager.syncSaves())
+                if (shouldPreSync) {
+                    activity.startActivityForResult(
+                        PreGameSyncActivity.intent(activity, game, coreConfig, loadSave, leanback, isExternalLaunch),
+                        BaseGameActivity.REQUEST_PLAY_GAME,
+                    )
 
-            if (shouldPreSync) {
-                activity.startActivityForResult(
-                    PreGameSyncActivity.intent(activity, game, coreConfig, loadSave, leanback, isExternalLaunch),
-                    BaseGameActivity.REQUEST_PLAY_GAME,
-                )
+                    onLaunched?.invoke()
+                } else {
+                    gameLaunchTaskHandler.handleGameStart(activity.applicationContext)
 
-                onLaunched?.invoke()
-            } else {
-                gameLaunchTaskHandler.handleGameStart(activity.applicationContext)
+                    BaseGameActivity.launchGame(
+                        activity,
+                        coreConfig,
+                        game,
+                        loadSave,
+                        leanback,
+                        isExternalLaunch,
+                    )
 
-                BaseGameActivity.launchGame(
-                    activity,
-                    coreConfig,
-                    game,
-                    loadSave,
-                    leanback,
-                    isExternalLaunch,
-                )
-
-                onLaunched?.invoke()
+                    onLaunched?.invoke()
+                }
+            } finally {
+                launchInProgress = false
             }
         }
 

@@ -221,6 +221,7 @@ class BaseGameScreenViewModel(
         context: Context,
         lifecycle: LifecycleOwner,
     ): View {
+        val playbackOwner = (context as? BaseGameActivity)?.playbackLifecycle ?: lifecycle
         val descriptor = ConsoleBackendRegistry.findDescriptorForCore(systemCoreConfig.coreID)
 
         val capabilities = descriptor?.capabilities(systemCoreConfig) ?: BackendCapabilities()
@@ -251,7 +252,7 @@ class BaseGameScreenViewModel(
             retroGameView.retroGameView = gameView
             gameView.disableTouchEvents()
 
-            lifecycle.lifecycle.addObserver(
+            playbackOwner.lifecycle.addObserver(
                 object : DefaultLifecycleObserver {
                     override fun onPause(owner: LifecycleOwner) {
                         session.pause()
@@ -269,7 +270,7 @@ class BaseGameScreenViewModel(
 
             return session.view
         } else {
-            val retroView = createRetroView(context, lifecycle)
+            val retroView = createRetroView(context, playbackOwner)
 
             val session =
                 LibretroBackendSession(
@@ -315,6 +316,10 @@ class BaseGameScreenViewModel(
         Timber.i("Calling load game: $game")
 
         retroGameView.initialize(applicationContext, game, systemCoreConfig, gameLoader, requestLoadSave)
+    }
+
+    fun requestMenu() {
+        sideEffects.showMenu(tilt, inputs)
     }
 
     fun showEditControls(show: Boolean) {
@@ -487,7 +492,9 @@ class BaseGameScreenViewModel(
                 }
                 return@schedule
             }
-            val snapshot = saves.captureSaveSnapshot(false)
+            // Serialize between frames, including when the UI is returning. Calling
+            // a core directly from this service thread races its renderer and GPU.
+            val snapshot = saves.captureSaveSnapshot(true)
 
             saves.writeSaveSnapshot(snapshot)
         }

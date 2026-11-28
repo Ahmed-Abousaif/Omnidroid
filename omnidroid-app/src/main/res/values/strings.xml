@@ -1,4 +1,5 @@
 <resources>
+    <string name="game_process_cleanup_failed">Couldn’t stop the previous game. Please try again.</string>
     <string name="core_name_picodrive">PicoDrive</string>
     <string name="title_home">Home</string>
     <string name="title_search">Search</string>

@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.withResumed
 import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.game.GameActivity
 import com.omnidroid.app.mobile.feature.game.GameService
@@ -60,6 +61,7 @@ import dagger.Lazy
 import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -123,6 +125,9 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
     private var isExternalLaunch = false
 
+    lateinit var playbackLifecycle: GamePlaybackLifecycle
+        private set
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         // Keep sensor rotation including reverse orientations so in-game layouts can adapt.
@@ -130,6 +135,13 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
 
         super.onCreate(savedInstanceState)
+
+        playbackLifecycle =
+            GamePlaybackLifecycle(
+                lifecycle,
+                menuRequired = savedInstanceState?.getBoolean(STATE_MENU_REQUIRED) ?: false,
+                menuOpen = savedInstanceState?.getBoolean(STATE_MENU_OPEN) ?: false,
+            )
 
         setUpExceptionsHandler()
 
@@ -390,7 +402,9 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
     ) {
 
-        if (baseGameScreenViewModel.loadingState.value) {
+        if (baseGameScreenViewModel.loadingState.value || playbackLifecycle.menuOpen || isFinishing || isDestroyed ||
+            !lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+        ) {
 
             return
 
@@ -492,6 +506,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
             }
 
+        playbackLifecycle.onMenuOpened()
         startActivityForResult(intent, DIALOG_REQUEST)
 
         overridePendingTransition(0, 0)
@@ -735,6 +750,35 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
     }
 
+    override fun onPause() {
+        if (!finishTriggered && !isFinishing && !isChangingConfigurations) {
+            playbackLifecycle.onBackground()
+        }
+        super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!playbackLifecycle.menuRequired) return
+        lifecycleScope.launch {
+            // Loading can finish while the app is in the background. Wait for the view
+            // before building the menu, without resuming its emulation lifecycle.
+            baseGameScreenViewModel.retroGameView.retroGameViewFlow()
+            baseGameScreenViewModel.loadingState.first { !it }
+            lifecycle.withResumed {
+                if (playbackLifecycle.menuRequired && !finishTriggered && !isFinishing) {
+                    baseGameScreenViewModel.requestMenu()
+                }
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(STATE_MENU_REQUIRED, playbackLifecycle.menuRequired)
+        outState.putBoolean(STATE_MENU_OPEN, playbackLifecycle.menuOpen)
+        super.onSaveInstanceState(outState)
+    }
+
     override fun onDestroy() {
 
         if (GameService.activeGameActivity == this) {
@@ -800,6 +844,8 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == DIALOG_REQUEST) {
+
+            playbackLifecycle.onMenuClosed()
 
             Timber.i("Game menu dialog response: ${data?.extras.dump()}")
 
@@ -936,6 +982,9 @@ abstract class BaseGameActivity : ImmersiveActivity() {
     }
 
     companion object {
+
+        private const val STATE_MENU_REQUIRED = "game_menu_required"
+        private const val STATE_MENU_OPEN = "game_menu_open"
 
         const val DIALOG_REQUEST = 100
 
