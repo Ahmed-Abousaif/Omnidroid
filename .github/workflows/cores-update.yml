@@ -87,6 +87,10 @@ jobs:
         if: inputs.reuse_update_run == '' && (inputs.cores == '' || contains(inputs.cores, 'switch'))
         run: git submodule update --init -- modules/switch/upstream/eden
 
+      - name: Checkout PS3 Source
+        if: inputs.reuse_update_run == '' && (inputs.cores == '' || contains(inputs.cores, 'armsx3'))
+        run: git submodule update --init -- modules/ps3/upstream/armsx3
+
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
@@ -149,6 +153,10 @@ jobs:
       - name: Set up Eden Native Build
         if: inputs.reuse_update_run == '' && (inputs.cores == '' || contains(inputs.cores, 'switch'))
         uses: ./.github/actions/setup-eden
+
+      - name: Set up PS3 Native Build
+        if: inputs.reuse_update_run == '' && (inputs.cores == '' || contains(inputs.cores, 'armsx3'))
+        uses: ./.github/actions/setup-armsx3
 
       - name: Run Omnidroid Core Updater
         if: inputs.reuse_update_run == ''

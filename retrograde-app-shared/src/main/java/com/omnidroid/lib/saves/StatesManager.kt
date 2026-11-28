@@ -17,11 +17,15 @@ import java.util.zip.GZIPOutputStream
 
 class StatesManager(
     private val directoriesManager: DirectoriesManager,
-    private val customSaveStorage: CustomSaveStorage = CustomSaveStorage(directoriesManager.context, directoriesManager),
+    private val customSaveStorage: CustomSaveStorage =
+        CustomSaveStorage(directoriesManager.context, directoriesManager),
 ) {
     private val writes = Mutex()
 
-    data class SlotInfo(val index: Int, val saveInfo: SaveInfo)
+    data class SlotInfo(
+        val index: Int,
+        val saveInfo: SaveInfo,
+    )
 
     suspend fun getSlotSave(
         game: Game,
@@ -30,7 +34,7 @@ class StatesManager(
     ): SaveState? =
         withContext(Dispatchers.IO) {
             require(index >= 0 && index < Int.MAX_VALUE)
-            writes.withLock { getSaveState(getSlotSaveFileName(game, index), coreID.coreName) }
+            writes.withLock { getSaveState(game, getSlotSaveFileName(game, index), coreID.coreName) }
         }
 
     suspend fun setSlotSave(
@@ -41,7 +45,7 @@ class StatesManager(
     ) = withContext(Dispatchers.IO) {
         require(index >= 0 && index < Int.MAX_VALUE)
         writes.withLock {
-            setSaveState(getSlotSaveFileName(game, index), coreID.coreName, saveState)
+            setSaveState(game, getSlotSaveFileName(game, index), coreID.coreName, saveState)
         }
     }
 
@@ -55,7 +59,7 @@ class StatesManager(
             writes.withLock {
                 val index = getSlotIndices(game, coreID.coreName).last() + 1
                 require(index < Int.MAX_VALUE) { "No more save slots available" }
-                setSaveState(getSlotSaveFileName(game, index), coreID.coreName, saveState)
+                setSaveState(game, getSlotSaveFileName(game, index), coreID.coreName, saveState)
                 index
             }
         }
@@ -66,14 +70,14 @@ class StatesManager(
     ): SaveInfo =
         withContext(Dispatchers.IO) {
             val autoSaveFileName = getAutoSaveFileName(game)
-            findStateInfo(autoSaveFileName, coreID.coreName)
+            findStateInfo(game, autoSaveFileName, coreID.coreName)
         }
 
     suspend fun getAutoSave(
         game: Game,
         coreID: CoreID,
     ) = withContext(Dispatchers.IO) {
-        writes.withLock { getSaveState(getAutoSaveFileName(game), coreID.coreName) }
+        writes.withLock { getSaveState(game, getAutoSaveFileName(game), coreID.coreName) }
     }
 
     suspend fun setAutoSave(
@@ -82,7 +86,7 @@ class StatesManager(
         saveState: SaveState,
     ) = withContext(Dispatchers.IO) {
         writes.withLock {
-            setSaveState(getAutoSaveFileName(game), coreID.coreName, saveState)
+            setSaveState(game, getAutoSaveFileName(game), coreID.coreName, saveState)
         }
     }
 
@@ -91,10 +95,14 @@ class StatesManager(
         coreID: CoreID,
     ): List<SlotInfo> =
         withContext(Dispatchers.IO) {
+            if (coreID == CoreID.ARMSX3) {
+                val slots = Ps3StateSlots.forGame(directoriesManager.context, game)
+                return@withContext slots.indices().map { SlotInfo(it, slots.info(it)) }
+            }
             writes.withLock {
                 getSlotIndices(game, coreID.coreName).map { index ->
                     val slotFileName = getSlotSaveFileName(game, index)
-                    val info = findStateInfo(slotFileName, coreID.coreName)
+                    val info = findStateInfo(game, slotFileName, coreID.coreName)
                     SlotInfo(index, info)
                 }
             }
@@ -107,12 +115,26 @@ class StatesManager(
         val pattern = Regex("${Regex.escape(game.fileName)}\\.slot([1-9][0-9]*)")
         val savedIndices = mutableListOf<Int>()
 
+        val consoleDir = consoleStateDir(game, coreName)
         val files =
-            customSaveStorage.listSaveFiles("states/$coreName") +
-                customSaveStorage.listSaveFiles("states") +
-                customSaveStorage.listSaveFiles()
+            if (customSaveStorage.isConfigured()) {
+                customSaveStorage.listSaveFiles(consoleDir) +
+                    customSaveStorage.listSaveFiles("states/$coreName") +
+                    customSaveStorage.listSaveFiles("states") +
+                    customSaveStorage.listSaveFiles()
+            } else {
+                customSaveStorage.listSaveFiles("states/$coreName") +
+                    customSaveStorage.listSaveFiles(consoleDir) +
+                    customSaveStorage.listSaveFiles("states") +
+                    customSaveStorage.listSaveFiles()
+            }
         files.forEach { name ->
-            val number = pattern.matchEntire(name)?.groupValues?.get(1)?.toIntOrNull()
+            val number =
+                pattern
+                    .matchEntire(name)
+                    ?.groupValues
+                    ?.get(1)
+                    ?.toIntOrNull()
             if (number != null) {
                 savedIndices.add(number - 1)
             }
@@ -121,18 +143,14 @@ class StatesManager(
     }
 
     private suspend fun getSaveState(
+        game: Game,
         fileName: String,
         coreName: String,
     ): SaveState? {
         return runCatchingWithRetry(FILE_ACCESS_RETRIES) {
             customSaveStorage.syncOfflineStash()
 
-            val paths =
-                listOf(
-                    "states/$coreName/$fileName",
-                    "states/$fileName",
-                    fileName,
-                )
+            val paths = stateSearchPaths(game, coreName, fileName)
             var foundPath: String? = null
             var rawBytes: ByteArray? = null
             for (path in paths) {
@@ -150,7 +168,11 @@ class StatesManager(
 
             val metaBytes =
                 customSaveStorage.readSave("$foundPath.metadata")
-                    ?: customSaveStorage.readSave("states/$coreName/$fileName.metadata")
+                    ?: if (foundPath == "states/$fileName" || foundPath == fileName) {
+                        customSaveStorage.readSave("states/$coreName/$fileName.metadata")
+                    } else {
+                        null
+                    }
             val metadata =
                 if (metaBytes != null && metaBytes.isNotEmpty()) {
                     Json.decodeFromString(SaveState.Metadata.serializer(), metaBytes.decodeToString())
@@ -162,6 +184,7 @@ class StatesManager(
     }
 
     private suspend fun setSaveState(
+        game: Game,
         fileName: String,
         coreName: String,
         saveState: SaveState,
@@ -170,33 +193,87 @@ class StatesManager(
         runCatchingWithRetry(FILE_ACCESS_RETRIES) {
             val compressed = saveState.state.compressGzip()
             val metadataJson = Json.encodeToString(SaveState.Metadata.serializer(), saveState.metadata)
-            val statePath = "states/$coreName/$fileName"
+            val statePath = "${writeStateDir(game, coreName, fileName)}/$fileName"
             val stateOk = customSaveStorage.writeSave(statePath, compressed)
             val metaOk = customSaveStorage.writeSave("$statePath.metadata", metadataJson.encodeToByteArray())
             if (!stateOk || !metaOk) {
                 throw IOException("Failed to write save state $fileName")
             }
+            cleanupLegacyStateIfSafe(game, coreName, fileName, statePath)
             customSaveStorage.syncOfflineStash()
         }.getOrThrow()
     }
 
     private fun findStateInfo(
+        game: Game,
         fileName: String,
         coreName: String,
     ): SaveInfo {
-        val paths =
-            listOf(
-                "states/$coreName/$fileName",
-                "states/$fileName",
-                fileName,
-            )
-        for (path in paths) {
+        for (path in stateSearchPaths(game, coreName, fileName)) {
             val info = customSaveStorage.getSaveInfo(path)
             if (info != null && info.exists) {
                 return info
             }
         }
         return SaveInfo(false, 0L)
+    }
+
+    private fun consoleStateDir(
+        game: Game,
+        coreName: String,
+    ): String = "states/${SaveConsoleFolders.forSystemId(game.systemId)}/$coreName"
+
+    private fun stateSearchPaths(
+        game: Game,
+        coreName: String,
+        fileName: String,
+    ): List<String> {
+        val consolePath = "${consoleStateDir(game, coreName)}/$fileName"
+        val corePath = "states/$coreName/$fileName"
+        return if (customSaveStorage.isConfigured()) {
+            listOf(consolePath, corePath, "states/$fileName", fileName)
+        } else {
+            listOf(corePath, consolePath, "states/$fileName", fileName)
+        }
+    }
+
+    private fun writeStateDir(
+        game: Game,
+        coreName: String,
+        fileName: String,
+    ): String {
+        val consoleDir = consoleStateDir(game, coreName)
+        if (customSaveStorage.isConfigured()) {
+            return consoleDir
+        }
+        if (customSaveStorage.getSaveInfo("$consoleDir/$fileName")?.exists == true) {
+            return consoleDir
+        }
+        return "states/$coreName"
+    }
+
+    private suspend fun cleanupLegacyStateIfSafe(
+        game: Game,
+        coreName: String,
+        fileName: String,
+        writtenPath: String,
+    ) {
+        if (!customSaveStorage.isConfigured()) return
+        val legacyPath = "states/$coreName/$fileName"
+        if (writtenPath == legacyPath) return
+        if (customSaveStorage.isStashedLocally(writtenPath) ||
+            customSaveStorage.isStashedLocally("$writtenPath.metadata")
+        ) {
+            return
+        }
+        if (customSaveStorage.getSaveInfo(writtenPath)?.exists != true) return
+        val hasLegacyState = customSaveStorage.getSaveInfo(legacyPath)?.exists == true
+        val hasLegacyMeta = customSaveStorage.getSaveInfo("$legacyPath.metadata")?.exists == true
+        if (!hasLegacyState && !hasLegacyMeta) return
+        if (customSaveStorage.canSafelyDeleteLegacyState(coreName, game.fileName, game.systemId)) {
+            if (hasLegacyState) customSaveStorage.deleteSave(legacyPath)
+            if (hasLegacyMeta) customSaveStorage.deleteSave("$legacyPath.metadata")
+        }
     }
 
     private fun ByteArray.compressGzip(): ByteArray =

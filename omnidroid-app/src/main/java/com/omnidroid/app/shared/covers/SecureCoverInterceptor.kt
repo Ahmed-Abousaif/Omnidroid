@@ -6,16 +6,12 @@ import java.io.IOException
 import java.util.Locale
 
 /**
- * Security interceptor ensuring remote cover images are only loaded from verified,
- * trusted domain whitelists and strictly validate protocol, MIME types, and payload size.
+ * Security interceptor ensuring remote images (game covers and RetroAchievements badges) are only
+ * loaded from verified, trusted domain whitelists and strictly validate protocol, MIME types,
+ * and payload size.
  */
 object SecureCoverInterceptor : Interceptor {
     private const val MAX_COVER_BYTES = 15L * 1024L * 1024L // 15 MB payload safety limit
-
-    private val ALLOWED_DOMAINS = listOf(
-        "thumbnails.libretro.com",
-        "images.igdb.com",
-    )
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -25,16 +21,14 @@ object SecureCoverInterceptor : Interceptor {
 
         // 1. Enforce strict HTTP/HTTPS scheme (block file://, content://, javascript:, etc.)
         if (scheme != "http" && scheme != "https") {
-            throw IOException("Blocked unsafe cover protocol: $scheme")
+            throw IOException("Blocked unsafe image protocol: $scheme")
         }
 
         // 2. Enforce strict domain whitelist (SSRF & Arbitrary URL exfiltration defense)
-        val isAllowedHost = ALLOWED_DOMAINS.any { allowed ->
-            host == allowed || host.endsWith(".$allowed")
-        }
+        val isAllowedHost = CoverUtils.isAllowedRemoteImageUrl(url.toString())
 
         if (!isAllowedHost) {
-            throw IOException("Blocked unauthorized remote cover host: $host")
+            throw IOException("Blocked unauthorized remote image host: $host")
         }
 
         val response = chain.proceed(request)

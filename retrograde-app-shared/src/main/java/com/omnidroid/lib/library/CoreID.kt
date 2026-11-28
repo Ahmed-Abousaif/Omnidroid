@@ -4,15 +4,19 @@ import android.content.SharedPreferences
 import com.omnidroid.lib.core.CoreUpdater
 import com.omnidroid.lib.core.assetsmanager.CemuAssetsManager
 import com.omnidroid.lib.core.assetsmanager.DolphinAssetsManager
+import com.omnidroid.lib.core.assetsmanager.FirmwarePackage
+import com.omnidroid.lib.core.assetsmanager.ManagedFirmwareAssetsManager
 import com.omnidroid.lib.core.assetsmanager.NoAssetsManager
 import com.omnidroid.lib.core.assetsmanager.PCEE2AssetsManager
 import com.omnidroid.lib.core.assetsmanager.PPSSPPAssetsManager
+import com.omnidroid.lib.core.assetsmanager.SegaCdAssetsManager
 import com.omnidroid.lib.storage.DirectoriesManager
 
 enum class CoreID(
     val coreName: String,
     val coreDisplayName: String,
     val libretroFileName: String,
+    val buildbotName: String? = null,
 ) {
     STELLA(
         "stella",
@@ -28,6 +32,11 @@ enum class CoreID(
         "snes9x",
         "Snes9x",
         "libsnes9x_libretro_android.so",
+    ),
+    PICODRIVE(
+        "picodrive",
+        "PicoDrive",
+        "libpicodrive_libretro_android.so",
     ),
     GENESIS_PLUS_GX(
         "genesis_plus_gx",
@@ -139,18 +148,40 @@ enum class CoreID(
         "Eden",
         "libyuzu-android.so",
     ),
+    ARMSX3(
+        "armsx3",
+        "ARMSX3",
+        "libomnidroid-armsx3.so",
+    ),
+    A5200("a5200", "a5200", "liba5200_libretro_android.so", buildbotName = "a5200"),
+    ATARI800("atari800", "Atari800", "libatari800_libretro_android.so", buildbotName = "atari800"),
+    YABASANSHIRO("yabasanshiro", "YabaSanshiro", "libyabasanshiro_libretro_android.so", buildbotName = "yabasanshiro"),
+    OPERA("opera", "Opera", "libopera_libretro_android.so", buildbotName = "opera"),
+    GEARCOLECO("gearcoleco", "Gearcoleco", "libgearcoleco_libretro_android.so", buildbotName = "gearcoleco"),
+    VICE_X64("vice_x64", "VICE x64", "libvice_x64_libretro_android.so", buildbotName = "vice_x64"),
+    FMSX("fmsx", "fMSX", "libfmsx_libretro_android.so", buildbotName = "fmsx"),
+    APPLEWIN("applewin", "AppleWin", "libapplewin_libretro_android.so", buildbotName = "applewin"),
+    VIRTUAL_JAGUAR(
+        "virtualjaguar",
+        "Virtual Jaguar",
+        "libvirtualjaguar_libretro_android.so",
+        buildbotName = "virtualjaguar",
+    ),
     ;
 
     companion object {
-        fun getAssetManager(coreID: CoreID): AssetsManager {
-            return when (coreID) {
+        fun getAssetManager(coreID: CoreID): AssetsManager =
+            when (coreID) {
+                GENESIS_PLUS_GX, PICODRIVE -> SegaCdAssetsManager()
+                YABASANSHIRO -> ManagedFirmwareAssetsManager(FirmwarePackage.SATURN)
+                GEARCOLECO -> ManagedFirmwareAssetsManager(FirmwarePackage.COLECOVISION)
+                FMSX -> ManagedFirmwareAssetsManager(FirmwarePackage.MSX)
                 PPSSPP -> PPSSPPAssetsManager()
                 ARMSX2 -> PCEE2AssetsManager()
                 DOLPHIN -> DolphinAssetsManager()
                 CEMU -> CemuAssetsManager()
                 else -> NoAssetsManager()
             }
-        }
     }
 
     interface AssetsManager {
@@ -163,7 +194,10 @@ enum class CoreID(
 
         suspend fun isReady(directoriesManager: DirectoriesManager): Boolean
 
-        suspend fun clearAssets(directoriesManager: DirectoriesManager, sharedPreferences: SharedPreferences)
+        suspend fun clearAssets(
+            directoriesManager: DirectoriesManager,
+            sharedPreferences: SharedPreferences,
+        )
     }
 }
 

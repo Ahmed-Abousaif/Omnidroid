@@ -90,7 +90,8 @@ If Omnidroid helps you play, you can fuel continued development here:
 - 🚀 **Frontend & File Manager Integration:** Exported launcher activity for external frontends (Daijishō, Pegasus, Beacon) and direct "Open With" file manager launching for ROMs and archives without requiring a prior library scan.
 - 📚 **Console Carousel & Library Sorting:** Dedicated console views with a portrait cover carousel, landscape details pane, flexible sorting (name, console, recently played, favorites), and random game selection.
 - 🔄 **Saves Backup & Lemuroid Migration:** Multi-tier save and state migration from Lemuroid (automatic 1-tap direct migration, uncompressed folder import via SAF, and lenient ZIP backup import), plus multi-provider cloud sync (**Google Drive**, **Dropbox**, **OneDrive**) with full conflict resolution.
-- 🏆 **Gamification & Profile System:** Earn XP from play sessions, maintain daily streaks, level up, and unlock collection badges (Collector → Enthusiast → Historian → Omnidroid Master). Browse day-grouped sessions with game-detail shortcuts and a compact console grid in separate tabs, with a dedicated profile rail in landscape.
+- 🏅 **RetroAchievements Integration:** Track achievements, leaderboards, and Rich Presence across supported Libretro cores using `rcheevos`, with Hardcore Mode enforcement, Encore/Spectator/Unofficial modes, customizable unlock overlays with synthesized chimes, offline achievement caching, and a dedicated **Retro Achievements** tab in your Profile.
+- 🏆 **Gamification & Profile System:** Earn XP from play sessions, maintain daily streaks, level up, and unlock collection badges (Collector → Enthusiast → Historian → Omnidroid Master). Browse day-grouped sessions with game-detail shortcuts, a compact console grid, and a Retro Achievements summary in separate tabs, with a dedicated profile rail in landscape.
 - 📺 **Android TV & Big-Screen Integration:** Full Android TV Leanback launcher support with dynamic home screen preview channels for recently played games, plus wireless and HDMI casting.
 - 🔋 **Battery-Aware HD Mode:** Intelligently disables heavy HD enhancements when battery drops below 15% to conserve power.
 - 🛡️ **Lightweight & 16KB Page-Aligned:** Universal release APK is under 8.5 MB (~27% smaller than baseline) and fully aligned for Android 15+ 16KB memory page sizes.
@@ -153,6 +154,16 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 | **PlayStation Portable (PSP)**     | Handheld (7th Gen)       | [ppsspp](https://docs.libretro.com/library/ppsspp/)                                                                                                                 |
 | **PlayStation (PSX)**              | Home Console (5th Gen)   | [PCSX-ReARMed](https://docs.libretro.com/library/pcsx_rearmed/)                                                                                                     |
 | **Sega Dreamcast**                 | Home Console (6th Gen)   | [flycast](https://docs.libretro.com/library/flycast/)                                                                                                               |
+| **Atari 5200** | Home Console | a5200 |
+| **Atari 8-bit** | Home Computer | Atari800 |
+| **Sega Saturn** | Home Console | YabaSanshiro |
+| **3DO** | Home Console | Opera |
+| **ColecoVision** | Home Console | Gearcoleco |
+| **Commodore 64** | Home Computer | VICE x64 |
+| **MSX** | Home Computer | fMSX |
+| **MSX2** | Home Computer | fMSX |
+| **Apple II** | Home Computer | AppleWin |
+| **Atari Jaguar** | Home Console | Virtual Jaguar |
 | **Sega Genesis / Mega Drive**      | Home Console (4th Gen)   | [genesis_plus_gx](https://docs.libretro.com/library/genesis_plus_gx/)                                                                                               |
 | **Sega CD / Mega CD**              | Add-on (4th Gen)         | [genesis_plus_gx](https://docs.libretro.com/library/genesis_plus_gx/)                                                                                               |
 | **Sega Master System / Game Gear** | 8-bit Console & Handheld | [genesis_plus_gx](https://docs.libretro.com/library/genesis_plus_gx/)                                                                                               |
@@ -290,6 +301,17 @@ The library has **114 passing tests**, including **24 API 24 cases**, plus five 
 - **Built-in Migration Guide:** In-app walkthrough with step-by-step instructions for PC/USB file transfer and on-device file managers.
 </details>
 
+<details>
+<summary><b>🏅 RetroAchievements & Hardcore Mode</b></summary>
+<br>
+
+- **Native `rcheevos` Engine (`omni_ra`):** Pure-C module powered by `rcheevos` supporting Libretro memory maps, ROM hashing (including optical disc and CHD track inspection via `omnidroid-chd`), Rich Presence, leaderboards, and Softcore save-state progress serialization.
+- **Profile, Game Details & In-Game Views:** Inspect overall RetroAchievements stats, mastered/beaten titles, and unlocked achievements in **Profile -> Retro Achievements**, view compact achievement and leaderboard cards in **Game Details -> Achievements**, or check live progress from the in-game Achievements menu.
+- **Hardcore Mode & Fair-Play Guards:** Enforces RetroAchievements Hardcore rules by blocking save-state loading, rewind, slow-motion (`< 1x`), cheats, memory edits, pause cooldown abuse, and disallowed core enhancements.
+- **Flexible Modes & Custom Overlays:** Supports Encore, Spectator, and Unofficial achievement modes alongside configurable screen positions for unlock overlays, mastery/beaten/subset/leaderboard banners, and synthesized unlock chimes.
+- **Seamless Delivery:** Bundled into Play/bundle builds and downloaded cleanly on demand with offline metadata caching for GitHub builds.
+</details>
+
 ---
 
 ## 🛠️ For Contributors & Developers
@@ -311,6 +333,7 @@ Omnidroid/
 ├── omni-libretrodroid/             # Native Vulkan/GLES runtime submodule
 ├── omnidroid-cores/                # Core binaries, build/update tools, and SDL Java sources
 ├── omnidroid-chd/                  # CHD wrapper; libchdr submodule is under src/main/cpp/
+├── omnidroid-ra/                   # Kotlin/JNI bridge and dynamic loader for libomnidroid_ra.so
 ├── omnidroid-metadata-libretro-db/ # Offline identification database and title matching
 ├── retrograde-app-shared/          # Shared game, database, storage, and lifecycle code
 └── retrograde-util/                # Common utilities
@@ -443,6 +466,8 @@ Use the issue forms for bugs and feature requests; use Discussions or our [Disco
 - [Settings](docs/SETTINGS_TECHNICAL_GUIDE.md): feature sections, typed preferences, and navigation.
 - [Side menus](docs/SIDE_MENUS_TECHNICAL_GUIDE.md): shared panels, composable pages, and host actions.
 - [Save states](docs/SAVE_STATES_TECHNICAL_GUIDE.md): slots, autosave, errors, and backend support.
+- [RetroAchievements](docs/retroachievements.md): architecture, Hardcore Mode policy, module delivery, and UI surfaces.
+- [RetroAchievements testing](docs/retroachievements-testing.md): native C tests, Gradle unit suites, and device smoke checks.
 
 ### Distribution and app updates
 

@@ -3,8 +3,10 @@ package com.omnidroid.app.shared.library
 import android.content.Context
 import coil.imageLoader
 import coil.size.Size
+import com.omnidroid.app.shared.covers.CoverCacheStore
 import com.omnidroid.app.shared.covers.CoverUtils
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.metadata.libretrodb.CoverSearcher
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -50,8 +52,45 @@ object LibraryCoverPrefetcher {
     ) {
         try {
             val url = game.coverFrontUrl
-            if (url != null && game.customCoverPath == null && CoverUtils.isAllowedRemoteCoverUrl(url)) {
-                CoverUtils.coverCache(context).ensureGrid(game.id, url)
+            val cache = CoverUtils.coverCache(context)
+            val mirror = url?.let(CoverSearcher::libretroMirrorUrl)
+            val settings =
+                com.omnidroid.app.shared.metadata
+                    .MetadataSettings(context.applicationContext)
+            val network = context.getSystemService(android.net.ConnectivityManager::class.java)
+            val capabilities = network?.getNetworkCapabilities(network.activeNetwork)
+            val allowedNetwork =
+                capabilities?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) == true &&
+                    (
+                        !settings.wifiOnly ||
+                            capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
+                    )
+            val canEnrich = settings.enabled && allowedNetwork && game.customCoverPath == null
+            val hasMirrorOnDisk = mirror != null && cache.gridFile(game.id, mirror) != null
+            val prepared =
+                if (url != null && game.customCoverPath == null && CoverUtils.isAllowedRemoteCoverUrl(url)) {
+                    if (canEnrich && !hasMirrorOnDisk) {
+                        cache.ensureGrid(game.id, url) != null
+                    } else if (!canEnrich) {
+                        CoverUtils.ensureWithMirror(cache, game.id, url, CoverCacheStore.Tier.GRID) != null
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            if (canEnrich &&
+                !prepared &&
+                (
+                    url == null ||
+                        hasMirrorOnDisk ||
+                        cache.failure(url)?.state == "missing" ||
+                        (mirror != null && cache.failure(url) != null && cache.failure(mirror) == null)
+                )
+            ) {
+                com.omnidroid.app.shared.metadata.MetadataRepository
+                    .get(context)
+                    .enrich(listOf(game))
             }
             // Only warm covers already on disk; remote fallbacks are left to the cell.
             if (decodeSize != null && CoverUtils.coverData(game) is File) {

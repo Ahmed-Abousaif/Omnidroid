@@ -16,17 +16,71 @@ object StorageFilesMerger {
         files: List<BaseStorageFile>,
     ): List<GroupedStorageFiles> {
         val allFiles =
-            files
+            ps3GameFiles(storageProvider, files)
                 .associateWith { listOf<BaseStorageFile>() }
                 .toMutableMap()
 
+        val ps3Icons = files.filter { it.name.equals("ICON0.PNG", true) }
+        allFiles.keys.filter { it.name.equals("PARAM.SFO", true) }.forEach { descriptor ->
+            val parent = (descriptor.path ?: descriptor.uri.path.orEmpty()).substringBeforeLast('/')
+            allFiles[descriptor] =
+                ps3Icons.filter { (it.path ?: it.uri.path.orEmpty()).substringBeforeLast('/') == parent }
+        }
         mergeBinCueFiles(allFiles, storageProvider)
         removeInvalidBinCuePairs(allFiles, storageProvider)
+        mergeDiscDescriptors(allFiles)
         mergeM3UPlaylists(allFiles, storageProvider)
         removeInvalidM3UPlaylists(allFiles, storageProvider)
         mergeMsu1Files(allFiles)
 
         return allFiles.map { GroupedStorageFiles(it.key, it.value) }
+    }
+
+    private fun ps3GameFiles(
+        provider: StorageProvider,
+        files: List<BaseStorageFile>,
+    ): List<BaseStorageFile> {
+        fun path(file: BaseStorageFile) = (file.path ?: file.uri.path.orEmpty()).replace('\\', '/')
+        val descriptors =
+            files.filter { file ->
+                file.name.equals("PARAM.SFO", true) &&
+                    runCatching {
+                        provider.openRandomAccess(file.uri)?.use { source ->
+                            com.omnidroid.lib.library.scan.Ps3Content.parse(
+                                source.read(0, minOf(file.size, 1024 * 1024L).toInt()),
+                            )
+                        } != null
+                    }.getOrDefault(false)
+            }
+        val roots =
+            descriptors.map { file ->
+                val parent = path(file).substringBeforeLast('/')
+                if (parent.endsWith("/PS3_GAME", true)) parent.substringBeforeLast('/') else parent
+            }
+        return files.filter { file ->
+            !file.name.equals("ICON0.PNG", true) &&
+                (file in descriptors || roots.none { path(file).startsWith("$it/", ignoreCase = true) })
+        }
+    }
+
+    private fun mergeDiscDescriptors(allFiles: MutableMap<BaseStorageFile, List<BaseStorageFile>>) {
+        val removed = mutableSetOf<BaseStorageFile>()
+
+        fun parent(file: BaseStorageFile) =
+            (file.path ?: file.uri.toString()).replace('\\', '/').substringBeforeLast('/')
+        allFiles.keys.filter { it.extension.lowercase() in setOf("ccd", "mds") }.toList().forEach { descriptor ->
+            val extensions = if (descriptor.extension.equals("ccd", true)) setOf("img", "sub") else setOf("mdf")
+            val companions =
+                allFiles.keys.filter {
+                    it != descriptor &&
+                        it.extension.lowercase() in extensions &&
+                        it.extensionlessName.equals(descriptor.extensionlessName, true) &&
+                        parent(it) == parent(descriptor)
+                }
+            allFiles[descriptor] = allFiles[descriptor].orEmpty() + companions
+            removed.addAll(companions)
+        }
+        removed.forEach { allFiles.remove(it) }
     }
 
     private fun removeInvalidM3UPlaylists(
@@ -41,7 +95,9 @@ object StorageFilesMerger {
             .forEach { m3uFile ->
                 val m3uFiles: List<String> =
                     runCatching {
-                        storageProvider.getInputStream(m3uFile.uri)?.readLines()
+                        storageProvider
+                            .getInputStream(m3uFile.uri)
+                            ?.readLines()
                             ?.map { it.trim() }
                             ?.filter { it.isNotEmpty() && !it.startsWith("#") }
                             ?.map { it.substringAfterLast('/').substringAfterLast('\\') }
@@ -69,7 +125,9 @@ object StorageFilesMerger {
             .forEach { m3uFile ->
                 val m3uFiles =
                     runCatching {
-                        storageProvider.getInputStream(m3uFile.uri)?.readLines()
+                        storageProvider
+                            .getInputStream(m3uFile.uri)
+                            ?.readLines()
                             ?.map { it.trim() }
                             ?.filter { it.isNotEmpty() && !it.startsWith("#") }
                             ?.map { it.substringAfterLast('/').substringAfterLast('\\') }
@@ -132,9 +190,7 @@ object StorageFilesMerger {
         toBeRemoved.forEach { allFiles.remove(it) }
     }
 
-    private fun mergeMsu1Files(
-        allFiles: MutableMap<BaseStorageFile, List<BaseStorageFile>>,
-    ) {
+    private fun mergeMsu1Files(allFiles: MutableMap<BaseStorageFile, List<BaseStorageFile>>) {
         val toBeRemoved = mutableListOf<BaseStorageFile>()
 
         // Process longer ROM names first so more specific names claim their companion files first
@@ -173,11 +229,17 @@ object StorageFilesMerger {
     private fun extractBinFiles(
         storageProvider: StorageProvider,
         uri: Uri,
-    ): List<String> {
-        return runCatching {
-            storageProvider.getInputStream(uri)?.readLines()
-                ?.mapNotNull { Regex("FILE \"(.*)\"", RegexOption.IGNORE_CASE).find(it)?.groupValues?.get(1)?.substringAfterLast('/')?.substringAfterLast('\\') }
+    ): List<String> =
+        runCatching {
+            storageProvider
+                .getInputStream(uri)
+                ?.readLines()
+                ?.mapNotNull {
+                    Regex(
+                        "FILE \"(.*)\"",
+                        RegexOption.IGNORE_CASE,
+                    ).find(it)?.groupValues?.get(1)?.substringAfterLast('/')?.substringAfterLast('\\')
+                }
                 ?: listOf()
         }.getOrDefault(listOf())
-    }
 }

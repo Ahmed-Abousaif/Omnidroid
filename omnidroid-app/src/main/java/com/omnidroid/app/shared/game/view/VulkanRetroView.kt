@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import timber.log.Timber
 import java.util.Locale
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -46,6 +47,7 @@ class VulkanRetroView(
 
     private val isEmulationReady = AtomicBoolean(false)
     private val isGameLoaded = AtomicBoolean(false)
+    private val isResumed = AtomicBoolean(false)
     private var isInitializationFailed = false
     private val softwareKeyboard = NativeSoftwareKeyboard(this)
 
@@ -236,6 +238,7 @@ class VulkanRetroView(
     }
 
     override fun onResume(owner: LifecycleOwner) {
+        isResumed.set(true)
         if (!isInitializationFailed) softwareKeyboard.start()
         if (isGameLoaded.get()) {
             emulationThread?.resumeEmulation()
@@ -243,6 +246,7 @@ class VulkanRetroView(
     }
 
     override fun onPause(owner: LifecycleOwner) {
+        isResumed.set(false)
         softwareKeyboard.stop()
         if (isGameLoaded.get()) {
             emulationThread?.pauseEmulation()
@@ -259,6 +263,16 @@ class VulkanRetroView(
         if (isGameLoaded.get()) {
             runCatching { LibretroDroid.destroy() }
         }
+    }
+
+    override fun sendKeyboardEvent(
+        down: Boolean,
+        key: Int,
+        character: Int,
+        modifiers: Int,
+    ): Boolean {
+        LibretroDroid.onKeyboardEvent(down, key, character, modifiers)
+        return true
     }
 
     override fun sendKeyEvent(action: Int, keyCode: Int, port: Int) {
@@ -386,24 +400,29 @@ class VulkanRetroView(
 
     private fun <T> runOnEmulationThread(useEmulationThread: Boolean, action: () -> T): T? {
         val thread = emulationThread
-        if (!useEmulationThread || thread == null || Thread.currentThread() == thread) {
+        if (!useEmulationThread || Thread.currentThread() == thread) {
             return action()
         }
-        var result: T? = null
+        check(thread != null && thread.isAlive) { "Emulation surface is unavailable" }
+        var result: Result<T>? = null
+        val cancelled = AtomicBoolean(false)
         val latch = CountDownLatch(1)
         thread.postAction {
             try {
-                result = action()
+                if (!cancelled.get()) result = runCatching(action)
             } finally {
                 latch.countDown()
             }
         }
         try {
-            latch.await()
+            check(latch.await(5, TimeUnit.SECONDS)) { "Emulation thread did not respond" }
         } catch (e: InterruptedException) {
-            Timber.w(e, "Interrupted waiting for action on emulation thread")
+            Thread.currentThread().interrupt()
+            throw IllegalStateException("Interrupted waiting for emulation thread", e)
+        } finally {
+            cancelled.set(true)
         }
-        return result
+        return result?.getOrThrow()
     }
 
     /**
@@ -414,7 +433,7 @@ class VulkanRetroView(
     ) : Thread("VulkanEmulationThread") {
 
         private val isRunning = AtomicBoolean(true)
-        private val isPaused = AtomicBoolean(false)
+        private val isPaused = AtomicBoolean(true)
         private val pendingActions = java.util.concurrent.ConcurrentLinkedQueue<() -> Unit>()
 
         fun requestStop() {
@@ -480,7 +499,15 @@ class VulkanRetroView(
                         LibretroDroid.onSurfaceChanged(pendingSurfaceWidth, pendingSurfaceHeight)
                     }
                 }
-                LibretroDroid.resume()
+                // A SurfaceView can be recreated while the pause menu is on top.
+                // Surface creation alone must never resume the game behind it.
+                if (isResumed.get()) {
+                    LibretroDroid.resume()
+                    isPaused.set(false)
+                } else {
+                    LibretroDroid.pause()
+                    isPaused.set(true)
+                }
                 isGameLoaded.set(true)
                 isEmulationReady.set(true)
                 retroEventsSubject.tryEmit(GLRetroView.GLRetroEvents.SurfaceCreated)

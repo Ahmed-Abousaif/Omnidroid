@@ -55,8 +55,8 @@ internal object CartridgeHasher {
             val read = source.read(offset, block.size)
             if (read.size < block.size) break
             for (index in 0 until 8192) {
-                out[index * 2] = read[index]
-                out[index * 2 + 1] = read[8192 + index]
+                out[index * 2] = read[8192 + index]
+                out[index * 2 + 1] = read[index]
             }
             crc.update(out)
             offset += block.size

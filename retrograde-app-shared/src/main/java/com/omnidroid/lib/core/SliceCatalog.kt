@@ -13,12 +13,23 @@ object SliceCatalog {
 
     val slices =
         listOf(
+            Slice("atari5200", listOf("atari5200"), listOf("a5200")),
+            Slice("atari800", listOf("atari800"), listOf("atari800")),
+            Slice("saturn", listOf("saturn"), listOf("yabasanshiro")),
+            Slice("3do", listOf("3do"), listOf("opera")),
+            Slice("colecovision", listOf("colecovision"), listOf("gearcoleco")),
+            Slice("c64", listOf("c64"), listOf("vice_x64")),
+            Slice("msx", listOf("msx"), listOf("fmsx")),
+            Slice("msx2", listOf("msx2"), listOf("fmsx")),
+            Slice("apple2", listOf("apple2"), listOf("applewin")),
+            Slice("jaguar", listOf("jaguar"), listOf("virtualjaguar")),
             Slice("atari2600", listOf("atari2600"), listOf("stella")),
             Slice("nes", listOf("nes"), listOf("fceumm")),
             Slice("snes", listOf("snes"), listOf("snes9x")),
             Slice("sms", listOf("sms"), listOf("genesis_plus_gx")),
-            Slice("md", listOf("md"), listOf("genesis_plus_gx")),
-            Slice("scd", listOf("scd"), listOf("genesis_plus_gx")),
+            Slice("md", listOf("md"), listOf("genesis_plus_gx", "picodrive")),
+            Slice("scd", listOf("scd"), listOf("genesis_plus_gx", "picodrive")),
+            Slice("32x", listOf("32x"), listOf("picodrive")),
             Slice("gg", listOf("gg"), listOf("genesis_plus_gx")),
             Slice("gb", listOf("gb"), listOf("gambatte")),
             Slice("gbc", listOf("gbc"), listOf("gambatte")),
@@ -38,6 +49,7 @@ object SliceCatalog {
             Slice("wsc", listOf("wsc"), listOf("mednafen_wswan")),
             Slice("dos", listOf("dos"), listOf("dosbox_pure")),
             Slice("ps2", listOf("ps2"), listOf("armsx2")),
+            Slice("ps3", listOf("ps3"), listOf("armsx3")),
             Slice("gamecube", listOf("gamecube"), listOf("dolphin")),
             Slice("wii", listOf("wii"), listOf("dolphin")),
             Slice("wiiu", listOf("wiiu"), listOf("cemu")),
@@ -59,14 +71,25 @@ object SliceCatalog {
         return installedSha != sha || installedSchema != schema
     }
 
-    fun displayName(sliceId: String): String {
-        return when (sliceId.lowercase()) {
+    fun displayName(sliceId: String): String =
+        when (sliceId.lowercase()) {
+            "atari5200" -> "Atari 5200"
+            "atari800" -> "Atari 8-bit"
+            "saturn" -> "Sega Saturn"
+            "3do" -> "3DO"
+            "colecovision" -> "ColecoVision"
+            "c64" -> "Commodore 64"
+            "msx" -> "MSX"
+            "msx2" -> "MSX2"
+            "apple2" -> "Apple II"
+            "jaguar" -> "Atari Jaguar"
             "arcade" -> "Arcade"
             "dos" -> "DOS"
             "snes" -> "SNES"
             "nes" -> "NES"
             "md" -> "Genesis / Mega Drive"
             "scd" -> "Sega CD"
+            "32x" -> "Sega 32X"
             "sms" -> "Master System"
             "gg" -> "Game Gear"
             "gb" -> "Game Boy"
@@ -75,6 +98,7 @@ object SliceCatalog {
             "n64" -> "Nintendo 64"
             "psx" -> "PlayStation"
             "ps2" -> "PlayStation 2"
+            "ps3" -> "PlayStation 3"
             "psp" -> "PSP"
             "nds" -> "Nintendo DS"
             "3ds" -> "Nintendo 3DS"
@@ -93,7 +117,6 @@ object SliceCatalog {
             "wsc" -> "WonderSwan Color"
             else -> sliceId.uppercase()
         }
-    }
 }
 
 interface MetadataSliceInstaller {

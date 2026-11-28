@@ -26,11 +26,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -44,20 +46,27 @@ import com.omnidroid.app.mobile.shared.compose.dialog.DialogWidth
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogTextField
+import com.omnidroid.app.shared.covers.CoverCacheStore
+import com.omnidroid.app.shared.covers.ManagedCover
+import com.omnidroid.app.shared.metadata.MetadataRepository
 import com.omnidroid.lib.library.db.entity.Game
 import com.omnidroid.metadata.libretrodb.CoverSearchResult
 import com.omnidroid.metadata.libretrodb.CoverSearcher
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun CoverSearchDialog(
     game: Game,
     coverSearcher: CoverSearcher,
     onDismiss: () -> Unit,
-    onUpdateCoverOnly: (String) -> Unit,
-    onFixFullMatch: (String, String) -> Unit,
+    onUpdateCoverOnly: (CoverSearchResult) -> Unit,
+    onFixFullMatch: (CoverSearchResult) -> Unit,
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var onlineSearch by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf(game.displayName) }
     var results by remember { mutableStateOf<List<CoverSearchResult>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -66,20 +75,32 @@ fun CoverSearchDialog(
     val gridState = rememberLazyGridState()
     val gridLayout = gridState.layoutInfo
     val gridSpacing = with(LocalDensity.current) { 8.dp.toPx() }
-    val gridScrollInfo = if (!isLoading && (gridState.canScrollForward || gridState.canScrollBackward)) {
-        val rowHeight = gridLayout.visibleItemsInfo.maxOfOrNull { it.size.height }?.toFloat() ?: 1f
-        val rowCount = (gridLayout.totalItemsCount + 1) / 2
-        val viewportHeight = (gridLayout.viewportEndOffset - gridLayout.viewportStartOffset).toFloat()
-        val estimatedHeight = rowCount * (rowHeight + gridSpacing)
-        val offset = (gridState.firstVisibleItemIndex / 2) * (rowHeight + gridSpacing) + gridState.firstVisibleItemScrollOffset
-        DialogScrollInfo(
-            progress = if (!gridState.canScrollForward) 1f else offset / (estimatedHeight - viewportHeight).coerceAtLeast(1f),
-            visibleFraction = (viewportHeight / estimatedHeight.coerceAtLeast(1f)).coerceIn(0f, 0.98f),
-            canScrollForward = gridState.canScrollForward,
-        )
-    } else null
+    val gridScrollInfo =
+        if (!isLoading && (gridState.canScrollForward || gridState.canScrollBackward)) {
+            val rowHeight = gridLayout.visibleItemsInfo.maxOfOrNull { it.size.height }?.toFloat() ?: 1f
+            val rowCount = (gridLayout.totalItemsCount + 1) / 2
+            val viewportHeight = (gridLayout.viewportEndOffset - gridLayout.viewportStartOffset).toFloat()
+            val estimatedHeight = rowCount * (rowHeight + gridSpacing)
+            val offset =
+                (gridState.firstVisibleItemIndex / 2) * (rowHeight + gridSpacing) +
+                    gridState.firstVisibleItemScrollOffset
+            DialogScrollInfo(
+                progress =
+                    if (!gridState.canScrollForward) {
+                        1f
+                    } else {
+                        offset /
+                            (estimatedHeight - viewportHeight).coerceAtLeast(1f)
+                    },
+                visibleFraction = (viewportHeight / estimatedHeight.coerceAtLeast(1f)).coerceIn(0f, 0.98f),
+                canScrollForward = gridState.canScrollForward,
+            )
+        } else {
+            null
+        }
 
     LaunchedEffect(game.id, query) {
+        onlineSearch = false
         val trimmed = query.trim()
         if (trimmed.length < 2) {
             results = emptyList()
@@ -120,6 +141,43 @@ fun CoverSearchDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
+                // Online IGDB results are placed at the top of the list when requested.
+                OmnidroidDialogButton(
+                    onClick = {
+                        if (!isLoading && query.isNotBlank()) {
+                            onlineSearch = true
+                            searchFailed = false
+                            isLoading = true
+                            val searched = query
+                            scope.launch {
+                                try {
+                                    val online = MetadataRepository.get(context).search(game, searched)
+                                    if (query == searched) {
+                                        results = mergeOnlineCoverResults(results, online)
+                                        if (online.isNotEmpty()) gridState.scrollToItem(0)
+                                    }
+                                } catch (
+                                    cancelled: CancellationException,
+                                ) {
+                                    throw cancelled
+                                } catch (
+                                    _: Exception,
+                                ) {
+                                    if (query == searched) searchFailed = true
+                                } finally {
+                                    if (query == searched) isLoading = false
+                                }
+                            }
+                        }
+                    },
+                ) { Text(stringResource(R.string.game_search_online_covers)) }
+                if (onlineSearch) {
+                    Text(
+                        stringResource(R.string.metadata_attribution),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+
                 Box(
                     modifier =
                         Modifier
@@ -135,7 +193,11 @@ fun CoverSearchDialog(
                             Text(
                                 text =
                                     stringResource(
-                                        if (searchFailed) R.string.game_search_cover_failed else R.string.game_search_cover_no_results,
+                                        if (searchFailed) {
+                                            R.string.game_search_cover_failed
+                                        } else {
+                                            R.string.game_search_cover_no_results
+                                        },
                                     ),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -187,7 +249,7 @@ fun CoverSearchDialog(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         AsyncImage(
-                            model = candidate.coverUrl,
+                            model = ManagedCover(0, candidate.coverUrl, CoverCacheStore.Tier.GRID),
                             contentDescription = candidate.title,
                             modifier =
                                 Modifier
@@ -217,7 +279,7 @@ fun CoverSearchDialog(
                     onClick = {
                         val chosen = candidate
                         selectedCandidate = null
-                        onFixFullMatch(chosen.title, chosen.coverUrl)
+                        onFixFullMatch(chosen)
                         onDismiss()
                     },
                 ) {
@@ -232,7 +294,7 @@ fun CoverSearchDialog(
                     onClick = {
                         val chosen = candidate
                         selectedCandidate = null
-                        onUpdateCoverOnly(chosen.coverUrl)
+                        onUpdateCoverOnly(chosen)
                         onDismiss()
                     },
                 ) {
@@ -264,7 +326,7 @@ private fun CoverCandidateCard(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             AsyncImage(
-                model = candidate.coverUrl,
+                model = ManagedCover(0, candidate.coverUrl, CoverCacheStore.Tier.GRID),
                 contentDescription = candidate.title,
                 modifier =
                     Modifier
@@ -284,3 +346,8 @@ private fun CoverCandidateCard(
         }
     }
 }
+
+internal fun mergeOnlineCoverResults(
+    existing: List<CoverSearchResult>,
+    online: List<CoverSearchResult>,
+): List<CoverSearchResult> = (online + existing).distinctBy { it.coverUrl }

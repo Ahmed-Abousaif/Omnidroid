@@ -1,0 +1,17 @@
+name: Set up ARMSX3 Android toolchain
+description: Install the pinned PS3 native build prerequisites
+runs:
+  using: composite
+  steps:
+    - uses: android-actions/setup-android@v3
+      with:
+        packages: platform-tools
+    - shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential ninja-build pkg-config python3 nasm yasm autoconf automake libtool ccache glslang-tools
+        sdkmanager 'ndk;29.0.14206865' 'cmake;3.30.5'
+    - uses: actions/cache@v4
+      with:
+        path: build/ps3/*/engine-v1/source/build-ffmpeg
+        key: ps3-ffmpeg-${{ runner.os }}-${{ hashFiles('modules/ps3/upstream/armsx3/android/build-ffmpeg.sh', 'modules/ps3/upstream/armsx3/android/ffmpeg.cmake') }}

@@ -18,11 +18,11 @@ class LibretroBackendDescriptor : ConsoleBackendDescriptor {
     override val displayName: String = "Libretro"
 
     override val ownedCoreIDs: Set<CoreID> = CoreID.values()
-        .filterNot { it == CoreID.SWITCH }
+        .filterNot { it == CoreID.SWITCH || it == CoreID.ARMSX3 }
         .toSet()
 
     override val ownedSystemIDs: Set<SystemID> = SystemID.values()
-        .filterNot { it == SystemID.SWITCH }
+        .filterNot { it == SystemID.SWITCH || it == SystemID.PS3 }
         .toSet()
 
     override fun capabilities(config: SystemCoreConfig): BackendCapabilities {

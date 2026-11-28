@@ -21,6 +21,9 @@ object FolderHints {
             "megadrive" to SystemID.GENESIS,
             "md" to SystemID.GENESIS,
             "segacd" to SystemID.SEGACD,
+            "32x" to SystemID.SEGA32X,
+            "sega32x" to SystemID.SEGA32X,
+            "sega_32x" to SystemID.SEGA32X,
             "megacd" to SystemID.SEGACD,
             "scd" to SystemID.SEGACD,
             "gg" to SystemID.GG,
@@ -66,6 +69,8 @@ object FolderHints {
             "wonderswancolor" to SystemID.WSC,
             "dos" to SystemID.DOS,
             "ps2" to SystemID.PS2,
+            "ps3" to SystemID.PS3,
+            "playstation3" to SystemID.PS3,
             "playstation2" to SystemID.PS2,
             "gc" to SystemID.GAMECUBE,
             "gamecube" to SystemID.GAMECUBE,
@@ -76,6 +81,29 @@ object FolderHints {
             "switch" to SystemID.SWITCH,
             "nswitch" to SystemID.SWITCH,
             "nintendoswitch" to SystemID.SWITCH,
+            "atari5200" to SystemID.ATARI5200,
+            "a5200" to SystemID.ATARI5200,
+            "5200" to SystemID.ATARI5200,
+            "atari800" to SystemID.ATARI800,
+            "atari8bit" to SystemID.ATARI800,
+            "atari8bitfamily" to SystemID.ATARI800,
+            "atari400" to SystemID.ATARI800,
+            "atarixl" to SystemID.ATARI800,
+            "atarixe" to SystemID.ATARI800,
+            "saturn" to SystemID.SATURN,
+            "segasaturn" to SystemID.SATURN,
+            "3do" to SystemID.THREE_DO,
+            "colecovision" to SystemID.COLECOVISION,
+            "coleco" to SystemID.COLECOVISION,
+            "c64" to SystemID.C64,
+            "commodore64" to SystemID.C64,
+            "msx" to SystemID.MSX,
+            "msx1" to SystemID.MSX,
+            "msx2" to SystemID.MSX2,
+            "apple2" to SystemID.APPLE2,
+            "appleii" to SystemID.APPLE2,
+            "jaguar" to SystemID.JAGUAR,
+            "atarijaguar" to SystemID.JAGUAR,
             "dreamcast" to SystemID.DREAMCAST,
             "dc" to SystemID.DREAMCAST,
         )
@@ -83,7 +111,8 @@ object FolderHints {
     fun system(path: String?): SystemID? {
         if (path.isNullOrBlank()) return null
         val segments =
-            path.split('/', '\\')
+            path
+                .split('/', '\\')
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
                 .dropLast(1)
@@ -95,11 +124,7 @@ object FolderHints {
     fun systemAmong(
         path: String?,
         allowed: Set<SystemID>,
-    ): SystemID? {
-        return system(path)?.takeIf { it in allowed }
-    }
+    ): SystemID? = system(path)?.takeIf { it in allowed }
 
-    private fun normalise(segment: String): String {
-        return segment.lowercase(Locale.US).replace(Regex("[^a-z0-9]"), "")
-    }
+    private fun normalise(segment: String): String = segment.lowercase(Locale.US).replace(Regex("[^a-z0-9]"), "")
 }

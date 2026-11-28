@@ -108,6 +108,7 @@ import com.omnidroid.app.shared.input.omnidroiddevice.OmnidroidInputDeviceGamePa
 import com.omnidroid.app.shared.input.omnidroiddevice.getOmnidroidInputDevice
 import com.omnidroid.app.shared.main.BusyActivity
 import com.omnidroid.app.shared.main.GameLaunchTaskHandler
+import com.omnidroid.app.shared.ra.RetroAchievementsCoordinator
 import com.omnidroid.app.shared.settings.SettingsInteractor
 import com.omnidroid.app.tv.channel.ChannelUpdateWork
 import com.omnidroid.app.tv.shared.TVHelper
@@ -207,6 +208,9 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
     @Inject
     lateinit var coreVariablesManager: com.omnidroid.lib.core.CoreVariablesManager
+
+    @Inject
+    lateinit var raCoordinator: RetroAchievementsCoordinator
 
     @Inject
     lateinit var displayClient: DisplayClient
@@ -627,8 +631,8 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                     searched,
                                     coverSearcher,
                                     onDismiss = { coverSearchGame = null },
-                                    onUpdateCoverOnly = { url -> gameInteractor.onSetCoverUrl(searched, url) },
-                                    onFixFullMatch = { title, url -> gameInteractor.onFixGameMatch(searched, title, url) },
+                                    onUpdateCoverOnly = { gameInteractor.onSetCoverUrl(searched, it) },
+                                    onFixFullMatch = { gameInteractor.onFixGameMatch(searched, it) },
                                 )
                             }
                             GameDetailsScreen(
@@ -775,6 +779,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     composable(MainRoute.PROFILE) {
                         ProfileScreen(
                             onGameClick = { gameId -> navController.navigateToGameDetails(gameId) },
+                            onOpenRetroAchievementsSettings = { navController.navigateToRoute(MainRoute.SETTINGS) },
                             modifier =
                                 Modifier
                                     .fillMaxSize()
@@ -787,6 +792,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                             applicationContext,
                                             retrogradeDb,
                                             registeredSystemsStore,
+                                            raCoordinator,
                                         ),
                                 ),
                         )
@@ -817,8 +823,8 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     syncNow = { gameInteractor.syncGameNow(it) },
                     setThumbnail = { game, uri -> gameInteractor.onSetCustomCover(game, uri) },
                     removeThumbnail = { gameInteractor.onRemoveCustomCover(it) },
-                    setCoverUrl = { game, url -> gameInteractor.onSetCoverUrl(game, url) },
-                    fixMatch = { game, title, url -> gameInteractor.onFixGameMatch(game, title, url) },
+                    setCoverUrl = { game, result -> gameInteractor.onSetCoverUrl(game, result) },
+                    fixMatch = { game, result -> gameInteractor.onFixGameMatch(game, result) },
                     setName = { game, name -> gameInteractor.onSetCustomName(game, name) },
                     removeName = { gameInteractor.onRemoveCustomName(it) },
                 ),

@@ -1,7 +1,5 @@
 package com.omnidroid.app.mobile.feature.library
 
-import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
-import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -68,25 +66,19 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -95,6 +87,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
@@ -110,21 +103,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.offset
 import androidx.paging.compose.LazyPagingItems
+import coil.compose.AsyncImage
 import com.omnidroid.R
-import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
-import com.omnidroid.app.OmnidroidApplication
 import com.omnidroid.app.mobile.feature.gamedetails.PlayTimeStore
+import com.omnidroid.app.mobile.shared.compose.ui.GameCoverOrigin
 import com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.OmnidroidGameImage
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
-import com.omnidroid.app.mobile.shared.compose.ui.GameCoverOrigin
 import com.omnidroid.app.mobile.shared.compose.ui.gameCoverSharedBounds
+import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
+import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
+import com.omnidroid.app.mobile.shared.compose.ui.selectionGlow
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
-import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.app.shared.covers.backdropRequest
 import com.omnidroid.app.shared.library.GameStatsCache
-import coil.compose.AsyncImage
+import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.db.dao.GamePlayStats
 import com.omnidroid.lib.library.db.entity.Game
@@ -132,7 +127,6 @@ import com.omnidroid.lib.library.metaSystemID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
@@ -147,17 +141,16 @@ private val ConsoleActionHeight = 40.dp
 private val ConsoleActionShape = RoundedCornerShape(8.dp)
 private val ConsoleActionShadowPadding = 12.dp
 private val ConsoleStartMinWidth = 168.dp
-private val GlowSpread = 14.dp
-private const val GlowLayers = 14
-private const val GlowLayerAlpha = 0.016f
-private const val PortraitMaxRotation = 32f
-private const val MaxOverscroll = 0.35f
-private const val OverscrollResistance = 0.35f
-private const val FlingProjectionSeconds = 0.28f
-private const val MaxFlingItemsPerSecond = 40f
+private const val PORTRAIT_MAX_ROTATION = 32f
+private const val MAX_OVERSCROLL = 0.35f
+private const val OVERSCROLL_RESISTANCE = 0.35f
+private const val FLING_PROJECTION_SECONDS = 0.28f
+private const val MAX_FLING_ITEMS_PER_SECOND = 40f
 
 @Stable
-internal class ConsoleCarouselState(initialIndex: Int) {
+internal class ConsoleCarouselState(
+    initialIndex: Int,
+) {
     var position by mutableFloatStateOf(initialIndex.toFloat())
         private set
 
@@ -178,16 +171,16 @@ internal class ConsoleCarouselState(initialIndex: Int) {
     fun dragBy(deltaItems: Float) {
         settleJob?.cancel()
         val outside = position < 0f || position > lastIndex
-        val delta = if (outside) deltaItems * OverscrollResistance else deltaItems
-        position = (position + delta).coerceIn(-MaxOverscroll, lastIndex + MaxOverscroll)
+        val delta = if (outside) deltaItems * OVERSCROLL_RESISTANCE else deltaItems
+        position = (position + delta).coerceIn(-MAX_OVERSCROLL, lastIndex + MAX_OVERSCROLL)
     }
 
     fun fling(
         scope: CoroutineScope,
         velocityItems: Float,
     ) {
-        val velocity = velocityItems.coerceIn(-MaxFlingItemsPerSecond, MaxFlingItemsPerSecond)
-        animateTo(scope, (position + velocity * FlingProjectionSeconds).roundToInt(), velocity)
+        val velocity = velocityItems.coerceIn(-MAX_FLING_ITEMS_PER_SECOND, MAX_FLING_ITEMS_PER_SECOND)
+        animateTo(scope, (position + velocity * FLING_PROJECTION_SECONDS).roundToInt(), velocity)
     }
 
     fun animateTo(
@@ -322,8 +315,7 @@ internal fun ConsoleLibrary(
                 .onFocusChanged { focusState ->
                     hasFocus = focusState.isFocused
                     if (!focusState.isFocused) navigation?.setFocusedGame(null)
-                }
-                .onKeyEvent { event -> handleCarouselKey(event, state, scope, playSelected) }
+                }.onKeyEvent { event -> handleCarouselKey(event, state, scope, playSelected) }
                 .focusable(),
     ) {
         val carouselRatio = if (maxHeight > 0.dp) maxWidth / maxHeight else 1f
@@ -429,11 +421,15 @@ private fun ConsoleCarouselState.settledAmount(): Float {
 /** Height the compact info panel needs: one title line, the details row and the action buttons. */
 internal val LandscapeInfoMinHeight = 96.dp
 
-internal class LandscapeMetrics(maxWidth: Dp, maxHeight: Dp) {
+internal class LandscapeMetrics(
+    maxWidth: Dp,
+    maxHeight: Dp,
+) {
     val edge = if (maxHeight < 280.dp) 16.dp else 20.dp
     val gap = 12.dp
     val bigHeight = (maxHeight - edge * 2).coerceIn(96.dp, 440.dp)
     val bigWidth = bigHeight * LibraryGameCardAspectRatio
+
     // The info panel sits under the small cards; on short screens (the console bar at the bottom,
     // 4:3) shrink the small cards so the title, details and buttons still fit beside the cover.
     val smallHeight = min(bigHeight * 0.60f, bigHeight - gap - LandscapeInfoMinHeight).coerceAtLeast(bigHeight * 0.3f)
@@ -490,8 +486,20 @@ private fun ConsoleLandscapeCarousel(
                             },
                             sharedModifier =
                                 game?.let {
-                                    consoleCoverSharedBounds(sharedTransitionScope, animatedVisibilityScope, it, LandscapeCardCorner,
-                                        if (items.isFeatured(index)) GameCoverOrigin.Continue else GameCoverOrigin.Library)
+                                    consoleCoverSharedBounds(
+                                        sharedTransitionScope,
+                                        animatedVisibilityScope,
+                                        it,
+                                        LandscapeCardCorner,
+                                        if (items.isFeatured(
+                                                index,
+                                            )
+                                        ) {
+                                            GameCoverOrigin.Continue
+                                        } else {
+                                            GameCoverOrigin.Library
+                                        },
+                                    )
                                 } ?: Modifier,
                             onClick = { game?.let { onCardClick(index, it) } },
                             onLongClick = { game?.let(onGameLongClick) },
@@ -579,7 +587,7 @@ private fun ConsoleLandscapeCard(
         modifier =
             Modifier
                 .fillMaxSize()
-                .consoleSelectionGlow(libraryAccentColor, LandscapeCardCorner, focus)
+                .selectionGlow(libraryAccentColor, LandscapeCardCorner, focus)
                 .then(sharedModifier)
                 .shadow(elevation = 6.dp, shape = shape)
                 .background(chromeColors.listRow)
@@ -606,7 +614,7 @@ private fun ConsoleLandscapeCard(
     }
 }
 
-private const val TitleRotateDelayMillis = 1500L
+private const val TITLE_ROTATE_DELAY_MILLIS = 1500L
 
 /** Ellipsized title that, once [active] for a moment, scrolls on one line so the full name can be read. */
 @Composable
@@ -624,7 +632,7 @@ private fun ConsoleRotatingTitle(
     LaunchedEffect(text, active, overflowing) {
         rotating = false
         if (active && overflowing) {
-            delay(TitleRotateDelayMillis)
+            delay(TITLE_ROTATE_DELAY_MILLIS)
             rotating = true
         }
     }
@@ -695,11 +703,19 @@ private fun LandscapeInfoPanel(
     }
 }
 
-private class PortraitMetrics(maxWidth: Dp, maxHeight: Dp, showButtons: Boolean = true) {
+private class PortraitMetrics(
+    maxWidth: Dp,
+    maxHeight: Dp,
+    showButtons: Boolean = true,
+) {
     val buttonGap = if (showButtons) 20.dp else 0.dp
     val buttonArea = if (showButtons) 40.dp + buttonGap else 0.dp
     val verticalPadding = if (showButtons) 32.dp else 24.dp
-    val cardWidth = min(maxWidth * 0.68f, (maxHeight - verticalPadding - buttonArea) * LibraryGameCardAspectRatio).coerceAtLeast(80.dp)
+    val cardWidth =
+        min(
+            maxWidth * 0.68f,
+            (maxHeight - verticalPadding - buttonArea) * LibraryGameCardAspectRatio,
+        ).coerceAtLeast(80.dp)
     val cardHeight = cardWidth / LibraryGameCardAspectRatio
     val top = ((maxHeight - cardHeight - buttonArea) / 2).coerceAtLeast(0.dp)
     val step = cardWidth * 0.74f
@@ -747,8 +763,20 @@ private fun ConsolePortraitCarousel(
                             },
                             sharedModifier =
                                 game?.let {
-                                    consoleCoverSharedBounds(sharedTransitionScope, animatedVisibilityScope, it, PortraitCardCorner,
-                                        if (items.isFeatured(index)) GameCoverOrigin.Continue else GameCoverOrigin.Library)
+                                    consoleCoverSharedBounds(
+                                        sharedTransitionScope,
+                                        animatedVisibilityScope,
+                                        it,
+                                        PortraitCardCorner,
+                                        if (items.isFeatured(
+                                                index,
+                                            )
+                                        ) {
+                                            GameCoverOrigin.Continue
+                                        } else {
+                                            GameCoverOrigin.Library
+                                        },
+                                    )
                                 } ?: Modifier,
                             onClick = { game?.let { onCardClick(index, it) } },
                             onLongClick = { game?.let(onGameLongClick) },
@@ -759,7 +787,14 @@ private fun ConsolePortraitCarousel(
                     ConsoleActions(
                         label =
                             stringResource(
-                                if (items.isFeatured(selectedIndex)) R.string.continue_playing else R.string.library_console_start,
+                                if (items.isFeatured(
+                                        selectedIndex,
+                                    )
+                                ) {
+                                    R.string.continue_playing
+                                } else {
+                                    R.string.library_console_start
+                                },
                             ),
                         showControllerGlyph = showControllerGlyph,
                         modifier = Modifier.consoleActionFade(settledAmount = { state.settledAmount() }),
@@ -801,7 +836,7 @@ private fun ConsolePortraitCarousel(
                         scaleX = scale
                         scaleY = scale
                         // Side cards turn their inner edge away, cover-flow style.
-                        rotationY = -distance.coerceIn(-1f, 1f) * PortraitMaxRotation
+                        rotationY = -distance.coerceIn(-1f, 1f) * PORTRAIT_MAX_ROTATION
                         cameraDistance = camera
                         alpha = (2.6f - magnitude).coerceIn(0f, 1f)
                     }
@@ -832,15 +867,14 @@ private fun ConsolePortraitCard(
         modifier =
             Modifier
                 .fillMaxSize()
-                .consoleSelectionGlow(libraryAccentColor, PortraitCardCorner, focus)
+                .selectionGlow(libraryAccentColor, PortraitCardCorner, focus)
                 .then(sharedModifier)
                 .shadow(
                     elevation = 20.dp,
                     shape = shape,
                     ambientColor = Color.Black,
                     spotColor = Color.Black,
-                )
-                .background(chromeColors.listRow)
+                ).background(chromeColors.listRow)
                 .focusProperties { canFocus = false }
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
@@ -872,8 +906,7 @@ private fun ConsolePortraitCard(
                                 0.35f to Color.Black.copy(alpha = 0.7f),
                                 1f to Color.Black.copy(alpha = 0.96f),
                             ),
-                        )
-                        .padding(start = 14.dp, end = 14.dp, top = 56.dp, bottom = 16.dp),
+                        ).padding(start = 14.dp, end = 14.dp, top = 56.dp, bottom = 16.dp),
             ) {
                 ConsoleRotatingTitle(
                     text = game.displayName.uppercase(),
@@ -1023,7 +1056,16 @@ internal fun ConsoleStatItem(
             style =
                 MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Medium,
-                    shadow = if (hasShadow) Shadow(color = Color.Black, offset = Offset(0f, 1f), blurRadius = 4f) else null,
+                    shadow =
+                        if (hasShadow) {
+                            Shadow(
+                                color = Color.Black,
+                                offset = Offset(0f, 1f),
+                                blurRadius = 4f,
+                            )
+                        } else {
+                            null
+                        },
                 ),
             color = tint,
             maxLines = 1,
@@ -1043,7 +1085,6 @@ internal fun formatPlayTime(playTimeMs: Long): String {
         else -> "< 1m"
     }
 }
-
 
 @Composable
 private fun ConsoleSystemBanner(
@@ -1085,8 +1126,7 @@ private fun ConsoleSystemChip(
                 .background(
                     color = color,
                     shape = RoundedCornerShape(topStart = PortraitCardCorner, bottomEnd = 12.dp),
-                )
-                .padding(start = 14.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
+                ).padding(start = 14.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
     ) {
         Text(
             text = label,
@@ -1141,7 +1181,11 @@ private fun ConsoleActions(
             // Toggle: announce what tapping does, not just "Favorites".
             contentDescription =
                 stringResource(
-                    if (favorite) R.string.game_context_menu_remove_from_favorites else R.string.game_context_menu_add_to_favorites,
+                    if (favorite) {
+                        R.string.game_context_menu_remove_from_favorites
+                    } else {
+                        R.string.game_context_menu_add_to_favorites
+                    },
                 ),
             tint = if (favorite) libraryAccentColor else chromeColors.muted,
             onClick = {
@@ -1251,6 +1295,7 @@ private fun ConsoleStartButton(
 internal fun ConsoleBackdrop(
     game: Game?,
     modifier: Modifier = Modifier,
+    preferredCoverUrl: String? = null,
 ) {
     BoxWithConstraints(modifier = modifier) {
         val context = LocalContext.current
@@ -1258,9 +1303,19 @@ internal fun ConsoleBackdrop(
         val width = (128f * maxWidth.value / longest).roundToInt().coerceIn(1, 128)
         val height = (128f * maxHeight.value / longest).roundToInt().coerceIn(1, 128)
         val radius = (36f * 128f / longest).roundToInt().coerceIn(1, 32)
-        val request = remember(game?.id, game?.coverFrontUrl, game?.customCoverPath, width, height, radius, context) {
-            game?.let { backdropRequest(context, it, width, height, radius) }
-        }
+        val request =
+            remember(
+                game?.id,
+                game?.coverFrontUrl,
+                game?.customCoverPath,
+                preferredCoverUrl,
+                width,
+                height,
+                radius,
+                context,
+            ) {
+                game?.let { backdropRequest(context, it, width, height, radius, preferredCoverUrl) }
+            }
         val fallback = ColorPainter(homeChromeColor)
         AsyncImage(
             model = request,
@@ -1301,41 +1356,6 @@ internal fun Modifier.bleedTop(amount: Dp): Modifier =
         layout(constraints.maxWidth, constraints.maxHeight) {
             placeable.place(0, -extra)
         }
-    }
-
-/** Gentle accent halo and outline that fade in as the card becomes selected. */
-private fun Modifier.consoleSelectionGlow(
-    accent: Color,
-    corner: Dp,
-    amount: () -> Float,
-): Modifier =
-    drawBehind {
-        val selected = amount()
-        if (selected <= 0.01f) return@drawBehind
-        val strength = selected * selected
-        val spread = GlowSpread.toPx()
-        val radius = corner.toPx()
-        for (layer in GlowLayers downTo 1) {
-            val grow = spread * layer / GlowLayers
-            drawRoundRect(
-                color = accent.copy(alpha = GlowLayerAlpha * strength),
-                topLeft = Offset(-grow, -grow),
-                size = Size(size.width + grow * 2, size.height + grow * 2),
-                cornerRadius = CornerRadius(radius + grow),
-            )
-        }
-    }.drawWithContent {
-        drawContent()
-        val selected = amount()
-        if (selected <= 0.01f) return@drawWithContent
-        val stroke = 1.5.dp.toPx()
-        drawRoundRect(
-            color = accent.copy(alpha = selected),
-            topLeft = Offset(stroke / 2, stroke / 2),
-            size = Size(size.width - stroke, size.height - stroke),
-            cornerRadius = CornerRadius(corner.toPx() - stroke / 2),
-            style = Stroke(width = stroke),
-        )
     }
 
 /**

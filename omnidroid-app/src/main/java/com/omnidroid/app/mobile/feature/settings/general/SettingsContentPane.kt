@@ -72,6 +72,7 @@ internal fun SettingsContentPane(
                     onNavigateSubscreen = onNavigateSubscreen,
                 )
             SettingsSection.EMULATION -> EmulationSettings(indexingInProgress, onNavigateSubscreen)
+            SettingsSection.RETRO_ACHIEVEMENTS -> RetroAchievementsSettings()
             SettingsSection.ADVANCED -> AdvancedSettings(cacheState, viewModel)
             SettingsSection.ABOUT -> AboutSettings()
         }
