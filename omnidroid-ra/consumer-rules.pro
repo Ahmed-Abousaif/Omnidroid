@@ -1,0 +1,2 @@
+-keep class com.omnidroid.ra.NativeRetroAchievementsBridge { *; }
+-keep class com.omnidroid.ra.NativeRetroAchievementsBridge$* { *; }

@@ -8,6 +8,7 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ### v3.2.0
 
+- Added RetroAchievements integration via a dedicated pure-C `rcheevos` engine (`omni_ra` / `omnidroid-ra`) with token-based login, Hardcore Mode enforcement, Encore/Spectator/Unofficial modes, leaderboards, Rich Presence, customizable unlock overlays with synthesized chimes, offline achievement caching, compact **Game Details -> Achievements** and in-game **Achievements** views, and a dedicated **Retro Achievements** tab in Profile ([#98](https://github.com/Ahmed-Abousaif/Omnidroid/pull/98), [#21](https://github.com/Ahmed-Abousaif/Omnidroid/issues/21)) ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif), [@Deus0](https://github.com/Deus0))
 - Added PlayStation 3 emulation via an integrated ARMSX3 engine (Android 13+, ARM64, Vulkan), supporting ISO and extracted-folder games, firmware/PKG/license imports, 15 graphics settings, manual snapshot slots, quick saves, and native save-folder archiving ([#88](https://github.com/Ahmed-Abousaif/Omnidroid/pull/88), [#83](https://github.com/Ahmed-Abousaif/Omnidroid/issues/83)) ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif), [@Deus0](https://github.com/Deus0))
 - Added Sega 32X emulation via PicoDrive (`.32x`, `.bin`, `.gen`, `.md`, `.smd`, and `.zip`) with two 6-button controller ports, fixed SMD bank checksums, and made PicoDrive selectable alongside Genesis Plus GX for Genesis and Sega CD ([#93](https://github.com/Ahmed-Abousaif/Omnidroid/pull/93), [#89](https://github.com/Ahmed-Abousaif/Omnidroid/issues/89)) ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif), [@102hedgehog](https://github.com/102hedgehog))
 - Automatically installs and verifies required Europe, Japan, and USA Sega CD BIOS files through core support assets so firmware survives rescans and repairs missing or corrupt copies from cache ([#92](https://github.com/Ahmed-Abousaif/Omnidroid/pull/92), [#91](https://github.com/Ahmed-Abousaif/Omnidroid/issues/91)) ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif))
@@ -201,7 +202,6 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Upscaling / higher resolution with finer control, plus more shader options (upscaling already works for Wii / GameCube / 3DS) (_u/Mr2Sexy_, _u/Abdallah_player1_, _u/bboy_3431_)
 - Custom shaders at a RetroArch-like level (_u/Due-Car-6521_)
 - Cheat codes (_u/madzleng_)
-- RetroAchievements (planned after full release) (_u/Fein_shit_, _u/Abdallah_player1_, _u/Repulsive_Cow_2470_)
 - DOS (DOSBox Pure), Pico-8, and Sega Saturn (_u/milosmisic89_, _u/Kwametoure1_)
 - PSP custom texture support (needed for some English patches) (_u/DragonBane52_)
 - SNES widescreen patches (_u/Le_Sairo_)

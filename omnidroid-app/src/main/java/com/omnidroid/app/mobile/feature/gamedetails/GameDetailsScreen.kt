@@ -97,9 +97,16 @@ import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.shared.covers.CoverCacheStore
 import com.omnidroid.app.shared.covers.CoverUtils
+import com.omnidroid.app.shared.ra.RaAchievementCard
+import com.omnidroid.app.shared.ra.RaGameSummaryHeader
+import com.omnidroid.app.shared.ra.RaLeaderboardCard
 import com.omnidroid.app.utils.android.benchmarkTag
 import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.library.db.entity.RaGameCache
+import com.omnidroid.lib.ra.RaAchievementBucket
+import com.omnidroid.lib.ra.RaLeaderboardBucket
+import kotlinx.serialization.json.Json
 import java.text.DateFormat
 import java.util.Date
 import java.util.concurrent.TimeUnit
@@ -647,12 +654,9 @@ private fun GameDetailsInfo(
                     .fillMaxWidth(),
         ) {
             if (selectedTab == GameDetailsTab.Achievements) {
-                Text(
-                    text = stringResource(R.string.game_retro_achievements_wip),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = chromeMutedContentColor,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.align(Alignment.Center).padding(16.dp),
+                GameDetailsAchievementsContent(
+                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                    raCache = state.raCache,
                 )
             } else {
                 GameDetailsInfoContent(
@@ -661,6 +665,92 @@ private fun GameDetailsInfo(
                     state = state,
                     systemName = systemName,
                 )
+            }
+        }
+    }
+}
+
+private val DETAILS_RA_JSON = Json { ignoreUnknownKeys = true }
+
+@Composable
+private fun GameDetailsAchievementsContent(
+    modifier: Modifier,
+    raCache: RaGameCache?,
+) {
+    if (raCache == null) {
+        Box(modifier = modifier.padding(16.dp), contentAlignment = Alignment.Center) {
+            Text(
+                text = stringResource(R.string.ra_details_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = chromeMutedContentColor,
+                textAlign = TextAlign.Center,
+            )
+        }
+        return
+    }
+
+    val achievementBuckets =
+        remember(raCache.achievementsJson) {
+            runCatching {
+                DETAILS_RA_JSON.decodeFromString<List<RaAchievementBucket>>(raCache.achievementsJson)
+            }.getOrDefault(emptyList())
+        }
+    val leaderboardBuckets =
+        remember(raCache.leaderboardsJson) {
+            runCatching {
+                DETAILS_RA_JSON.decodeFromString<List<RaLeaderboardBucket>>(raCache.leaderboardsJson)
+            }.getOrDefault(emptyList())
+        }
+    val achievements = remember(achievementBuckets) { achievementBuckets.flatMap { it.achievements } }
+    val leaderboards = remember(leaderboardBuckets) { leaderboardBuckets.flatMap { it.leaderboards } }
+
+    Column(
+        modifier = modifier.padding(top = 2.dp, bottom = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        val statusFlags =
+            buildList {
+                if (raCache.completedTime > 0L) {
+                    add(stringResource(R.string.ra_details_mastered))
+                } else if (raCache.beatenTime > 0L) {
+                    add(stringResource(R.string.ra_details_beaten))
+                }
+            }
+        RaGameSummaryHeader(
+            badgeUrl = raCache.badgeUrl,
+            title = raCache.title.ifBlank { "RA #${raCache.raGameId}" },
+            scoreSummary =
+                stringResource(
+                    R.string.ra_details_score_summary,
+                    raCache.numUnlockedAchievements,
+                    raCache.numCoreAchievements,
+                    raCache.pointsUnlocked,
+                    raCache.pointsCore,
+                ),
+            statusText = statusFlags.takeIf { it.isNotEmpty() }?.joinToString(" • "),
+            richPresence = raCache.richPresence,
+        )
+
+        Text(
+            text = stringResource(R.string.ra_details_offline_cached),
+            style = MaterialTheme.typography.labelSmall,
+            color = chromeMutedContentColor.copy(alpha = 0.8f),
+        )
+
+        achievements.forEach { ach ->
+            RaAchievementCard(
+                achievement = ach,
+                useHardcoreRarity = true,
+            )
+        }
+
+        if (leaderboards.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.ra_menu_leaderboards_section),
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+            )
+            leaderboards.forEach { lb ->
+                RaLeaderboardCard(leaderboard = lb)
             }
         }
     }

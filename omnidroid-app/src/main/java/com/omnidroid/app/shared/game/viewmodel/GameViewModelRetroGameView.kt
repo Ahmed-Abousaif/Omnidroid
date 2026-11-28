@@ -83,9 +83,19 @@ class GameViewModelRetroGameView(
     private val frameSpeedPreferences = GameFrameSpeedPreferences(appContext)
     private var rendererSettingsGuard: RendererSettingsGuard? = null
 
-    fun getGameState(): Flow<GameState> {
-        return gameState.debounce(200)
-    }
+    @Volatile
+    var raCoreOptionValidator: ((key: String, value: String) -> Boolean)? = null
+
+    fun currentGameData(): GameLoader.GameData? =
+        when (val state = gameState.value) {
+            is GameState.Loaded -> state.gameData
+            else -> loadedGameDataSnapshot
+        }
+
+    @Volatile
+    private var loadedGameDataSnapshot: GameLoader.GameData? = null
+
+    fun getGameState(): Flow<GameState> = gameState.debounce(200)
 
     fun setLoadingForNative(message: String) {
         gameState.value = GameState.Loading(message)
@@ -180,25 +190,30 @@ class GameViewModelRetroGameView(
         context: Context,
         lifecycle: LifecycleOwner,
     ): Pair<GameLoader.GameData, IRetroGameView> {
-        val currentState = gameState.value
-        if (currentState !is GameState.Loaded) throw IllegalStateException("Game is not loaded.")
+        val (gameData, viewData) =
+            run {
+                val currentState = gameState.value
+                if (currentState !is GameState.Loaded) throw IllegalStateException("Game is not loaded.")
+                loadedGameDataSnapshot = currentState.gameData
+                currentState.gameData to currentState.retroViewData
+            }
 
-        rendererSettingsGuard = RendererSettingsGuard(currentState.gameData.coreVariables.asList())
+        rendererSettingsGuard = RendererSettingsGuard(gameData.coreVariables.asList())
 
         val isVulkanPreferred =
-            isVulkanRequested(currentState.gameData) && VulkanDetector.isVulkanSupported(context)
+            isVulkanRequested(gameData) && VulkanDetector.isVulkanSupported(context)
 
-        val result: IRetroGameView =
+        val retroView: IRetroGameView =
             if (isVulkanPreferred) {
                 Timber.i("Initializing VulkanRetroView for core ${systemCoreConfig.coreID.coreName}")
-                VulkanRetroView(context, currentState.retroViewData).apply {
+                VulkanRetroView(context, viewData).apply {
                     isFocusable = false
                     isFocusableInTouchMode = false
                 }
             } else {
                 Timber.i("Initializing GLRetroView for core ${systemCoreConfig.coreID.coreName}")
                 GLRetroGameViewWrapper(
-                    GLRetroView(context, currentState.retroViewData).apply {
+                    GLRetroView(context, viewData).apply {
                         isFocusable = false
                         isFocusableInTouchMode = false
                     },
@@ -208,25 +223,25 @@ class GameViewModelRetroGameView(
         // Framework touch is disabled for all systems. Touchscreen consoles (NDS/3DS) receive
         // stylus input via GameTouchInput, which supports a second finger while
         // virtual buttons are held. GLRetroView.onTouchEvent only handles the primary pointer.
-        result.disableTouchEvents()
+        retroView.disableTouchEvents()
 
         // Apply after addObserver: LibretroDroid.create() (ON_CREATE) always resets frameSpeed to 1.
-        lifecycle.lifecycle.addObserver(result)
+        lifecycle.lifecycle.addObserver(retroView)
 
         if (system.fastForwardSupport) {
-            result.frameSpeed = frameSpeedPreferences.get(currentState.gameData.game.id)
+            retroView.frameSpeed = frameSpeedPreferences.get(gameData.game.id)
         }
 
         if (BuildConfig.DEBUG) {
             runCatching {
-                printRetroVariables(result)
+                printRetroVariables(retroView)
             }
         }
 
-        retroGameViewFlow.value = result
+        retroGameViewFlow.value = retroView
         gameState.value = GameState.Ready
 
-        return currentState.gameData to result
+        return gameData to retroView
     }
 
     private fun isVulkanRequested(gameData: GameLoader.GameData): Boolean =
@@ -275,7 +290,14 @@ class GameViewModelRetroGameView(
 
             systemDirectory = gameData.systemDirectory.absolutePath
             savesDirectory = gameData.savesDirectory.absolutePath
-            variables = gameData.coreVariables.map { Variable(it.key, it.value) }.toTypedArray()
+            val validator = raCoreOptionValidator
+            val allowedInitialVars =
+                if (validator != null) {
+                    gameData.coreVariables.filter { validator(it.key, it.value) }
+                } else {
+                    gameData.coreVariables.asList()
+                }
+            variables = allowedInitialVars.map { Variable(it.key, it.value) }.toTypedArray()
             saveRAMState = gameData.saveRAMData
             shader =
                 ShaderChooser.getShaderForSystem(
@@ -371,8 +393,25 @@ class GameViewModelRetroGameView(
         if (update?.notifyDeferredChange == true) {
             sideEffects.showToast(appContext.getString(R.string.game_toast_renderer_change_deferred))
         }
+        val validator = raCoreOptionValidator
+        val candidateVariables = update?.applicable ?: options
+        val filteredVariables =
+            if (validator != null) {
+                candidateVariables.filter { opt ->
+                    val ok = validator(opt.key, opt.value)
+                    if (!ok) {
+                        sideEffects.showToast(
+                            appContext.getString(R.string.ra_hardcore_blocked_core_option, opt.key, opt.value),
+                        )
+                    }
+                    ok
+                }
+            } else {
+                candidateVariables
+            }
         val updatedVariables =
-            (update?.applicable ?: options).map { Variable(it.key, it.value) }
+            filteredVariables
+                .map { Variable(it.key, it.value) }
                 .toTypedArray()
 
         updatedVariables.forEach {

@@ -44,6 +44,11 @@ enum class GameMenuRoute(
         titleId = R.string.game_menu_settings,
         parent = HOME,
     ),
+    ACHIEVEMENTS(
+        route = "achievements",
+        titleId = R.string.ra_menu_achievements,
+        parent = HOME,
+    ),
     ;
 
     fun canGoBack(): Boolean {

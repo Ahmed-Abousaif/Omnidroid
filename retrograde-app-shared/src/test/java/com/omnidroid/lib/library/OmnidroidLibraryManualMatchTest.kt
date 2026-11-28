@@ -299,7 +299,7 @@ class OmnidroidLibraryManualMatchTest {
         val upgraded =
             Room
                 .databaseBuilder(context, RetrogradeDatabase::class.java, name)
-                .addMigrations(Migrations.VERSION_17_18, Migrations.VERSION_18_19)
+                .addMigrations(Migrations.VERSION_17_18, Migrations.VERSION_18_19, Migrations.VERSION_19_20)
                 .allowMainThreadQueries()
                 .build()
         try {

@@ -118,4 +118,31 @@
         <item>8</item>
         <item>16</item>
     </string-array>
+
+    <string name="pref_key_ra_enabled" translatable="false">ra_enabled</string>
+    <string name="pref_key_ra_hardcore" translatable="false">ra_hardcore</string>
+    <string name="pref_key_ra_encore" translatable="false">ra_encore</string>
+    <string name="pref_key_ra_unofficial" translatable="false">ra_unofficial</string>
+    <string name="pref_key_ra_spectator" translatable="false">ra_spectator</string>
+    <string name="pref_key_ra_notifications" translatable="false">ra_notifications</string>
+    <string name="pref_key_ra_notification_position" translatable="false">ra_notification_position</string>
+    <string name="pref_key_ra_leaderboards" translatable="false">ra_leaderboards</string>
+    <string name="pref_key_ra_rich_presence" translatable="false">ra_rich_presence</string>
+    <string name="pref_key_ra_sounds" translatable="false">ra_sounds</string>
+
+    <string-array translatable="false" name="pref_key_ra_notification_position_values">
+        <item>top_left</item>
+        <item>top_center</item>
+        <item>top_right</item>
+        <item>bottom_left</item>
+        <item>bottom_right</item>
+    </string-array>
+
+    <string-array name="pref_key_ra_notification_position_display_names">
+        <item>@string/ra_position_top_left</item>
+        <item>@string/ra_position_top_center</item>
+        <item>@string/ra_position_top_right</item>
+        <item>@string/ra_position_bottom_left</item>
+        <item>@string/ra_position_bottom_right</item>
+    </string-array>
 </resources>

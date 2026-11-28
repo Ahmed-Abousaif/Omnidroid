@@ -229,4 +229,33 @@ object Migrations {
                 database.execSQL("UPDATE `games` SET `isManualMatch` = 1")
             }
         }
+
+    val VERSION_19_20: Migration =
+        object : Migration(19, 20) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `ra_game_cache` (
+                        `gameId` INTEGER NOT NULL PRIMARY KEY,
+                        `raGameId` INTEGER NOT NULL,
+                        `consoleId` INTEGER NOT NULL,
+                        `raHash` TEXT NOT NULL,
+                        `title` TEXT NOT NULL,
+                        `badgeUrl` TEXT NOT NULL,
+                        `numCoreAchievements` INTEGER NOT NULL,
+                        `numUnlockedAchievements` INTEGER NOT NULL,
+                        `pointsCore` INTEGER NOT NULL,
+                        `pointsUnlocked` INTEGER NOT NULL,
+                        `beatenTime` INTEGER NOT NULL,
+                        `completedTime` INTEGER NOT NULL,
+                        `richPresence` TEXT NOT NULL,
+                        `achievementsJson` TEXT NOT NULL,
+                        `leaderboardsJson` TEXT NOT NULL,
+                        `updatedAt` INTEGER NOT NULL,
+                        FOREIGN KEY(`gameId`) REFERENCES `games`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+            }
+        }
 }

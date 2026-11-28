@@ -34,14 +34,14 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -75,6 +75,7 @@ import com.omnidroid.app.mobile.shared.compose.ui.chromeContentColor
 import com.omnidroid.app.mobile.shared.compose.ui.chromeMutedContentColor
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeColor
+import com.omnidroid.app.shared.ra.RaAchievementCard
 import com.omnidroid.lib.library.GameSystem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -82,16 +83,33 @@ import java.text.DateFormat
 import java.util.Date
 import java.util.TimeZone
 
+private enum class ProfileTab(
+    val labelRes: Int,
+) {
+    Sessions(R.string.profile_sessions_tab),
+    Consoles(R.string.profile_consoles_tab),
+    RetroAchievements(R.string.profile_retro_achievements_tab),
+}
+
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel,
     onGameClick: (Int) -> Unit,
+    onOpenRetroAchievementsSettings: (() -> Unit)? = null,
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     var showEditTag by rememberSaveable { mutableStateOf(false) }
     var showPhotoOptions by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewModel.refreshRetroAchievements()
+        }
+    }
+
     val photoPicker =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
             uri?.let {
@@ -108,6 +126,7 @@ fun ProfileScreen(
         onEditTag = { showEditTag = true },
         onEditPhoto = { showPhotoOptions = true },
         onGameClick = onGameClick,
+        onOpenRetroAchievementsSettings = onOpenRetroAchievementsSettings,
     )
 
     if (showEditTag) {
@@ -145,8 +164,9 @@ internal fun ProfileContent(
     onEditPhoto: () -> Unit,
     onGameClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenRetroAchievementsSettings: (() -> Unit)? = null,
 ) {
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    var selectedTab by rememberSaveable { mutableStateOf(ProfileTab.Sessions) }
     val listState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
     val configuration = LocalConfiguration.current
@@ -193,7 +213,7 @@ internal fun ProfileContent(
             }
             LazyVerticalGrid(
                 columns =
-                    if (selectedTab == 1) {
+                    if (selectedTab == ProfileTab.Consoles) {
                         GridCells.Adaptive(104.dp * configuration.fontScale)
                     } else {
                         GridCells.Fixed(1)
@@ -212,20 +232,18 @@ internal fun ProfileContent(
                     }
                 }
                 stickyHeader(key = "tabs", contentType = "tabs") {
-                    SecondaryTabRow(
-                        selectedTabIndex = selectedTab,
+                    SecondaryScrollableTabRow(
+                        selectedTabIndex = selectedTab.ordinal,
                         containerColor = homeChromeColor,
                         contentColor = libraryAccentColor,
+                        edgePadding = 0.dp,
                         divider = { ProfileDivider() },
                     ) {
-                        listOf(R.string.profile_sessions_tab, R.string.profile_consoles_tab).forEachIndexed {
-                                index,
-                                label,
-                            ->
+                        ProfileTab.entries.forEach { tab ->
                             Tab(
-                                selected = selectedTab == index,
+                                selected = selectedTab == tab,
                                 onClick = {
-                                    selectedTab = index
+                                    selectedTab = tab
                                     val tabIndex = if (showProfileRail) 0 else 2
                                     if (listState.firstVisibleItemIndex > tabIndex) {
                                         scope.launch { listState.scrollToItem(tabIndex) }
@@ -233,12 +251,21 @@ internal fun ProfileContent(
                                 },
                                 selectedContentColor = chromeContentColor,
                                 unselectedContentColor = chromeMutedContentColor,
-                                text = { Text(stringResource(label), fontWeight = FontWeight.SemiBold) },
+                                text = {
+                                    Text(
+                                        text = stringResource(tab.labelRes),
+                                        fontWeight = FontWeight.SemiBold,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
                             )
                         }
                     }
                 }
-                if (selectedTab == 0) {
+                when (selectedTab) {
+                    ProfileTab.Sessions -> {
                     item(
                         key = "sessions_heading",
                         span = { GridItemSpan(maxLineSpan) },
@@ -327,36 +354,140 @@ internal fun ProfileContent(
                             }
                         }
                     }
-                } else {
-                    item(
-                        key = "consoles_heading",
-                        span = { GridItemSpan(maxLineSpan) },
-                        contentType = "section_heading",
-                    ) {
-                        ProfileSectionHeading(
-                            title = stringResource(R.string.profile_achievements),
-                            subtitle =
-                                stringResource(
-                                    R.string.profile_consoles_unlocked,
-                                    state.unlockedConsoles,
-                                    state.totalConsoles,
-                                ),
-                        )
-                        if (!showProfileRail) {
-                            Text(
-                                stringResource(R.string.profile_console_help),
-                                modifier = Modifier.padding(bottom = 12.dp),
-                                color = chromeMutedContentColor,
-                                style = MaterialTheme.typography.bodyMedium,
+                    }
+                    ProfileTab.Consoles -> {
+                        item(
+                            key = "consoles_heading",
+                            span = { GridItemSpan(maxLineSpan) },
+                            contentType = "section_heading",
+                        ) {
+                            ProfileSectionHeading(
+                                title = stringResource(R.string.profile_achievements),
+                                subtitle =
+                                    stringResource(
+                                        R.string.profile_consoles_unlocked,
+                                        state.unlockedConsoles,
+                                        state.totalConsoles,
+                                    ),
                             )
+                            if (!showProfileRail) {
+                                Text(
+                                    stringResource(R.string.profile_console_help),
+                                    modifier = Modifier.padding(bottom = 12.dp),
+                                    color = chromeMutedContentColor,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                            }
+                        }
+                        items(
+                            state.achievements,
+                            key = { it.metaSystemID.name },
+                            contentType = { "console" },
+                        ) { achievement ->
+                            ProfileConsoleTile(achievement)
                         }
                     }
-                    items(
-                        state.achievements,
-                        key = { it.metaSystemID.name },
-                        contentType = { "console" },
-                    ) { achievement ->
-                        ProfileConsoleTile(achievement)
+                    ProfileTab.RetroAchievements -> {
+                        item(
+                            key = "ra_account",
+                            span = { GridItemSpan(maxLineSpan) },
+                            contentType = "ra_account",
+                        ) {
+                            ProfileRaAccountCard(
+                                signedIn = state.raSignedIn,
+                                username = state.raUsername,
+                                userInfo = state.raUserInfo,
+                                loadingUser = state.raUserLoading,
+                                aggregate = state.raAggregate,
+                                onOpenSettings = onOpenRetroAchievementsSettings,
+                            )
+                        }
+                        val aggregate = state.raAggregate
+                        if (aggregate.games.isEmpty()) {
+                            if (state.raSignedIn) {
+                                item(
+                                    key = "ra_empty_games",
+                                    span = { GridItemSpan(maxLineSpan) },
+                                    contentType = "empty",
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.profile_ra_no_games_yet),
+                                        modifier = Modifier.padding(vertical = 16.dp),
+                                        color = chromeMutedContentColor,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                }
+                            }
+                        } else {
+                            item(
+                                key = "ra_games_heading",
+                                span = { GridItemSpan(maxLineSpan) },
+                                contentType = "section_heading",
+                            ) {
+                                ProfileRaSectionHeader(
+                                    stringResource(R.string.profile_ra_games_heading, aggregate.games.size),
+                                )
+                            }
+                            items(
+                                aggregate.games,
+                                key = { "ra_game_${it.gameId}" },
+                                span = { GridItemSpan(maxLineSpan) },
+                                contentType = { "ra_game" },
+                            ) { game ->
+                                ProfileRaGameRow(game = game, onClick = { onGameClick(game.gameId) })
+                            }
+                            item(
+                                key = "ra_unlocked_heading",
+                                span = { GridItemSpan(maxLineSpan) },
+                                contentType = "section_heading",
+                            ) {
+                                ProfileRaSectionHeader(
+                                    stringResource(
+                                        R.string.profile_ra_unlocked_heading,
+                                        aggregate.unlockedAchievements.size,
+                                    ),
+                                )
+                            }
+                            if (aggregate.unlockedAchievements.isEmpty()) {
+                                item(
+                                    key = "ra_no_unlocked",
+                                    span = { GridItemSpan(maxLineSpan) },
+                                    contentType = "empty",
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.profile_ra_no_unlocked_yet),
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        color = chromeMutedContentColor,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                            } else {
+                                items(
+                                    aggregate.unlockedAchievements,
+                                    key = { "ra_ach_${it.gameId}_${it.achievement.id}" },
+                                    span = { GridItemSpan(maxLineSpan) },
+                                    contentType = { "ra_achievement" },
+                                ) { unlocked ->
+                                    RaAchievementCard(
+                                        achievement = unlocked.achievement,
+                                        useHardcoreRarity = true,
+                                        contextLabel =
+                                            formatRaUnlockContext(
+                                                gameTitle = unlocked.gameTitle,
+                                                unlockTimeSeconds = unlocked.achievement.unlockTime,
+                                            ),
+                                        modifier =
+                                            Modifier
+                                                .padding(vertical = 3.dp)
+                                                .clickable(
+                                                    role = Role.Button,
+                                                    onClickLabel = stringResource(R.string.profile_open_game),
+                                                    onClick = { onGameClick(unlocked.gameId) },
+                                                ),
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
                 item(key = "bottom_space", span = { GridItemSpan(maxLineSpan) }, contentType = "spacer") {

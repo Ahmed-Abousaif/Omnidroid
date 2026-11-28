@@ -12,6 +12,7 @@ internal enum class SettingsSection(
     CONTROLS(R.string.settings_category_controllers),
     SAVES(R.string.settings_category_saves),
     EMULATION(R.string.settings_category_emulation),
+    RETRO_ACHIEVEMENTS(R.string.settings_category_retroachievements),
     ADVANCED(R.string.settings_category_advanced),
     ABOUT(R.string.settings_category_about),
 }

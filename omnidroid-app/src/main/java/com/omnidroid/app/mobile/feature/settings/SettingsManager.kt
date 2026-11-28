@@ -11,6 +11,8 @@ import com.omnidroid.R
 import com.omnidroid.app.shared.settings.HDModeQuality
 import com.omnidroid.app.shared.settings.HdModeBatteryMonitor
 import com.omnidroid.common.math.Fraction
+import com.omnidroid.lib.ra.RaNotificationPosition
+import com.omnidroid.lib.ra.RetroAchievementsSettings
 import com.omnidroid.lib.storage.cache.CacheCleaner
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
@@ -71,6 +73,40 @@ class SettingsManager(private val context: Context, sharedPreferences: Lazy<Shar
         )
 
     suspend fun allowDirectGameLoad() = booleanPreference(R.string.pref_key_allow_direct_game_load, true)
+
+    suspend fun raEnabled() = booleanPreference(R.string.pref_key_ra_enabled, false)
+
+    suspend fun raHardcore() = booleanPreference(R.string.pref_key_ra_hardcore, true)
+
+    suspend fun raEncore() = booleanPreference(R.string.pref_key_ra_encore, false)
+
+    suspend fun raUnofficial() = booleanPreference(R.string.pref_key_ra_unofficial, false)
+
+    suspend fun raSpectator() = booleanPreference(R.string.pref_key_ra_spectator, false)
+
+    suspend fun raNotificationsEnabled() = booleanPreference(R.string.pref_key_ra_notifications, true)
+
+    suspend fun raNotificationPosition() = stringPreference(R.string.pref_key_ra_notification_position, "top_left")
+
+    suspend fun raLeaderboardsEnabled() = booleanPreference(R.string.pref_key_ra_leaderboards, true)
+
+    suspend fun raRichPresenceEnabled() = booleanPreference(R.string.pref_key_ra_rich_presence, true)
+
+    suspend fun raSoundsEnabled() = booleanPreference(R.string.pref_key_ra_sounds, true)
+
+    suspend fun raSettings(): RetroAchievementsSettings =
+        RetroAchievementsSettings(
+            enabled = raEnabled(),
+            hardcore = raHardcore(),
+            encoreMode = raEncore(),
+            unofficialEnabled = raUnofficial(),
+            spectatorMode = raSpectator(),
+            notificationsEnabled = raNotificationsEnabled(),
+            leaderboardsEnabled = raLeaderboardsEnabled(),
+            richPresenceEnabled = raRichPresenceEnabled(),
+            soundEnabled = raSoundsEnabled(),
+            notificationPosition = RaNotificationPosition.fromKey(raNotificationPosition()),
+        )
 
     private suspend fun booleanPreference(
         keyId: Int,

@@ -108,6 +108,7 @@ import com.omnidroid.app.shared.input.omnidroiddevice.OmnidroidInputDeviceGamePa
 import com.omnidroid.app.shared.input.omnidroiddevice.getOmnidroidInputDevice
 import com.omnidroid.app.shared.main.BusyActivity
 import com.omnidroid.app.shared.main.GameLaunchTaskHandler
+import com.omnidroid.app.shared.ra.RetroAchievementsCoordinator
 import com.omnidroid.app.shared.settings.SettingsInteractor
 import com.omnidroid.app.tv.channel.ChannelUpdateWork
 import com.omnidroid.app.tv.shared.TVHelper
@@ -207,6 +208,9 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
 
     @Inject
     lateinit var coreVariablesManager: com.omnidroid.lib.core.CoreVariablesManager
+
+    @Inject
+    lateinit var raCoordinator: RetroAchievementsCoordinator
 
     @Inject
     lateinit var displayClient: DisplayClient
@@ -775,6 +779,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     composable(MainRoute.PROFILE) {
                         ProfileScreen(
                             onGameClick = { gameId -> navController.navigateToGameDetails(gameId) },
+                            onOpenRetroAchievementsSettings = { navController.navigateToRoute(MainRoute.SETTINGS) },
                             modifier =
                                 Modifier
                                     .fillMaxSize()
@@ -787,6 +792,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                                             applicationContext,
                                             retrogradeDb,
                                             registeredSystemsStore,
+                                            raCoordinator,
                                         ),
                                 ),
                         )

@@ -9,6 +9,7 @@ pluginManagement {
 
 include(
     ":omnidroid-chd",
+    ":omnidroid-ra",
     ":retrograde-util",
     ":retrograde-app-shared",
     ":omnidroid-padkit",

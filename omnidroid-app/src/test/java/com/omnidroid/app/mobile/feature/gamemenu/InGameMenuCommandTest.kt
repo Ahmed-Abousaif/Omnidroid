@@ -27,4 +27,9 @@ class InGameMenuCommandTest {
         assertEquals(mapOf(Contract.RESULT_SAVE to 12), InGameMenuCommand.Save(12).extras())
         assertEquals(mapOf(Contract.RESULT_LOAD to 12), InGameMenuCommand.Load(12).extras())
     }
+
+    @Test fun hardcoreToggleCommandSetsExpectedExtraOnly() {
+        assertEquals(mapOf(Contract.RESULT_SET_HARDCORE to true), InGameMenuCommand.SetHardcore(true).extras())
+        assertEquals(mapOf(Contract.RESULT_SET_HARDCORE to false), InGameMenuCommand.SetHardcore(false).extras())
+    }
 }
