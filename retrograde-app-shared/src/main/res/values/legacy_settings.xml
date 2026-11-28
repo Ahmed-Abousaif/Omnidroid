@@ -1,0 +1,32 @@
+<resources>
+    <string name="setting_a5200_bios">BIOS (restart)</string>
+    <string name="setting_a5200_input_hack">Controller mode</string>
+    <string name="setting_a5200_analog_sensitivity">Analog sensitivity</string>
+    <string name="setting_atari800_system">Atari model (restart)</string>
+    <string name="setting_atari800_internalbasic">Internal BASIC (restart)</string>
+    <string name="setting_atari800_ntscpal">Video standard</string>
+    <string name="setting_atari800_cassboot">Boot from cassette (restart)</string>
+    <string name="setting_yabasanshiro_resolution_mode">Internal resolution</string>
+    <string name="setting_yabasanshiro_frameskip">Frame skip</string>
+    <string name="setting_yabasanshiro_system_language">System language</string>
+    <string name="setting_opera_bios">BIOS (restart)</string>
+    <string name="setting_opera_region">Region</string>
+    <string name="setting_opera_high_resolution">High resolution</string>
+    <string name="setting_opera_active_devices">Active controllers</string>
+    <string name="setting_gearcoleco_timing">Refresh rate (restart)</string>
+    <string name="setting_gearcoleco_mapper">Cartridge mapper (restart)</string>
+    <string name="setting_gearcoleco_overscan">Overscan</string>
+    <string name="setting_vice_c64_model">C64 model (restart)</string>
+    <string name="setting_vice_joyport">Joystick port</string>
+    <string name="setting_vice_autostart">Autostart</string>
+    <string name="setting_vice_vkbd_theme">Virtual keyboard theme</string>
+    <string name="setting_fmsx_video_mode">Video standard</string>
+    <string name="setting_fmsx_hires">High resolution</string>
+    <string name="setting_fmsx_mapper_type_mode">Cartridge mapper</string>
+    <string name="setting_applewin_machine">Apple II model (restart)</string>
+    <string name="setting_applewin_video_mode">Video mode</string>
+    <string name="setting_applewin_keyboard_type">Keyboard type</string>
+    <string name="setting_virtualjaguar_usefastblitter">Blitter</string>
+    <string name="setting_virtualjaguar_pal">PAL (restart)</string>
+    <string name="setting_virtualjaguar_bios">Cartridge BIOS (restart)</string>
+</resources>

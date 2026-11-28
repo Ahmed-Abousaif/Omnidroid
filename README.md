@@ -153,6 +153,16 @@ Omnidroid supports a massive range of retro and modern consoles powered by Libre
 | **PlayStation Portable (PSP)**     | Handheld (7th Gen)       | [ppsspp](https://docs.libretro.com/library/ppsspp/)                                                                                                                 |
 | **PlayStation (PSX)**              | Home Console (5th Gen)   | [PCSX-ReARMed](https://docs.libretro.com/library/pcsx_rearmed/)                                                                                                     |
 | **Sega Dreamcast**                 | Home Console (6th Gen)   | [flycast](https://docs.libretro.com/library/flycast/)                                                                                                               |
+| **Atari 5200** | Home Console | a5200 |
+| **Atari 8-bit** | Home Computer | Atari800 |
+| **Sega Saturn** | Home Console | YabaSanshiro |
+| **3DO** | Home Console | Opera |
+| **ColecoVision** | Home Console | Gearcoleco |
+| **Commodore 64** | Home Computer | VICE x64 |
+| **MSX** | Home Computer | fMSX |
+| **MSX2** | Home Computer | fMSX |
+| **Apple II** | Home Computer | AppleWin |
+| **Atari Jaguar** | Home Console | Virtual Jaguar |
 | **Sega Genesis / Mega Drive**      | Home Console (4th Gen)   | [genesis_plus_gx](https://docs.libretro.com/library/genesis_plus_gx/)                                                                                               |
 | **Sega CD / Mega CD**              | Add-on (4th Gen)         | [genesis_plus_gx](https://docs.libretro.com/library/genesis_plus_gx/)                                                                                               |
 | **Sega Master System / Game Gear** | 8-bit Console & Handheld | [genesis_plus_gx](https://docs.libretro.com/library/genesis_plus_gx/)                                                                                               |

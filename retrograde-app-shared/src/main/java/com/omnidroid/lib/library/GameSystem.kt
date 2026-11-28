@@ -2532,7 +2532,7 @@ data class GameSystem(
                     hasMultiDiskSupport = false,
                     hasTouchScreen = true,
                 ),
-            )
+            ) + LegacySystems.all()
 
         private val byIdCache by lazy { mapOf(*SYSTEMS.map { it.id.dbname to it }.toTypedArray()) }
         private val byExtensionCache by lazy {

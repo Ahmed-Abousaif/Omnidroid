@@ -73,6 +73,16 @@ internal object DiscIdentifier {
         if (sector0.startsWithAscii("SEGA SEGAKATANA")) {
             return DiscHit(SystemID.DREAMCAST, null)
         }
+        if (sector0.startsWithAscii("SEGA SEGASATURN")) {
+            return DiscHit(SystemID.SATURN, sector0.asciiAt(0x20, 10).ifBlank { null })
+        }
+        if (sector0.size >= 7 &&
+            sector0[0] == 1.toByte() &&
+            (1..5).all { sector0[it] == 0x5a.toByte() } &&
+            sector0[6] == 1.toByte()
+        ) {
+            return DiscHit(SystemID.THREE_DO, null)
+        }
         val pvd = sectors.readUserSector(16) ?: return null
         if (pvd.size < 8 || !pvd.copyOfRange(1, 6).startsWithAscii("CD001")) return null
         val system = pvd.asciiAt(8, 32)

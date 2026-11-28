@@ -24,6 +24,13 @@ interface IRetroGameView : DefaultLifecycleObserver {
 
     fun asView(): View
 
+    fun sendKeyboardEvent(
+        down: Boolean,
+        key: Int,
+        character: Int = 0,
+        modifiers: Int = 0,
+    ): Boolean = false
+
     fun sendKeyEvent(
         action: Int,
         keyCode: Int,

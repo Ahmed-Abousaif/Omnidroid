@@ -28,6 +28,7 @@ object StorageFilesMerger {
         }
         mergeBinCueFiles(allFiles, storageProvider)
         removeInvalidBinCuePairs(allFiles, storageProvider)
+        mergeDiscDescriptors(allFiles)
         mergeM3UPlaylists(allFiles, storageProvider)
         removeInvalidM3UPlaylists(allFiles, storageProvider)
         mergeMsu1Files(allFiles)
@@ -60,6 +61,26 @@ object StorageFilesMerger {
             !file.name.equals("ICON0.PNG", true) &&
                 (file in descriptors || roots.none { path(file).startsWith("$it/", ignoreCase = true) })
         }
+    }
+
+    private fun mergeDiscDescriptors(allFiles: MutableMap<BaseStorageFile, List<BaseStorageFile>>) {
+        val removed = mutableSetOf<BaseStorageFile>()
+
+        fun parent(file: BaseStorageFile) =
+            (file.path ?: file.uri.toString()).replace('\\', '/').substringBeforeLast('/')
+        allFiles.keys.filter { it.extension.lowercase() in setOf("ccd", "mds") }.toList().forEach { descriptor ->
+            val extensions = if (descriptor.extension.equals("ccd", true)) setOf("img", "sub") else setOf("mdf")
+            val companions =
+                allFiles.keys.filter {
+                    it != descriptor &&
+                        it.extension.lowercase() in extensions &&
+                        it.extensionlessName.equals(descriptor.extensionlessName, true) &&
+                        parent(it) == parent(descriptor)
+                }
+            allFiles[descriptor] = allFiles[descriptor].orEmpty() + companions
+            removed.addAll(companions)
+        }
+        removed.forEach { allFiles.remove(it) }
     }
 
     private fun removeInvalidM3UPlaylists(

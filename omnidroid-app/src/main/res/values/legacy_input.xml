@@ -1,0 +1,5 @@
+<resources>
+    <string name="game_input_keyboard">Keyboard</string>
+    <string name="game_input_keypad">Keypad</string>
+    <string name="game_input_hide">Hide</string>
+</resources>

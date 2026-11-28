@@ -261,6 +261,16 @@ class VulkanRetroView(
         }
     }
 
+    override fun sendKeyboardEvent(
+        down: Boolean,
+        key: Int,
+        character: Int,
+        modifiers: Int,
+    ): Boolean {
+        LibretroDroid.onKeyboardEvent(down, key, character, modifiers)
+        return true
+    }
+
     override fun sendKeyEvent(action: Int, keyCode: Int, port: Int) {
         runCatching { LibretroDroid.onKeyEvent(port, action, keyCode) }
     }

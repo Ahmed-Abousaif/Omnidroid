@@ -335,6 +335,11 @@ class GameViewModelTouchControls(
     }
 
     private fun handleVirtualInputButton(event: InputEvent.Button) {
+        if (systemId in setOf(SystemID.MSX, SystemID.MSX2) &&
+            event.pressed
+        ) {
+            retroGameView.retroGameView?.setControllerType(0, 257)
+        }
         val action = if (event.pressed) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP
         retroGameView.retroGameView?.sendKeyEvent(action, event.id)
     }

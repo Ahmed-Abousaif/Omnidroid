@@ -285,6 +285,17 @@ class MetadataSliceInstallerImpl(
         if (sharedCore != null) {
             assetBundle(context, "libretro-db/${sharedCore.coreName}")?.let { return it }
         }
+        val expectedIds = SliceCatalog.forCore(core).map { it.id }.toSet()
+        assetBundle(context, "libretro-db/legacy")
+            ?.takeIf { bundle ->
+                runCatching {
+                    SliceManifest
+                        .parse(
+                            bundle.manifestJson,
+                        ).slices
+                        .any { it.sliceId in expectedIds }
+                }.getOrDefault(false)
+            }?.let { return it }
         assetBundle(context, "libretro-db/bundled")?.let { return it }
         val bundle = githubBundle(core)
         if (bundle == null && sharedCore != null) {

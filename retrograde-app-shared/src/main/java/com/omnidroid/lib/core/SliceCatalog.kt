@@ -13,6 +13,16 @@ object SliceCatalog {
 
     val slices =
         listOf(
+            Slice("atari5200", listOf("atari5200"), listOf("a5200")),
+            Slice("atari800", listOf("atari800"), listOf("atari800")),
+            Slice("saturn", listOf("saturn"), listOf("yabasanshiro")),
+            Slice("3do", listOf("3do"), listOf("opera")),
+            Slice("colecovision", listOf("colecovision"), listOf("gearcoleco")),
+            Slice("c64", listOf("c64"), listOf("vice_x64")),
+            Slice("msx", listOf("msx"), listOf("fmsx")),
+            Slice("msx2", listOf("msx2"), listOf("fmsx")),
+            Slice("apple2", listOf("apple2"), listOf("applewin")),
+            Slice("jaguar", listOf("jaguar"), listOf("virtualjaguar")),
             Slice("atari2600", listOf("atari2600"), listOf("stella")),
             Slice("nes", listOf("nes"), listOf("fceumm")),
             Slice("snes", listOf("snes"), listOf("snes9x")),
@@ -63,6 +73,16 @@ object SliceCatalog {
 
     fun displayName(sliceId: String): String =
         when (sliceId.lowercase()) {
+            "atari5200" -> "Atari 5200"
+            "atari800" -> "Atari 8-bit"
+            "saturn" -> "Sega Saturn"
+            "3do" -> "3DO"
+            "colecovision" -> "ColecoVision"
+            "c64" -> "Commodore 64"
+            "msx" -> "MSX"
+            "msx2" -> "MSX2"
+            "apple2" -> "Apple II"
+            "jaguar" -> "Atari Jaguar"
             "arcade" -> "Arcade"
             "dos" -> "DOS"
             "snes" -> "SNES"

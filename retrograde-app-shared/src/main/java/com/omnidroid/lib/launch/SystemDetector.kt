@@ -3,6 +3,8 @@ package com.omnidroid.lib.launch
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemID
 import com.omnidroid.lib.library.scan.ByteArraySource
+import com.omnidroid.lib.library.scan.DiscIdentifier
+import com.omnidroid.lib.library.scan.DiscImages
 import com.omnidroid.lib.library.scan.NintendoDisc
 import com.omnidroid.lib.library.scan.SegaCartridge
 import java.io.InputStream
@@ -51,6 +53,34 @@ object SystemDetector {
             "switch" to SystemID.SWITCH,
             "nswitch" to SystemID.SWITCH,
             "nintendo_switch" to SystemID.SWITCH,
+            "atari5200" to SystemID.ATARI5200,
+            "a5200" to SystemID.ATARI5200,
+            "5200" to SystemID.ATARI5200,
+            "atari800" to SystemID.ATARI800,
+            "atari8bit" to SystemID.ATARI800,
+            "atari_8_bit" to SystemID.ATARI800,
+            "atari8bitfamily" to SystemID.ATARI800,
+            "atari400" to SystemID.ATARI800,
+            "atarixl" to SystemID.ATARI800,
+            "atarixe" to SystemID.ATARI800,
+            "saturn" to SystemID.SATURN,
+            "segasaturn" to SystemID.SATURN,
+            "sega_saturn" to SystemID.SATURN,
+            "3do" to SystemID.THREE_DO,
+            "colecovision" to SystemID.COLECOVISION,
+            "coleco" to SystemID.COLECOVISION,
+            "c64" to SystemID.C64,
+            "commodore64" to SystemID.C64,
+            "commodore_64" to SystemID.C64,
+            "msx" to SystemID.MSX,
+            "msx1" to SystemID.MSX,
+            "msx2" to SystemID.MSX2,
+            "apple2" to SystemID.APPLE2,
+            "appleii" to SystemID.APPLE2,
+            "apple_ii" to SystemID.APPLE2,
+            "jaguar" to SystemID.JAGUAR,
+            "atarijaguar" to SystemID.JAGUAR,
+            "atari_jaguar" to SystemID.JAGUAR,
             "dreamcast" to SystemID.DREAMCAST,
             "dc" to SystemID.DREAMCAST,
             "fbneo" to SystemID.FBNEO,
@@ -196,6 +226,24 @@ object SystemDetector {
                 val candidate = runCatching { GameSystem.findById(discSystem.dbname) }.getOrNull()
                 if (candidate != null) return candidate
             }
+        }
+
+        if (openStream != null && extension in setOf("iso", "bin")) {
+            val detected =
+                runCatching {
+                    openStream()?.use { stream ->
+                        val header = ByteArray(64 * 1024)
+                        var count = 0
+                        while (count < header.size) {
+                            val read = stream.read(header, count, header.size - count)
+                            if (read <= 0) break
+                            count += read
+                        }
+                        val bytes = ByteArraySource(header.copyOf(count))
+                        DiscIdentifier.identify(DiscImages.userSectors(bytes, DiscImages.layout(bytes)))?.system
+                    }
+                }.getOrNull()
+            if (detected != null) return GameSystem.findById(detected.dbname)
         }
 
         // 3. Check unique extension across all systems

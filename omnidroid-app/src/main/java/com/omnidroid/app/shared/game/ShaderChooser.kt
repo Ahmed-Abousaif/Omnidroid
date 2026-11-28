@@ -38,8 +38,12 @@ object ShaderChooser {
         }
     }
 
-    private fun getDefaultShaderForSystem(system: GameSystem): ShaderConfig {
-        return when (system.id) {
+    private fun getDefaultShaderForSystem(system: GameSystem): ShaderConfig =
+        when (system.id) {
+            SystemID.ATARI5200, SystemID.ATARI800, SystemID.SATURN, SystemID.THREE_DO,
+            SystemID.COLECOVISION, SystemID.C64, SystemID.MSX, SystemID.MSX2,
+            SystemID.APPLE2, SystemID.JAGUAR,
+            -> ShaderConfig.CRT
             SystemID.GBA -> ShaderConfig.LCD
             SystemID.GBC -> ShaderConfig.LCD
             SystemID.GB -> ShaderConfig.LCD
@@ -71,18 +75,16 @@ object ShaderChooser {
             SystemID.DREAMCAST -> ShaderConfig.Default
             SystemID.WII_U, SystemID.SWITCH, SystemID.PS3 -> ShaderConfig.Default
         }
-    }
 
     private fun getHDShaderForSystem(
         system: GameSystem,
         hdModeQuality: HDModeQuality,
-    ): ShaderConfig {
-        return when (hdModeQuality) {
+    ): ShaderConfig =
+        when (hdModeQuality) {
             HDModeQuality.LOW -> getLowQualityHdMode(system)
             HDModeQuality.MEDIUM -> getMediumQualityHdMode(system)
             HDModeQuality.HIGH -> getHighQualityHdMode(system)
         }
-    }
 
     private fun getLowQualityHdMode(system: GameSystem): ShaderConfig {
         val upscale8BitsMobile =
@@ -266,8 +268,12 @@ object ShaderChooser {
         upscale16Bits: ShaderConfig,
         upscale8Bits: ShaderConfig,
         modern: ShaderConfig,
-    ): ShaderConfig {
-        return when (system.id) {
+    ): ShaderConfig =
+        when (system.id) {
+            SystemID.SATURN, SystemID.THREE_DO, SystemID.JAGUAR -> upscale32Bits
+            SystemID.ATARI5200, SystemID.ATARI800, SystemID.COLECOVISION, SystemID.C64,
+            SystemID.MSX, SystemID.MSX2, SystemID.APPLE2,
+            -> upscale8Bits
             SystemID.GBA -> upscale16BitsMobile
             SystemID.GBC -> upscale8BitsMobile
             SystemID.GB -> upscale8BitsMobile
@@ -300,5 +306,4 @@ object ShaderChooser {
             SystemID.DREAMCAST -> modern
             SystemID.WII_U, SystemID.SWITCH, SystemID.PS3 -> modern
         }
-    }
 }

@@ -322,6 +322,96 @@ object ControllerConfigs {
                 ),
         )
 
+    val ATARI5200 =
+        ControllerConfig(
+            "default",
+            R.string.controller_default,
+            TouchControllerID.ATARI5200,
+            libretroId = 257,
+            mergeDPADAndLeftStickEvents = false,
+            hasAnalogStick = true,
+        )
+
+    val ATARI800 =
+        ControllerConfig(
+            "default",
+            R.string.controller_default,
+            TouchControllerID.ATARI800,
+            libretroId = 1,
+            mergeDPADAndLeftStickEvents = true,
+            hasAnalogStick = false,
+        )
+
+    val SATURN =
+        ControllerConfig(
+            "default",
+            R.string.controller_default,
+            TouchControllerID.SATURN,
+            libretroId = 1,
+            mergeDPADAndLeftStickEvents = true,
+            hasAnalogStick = false,
+        )
+
+    val THREE_DO =
+        ControllerConfig(
+            "default",
+            R.string.controller_default,
+            TouchControllerID.THREE_DO,
+            libretroId = 1,
+            mergeDPADAndLeftStickEvents = true,
+            hasAnalogStick = false,
+        )
+
+    val COLECOVISION =
+        ControllerConfig(
+            "default",
+            R.string.controller_default,
+            TouchControllerID.COLECOVISION,
+            libretroId = 1,
+            mergeDPADAndLeftStickEvents = false,
+            hasAnalogStick = true,
+        )
+
+    val C64 =
+        ControllerConfig(
+            "default",
+            R.string.controller_default,
+            TouchControllerID.C64,
+            libretroId = 1,
+            mergeDPADAndLeftStickEvents = true,
+            hasAnalogStick = false,
+        )
+
+    val MSX =
+        ControllerConfig(
+            "default",
+            R.string.controller_default,
+            TouchControllerID.MSX,
+            libretroId = 257,
+            mergeDPADAndLeftStickEvents = true,
+            hasAnalogStick = false,
+        )
+
+    val APPLE2 =
+        ControllerConfig(
+            "default",
+            R.string.controller_default,
+            TouchControllerID.APPLE2,
+            libretroId = 1,
+            mergeDPADAndLeftStickEvents = true,
+            hasAnalogStick = false,
+        )
+
+    val JAGUAR =
+        ControllerConfig(
+            "default",
+            R.string.controller_default,
+            TouchControllerID.JAGUAR,
+            libretroId = 1,
+            mergeDPADAndLeftStickEvents = false,
+            hasAnalogStick = true,
+        )
+
     val DOS_AUTO =
         ControllerConfig(
             "auto",

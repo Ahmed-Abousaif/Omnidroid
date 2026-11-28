@@ -9,6 +9,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import java.io.File
+import java.util.zip.ZipInputStream
 
 class GithubCoreDownloader(
     private val directoriesManager: DirectoriesManager,
@@ -42,7 +43,11 @@ class GithubCoreDownloader(
 
             val stagedFile = File(coresDirectory, "${coreID.libretroFileName}.part")
             try {
-                downloadFile(uri, stagedFile)
+                if (coreID.buildbotName != null) {
+                    downloadBuildbotCore(coreID, stagedFile)
+                } else {
+                    downloadFile(uri, stagedFile)
+                }
                 check(stagedFile.renameTo(destFile)) { "Could not install ${destFile.name}" }
                 destFile
             } catch (error: Throwable) {
@@ -51,6 +56,50 @@ class GithubCoreDownloader(
                 throw error
             }
         }
+
+    private suspend fun downloadBuildbotCore(
+        coreID: CoreID,
+        destination: File,
+    ) {
+        val upstream = requireNotNull(coreID.buildbotName)
+        val fileName = "${upstream}_libretro_android.so"
+        val url = "https://buildbot.libretro.com/nightly/android/latest/${Build.SUPPORTED_ABIS.first()}/$fileName.zip"
+        val response = api.downloadZip(url)
+        check(response.isSuccessful) { "Core download failed: HTTP ${response.code()}" }
+        val body = response.body() ?: error("Empty core archive")
+        body.use {
+            ZipInputStream(it.byteStream()).use { zip ->
+                var entry = zip.nextEntry
+                var found = false
+                while (entry != null) {
+                    if (!entry.isDirectory && entry.name.substringAfterLast('/') == fileName) {
+                        destination.outputStream().use { output ->
+                            val buffer = ByteArray(64 * 1024)
+                            var total = 0L
+                            while (true) {
+                                val count = zip.read(buffer)
+                                if (count < 0) break
+                                total += count
+                                check(total <= 256L * 1024 * 1024) { "Core archive is too large" }
+                                output.write(buffer, 0, count)
+                            }
+                        }
+                        found = true
+                        break
+                    }
+                    entry = zip.nextEntry
+                }
+                check(found && destination.length() > 4) { "Core archive did not contain $fileName" }
+            }
+        }
+        destination.inputStream().use { input ->
+            check(input.read() == 0x7f && input.read() == 0x45 && input.read() == 0x4c && input.read() == 0x46) {
+                "Downloaded core is not an ELF library"
+            }
+        }
+        destination.setReadable(true, false)
+        destination.setExecutable(true, false)
+    }
 
     private suspend fun downloadFile(
         uri: Uri,

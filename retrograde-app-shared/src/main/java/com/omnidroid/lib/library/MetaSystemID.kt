@@ -152,6 +152,20 @@ enum class MetaSystemID(
         R.drawable.game_system_ps3,
         listOf(SystemID.PS3),
     ),
+    ATARI5200(R.string.game_system_title_atari5200, R.drawable.game_system_atari5200, listOf(SystemID.ATARI5200)),
+    ATARI800(R.string.game_system_title_atari800, R.drawable.game_system_atari800, listOf(SystemID.ATARI800)),
+    SATURN(R.string.game_system_title_saturn, R.drawable.game_system_saturn, listOf(SystemID.SATURN)),
+    THREE_DO(R.string.game_system_title_3do, R.drawable.game_system_3do, listOf(SystemID.THREE_DO)),
+    COLECOVISION(
+        R.string.game_system_title_colecovision,
+        R.drawable.game_system_colecovision,
+        listOf(SystemID.COLECOVISION),
+    ),
+    C64(R.string.game_system_title_c64, R.drawable.game_system_c64, listOf(SystemID.C64)),
+    MSX(R.string.game_system_title_msx, R.drawable.game_system_msx, listOf(SystemID.MSX)),
+    MSX2(R.string.game_system_title_msx2, R.drawable.game_system_msx2, listOf(SystemID.MSX2)),
+    APPLE2(R.string.game_system_title_apple2, R.drawable.game_system_apple2, listOf(SystemID.APPLE2)),
+    JAGUAR(R.string.game_system_title_jaguar, R.drawable.game_system_jaguar, listOf(SystemID.JAGUAR)),
     ;
 
     fun color(): Int = ColorUtils.color(ordinal.toFloat() / values().size)
@@ -192,6 +206,16 @@ enum class MetaSystemID(
                 SystemID.WII_U -> WII_U
                 SystemID.SWITCH -> SWITCH
                 SystemID.PS3 -> PS3
+                SystemID.ATARI5200 -> ATARI5200
+                SystemID.ATARI800 -> ATARI800
+                SystemID.SATURN -> SATURN
+                SystemID.THREE_DO -> THREE_DO
+                SystemID.COLECOVISION -> COLECOVISION
+                SystemID.C64 -> C64
+                SystemID.MSX -> MSX
+                SystemID.MSX2 -> MSX2
+                SystemID.APPLE2 -> APPLE2
+                SystemID.JAGUAR -> JAGUAR
             }
     }
 }

@@ -24,7 +24,26 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+// Keep firmware ZIPs in OmnidroidCores and package verified copies for offline installation.
+val prepareFirmwareAssets by tasks.registering(Sync::class) {
+    from(rootProject.file("omnidroid-cores/assets")) {
+        include("saturn.zip", "colecovision.zip", "msx.zip")
+        into("firmware")
+    }
+    into(layout.buildDirectory.dir("generated/firmwareAssets"))
+}
+
+tasks.matching { it.name.startsWith("merge") && it.name.endsWith("Assets") }.configureEach {
+    dependsOn(prepareFirmwareAssets)
+}
+
 android {
+    sourceSets.getByName("main").assets.srcDir(
+        layout.buildDirectory
+            .dir("generated/firmwareAssets")
+            .get()
+            .asFile,
+    )
     sourceSets.getByName("main").java.srcDir(
         rootProject.file("omnidroid-cores/omnidroid_core_switch/src/main/sdl/java"),
     )
@@ -102,6 +121,15 @@ android {
 
         dynamicFeatures.addAll(
             setOf(
+                ":omnidroid_core_a5200",
+                ":omnidroid_core_atari800",
+                ":omnidroid_core_yabasanshiro",
+                ":omnidroid_core_opera",
+                ":omnidroid_core_gearcoleco",
+                ":omnidroid_core_vice_x64",
+                ":omnidroid_core_fmsx",
+                ":omnidroid_core_applewin",
+                ":omnidroid_core_virtualjaguar",
                 ":omnidroid_core_dosbox_pure",
                 ":omnidroid_core_fbneo",
                 ":omnidroid_core_fceumm",

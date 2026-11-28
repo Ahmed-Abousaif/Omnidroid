@@ -105,6 +105,12 @@ object DetectionRules {
         fileNameSystems[extension]?.let { system ->
             return Detection.Ready(system, romBase(input.name))
         }
+        if (extension in LegacyContent.extensions && extension !in setOf("bin", "iso", "cue", "chd", "m3u")) {
+            val system =
+                LegacyContent.resolve(input.path, extension)
+                    ?: return Detection.Rejected("Needs a console folder: .$extension is shared by multiple systems")
+            return hashLoose(input, system, HashMode.RAW, beforeExpensiveHash)
+        }
         return when (extension) {
             "nds" -> headerSerial(input, SystemID.NDS) { it.ascii(0x0C, 4).takeIf(::isCode) }
             "3ds", "cci", "zcci", "cxi", "3dsx" ->
@@ -231,9 +237,12 @@ object DetectionRules {
                 return Detection.Ready(SystemID.NES, MetadataKey(MetadataKeyType.CRC, crc))
             }
             if (input.size > BIN_HASH_LIMIT) {
-                return Detection.Rejected(".bin over 16 MB was not a disc image")
+                return folderOrReject(input, ".bin over 16 MB was not a disc image")
             }
             val crc = CartridgeHasher.hash(bytes, HashMode.RAW)
+            LegacyContent.hinted(input.path, "bin")?.let {
+                return Detection.Ready(it, MetadataKey(MetadataKeyType.CRC, crc))
+            }
             return Detection.HashedBin(crc)
         }
     }
@@ -264,6 +273,14 @@ object DetectionRules {
     private fun isDisc(source: RandomAccessBytes): Boolean {
         val head = source.read(0, 12)
         if (head.size >= 12 && head[0] == 0.toByte() && head[1] == 0xFF.toByte()) return true
+        if (source.ascii(0, 16).startsWith("SEGA SEGASATURN")) return true
+        if (head.size >= 7 &&
+            head[0] == 1.toByte() &&
+            (1..5).all { head[it] == 0x5a.toByte() } &&
+            head[6] == 1.toByte()
+        ) {
+            return true
+        }
         val marker = source.read(0x8001, 5)
         return marker.size >= 5 && marker.startsWithAscii("CD001")
     }
@@ -334,7 +351,8 @@ object DetectionRules {
         offset: Long,
     ): Detection? {
         val layout = DiscImages.layout(source, offset)
-        val hit = DiscIdentifier.identify(DiscImages.userSectors(source, layout)) ?: return null
+        val sectors = DiscImages.userSectors(source, layout)
+        val hit = DiscIdentifier.identify(sectors) ?: return null
         return hit.toDetection(fileName)
     }
 
@@ -420,7 +438,16 @@ object DetectionRules {
         val source = input.open() ?: return Detection.Rejected("Could not open ${input.name}")
         source.use { bytes ->
             val entries = ZipDirectory.read(bytes) ?: return Detection.Rejected("${input.name} is not a zip archive")
-            val game = chooseArchiveGame(entries, input.name)
+            val game =
+                chooseArchiveCandidate(
+                    entries = entries,
+                    archiveName = input.name,
+                    archivePath = input.path,
+                    isDir = { it.name.endsWith("/") },
+                    sizeOf = { it.uncompressedSize },
+                    extensionOf = { it.extension },
+                    nameOf = { it.name },
+                )
             if (game != null) {
                 return identifyArchiveEntry(input, bytes, game, beforeExpensiveHash)
             }
@@ -434,25 +461,39 @@ object DetectionRules {
         }
     }
 
-    private fun chooseArchiveGame(
-        entries: List<ZipEntryInfo>,
-        zipName: String,
-    ): ZipEntryInfo? {
-        val files = entries.filter { !it.name.endsWith("/") && it.uncompressedSize > 0 && it.extension != "zip" }
-        val games = files.filter { it.extension in archiveExtensions }
+    private fun <T> chooseArchiveCandidate(
+        entries: List<T>,
+        archiveName: String,
+        archivePath: String?,
+        isDir: (T) -> Boolean,
+        sizeOf: (T) -> Long,
+        extensionOf: (T) -> String,
+        nameOf: (T) -> String,
+    ): T? {
+        val files =
+            entries.filter {
+                !isDir(it) && sizeOf(it) > 0 && extensionOf(it) != "zip"
+            }
+        val games =
+            files.filter {
+                extensionOf(it) in archiveExtensions ||
+                    extensionOf(it) in LegacyContent.uniqueExtensions ||
+                    LegacyContent.hinted(archivePath, extensionOf(it)) != null
+            }
         if (games.isNotEmpty()) {
-            val zipBase = ScanKeys.romBase(zipName.substringAfterLast('/').substringAfterLast('\\'))
+            val archiveBase = ScanKeys.romBase(archiveName.substringAfterLast('/').substringAfterLast('\\'))
             val named =
                 games.filter {
-                    ScanKeys.romBase(it.name.substringAfterLast('/').substringAfterLast('\\')) == zipBase
+                    val simple = nameOf(it).replace('\\', '/').substringAfterLast('/')
+                    ScanKeys.romBase(simple) == archiveBase
                 }
-            return (named.ifEmpty { games }).maxByOrNull { it.uncompressedSize }
+            return (named.ifEmpty { games }).maxByOrNull { sizeOf(it) }
         }
-        val bins = files.filter { it.extension == "bin" }
+        val bins = files.filter { extensionOf(it) == "bin" }
         if (bins.size != 1) return null
         val only = bins.first()
-        val total = files.sumOf { it.uncompressedSize }
-        if (files.size == 1 || (total > 0 && only.uncompressedSize.toDouble() / total.toDouble() > 0.9)) {
+        val total = files.sumOf { sizeOf(it) }
+        if (files.size == 1 || (total > 0 && sizeOf(only).toDouble() / total.toDouble() > 0.9)) {
             return only
         }
         return null
@@ -574,7 +615,13 @@ private fun DiscHit.toDetection(fileName: String): Detection {
     val key =
         when {
             serial != null -> MetadataKey(MetadataKeyType.SERIAL, serial)
-            system == SystemID.DREAMCAST -> MetadataKey(MetadataKeyType.ROM_BASE, ScanKeys.romBase(fileName))
+            system in
+                setOf(
+                    SystemID.DREAMCAST,
+                    SystemID.SATURN,
+                    SystemID.THREE_DO,
+                )
+            -> MetadataKey(MetadataKeyType.ROM_BASE, ScanKeys.romBase(fileName))
             else -> null
         }
     return Detection.Ready(system, key)

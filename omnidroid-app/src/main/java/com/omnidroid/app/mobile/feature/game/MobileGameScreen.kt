@@ -361,6 +361,10 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                 .collectAsState(true)
                 .value
 
+        if (!isLoading) {
+            LegacyInputPanel(viewModel.system.id, retroViewState.value, Modifier.align(Alignment.TopCenter))
+        }
+
         if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),

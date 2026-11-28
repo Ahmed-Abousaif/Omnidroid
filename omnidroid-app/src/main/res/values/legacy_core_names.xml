@@ -1,0 +1,11 @@
+<resources>
+    <string name="core_name_a5200">a5200</string>
+    <string name="core_name_atari800">Atari800</string>
+    <string name="core_name_yabasanshiro">YabaSanshiro</string>
+    <string name="core_name_opera">Opera</string>
+    <string name="core_name_gearcoleco">Gearcoleco</string>
+    <string name="core_name_vice_x64">VICE x64</string>
+    <string name="core_name_fmsx">fMSX</string>
+    <string name="core_name_applewin">AppleWin</string>
+    <string name="core_name_virtualjaguar">Virtual Jaguar</string>
+</resources>

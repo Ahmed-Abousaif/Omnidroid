@@ -46,6 +46,16 @@ object SaveConsoleFolders {
             SystemID.WS to "WS",
             SystemID.WSC to "WSC",
             SystemID.DOS to "DOS",
+            SystemID.ATARI5200 to "Atari 5200",
+            SystemID.ATARI800 to "Atari 8-bit",
+            SystemID.SATURN to "Sega Saturn",
+            SystemID.THREE_DO to "3DO",
+            SystemID.COLECOVISION to "ColecoVision",
+            SystemID.C64 to "Commodore 64",
+            SystemID.MSX to "MSX",
+            SystemID.MSX2 to "MSX2",
+            SystemID.APPLE2 to "Apple II",
+            SystemID.JAGUAR to "Atari Jaguar",
         )
 
     private val DBNAME_TO_FOLDER: Map<String, String> =
