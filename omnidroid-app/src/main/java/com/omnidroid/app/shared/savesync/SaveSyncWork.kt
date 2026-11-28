@@ -72,6 +72,7 @@ class SaveSyncWork
                     SaveSyncRequest(
                         cores = coresToSync,
                         gameFileName = gameFileName,
+                        gameSystemId = inputData.getString(GAME_SYSTEM_ID),
                         includeSaves = includeSaves,
                         includeStates = includeStates,
                         includePreviews = includeStates,
@@ -148,6 +149,7 @@ class SaveSyncWork
             val UNIQUE_PERIODIC_WORK_ID: String = SaveSyncWork::class.java.simpleName + "Periodic"
             private const val IS_AUTO = "IS_AUTO"
             private const val GAME_FILE_NAME = "GAME_FILE_NAME"
+            private const val GAME_SYSTEM_ID = "GAME_SYSTEM_ID"
 
             fun enqueueManualWork(applicationContext: Context) {
                 enqueueOneShot(applicationContext, workDataOf(IS_AUTO to false))
@@ -156,10 +158,11 @@ class SaveSyncWork
             fun enqueueGameWork(
                 applicationContext: Context,
                 gameFileName: String,
+                gameSystemId: String,
             ) {
                 enqueueOneShot(
                     applicationContext,
-                    workDataOf(IS_AUTO to false, GAME_FILE_NAME to gameFileName),
+                    workDataOf(IS_AUTO to false, GAME_FILE_NAME to gameFileName, GAME_SYSTEM_ID to gameSystemId),
                 )
             }
 

@@ -67,7 +67,7 @@ class GameLaunchTaskHandler(
                         .GameCloudSyncPreferences(context)
                         .syncFileName(game)
                 }
-            SaveSyncWork.enqueueGameWork(context, name)
+            SaveSyncWork.enqueueGameWork(context, name, game.systemId)
         }
         SaveSyncWork.enqueueAutoWork(context, 5)
         CacheCleanerWork.enqueueCleanCacheLRU(context)

@@ -108,6 +108,46 @@ class Ps2MemoryCardsTest {
     }
 
     @Test
+    fun `retries after the ini switch fails and picks up the card the core kept using`() {
+        ini.writeText(INI)
+        File(legacy, "Mcd001.ps2").writeBytes(byteArrayOf(1))
+        val blocker = File(ini.parentFile, ".${ini.name}.tmp").apply { mkdirs() }
+
+        assertTrue(runCatching { Ps2MemoryCards.prepare(system, saves) }.isFailure)
+        assertTrue("MemoryCards = memcards" in ini.readLines())
+
+        // The game ran on the old folder and saved there.
+        File(legacy, "Mcd001.ps2").writeBytes(byteArrayOf(2))
+        blocker.delete()
+        Ps2MemoryCards.prepare(system, saves)
+
+        assertArrayEquals(byteArrayOf(2), File(cards, "Mcd001.ps2").readBytes())
+        assertFalse(File(cards, "Mcd001 (old location).ps2").exists())
+        assertTrue("MemoryCards = ${cards.absolutePath}" in ini.readLines())
+
+        // Once switched, the old folder is left alone.
+        File(legacy, "Mcd001.ps2").writeBytes(byteArrayOf(3))
+        Ps2MemoryCards.prepare(system, saves)
+        assertArrayEquals(byteArrayOf(2), File(cards, "Mcd001.ps2").readBytes())
+    }
+
+    @Test
+    fun `a retry never replaces a card that was changed in the new folder`() {
+        ini.writeText(INI)
+        File(legacy, "Mcd001.ps2").writeBytes(byteArrayOf(1))
+        val blocker = File(ini.parentFile, ".${ini.name}.tmp").apply { mkdirs() }
+        runCatching { Ps2MemoryCards.prepare(system, saves) }
+
+        File(cards, "Mcd001.ps2").writeBytes(byteArrayOf(7))
+        File(legacy, "Mcd001.ps2").writeBytes(byteArrayOf(2))
+        blocker.delete()
+        Ps2MemoryCards.prepare(system, saves)
+
+        assertArrayEquals(byteArrayOf(7), File(cards, "Mcd001.ps2").readBytes())
+        assertArrayEquals(byteArrayOf(2), File(cards, "Mcd001 (old location).ps2").readBytes())
+    }
+
+    @Test
     fun `maps ps2 files from anywhere in an import to the card folder`() {
         assertEquals("pcsx2/memcards/Mcd001.ps2", Ps2MemoryCards.importPath("Mcd001.ps2"))
         assertEquals("pcsx2/memcards/Burnout.ps2", Ps2MemoryCards.importPath("PCSX2\\memcards\\Burnout.ps2"))

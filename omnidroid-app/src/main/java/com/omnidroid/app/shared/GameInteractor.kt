@@ -200,7 +200,7 @@ class GameInteractor(
     }
 
     fun syncGameNow(game: Game) {
-        SaveSyncWork.enqueueGameWork(activity.activity().applicationContext, game.fileName)
+        SaveSyncWork.enqueueGameWork(activity.activity().applicationContext, game.fileName, game.systemId)
     }
 
     private fun withNotificationsPermission(onGranted: () -> Unit) {
