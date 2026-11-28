@@ -18,7 +18,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 
 @Composable
@@ -27,6 +29,10 @@ internal fun chromeButtonSize(): Dp {
     val base = if (spec.isCompact) 32.dp else 36.dp
     return base * spec.uiScale
 }
+
+/** Text size shared by the top bar's search field and status readout, so the bar reads as one row. */
+@Composable
+internal fun chromeTextSize(): TextUnit = 12.sp * LocalAdaptiveLayout.current.uiScale
 
 /** Borderless top bar icon button; it only shows a fill while pressed. */
 @Composable

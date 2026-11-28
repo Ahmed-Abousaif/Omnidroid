@@ -100,17 +100,16 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.omnidroid.R
 import com.omnidroid.app.mobile.shared.compose.ui.AppTopBar
 import com.omnidroid.app.mobile.shared.compose.ui.FloatingChromeButton
 import com.omnidroid.app.mobile.shared.compose.ui.chromeButtonSize
+import com.omnidroid.app.mobile.shared.compose.ui.chromeTextSize
 import com.omnidroid.app.mobile.shared.compose.ui.LocalAdaptiveLayout
 import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
@@ -259,6 +258,7 @@ fun LibraryTopBar(
                                 LibraryLayoutToggle(
                                     layout = layout,
                                     onLayoutChange = onLayoutChange,
+                                    height = chromeButtonSize(),
                                 )
                             }
                         } else null,
@@ -267,7 +267,7 @@ fun LibraryTopBar(
                                 Box(
                                     modifier =
                                         Modifier
-                                            .height(28.dp * spec.uiScale)
+                                            .height(chromeButtonSize())
                                             .background(chromeColors.panel, CircleShape)
                                             .border(BorderStroke(1.dp, chromeColors.panelBorder), CircleShape)
                                             .padding(horizontal = 4.dp),
@@ -304,6 +304,7 @@ fun LibraryTopBar(
                                         LibraryLayoutToggle(
                                             layout = layout,
                                             onLayoutChange = onLayoutChange,
+                                            height = chromeButtonSize(),
                                         )
                                     }
                                 }
@@ -707,10 +708,8 @@ internal fun LibrarySearchField(
                 singleLine = true,
                 cursorBrush = SolidColor(chromeColors.content),
                 textStyle =
-                    TextStyle(
-                        color = chromeColors.content,
-                        fontSize = (13 * scale).sp,
-                    ),
+                    MaterialTheme.typography.bodyMedium
+                        .copy(color = chromeColors.content, fontSize = chromeTextSize()),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 decorationBox = { inner ->
@@ -719,7 +718,7 @@ internal fun LibrarySearchField(
                             Text(
                                 text = stringResource(R.string.title_search),
                                 color = chromeColors.faint,
-                                fontSize = (13 * scale).sp,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = chromeTextSize()),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
