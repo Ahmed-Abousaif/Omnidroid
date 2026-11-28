@@ -5,12 +5,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
+import com.omnidroid.app.shared.covers.CoverCacheStore
+import com.omnidroid.app.shared.covers.CoverUtils
+import com.omnidroid.app.shared.metadata.MetadataRepository
+import com.omnidroid.common.coroutines.combine
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.library.db.entity.RaGameCache
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -29,9 +36,8 @@ class GameDetailsViewModel(
         private val gameId: Int,
         private val initialGame: Game? = null,
     ) : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return GameDetailsViewModel(appContext, retrogradeDb, settingsManager, gameId, initialGame) as T
-        }
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            GameDetailsViewModel(appContext, retrogradeDb, settingsManager, gameId, initialGame) as T
     }
 
     data class UiState(
@@ -40,6 +46,7 @@ class GameDetailsViewModel(
         val playTimeMs: Long = 0L,
         val sessionCount: Int = 0,
         val playingTrailer: Boolean = false,
+        val raCache: RaGameCache? = null,
     )
 
     private val playTimeStore = PlayTimeStore(appContext)
@@ -53,7 +60,10 @@ class GameDetailsViewModel(
             playTimeStore.observe(gameId),
             retrogradeDb.gameSessionDao().observeStatsForGame(gameId),
             playingTrailerFlow,
-        ) { game, metadata, legacyPlayTimeMs, sessionStats, playingTrailer ->
+            retrogradeDb
+                .raGameCacheDao()
+                .observeByGameId(gameId),
+        ) { game, metadata, legacyPlayTimeMs, sessionStats, playingTrailer, raCache ->
             val totalPlayTimeMs = maxOf(sessionStats.totalDurationMs, legacyPlayTimeMs)
             val sessionCount = maxOf(sessionStats.sessionCount, if (totalPlayTimeMs > 0L) 1 else 0)
             UiState(
@@ -62,6 +72,7 @@ class GameDetailsViewModel(
                 playTimeMs = totalPlayTimeMs,
                 sessionCount = sessionCount,
                 playingTrailer = playingTrailer,
+                raCache = raCache,
             )
         }.stateIn(
             viewModelScope,
@@ -75,19 +86,61 @@ class GameDetailsViewModel(
 
     init {
         viewModelScope.launch {
+            retrogradeDb
+                .gameDao()
+                .observeById(gameId)
+                .filterNotNull()
+                .distinctUntilChangedBy { listOf(it.id, it.systemId, it.title, it.coverFrontUrl, it.isManualMatch) }
+                .collectLatest { game ->
+                    try {
+                        val metadata = MetadataRepository.get(appContext).details(game)
+                        metadataFlow.value = metadata?.let {
+                            GameRemoteMetadata(
+                                description = it.description,
+                                genre = it.genres.joinToString(", ").ifBlank { null },
+                                releaseDate = it.releaseDate,
+                                publisher = it.publisher,
+                                rating = it.rating?.let { rating -> "${rating.toInt()} / 100" },
+                                backgroundImageUrl =
+                                    it
+                                        .artwork(
+                                            "background",
+                                            null,
+                                        )?.url
+                                        ?.takeIf(CoverUtils::isAllowedRemoteCoverUrl),
+                            )
+                        } ?: GameRemoteMetadata()
+                    } catch (
+                        cancelled: CancellationException,
+                    ) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        // Existing local details remain useful offline.
+                    }
+                }
+        }
+        viewModelScope.launch {
             retrogradeDb.gameDao().observeById(gameId).collect { game ->
                 val url = game?.coverFrontUrl ?: return@collect
                 if (url.isBlank()) return@collect
                 runCatching {
-                    com.omnidroid.app.shared.covers.CoverUtils.coverCache(appContext)
-                        .ensureDetail(game.id, url)
+                    CoverUtils.ensureWithMirror(
+                        CoverUtils.coverCache(appContext),
+                        game.id,
+                        url,
+                        CoverCacheStore.Tier.DETAIL,
+                    )
                 }
             }
         }
     }
 
     fun toggleTrailer() {
-        if (state.value.metadata.trailerUrl.isNullOrBlank()) return
+        if (state.value.metadata.trailerUrl
+                .isNullOrBlank()
+        ) {
+            return
+        }
         playingTrailerFlow.value = !playingTrailerFlow.value
     }
 

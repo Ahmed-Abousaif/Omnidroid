@@ -32,6 +32,9 @@ class SaveFrameworkPickerLauncher : RetrogradeActivity() {
     @Inject
     lateinit var directoriesManager: DirectoriesManager
 
+    @Inject
+    lateinit var customSaveStorage: CustomSaveStorage
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -146,8 +149,10 @@ class SaveFrameworkPickerLauncher : RetrogradeActivity() {
         finish()
     }
 
-    private fun migrateAndSetCustomFolder(newFolderValue: String, safUri: Uri?) {
-        val customSaveStorage = CustomSaveStorage(this, directoriesManager)
+    private fun migrateAndSetCustomFolder(
+        newFolderValue: String,
+        safUri: Uri?,
+    ) {
         val currentUri = customSaveStorage.getCustomSavesFolderUriString()
 
         if (newFolderValue == currentUri) {

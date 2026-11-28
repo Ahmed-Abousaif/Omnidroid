@@ -1,6 +1,22 @@
 <resources>
     <string name="profile_sessions_tab">Sessions</string>
     <string name="profile_consoles_tab">Consoles</string>
+    <string name="profile_retro_achievements_tab">Retro Achievements</string>
+    <string name="profile_ra_account_loading">Syncing account summary…</string>
+    <string name="profile_ra_signed_in_offline">Signed in as %1$s</string>
+    <string name="profile_ra_not_signed_in_title">RetroAchievements</string>
+    <string name="profile_ra_not_signed_in_subtitle">Sign in under Settings → RetroAchievements to earn achievements and sync points.</string>
+    <string name="profile_ra_open_settings">Open Settings</string>
+    <string name="profile_ra_hardcore_pts">%1$s Hardcore pts</string>
+    <string name="profile_ra_softcore_pts">%1$s Softcore pts</string>
+    <string name="profile_ra_stat_unlocked">Unlocked</string>
+    <string name="profile_ra_stat_points">Library Pts</string>
+    <string name="profile_ra_stat_games">Games</string>
+    <string name="profile_ra_stat_mastered">%1$d mastered</string>
+    <string name="profile_ra_games_heading">Games (%1$d)</string>
+    <string name="profile_ra_unlocked_heading">Unlocked Achievements (%1$d)</string>
+    <string name="profile_ra_no_unlocked_yet">Unlock achievements in supported games and they will appear here.</string>
+    <string name="profile_ra_no_games_yet">Launch any supported game while signed in to cache its achievements and track your unlocks here.</string>
     <string name="profile_today">Today</string>
     <string name="profile_yesterday">Yesterday</string>
     <string name="profile_no_activity">No sessions yet</string>

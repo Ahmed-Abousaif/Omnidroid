@@ -41,11 +41,13 @@ fun GameMenuStatesScreen(
     onStateClicked: (Int) -> Unit,
     onAutoSaveClicked: () -> Unit = {},
     onNewStateClicked: () -> Unit = {},
+    hardcoreActive: Boolean = false,
 ) {
     val state = viewModel.uiStates.collectAsState()
     var pending by remember { mutableStateOf<PendingSlot?>(null) }
     val autoSaveTitle = stringResource(R.string.game_menu_autosave)
     val askToConfirm = confirmGameMenuActionsEnabled()
+    val loadBlocked = mode == StatesMenuMode.LOAD && hardcoreActive
 
     pending?.let { target ->
         val isLoad = mode == StatesMenuMode.LOAD
@@ -70,6 +72,14 @@ fun GameMenuStatesScreen(
     }
 
     SideMenuPage("game-slots") {
+        MenuSection("hardcore-blocked", visible = loadBlocked) {
+            MenuAction(
+                id = "hardcore-blocked-notice",
+                titleRes = R.string.ra_hardcore_title,
+                subtitle = { Text(stringResource(R.string.ra_hardcore_blocked_load)) },
+                enabled = false,
+            ) {}
+        }
         MenuSection("error", visible = state.value.loadFailed) {
             MenuAction(
                 "retry",
@@ -84,7 +94,7 @@ fun GameMenuStatesScreen(
                     "autosave",
                     titleRes = R.string.game_menu_autosave,
                     subtitle = { Text(autoSave.description) },
-                    enabled = autoSave.enabled,
+                    enabled = autoSave.enabled && !loadBlocked,
                 ) {
                     if (askToConfirm) pending = PendingSlot(null, autoSaveTitle, autoSave.description) else onAutoSaveClicked()
                 }
@@ -96,7 +106,7 @@ fun GameMenuStatesScreen(
                     id = "slot-${entry.slot}",
                     title = { Text(entry.title) },
                     subtitle = { Text(entry.description) },
-                    enabled = entry.enabled,
+                    enabled = entry.enabled && !loadBlocked,
                     icon = {
                         val preview = entry.preview
                         if (preview != null) {

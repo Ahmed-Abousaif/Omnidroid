@@ -2,6 +2,7 @@ package com.omnidroid.app.mobile.shared.compose.sidemenu
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -93,10 +94,9 @@ fun SideMenuPageScope.MenuAction(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
-) = OmnidroidSettingsMenuLink(
-    modifier = itemModifier(id, enabled, modifier), title = title, subtitle = subtitle, icon = icon,
-    enabled = enabled, onClick = onClick,
-)
+) = MenuItem(id, enabled, modifier) {
+    OmnidroidSettingsMenuLink(title = title, subtitle = subtitle, icon = icon, enabled = enabled, onClick = onClick)
+}
 
 data class MenuOption<T>(val value: T, val label: String)
 
@@ -122,12 +122,18 @@ fun <T> SideMenuPageScope.MenuChoice(
     icon: (@Composable () -> Unit)? = null,
     useSelectedValueAsSubtitle: Boolean = true,
     onSelected: (T) -> Unit,
-) = OmnidroidSettingsList(
-    modifier = itemModifier(id, enabled && options.isNotEmpty(), Modifier),
-    title = title, items = options.map { it.label }, selectedIndex = options.indexOfMenuValue(value),
-    enabled = enabled, subtitle = subtitle, icon = icon, useSelectedValueAsSubtitle = useSelectedValueAsSubtitle,
-    onItemSelected = { index, _ -> onSelected(options[index].value) },
-)
+) = MenuItem(id, enabled && options.isNotEmpty(), Modifier) {
+    OmnidroidSettingsList(
+        title = title,
+        items = options.map { it.label },
+        selectedIndex = options.indexOfMenuValue(value),
+        enabled = enabled,
+        subtitle = subtitle,
+        icon = icon,
+        useSelectedValueAsSubtitle = useSelectedValueAsSubtitle,
+        onItemSelected = { index, _ -> onSelected(options[index].value) },
+    )
+}
 
 @Composable
 fun SideMenuPageScope.MenuToggle(
@@ -138,11 +144,23 @@ fun SideMenuPageScope.MenuToggle(
     enabled: Boolean = true,
     icon: (@Composable () -> Unit)? = null,
     onChanged: (Boolean) -> Unit,
-) = OmnidroidSettingsSwitch(
-    modifier = itemModifier(id, enabled, Modifier), title = title, value = value,
-    enabled = enabled, icon = icon, onCheckedChange = onChanged,
-)
+) = MenuItem(id, enabled, Modifier) {
+    OmnidroidSettingsSwitch(title = title, value = value, enabled = enabled, icon = icon, onCheckedChange = onChanged)
+}
 
 @Composable
 fun SideMenuPageScope.MenuLink(id: String, destination: SideMenuDestination, onNavigate: (SideMenuDestination) -> Unit) =
     MenuAction(id = id, titleRes = destination.titleRes) { onNavigate(destination) }
+
+/**
+ * Puts the row's focus requester on a parent. The settings rows apply their own clickable ahead of
+ * the modifier they are given, where a requester can't reach it, so requesting focus on a menu row
+ * did nothing and controller focus stayed on the screen behind the menu.
+ */
+@Composable
+private fun SideMenuPageScope.MenuItem(
+    id: String,
+    enabled: Boolean,
+    modifier: Modifier,
+    content: @Composable () -> Unit,
+) = Box(itemModifier(id, enabled, modifier)) { content() }

@@ -3,6 +3,8 @@ package com.omnidroid.lib.bios
 import com.omnidroid.common.files.safeDelete
 import com.omnidroid.common.kotlin.associateByNotNull
 import com.omnidroid.common.kotlin.writeToFile
+import com.omnidroid.lib.core.assetsmanager.ManagedFirmwareAssetsManager
+import com.omnidroid.lib.core.assetsmanager.SegaCdAssetsManager
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.SystemID
 import com.omnidroid.lib.library.db.entity.Game
@@ -15,9 +17,18 @@ import java.io.File
 import java.io.InputStream
 import java.util.zip.CRC32
 
-class BiosManager(private val directoriesManager: DirectoriesManager) {
+class BiosManager(
+    private val directoriesManager: DirectoriesManager,
+) {
     private val crcLookup = SUPPORTED_BIOS.associateByNotNull { it.externalCRC32 }
-    private val nameLookup = SUPPORTED_BIOS.associateByNotNull { it.externalName }
+    private val nameLookup =
+        SUPPORTED_BIOS
+            .flatMap { bios ->
+                listOfNotNull(bios.libretroFileName.substringAfterLast('/'), bios.externalName).map {
+                    it.lowercase(java.util.Locale.US) to
+                        bios
+                }
+            }.toMap()
 
     fun getMissingBiosFiles(
         coreConfig: SystemCoreConfig,
@@ -26,10 +37,9 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
         val regionalBiosFiles = coreConfig.regionalBIOSFiles
         val systemDir = directoriesManager.getSystemDirectory()
 
-        fun present(biosName: String): Boolean {
-            return File(systemDir, biosName).exists() ||
+        fun present(biosName: String): Boolean =
+            File(systemDir, biosName).exists() ||
                 File(systemDir, "pcsx2/bios/$biosName").exists()
-        }
 
         val gameLabels = regionLabels(game.title)
         val matchedRegions = gameLabels.intersect(regionalBiosFiles.keys)
@@ -52,7 +62,7 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
         // If the preferred regional BIOS is missing, but another valid BIOS for this core
         // is present (e.g. user has scph39001.bin for a European game), allow it as a fallback
         // so cross-region games can still boot.
-        if (required.none(::present)) {
+        if (regionalBiosFiles.isNotEmpty() && required.none(::present)) {
             val allCoreBios = (coreConfig.requiredBIOSFiles + regionalBiosFiles.values).distinct()
             if (allCoreBios.any(::present)) {
                 return emptyList()
@@ -62,14 +72,13 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
         return required.filterNot(::present)
     }
 
-    private fun regionLabels(title: String): Set<String> {
-        return Regex("""\(([^)]+)\)""")
+    private fun regionLabels(title: String): Set<String> =
+        Regex("""\(([^)]+)\)""")
             .findAll(title)
             .flatMap { match -> match.groupValues[1].split(',', '/', '+') }
             .map { it.trim() }
             .filter { it.isNotBlank() }
             .toSet()
-    }
 
     fun deleteBiosBefore(timestampMs: Long) {
         Timber.i("Pruning old bios files")
@@ -79,13 +88,19 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
         SUPPORTED_BIOS
             .map { File(systemDir, it.libretroFileName) }
             .filter { it.exists() && it.lastModified() < normalizeTimestamp(timestampMs) }
-            .forEach {
+            .filterNot {
+                SegaCdAssetsManager.isPublishedBios(systemDir, it) ||
+                    ManagedFirmwareAssetsManager.isPublishedBios(systemDir, it)
+            }.forEach {
                 Timber.d("Pruning old bios file: ${it.path}")
                 it.safeDelete()
             }
     }
 
-    private fun isBiosPresent(systemDir: File, bios: Bios): Boolean {
+    private fun isBiosPresent(
+        systemDir: File,
+        bios: Bios,
+    ): Boolean {
         if (File(systemDir, bios.libretroFileName).exists() ||
             File(systemDir, "pcsx2/bios/${bios.libretroFileName}").exists()
         ) {
@@ -107,9 +122,10 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
         refreshPs2Library()
         val systemDir = directoriesManager.getSystemDirectory()
         val bios =
-            SUPPORTED_BIOS.groupBy {
-                isBiosPresent(systemDir, it)
-            }.withDefault { listOf() }
+            SUPPORTED_BIOS
+                .groupBy {
+                    isBiosPresent(systemDir, it)
+                }.withDefault { listOf() }
 
         return BiosInfo(bios.getValue(true), bios.getValue(false), ps2Selection())
     }
@@ -156,9 +172,13 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
         val source = File(ps2Library(systemDir), chosen)
         val live = File(systemDir, "pcsx2/bios")
         live.mkdirs()
-        live.listFiles()
-            ?.filter { it.isFile && it.name.endsWith(".bin", ignoreCase = true) && !it.name.equals(chosen, ignoreCase = true) }
-            ?.forEach { it.safeDelete() }
+        live
+            .listFiles()
+            ?.filter {
+                it.isFile &&
+                    it.name.endsWith(".bin", ignoreCase = true) &&
+                    !it.name.equals(chosen, ignoreCase = true)
+            }?.forEach { it.safeDelete() }
         val destination = File(live, chosen)
         if (!destination.exists() || destination.length() != source.length()) {
             source.copyTo(destination, overwrite = true)
@@ -166,7 +186,12 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
     }
 
     fun ps2Selection(): String? {
-        val text = File(ps2Library(directoriesManager.getSystemDirectory()), SELECTION_FILE).takeIf { it.isFile }?.readText()?.trim()
+        val text =
+            File(ps2Library(directoriesManager.getSystemDirectory()), SELECTION_FILE)
+                .takeIf {
+                    it.isFile
+                }?.readText()
+                ?.trim()
         if (text.isNullOrBlank() || text == Ps2Bios.AUTO) return null
         return text
     }
@@ -177,21 +202,14 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
         File(library, SELECTION_FILE).writeText(fileName ?: Ps2Bios.AUTO)
     }
 
-    private fun refreshPs2Library(): List<Bios> {
-        return refreshPs2Library(directoriesManager.getSystemDirectory())
-    }
+    private fun refreshPs2Library(): List<Bios> = refreshPs2Library(directoriesManager.getSystemDirectory())
 
-    private fun findByCRC(storageFile: StorageFile): Bios? {
-        return crcLookup[storageFile.crc]
-    }
+    private fun findByCRC(storageFile: StorageFile): Bios? = crcLookup[storageFile.crc]
 
-    private fun findByName(storageFile: StorageFile): Bios? {
-        return nameLookup[storageFile.name]
-    }
+    private fun findByName(storageFile: StorageFile): Bios? =
+        nameLookup[storageFile.name.lowercase(java.util.Locale.US)]
 
-    fun matchesBiosCrc(crc: String?): Boolean {
-        return crc != null && crcLookup.containsKey(crc)
-    }
+    fun matchesBiosCrc(crc: String?): Boolean = crc != null && crcLookup.containsKey(crc)
 
     private fun normalizeTimestamp(timestamp: Long) = (timestamp / 1000) * 1000
 
@@ -240,8 +258,10 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
 
         private fun biosCandidates(systemDir: File): List<File> {
             val found = ArrayList<File>()
+
             fun collect(dir: File) {
-                dir.listFiles()
+                dir
+                    .listFiles()
                     ?.filter { it.isFile && it.name.endsWith(".bin", ignoreCase = true) }
                     ?.let { found += it }
             }
@@ -272,15 +292,270 @@ class BiosManager(private val directoriesManager: DirectoriesManager) {
             return "%08X".format(crc.value)
         }
 
-        fun isKnownBiosName(name: String): Boolean {
-            return SUPPORTED_BIOS.any { bios ->
+        fun isKnownBiosName(name: String): Boolean =
+            SUPPORTED_BIOS.any { bios ->
                 bios.libretroFileName.equals(name, ignoreCase = true) ||
                     bios.externalName?.equals(name, ignoreCase = true) == true
             }
-        }
 
         private val SUPPORTED_BIOS =
             listOf(
+                Bios(
+                    "5200.rom",
+                    "281F20EA4320404EC820FB7EC0693B38",
+                    "5200 BIOS - Optional",
+                    SystemID.ATARI5200,
+                    null,
+                    "5200.rom",
+                ),
+                Bios(
+                    "ATARIXL.ROM",
+                    "06DAAC977823773A3EEA3422FD26A703",
+                    "Atari XL/XE OS BIOS - Optional",
+                    SystemID.ATARI800,
+                    null,
+                    "ATARIXL.ROM",
+                ),
+                Bios(
+                    "ATARIBAS.ROM",
+                    "0BAC0C6A50104045D902DF4503A4C30B",
+                    "BASIC interpreter BIOS - Optional",
+                    SystemID.ATARI800,
+                    null,
+                    "ATARIBAS.ROM",
+                ),
+                Bios(
+                    "ATARIOSA.ROM",
+                    "EB1F32F5D9F382DB1BBFB8D7F9CB343A",
+                    "Atari 400/800 PAL BIOS - Optional",
+                    SystemID.ATARI800,
+                    null,
+                    "ATARIOSA.ROM",
+                ),
+                Bios(
+                    "ATARIOSB.ROM",
+                    "A3E8D617C95D08031FE1B20D541434B2",
+                    "Atari 400/800 NTSC BIOS - Optional",
+                    SystemID.ATARI800,
+                    null,
+                    "ATARIOSB.ROM",
+                ),
+                Bios(
+                    "saturn_bios.bin",
+                    "AF5828FDFF51384F99B3C4926BE27762",
+                    "Saturn BIOS - Optional",
+                    SystemID.SATURN,
+                    null,
+                    "saturn_bios.bin",
+                ),
+                Bios(
+                    "panafz1.bin",
+                    "F47264DD47FE30F73AB3C010015C155B",
+                    "Panasonic FZ-1",
+                    SystemID.THREE_DO,
+                    null,
+                    "panafz1.bin",
+                ),
+                Bios(
+                    "panafz10.bin",
+                    "51F2F43AE2F3508A14D9F56597E2D3CE",
+                    "Panasonic FZ-10",
+                    SystemID.THREE_DO,
+                    null,
+                    "panafz10.bin",
+                ),
+                Bios(
+                    "panafz10-norsa.bin",
+                    "1477BDA80DC33731A65468C1F5BCBEE9",
+                    "Panasonic FZ-10 [RSA Patch]",
+                    SystemID.THREE_DO,
+                    null,
+                    "panafz10-norsa.bin",
+                ),
+                Bios(
+                    "panafz10e-anvil.bin",
+                    "A48E6746BD7EDEC0F40CFF078F0BB19F",
+                    "Panasonic FZ-10-E [Anvil]",
+                    SystemID.THREE_DO,
+                    null,
+                    "panafz10e-anvil.bin",
+                ),
+                Bios(
+                    "panafz10e-anvil-norsa.bin",
+                    "CF11BBB5A16D7AF9875CCA9DE9A15E09",
+                    "Panasonic FZ-10-E [Anvil RSA Patch]",
+                    SystemID.THREE_DO,
+                    null,
+                    "panafz10e-anvil-norsa.bin",
+                ),
+                Bios(
+                    "panafz1j.bin",
+                    "A496CFDDED3DA562759BE3561317B605",
+                    "Panasonic FZ-1J",
+                    SystemID.THREE_DO,
+                    null,
+                    "panafz1j.bin",
+                ),
+                Bios(
+                    "panafz1j-norsa.bin",
+                    "F6C71DE7470D16ABE4F71B1444883DC8",
+                    "Panasonic FZ-1J [RSA Patch]",
+                    SystemID.THREE_DO,
+                    null,
+                    "panafz1j-norsa.bin",
+                ),
+                Bios(
+                    "goldstar.bin",
+                    "8639FD5E549BD6238CFEE79E3E749114",
+                    "Goldstar  GDO-101M",
+                    SystemID.THREE_DO,
+                    null,
+                    "goldstar.bin",
+                ),
+                Bios(
+                    "sanyotry.bin",
+                    "35FA1A1EBAAEEA286DC5CD15487C13EA",
+                    "Sanyo IMP-21J TRY",
+                    SystemID.THREE_DO,
+                    null,
+                    "sanyotry.bin",
+                ),
+                Bios(
+                    "3do_arcade_saot.bin",
+                    "8970FC987AB89A7F64DA9F8A8C4333FF",
+                    "Shootout At Old Tucson",
+                    SystemID.THREE_DO,
+                    null,
+                    "3do_arcade_saot.bin",
+                ),
+                Bios(
+                    "panafz1-kanji.bin",
+                    "B8DC97F778A6245C58E064B0312E8281",
+                    "Panasonic FZ-1 Kanji ROM",
+                    SystemID.THREE_DO,
+                    null,
+                    "panafz1-kanji.bin",
+                ),
+                Bios(
+                    "panafz10ja-anvil-kanji.bin",
+                    "428577250F43EDC902EA239C50D2240D",
+                    "Panasonic FZ-10JA Kanji ROM",
+                    SystemID.THREE_DO,
+                    null,
+                    "panafz10ja-anvil-kanji.bin",
+                ),
+                Bios(
+                    "panafz1j-kanji.bin",
+                    "C23FB5D5E6BB1C240D02CF968972BE37",
+                    "Panasonic FZ-1J Kanji ROM",
+                    SystemID.THREE_DO,
+                    null,
+                    "panafz1j-kanji.bin",
+                ),
+                Bios(
+                    "colecovision.rom",
+                    "2C66F5911E5B42B8EBE113403548EEE7",
+                    "ColecoVision OS-7 BIOS - Required",
+                    SystemID.COLECOVISION,
+                    "3AA93EF3",
+                    "colecovision.rom",
+                ),
+                Bios(
+                    "MSX.ROM",
+                    "364A1A579FE5CB8DBA54519BCFCDAC0D",
+                    "MSX BIOS - Required",
+                    SystemID.MSX,
+                    null,
+                    "MSX.ROM",
+                ),
+                Bios(
+                    "MSX2.ROM",
+                    "EC3A01C91F24FBDDCBCAB0AD301BC9EF",
+                    "MSX2 BIOS - Required",
+                    SystemID.MSX2,
+                    null,
+                    "MSX2.ROM",
+                ),
+                Bios(
+                    "MSX2EXT.ROM",
+                    "2183C2AFF17CF4297BDB496DE78C2E8A",
+                    "MSX2 ExtROM - Required",
+                    SystemID.MSX2,
+                    null,
+                    "MSX2EXT.ROM",
+                ),
+                Bios(
+                    "MSX2P.ROM",
+                    "847CC025FFAE665487940FF2639540E5",
+                    "MSX2+ BIOS - Required",
+                    SystemID.MSX,
+                    null,
+                    "MSX2P.ROM",
+                ),
+                Bios(
+                    "MSX2PEXT.ROM",
+                    "7C8243C71D8F143B2531F01AFA6A05DC",
+                    "MSX2+ ExtROM - Required",
+                    SystemID.MSX,
+                    null,
+                    "MSX2PEXT.ROM",
+                ),
+                Bios(
+                    "DISK.ROM",
+                    "80DCD1AD1A4CF65D64B7BA10504E8190",
+                    "DiskROM/BDOS (optional)",
+                    SystemID.MSX,
+                    null,
+                    "DISK.ROM",
+                ),
+                Bios(
+                    "FMPAC.ROM",
+                    "6F69CC8B5ED761B03AFD78000DFB0E19",
+                    "FMPAC BIOS (optional)",
+                    SystemID.MSX,
+                    null,
+                    "FMPAC.ROM",
+                ),
+                Bios(
+                    "MSXDOS2.ROM",
+                    "6418D091CD6907BBCF940324339E43BB",
+                    "MSX-DOS 2 (optional)",
+                    SystemID.MSX,
+                    null,
+                    "MSXDOS2.ROM",
+                ),
+                Bios(
+                    "PAINTER.ROM",
+                    "403CDEA1CBD2BB24FAE506941F8F655E",
+                    "Yamaha Painter (optional)",
+                    SystemID.MSX,
+                    null,
+                    "PAINTER.ROM",
+                ),
+                Bios(
+                    "KANJI.ROM",
+                    "FEBE8782B466D7C3B16DE6D104826B34",
+                    "Kanji Font (optional)",
+                    SystemID.MSX,
+                    null,
+                    "KANJI.ROM",
+                ),
+                Bios(
+                    "[BIOS] Atari Jaguar CD (World).j64",
+                    "77CD95C7AD06A39F4C59995094AA10F9",
+                    "Jaguar CD BIOS, retail - optional override",
+                    SystemID.JAGUAR,
+                    null,
+                    "[BIOS] Atari Jaguar CD (World).j64",
+                ),
+                Bios(
+                    "[BIOS] Atari Jaguar Developer CD (World).j64",
+                    "578DE34498CB9A40C5368B6F5CA80484",
+                    "Jaguar CD BIOS, developer - optional override",
+                    SystemID.JAGUAR,
+                    null,
+                    "[BIOS] Atari Jaguar Developer CD (World).j64",
+                ),
                 Bios(
                     "scph101.bin",
                     "6E3735FF4C7DC899EE98981385F6F3D0",

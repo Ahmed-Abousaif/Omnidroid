@@ -14,10 +14,24 @@ import com.omnidroid.lib.library.db.entity.Game
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-internal fun backdropRequest(context: Context, game: Game, width: Int, height: Int, radius: Int): ImageRequest {
+internal fun backdropRequest(
+    context: Context,
+    game: Game,
+    width: Int,
+    height: Int,
+    radius: Int,
+    preferredCoverUrl: String? = null,
+): ImageRequest {
     val blur = BackdropBlurTransformation(width, height, radius)
-    val cover = CoverUtils.coverRequest(context, game, size = Size(width, height))
-    return cover.newBuilder()
+    val cover =
+        CoverUtils.coverRequest(
+            context,
+            game,
+            preferredCoverUrl = preferredCoverUrl,
+            size = Size(width, height),
+        )
+    return cover
+        .newBuilder()
         // Never let a blurred thumbnail replace the sharp cover in Coil's shared cache.
         .memoryCacheKey("backdrop:${cover.memoryCacheKey}:${blur.cacheKey}")
         .allowHardware(false)
@@ -39,15 +53,22 @@ internal class BackdropBlurTransformation(
 
     override val cacheKey = "backdrop-blur-v1:$width:$height:$radius"
 
-    override suspend fun transform(input: Bitmap, size: Size): Bitmap {
+    override suspend fun transform(
+        input: Bitmap,
+        size: Size,
+    ): Bitmap {
         val output = createBitmap(width, height)
         val scale = max(width.toFloat() / input.width, height.toFloat() / input.height)
         val cropWidth = (width / scale).roundToInt().coerceIn(1, input.width)
         val cropHeight = (height / scale).roundToInt().coerceIn(1, input.height)
         val left = (input.width - cropWidth) / 2
         val top = (input.height - cropHeight) / 2
-        Canvas(output).drawBitmap(input, Rect(left, top, left + cropWidth, top + cropHeight),
-            Rect(0, 0, width, height), Paint(Paint.FILTER_BITMAP_FLAG))
+        Canvas(output).drawBitmap(
+            input,
+            Rect(left, top, left + cropWidth, top + cropHeight),
+            Rect(0, 0, width, height),
+            Paint(Paint.FILTER_BITMAP_FLAG),
+        )
 
         val pixels = IntArray(width * height)
         val scratch = IntArray(pixels.size)
@@ -83,7 +104,14 @@ internal class BackdropBlurTransformation(
     }
 
     /** Swap the strides to reuse the same sliding window for horizontal and vertical passes. */
-    private fun blurPass(source: IntArray, target: IntArray, lines: Int, length: Int, lineStride: Int, pixelStride: Int) {
+    private fun blurPass(
+        source: IntArray,
+        target: IntArray,
+        lines: Int,
+        length: Int,
+        lineStride: Int,
+        pixelStride: Int,
+    ) {
         val divisor = radius * 2 + 1
         for (line in 0 until lines) {
             val base = line * lineStride

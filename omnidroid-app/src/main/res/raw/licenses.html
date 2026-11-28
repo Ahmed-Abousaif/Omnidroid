@@ -46,6 +46,7 @@
         </script>
         <script type="application/javascript">
             const LICENSES = {
+                "picodrive": "\n Redistribution and use of this code or any derivative works are permitted\n provided that the following conditions are met:\n\n * Redistributions may not be sold, nor may they be used in a commercial\n product or activity.\n\n * Redistributions that are modified from the original source must include the\n complete source code, including the source code for all components used by a\n binary built from the modified sources. However, as a special exception, the\n source code distributed need not include anything that is normally distributed\n (in either source or binary form) with the major components (compiler, kernel,\n and so on) of the operating system on which the executable runs, unless that\n component itself accompanies the executable.\n\n * Redistributions must reproduce the above copyright notice, this list of\n conditions and the following disclaimer in the documentation and/or other\n materials provided with the distribution.\n\n THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\n AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE\n ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE\n LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR\n CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF\n SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS\n INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN\n CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)\n ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE\n POSSIBILITY OF SUCH DAMAGE.\n",
                 "apache2": `
                     Licensed under the Apache License, Version 2.0 (the "License");
                     you may not use this file except in compliance with the License.
@@ -79,6 +80,12 @@
             };
 
             var LIBRARIES = [
+              {
+                  "name": "PicoDrive",
+                  "url": "https://github.com/libretro/picodrive",
+                  "copyright": "PicoDrive contributors",
+                  "license": "picodrive"
+              },
               {
                   "name": "AutoDispose",
                   "url": "https://github.com/uber/AutoDispose",

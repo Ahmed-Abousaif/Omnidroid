@@ -41,7 +41,7 @@
         <error line="314" column="47" source="standard:chain-method-continuation" />
         <error line="314" column="56" source="standard:chain-method-continuation" />
         <error line="314" column="62" source="standard:chain-method-continuation" />
-        <error line="374" column="46" source="standard:function-expression-body" />
+        <error line="375" column="46" source="standard:function-expression-body" />
     </file>
     <file name="src/main/java/com/omnidroid/metadata/libretrodb/TokenMatcher.kt">
         <error line="54" column="10" source="standard:chain-method-continuation" />

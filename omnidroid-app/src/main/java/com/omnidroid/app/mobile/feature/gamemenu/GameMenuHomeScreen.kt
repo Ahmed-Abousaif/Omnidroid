@@ -2,7 +2,9 @@ package com.omnidroid.app.mobile.feature.gamemenu
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Sensors
+import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.Composable
@@ -31,10 +33,14 @@ fun GameMenuHomeScreen(
     gameMenuRequest: GameMenuRequest,
     onCommand: (InGameMenuCommand) -> Unit,
     saveSyncSupported: Boolean = false,
+    raVisible: Boolean = false,
+    hardcoreActive: Boolean = false,
+    raSummarySubtitle: String? = null,
 ) {
     val request = gameMenuRequest
     var audioEnabled by remember(request.audioEnabled) { mutableStateOf(request.audioEnabled) }
     var confirmRestart by remember { mutableStateOf(false) }
+    var confirmHardcoreValue by remember { mutableStateOf<Boolean?>(null) }
     val askToConfirm = confirmGameMenuActionsEnabled()
     if (confirmRestart) {
         ConfirmProgressLossDialog(
@@ -46,16 +52,65 @@ fun GameMenuHomeScreen(
             onCommand(InGameMenuCommand.Restart)
         }
     }
+    confirmHardcoreValue?.let { targetHardcore ->
+        ConfirmProgressLossDialog(
+            title =
+                stringResource(
+                    if (targetHardcore) {
+                        R.string.ra_hardcore_toggle_enable_title
+                    } else {
+                        R.string.ra_hardcore_toggle_disable_title
+                    },
+                ),
+            confirmLabel =
+                stringResource(
+                    if (targetHardcore) R.string.game_menu_restart else R.string.ok,
+                ),
+            message =
+                stringResource(
+                    if (targetHardcore) {
+                        R.string.ra_hardcore_toggle_enable_message
+                    } else {
+                        R.string.ra_hardcore_toggle_disable_message
+                    },
+                ),
+            onDismiss = { confirmHardcoreValue = null },
+        ) {
+            confirmHardcoreValue = null
+            onCommand(InGameMenuCommand.SetHardcore(targetHardcore))
+        }
+    }
     val hasSettings = request.advancedCoreOptions.isNotEmpty() || request.coreOptions.isNotEmpty() ||
         request.coreConfig.controllerConfigs.values.any { it.size >= 2 }
     val hasControls = request.editTouchControlsSupported || saveSyncSupported || hasSettings || request.allTiltConfigurations.isNotEmpty()
     SideMenuPage("game-home") {
         MenuSection("commands") {
+            if (raVisible) {
+                MenuAction(
+                    id = "achievements",
+                    titleRes = R.string.ra_menu_achievements,
+                    subtitle = raSummarySubtitle?.let { text -> { Text(text) } },
+                    icon = { Icon(Icons.Outlined.EmojiEvents, contentDescription = null) },
+                ) {
+                    navController.navigateToRoute(GameMenuRoute.ACHIEVEMENTS)
+                }
+            }
             if (request.coreConfig.statesSupported) {
                 MenuAction("save", titleRes = R.string.game_menu_save, icon = { MenuDrawableIcon(R.drawable.ic_menu_save) }) {
                     navController.navigateToRoute(GameMenuRoute.SAVE)
                 }
-                MenuAction("load", titleRes = R.string.game_menu_load, icon = { MenuDrawableIcon(R.drawable.ic_menu_load) }) {
+                MenuAction(
+                    id = "load",
+                    titleRes = R.string.game_menu_load,
+                    subtitle =
+                        if (hardcoreActive) {
+                            { Text(stringResource(R.string.ra_hardcore_blocked_load)) }
+                        } else {
+                            null
+                        },
+                    enabled = !hardcoreActive,
+                    icon = { MenuDrawableIcon(R.drawable.ic_menu_load) },
+                ) {
                     navController.navigateToRoute(GameMenuRoute.LOAD)
                 }
             }
@@ -67,6 +122,16 @@ fun GameMenuHomeScreen(
             }
         }
         MenuSection("playback") {
+            if (raVisible) {
+                MenuToggle(
+                    id = "ra-hardcore",
+                    titleRes = R.string.ra_hardcore_title,
+                    value = hardcoreActive,
+                    icon = { Icon(Icons.Outlined.EmojiEvents, contentDescription = null) },
+                ) { desired ->
+                    confirmHardcoreValue = desired
+                }
+            }
             MenuToggle("mute", titleRes = R.string.game_menu_mute_audio, value = !audioEnabled,
                 icon = { MenuDrawableIcon(R.drawable.ic_menu_mute) },
             ) { audioEnabled = !it; onCommand(InGameMenuCommand.Audio(!it)) }

@@ -73,6 +73,16 @@ internal object DiscIdentifier {
         if (sector0.startsWithAscii("SEGA SEGAKATANA")) {
             return DiscHit(SystemID.DREAMCAST, null)
         }
+        if (sector0.startsWithAscii("SEGA SEGASATURN")) {
+            return DiscHit(SystemID.SATURN, sector0.asciiAt(0x20, 10).ifBlank { null })
+        }
+        if (sector0.size >= 7 &&
+            sector0[0] == 1.toByte() &&
+            (1..5).all { sector0[it] == 0x5a.toByte() } &&
+            sector0[6] == 1.toByte()
+        ) {
+            return DiscHit(SystemID.THREE_DO, null)
+        }
         val pvd = sectors.readUserSector(16) ?: return null
         if (pvd.size < 8 || !pvd.copyOfRange(1, 6).startsWithAscii("CD001")) return null
         val system = pvd.asciiAt(8, 32)
@@ -128,28 +138,48 @@ internal object Iso9660 {
         val extent = le32(root, 2)
         val length = le32(root, 10)
         if (extent < 0 || length <= 0) return null
+        return findFile(sectors, extent, length, wanted.split('/').filter { it.isNotBlank() })
+    }
+
+    private fun findFile(
+        sectors: UserSectors,
+        extent: Int,
+        length: Int,
+        components: List<String>,
+    ): ByteArray? {
+        if (components.isEmpty() || length !in 1..(1024 * 1024)) return null
         val directory = readExtent(sectors, extent, length) ?: return null
         var cursor = 0
         while (cursor + 33 < directory.size) {
-            val recordLength = directory[cursor].toInt() and 0xFF
+            val recordLength = directory[cursor].toInt() and 0xff
             if (recordLength == 0) {
                 cursor = ((cursor / 2048) + 1) * 2048
                 continue
             }
-            if (cursor + recordLength > directory.size) break
-            val nameLength = directory[cursor + 32].toInt() and 0xFF
+            if (recordLength < 34 || cursor + recordLength > directory.size) return null
+            val nameLength = directory[cursor + 32].toInt() and 0xff
+            if (33 + nameLength > recordLength) return null
             val name =
-                if (nameLength == 1 && directory[cursor + 33].toInt() <= 1) {
-                    ""
-                } else {
-                    directory.copyOfRange(cursor + 33, cursor + 33 + nameLength).toString(Charsets.US_ASCII)
-                }
-            val bare = name.substringBefore(';').uppercase()
-            if (bare == wanted.uppercase()) {
+                directory
+                    .copyOfRange(
+                        cursor + 33,
+                        cursor + 33 + nameLength,
+                    ).toString(Charsets.US_ASCII)
+                    .substringBefore(';')
+            if (name.equals(components.first(), ignoreCase = true)) {
                 val fileExtent = le32(directory, cursor + 2)
                 val fileLength = le32(directory, cursor + 10)
-                if (fileExtent < 0 || fileLength <= 0 || fileLength > 256 * 1024) return null
-                return readExtent(sectors, fileExtent, fileLength)
+                if (fileExtent < 0 || fileLength !in 1..(1024 * 1024)) return null
+                val isDirectory = directory[cursor + 25].toInt() and 2 != 0
+                return if (components.size > 1 &&
+                    isDirectory
+                ) {
+                    findFile(sectors, fileExtent, fileLength, components.drop(1))
+                } else if (components.size == 1 && !isDirectory) {
+                    readExtent(sectors, fileExtent, fileLength)
+                } else {
+                    null
+                }
             }
             cursor += recordLength
         }
@@ -253,12 +283,11 @@ internal object CsoImage {
     private fun le32(
         bytes: ByteArray,
         offset: Int,
-    ): Int {
-        return (bytes[offset].toInt() and 0xFF) or
+    ): Int =
+        (bytes[offset].toInt() and 0xFF) or
             ((bytes[offset + 1].toInt() and 0xFF) shl 8) or
             ((bytes[offset + 2].toInt() and 0xFF) shl 16) or
             ((bytes[offset + 3].toInt() and 0xFF) shl 24)
-    }
 }
 
 internal object Lz4 {

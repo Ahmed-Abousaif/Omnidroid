@@ -1,0 +1,4 @@
+OMNIDROID_PS3_1 {
+    global: Java_com_omnidroid_app_shared_ps3_Armsx3Native_*;
+    local: *;
+};

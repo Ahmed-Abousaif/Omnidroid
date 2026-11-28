@@ -33,6 +33,10 @@ bugreport*.zip
 .kotlin/
 /.perf-local/
 
+# Python build/test caches
+__pycache__/
+*.py[cod]
+
 # Backups & internal notes
 *.bak
 *.bak-*

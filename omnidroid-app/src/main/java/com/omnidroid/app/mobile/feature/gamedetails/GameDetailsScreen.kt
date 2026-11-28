@@ -1,7 +1,5 @@
 package com.omnidroid.app.mobile.feature.gamedetails
 
-import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
-import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
 import android.net.Uri
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -49,9 +47,9 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -82,24 +80,33 @@ import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.omnidroid.R
-import com.omnidroid.app.utils.android.benchmarkTag
 import com.omnidroid.app.mobile.feature.library.ConsoleBackdrop
 import com.omnidroid.app.mobile.feature.library.bleedTop
 import com.omnidroid.app.mobile.shared.compose.dialog.DialogWidth
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialog
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogButton
 import com.omnidroid.app.mobile.shared.compose.dialog.OmnidroidDialogTextField
-import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.GameCoverOrigin
-import com.omnidroid.app.mobile.shared.compose.ui.gameCoverSharedBounds
+import com.omnidroid.app.mobile.shared.compose.ui.chromeColors
 import com.omnidroid.app.mobile.shared.compose.ui.chromeMutedContentColor
+import com.omnidroid.app.mobile.shared.compose.ui.gameCoverSharedBounds
 import com.omnidroid.app.mobile.shared.compose.ui.homeChromeBackground
+import com.omnidroid.app.mobile.shared.compose.ui.libraryAccentColor
+import com.omnidroid.app.mobile.shared.compose.ui.onLibraryAccentColor
 import com.omnidroid.app.mobile.shared.controller.LocalControllerNavigation
 import com.omnidroid.app.mobile.shared.controller.controllerFocusGlow
 import com.omnidroid.app.shared.covers.CoverCacheStore
 import com.omnidroid.app.shared.covers.CoverUtils
+import com.omnidroid.app.shared.ra.RaAchievementCard
+import com.omnidroid.app.shared.ra.RaGameSummaryHeader
+import com.omnidroid.app.shared.ra.RaLeaderboardCard
+import com.omnidroid.app.utils.android.benchmarkTag
 import com.omnidroid.app.utils.games.GameUtils
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.library.db.entity.RaGameCache
+import com.omnidroid.lib.ra.RaAchievementBucket
+import com.omnidroid.lib.ra.RaLeaderboardBucket
+import kotlinx.serialization.json.Json
 import java.text.DateFormat
 import java.util.Date
 import java.util.concurrent.TimeUnit
@@ -156,10 +163,11 @@ fun GameDetailsScreen(
     }
 
     val context = LocalContext.current
-    val initialAspect = remember(game.id) {
-        CoverUtils.getCachedCoverAspectRatio(context, game, state.metadata.coverImageUrl)
-            ?: com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
-    }
+    val initialAspect =
+        remember(game.id) {
+            CoverUtils.getCachedCoverAspectRatio(context, game, state.metadata.coverImageUrl)
+                ?: com.omnidroid.app.mobile.shared.compose.ui.LibraryGameCardAspectRatio
+        }
     var naturalAspect by remember(game.id) { mutableStateOf(initialAspect) }
     var selectedTab by rememberSaveable(game.id) { mutableStateOf(GameDetailsTab.Info) }
 
@@ -185,9 +193,10 @@ fun GameDetailsScreen(
     ) { targetState ->
         if (targetState == EnterExitState.Visible) 0f else 28f
     }
-    val backdropModifier = remember(backdropTopBleed) {
-        Modifier.fillMaxSize().bleedTop(backdropTopBleed)
-    }
+    val backdropModifier =
+        remember(backdropTopBleed) {
+            Modifier.fillMaxSize().bleedTop(backdropTopBleed)
+        }
 
     Box(
         modifier =
@@ -199,6 +208,7 @@ fun GameDetailsScreen(
         ConsoleBackdrop(
             game = game,
             modifier = backdropModifier,
+            preferredCoverUrl = state.metadata.backgroundImageUrl,
         )
         BoxWithConstraints(
             modifier =
@@ -371,9 +381,14 @@ private fun GameCoverOrTrailer(
     val hasTrailer = !trailerUrl.isNullOrBlank()
     var coverMenuOpen by remember { mutableStateOf(false) }
     val coverShape = RoundedCornerShape(cornerRadius)
-    val coverSharedModifier = Modifier.gameCoverSharedBounds(
-        sharedTransitionScope, animatedVisibilityScope, game.id, cornerRadius, coverOrigin,
-    )
+    val coverSharedModifier =
+        Modifier.gameCoverSharedBounds(
+            sharedTransitionScope,
+            animatedVisibilityScope,
+            game.id,
+            cornerRadius,
+            coverOrigin,
+        )
     BoxWithConstraints(
         modifier = modifier,
         contentAlignment = Alignment.Center,
@@ -411,8 +426,8 @@ private fun GameCoverOrTrailer(
                             onClick = onStopTrailer,
                             modifier =
                                 Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(4.dp),
+                                    .align(Alignment.TopEnd)
+                                    .padding(4.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Close,
@@ -471,7 +486,11 @@ private fun GameCoverOrTrailer(
                         text = {
                             Text(
                                 stringResource(
-                                    if (customCover) R.string.game_context_menu_change_thumbnail else R.string.game_context_menu_set_custom_thumbnail,
+                                    if (customCover) {
+                                        R.string.game_context_menu_change_thumbnail
+                                    } else {
+                                        R.string.game_context_menu_set_custom_thumbnail
+                                    },
                                 ),
                             )
                         },
@@ -514,12 +533,13 @@ private fun OmnidroidPoster(
     val context = LocalContext.current
     val fallback = remember(game) { CoverUtils.getFallbackDrawable(game) }
     val fallbackPainter = rememberDrawablePainter(drawable = fallback)
-    val request = remember(context, game.id, game.coverFrontUrl, game.customCoverPath, preferredCoverUrl) {
-        // Show the sharper detail-size cover; the grid cover (usually in memory) stands in while it loads.
-        val grid = CoverUtils.coverRequest(context, game, preferredCoverUrl)
-        val cover = CoverUtils.coverRequest(context, game, preferredCoverUrl, tier = CoverCacheStore.Tier.DETAIL)
-        cover.newBuilder().placeholderMemoryCacheKey(grid.memoryCacheKey).build()
-    }
+    val request =
+        remember(context, game.id, game.coverFrontUrl, game.customCoverPath, preferredCoverUrl) {
+            // Show the sharper detail-size cover; the grid cover (usually in memory) stands in while it loads.
+            val grid = CoverUtils.coverRequest(context, game, preferredCoverUrl)
+            val cover = CoverUtils.coverRequest(context, game, preferredCoverUrl, tier = CoverCacheStore.Tier.DETAIL)
+            cover.newBuilder().placeholderMemoryCacheKey(grid.memoryCacheKey).build()
+        }
     AsyncImage(
         model = request,
         contentDescription = game.displayName,
@@ -634,12 +654,9 @@ private fun GameDetailsInfo(
                     .fillMaxWidth(),
         ) {
             if (selectedTab == GameDetailsTab.Achievements) {
-                Text(
-                    text = stringResource(R.string.game_retro_achievements_wip),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = chromeMutedContentColor,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.align(Alignment.Center).padding(16.dp),
+                GameDetailsAchievementsContent(
+                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                    raCache = state.raCache,
                 )
             } else {
                 GameDetailsInfoContent(
@@ -648,6 +665,92 @@ private fun GameDetailsInfo(
                     state = state,
                     systemName = systemName,
                 )
+            }
+        }
+    }
+}
+
+private val DETAILS_RA_JSON = Json { ignoreUnknownKeys = true }
+
+@Composable
+private fun GameDetailsAchievementsContent(
+    modifier: Modifier,
+    raCache: RaGameCache?,
+) {
+    if (raCache == null) {
+        Box(modifier = modifier.padding(16.dp), contentAlignment = Alignment.Center) {
+            Text(
+                text = stringResource(R.string.ra_details_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = chromeMutedContentColor,
+                textAlign = TextAlign.Center,
+            )
+        }
+        return
+    }
+
+    val achievementBuckets =
+        remember(raCache.achievementsJson) {
+            runCatching {
+                DETAILS_RA_JSON.decodeFromString<List<RaAchievementBucket>>(raCache.achievementsJson)
+            }.getOrDefault(emptyList())
+        }
+    val leaderboardBuckets =
+        remember(raCache.leaderboardsJson) {
+            runCatching {
+                DETAILS_RA_JSON.decodeFromString<List<RaLeaderboardBucket>>(raCache.leaderboardsJson)
+            }.getOrDefault(emptyList())
+        }
+    val achievements = remember(achievementBuckets) { achievementBuckets.flatMap { it.achievements } }
+    val leaderboards = remember(leaderboardBuckets) { leaderboardBuckets.flatMap { it.leaderboards } }
+
+    Column(
+        modifier = modifier.padding(top = 2.dp, bottom = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        val statusFlags =
+            buildList {
+                if (raCache.completedTime > 0L) {
+                    add(stringResource(R.string.ra_details_mastered))
+                } else if (raCache.beatenTime > 0L) {
+                    add(stringResource(R.string.ra_details_beaten))
+                }
+            }
+        RaGameSummaryHeader(
+            badgeUrl = raCache.badgeUrl,
+            title = raCache.title.ifBlank { "RA #${raCache.raGameId}" },
+            scoreSummary =
+                stringResource(
+                    R.string.ra_details_score_summary,
+                    raCache.numUnlockedAchievements,
+                    raCache.numCoreAchievements,
+                    raCache.pointsUnlocked,
+                    raCache.pointsCore,
+                ),
+            statusText = statusFlags.takeIf { it.isNotEmpty() }?.joinToString(" • "),
+            richPresence = raCache.richPresence,
+        )
+
+        Text(
+            text = stringResource(R.string.ra_details_offline_cached),
+            style = MaterialTheme.typography.labelSmall,
+            color = chromeMutedContentColor.copy(alpha = 0.8f),
+        )
+
+        achievements.forEach { ach ->
+            RaAchievementCard(
+                achievement = ach,
+                useHardcoreRarity = true,
+            )
+        }
+
+        if (leaderboards.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.ra_menu_leaderboards_section),
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+            )
+            leaderboards.forEach { lb ->
+                RaLeaderboardCard(leaderboard = lb)
             }
         }
     }
@@ -687,8 +790,7 @@ private fun GameDetailsTabs(
                             1.dp,
                             if (selected) chromeColors.content.copy(alpha = 0.12f) else Color.Transparent,
                             tabShape,
-                        )
-                        .selectable(selected = selected, role = Role.Tab, onClick = { onTabSelected(tab) })
+                        ).selectable(selected = selected, role = Role.Tab, onClick = { onTabSelected(tab) })
                         .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -747,6 +849,36 @@ private fun GameDetailsInfoContent(
             label = stringResource(R.string.game_sessions),
             value = "${state.sessionCount}",
         )
+        listOf(
+            R.string.game_metadata_developer to game.developer,
+            R.string.game_metadata_publisher to state.metadata.publisher,
+            R.string.game_metadata_genre to state.metadata.genre,
+            R.string.game_metadata_release_date to state.metadata.releaseDate,
+            R.string.game_metadata_rating to state.metadata.rating,
+        ).forEach { (label, value) ->
+            if (!value.isNullOrBlank()) {
+                GameStat(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    label = stringResource(label),
+                    value = value,
+                )
+            }
+        }
+        state.metadata.description?.takeIf { it.isNotBlank() }?.let { description ->
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
+            )
+        }
+        if (state.metadata != GameRemoteMetadata()) {
+            Text(
+                text = stringResource(R.string.metadata_attribution),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -814,7 +946,11 @@ private fun GameDetailsActions(
                     imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                     contentDescription =
                         stringResource(
-                            if (isFavorite) R.string.game_context_menu_remove_from_favorites else R.string.game_context_menu_add_to_favorites,
+                            if (isFavorite) {
+                                R.string.game_context_menu_remove_from_favorites
+                            } else {
+                                R.string.game_context_menu_add_to_favorites
+                            },
                         ),
                     tint = if (isFavorite) libraryAccentColor else chromeColors.muted,
                     modifier = Modifier.size(20.dp),

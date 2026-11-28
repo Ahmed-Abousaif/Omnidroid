@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="touch_control_game_menu">Game menu</string>
     <string name="touch_customize_title">Edit Controls &amp; Screen</string>
     <string name="touch_customize_button_done">Save</string>
     <string name="touch_customize_button_save">Save</string>
@@ -8,6 +9,7 @@
     <string name="touch_customize_section_screen">Screen</string>
     <string name="touch_customize_section_controls">Virtual Controller</string>
     <string name="touch_customize_screen_position">Screen Position</string>
+    <string name="touch_customize_opacity">Opacity</string>
     <string name="touch_customize_scale">Button Scale</string>
     <string name="touch_customize_margin_x">Horizontal Margin</string>
     <string name="touch_customize_margin_y">Vertical Margin</string>

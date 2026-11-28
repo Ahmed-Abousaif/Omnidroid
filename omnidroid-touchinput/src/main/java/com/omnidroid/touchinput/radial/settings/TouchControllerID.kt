@@ -12,16 +12,22 @@ import com.omnidroid.touchinput.radial.layouts.Atari7800Left
 import com.omnidroid.touchinput.radial.layouts.Atari7800Right
 import com.omnidroid.touchinput.radial.layouts.DOSLeft
 import com.omnidroid.touchinput.radial.layouts.DOSRight
+import com.omnidroid.touchinput.radial.layouts.DreamcastLeft
+import com.omnidroid.touchinput.radial.layouts.DreamcastRight
 import com.omnidroid.touchinput.radial.layouts.GBALeft
 import com.omnidroid.touchinput.radial.layouts.GBARight
 import com.omnidroid.touchinput.radial.layouts.GBLeft
 import com.omnidroid.touchinput.radial.layouts.GBRight
 import com.omnidroid.touchinput.radial.layouts.GGLeft
 import com.omnidroid.touchinput.radial.layouts.GGRight
+import com.omnidroid.touchinput.radial.layouts.GameCubeLeft
+import com.omnidroid.touchinput.radial.layouts.GameCubeRight
 import com.omnidroid.touchinput.radial.layouts.Genesis3Left
 import com.omnidroid.touchinput.radial.layouts.Genesis3Right
 import com.omnidroid.touchinput.radial.layouts.Genesis6Left
 import com.omnidroid.touchinput.radial.layouts.Genesis6Right
+import com.omnidroid.touchinput.radial.layouts.LegacyPadLeft
+import com.omnidroid.touchinput.radial.layouts.LegacyPadRight
 import com.omnidroid.touchinput.radial.layouts.LynxLeft
 import com.omnidroid.touchinput.radial.layouts.LynxRight
 import com.omnidroid.touchinput.radial.layouts.MelonDSLeft
@@ -52,17 +58,13 @@ import com.omnidroid.touchinput.radial.layouts.WSLandscapeLeft
 import com.omnidroid.touchinput.radial.layouts.WSLandscapeRight
 import com.omnidroid.touchinput.radial.layouts.WSPortraitLeft
 import com.omnidroid.touchinput.radial.layouts.WSPortraitRight
-import com.omnidroid.touchinput.radial.layouts.GameCubeLeft
-import com.omnidroid.touchinput.radial.layouts.GameCubeRight
 import com.omnidroid.touchinput.radial.layouts.WiiClassicLeft
-import com.omnidroid.touchinput.radial.layouts.WiiUGamepadLeft
 import com.omnidroid.touchinput.radial.layouts.WiiClassicRight
 import com.omnidroid.touchinput.radial.layouts.WiiRemoteLeft
 import com.omnidroid.touchinput.radial.layouts.WiiRemoteRight
 import com.omnidroid.touchinput.radial.layouts.WiiSidewaysLeft
 import com.omnidroid.touchinput.radial.layouts.WiiSidewaysRight
-import com.omnidroid.touchinput.radial.layouts.DreamcastLeft
-import com.omnidroid.touchinput.radial.layouts.DreamcastRight
+import com.omnidroid.touchinput.radial.layouts.WiiUGamepadLeft
 import gg.padkit.PadKitScope
 
 enum class TouchControllerID {
@@ -99,6 +101,15 @@ enum class TouchControllerID {
     WII_U_GAMEPAD,
     WII_U_PRO,
     SWITCH_PRO,
+    ATARI5200,
+    ATARI800,
+    SATURN,
+    THREE_DO,
+    COLECOVISION,
+    C64,
+    MSX,
+    APPLE2,
+    JAGUAR,
     ;
 
     class Config(
@@ -113,8 +124,14 @@ enum class TouchControllerID {
     )
 
     companion object {
-        fun getConfig(id: TouchControllerID): Config {
-            return when (id) {
+        fun getConfig(id: TouchControllerID): Config =
+            when (id) {
+                ATARI5200, ATARI800, SATURN, THREE_DO, COLECOVISION, C64, MSX, APPLE2, JAGUAR ->
+                    Config(
+                        { modifier, settings -> LegacyPadLeft(id, modifier, settings) },
+                        { modifier, settings -> LegacyPadRight(id, modifier, settings) },
+                    )
+
                 GB ->
                     Config(
                         { modifier, settings -> GBLeft(modifier, settings) },
@@ -307,6 +324,5 @@ enum class TouchControllerID {
                         { modifier, settings -> WiiClassicRight(modifier, settings) },
                     )
             }
-        }
     }
 }

@@ -29,67 +29,55 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class GameLauncher(
-
     private val coresSelection: CoresSelection,
-
     private val gameLaunchTaskHandler: GameLaunchTaskHandler,
-
     private val saveSyncManager: SaveSyncManager,
-
     private val settingsManager: SettingsManager,
-
     private val gameCloudSyncPreferences: GameCloudSyncPreferences,
-
     private val inputDeviceManager: InputDeviceManager,
-
 ) {
+    private var launchInProgress = false
 
     fun launchGameAsync(
-
         activity: Activity,
-
         game: Game,
-
         loadSave: Boolean,
-
         leanback: Boolean,
-
         isExternalLaunch: Boolean = false,
-
         onLaunched: (() -> Unit)? = null,
-
     ): Boolean {
-
         val system = GameSystem.findById(game.systemId)
 
         val systemDescriptor = ConsoleBackendRegistry.findDescriptorForSystem(game.systemId)
 
+        if (systemDescriptor?.isAvailable(activity) == false) {
+            android.widget.Toast
+                .makeText(
+                    activity,
+                    "${systemDescriptor.displayName} requires Android 13 or newer and an ARM64 device.",
+                    android.widget.Toast.LENGTH_LONG,
+                ).show()
+            return false
+        }
+
         val initialConfig = system.systemCoreConfigs.firstOrNull()
         val initialReqs = initialConfig?.let { systemDescriptor?.requirementsFor(it) }
-        val initialUnfulfilled = initialReqs?.items?.filter { it.severity == RequirementSeverity.REQUIRED && !it.isFulfilled(activity) }
+        val initialUnfulfilled =
+            initialReqs?.items?.filter {
+                it.severity == RequirementSeverity.REQUIRED &&
+                    !it.isFulfilled(activity)
+            }
 
         if (!initialUnfulfilled.isNullOrEmpty()) {
-
             showMissingRequirementsDialog(activity, initialReqs, initialUnfulfilled)
 
             return false
-
-        }
-
-        if (GameProcessLock.isHeldByAnotherProcess(activity.applicationContext)) {
-
-            activity.displayToast(R.string.game_process_another_game_running)
-
-            return false
-
         }
 
         if (TVHelper.isTV(activity) && !inputDeviceManager.hasEnabledGamePad()) {
-
             activity.displayToast(R.string.tv_game_message_missing_gamepad)
 
             return false
-
         }
 
         val scope: CoroutineScope =
@@ -98,86 +86,77 @@ class GameLauncher(
 
                 ?: OmnidroidApplication.scope(activity)
 
+        if (launchInProgress) return false
+        launchInProgress = true
         scope.launch(Dispatchers.Main) {
+            try {
+                val coreConfig = coresSelection.getCoreConfigForSystem(system)
 
-            val coreConfig = coresSelection.getCoreConfigForSystem(system)
+                val descriptor = ConsoleBackendRegistry.findDescriptorForCore(coreConfig.coreID)
 
-            val descriptor = ConsoleBackendRegistry.findDescriptorForCore(coreConfig.coreID)
+                val coreReqs = descriptor?.requirementsFor(coreConfig)
 
-            val coreReqs = descriptor?.requirementsFor(coreConfig)
+                val coreUnfulfilled =
+                    coreReqs?.items?.filter {
+                        it.severity == RequirementSeverity.REQUIRED &&
+                            !it.isFulfilled(activity)
+                    }
 
-            val coreUnfulfilled = coreReqs?.items?.filter { it.severity == RequirementSeverity.REQUIRED && !it.isFulfilled(activity) }
+                if (!coreUnfulfilled.isNullOrEmpty()) {
+                    showMissingRequirementsDialog(activity, coreReqs, coreUnfulfilled)
 
-            if (!coreUnfulfilled.isNullOrEmpty()) {
+                    return@launch
+                }
 
-                showMissingRequirementsDialog(activity, coreReqs, coreUnfulfilled)
+                if (!GameProcessLock.stopPreviousGame(activity.applicationContext)) {
+                    activity.displayToast(R.string.game_process_cleanup_failed)
+                    return@launch
+                }
 
-                return@launch
+                val shouldPreSync =
 
+                    saveSyncManager.isSupported() &&
+
+                        saveSyncManager.isConfigured() &&
+
+                        settingsManager.syncBeforeGame() &&
+
+                        gameCloudSyncPreferences.shouldSyncGame(game, settingsManager.syncSaves())
+
+                if (shouldPreSync) {
+                    activity.startActivityForResult(
+                        PreGameSyncActivity.intent(activity, game, coreConfig, loadSave, leanback, isExternalLaunch),
+                        BaseGameActivity.REQUEST_PLAY_GAME,
+                    )
+
+                    onLaunched?.invoke()
+                } else {
+                    gameLaunchTaskHandler.handleGameStart(activity.applicationContext)
+
+                    BaseGameActivity.launchGame(
+                        activity,
+                        coreConfig,
+                        game,
+                        loadSave,
+                        leanback,
+                        isExternalLaunch,
+                    )
+
+                    onLaunched?.invoke()
+                }
+            } finally {
+                launchInProgress = false
             }
-
-            val shouldPreSync =
-
-                saveSyncManager.isSupported() &&
-
-                    saveSyncManager.isConfigured() &&
-
-                    settingsManager.syncBeforeGame() &&
-
-                    gameCloudSyncPreferences.shouldSyncGame(game, settingsManager.syncSaves())
-
-            if (shouldPreSync) {
-
-                activity.startActivityForResult(
-
-                    PreGameSyncActivity.intent(activity, game, coreConfig, loadSave, leanback, isExternalLaunch),
-
-                    BaseGameActivity.REQUEST_PLAY_GAME,
-
-                )
-
-                onLaunched?.invoke()
-
-            } else {
-
-                gameLaunchTaskHandler.handleGameStart(activity.applicationContext)
-
-                BaseGameActivity.launchGame(
-
-                    activity,
-
-                    coreConfig,
-
-                    game,
-
-                    loadSave,
-
-                    leanback,
-
-                    isExternalLaunch,
-
-                )
-
-                onLaunched?.invoke()
-
-            }
-
         }
 
         return true
-
     }
 
     private fun showMissingRequirementsDialog(
-
         activity: Activity,
-
         descriptor: RequirementDescriptor,
-
         unfulfilled: List<RequirementItem>,
-
     ) {
-
         if (activity.isFinishing || activity.isDestroyed) return
 
         val item = unfulfilled.firstOrNull() ?: return
@@ -186,15 +165,13 @@ class GameLauncher(
             activity = activity,
             title = descriptor.title,
             message = item.description,
-            actions = listOf(
-                OmnidroidDialogAction(activity.getString(android.R.string.cancel), DialogActionRole.Cancel),
-                OmnidroidDialogAction(activity.getString(R.string.switch_keys_import_action)) {
-                    item.action?.let { RequirementPickerLauncherActivity.launch(activity, it) }
-                },
-            ),
+            actions =
+                listOf(
+                    OmnidroidDialogAction(activity.getString(android.R.string.cancel), DialogActionRole.Cancel),
+                    OmnidroidDialogAction(activity.getString(R.string.switch_keys_import_action)) {
+                        item.action?.let { RequirementPickerLauncherActivity.launch(activity, it) }
+                    },
+                ),
         )
-
     }
-
 }
-

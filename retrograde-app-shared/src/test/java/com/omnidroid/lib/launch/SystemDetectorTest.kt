@@ -1,13 +1,23 @@
 package com.omnidroid.lib.launch
 
 import com.omnidroid.lib.library.SystemID
-import java.io.ByteArrayInputStream
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.io.ByteArrayInputStream
 
 class SystemDetectorTest {
+    @Test
+    fun identifiesPs3VolumeBeforeIsoFallback() {
+        val header = ByteArray(0x9000) { 0x20 }
+        "CD001".toByteArray().copyInto(header, 0x8001)
+        "PS3VOLUME".toByteArray().copyInto(header, 0x8028)
+        assertEquals(
+            SystemID.PS3,
+            SystemDetector.detectSystem("iso", openStream = { ByteArrayInputStream(header) })?.id,
+        )
+        assertEquals(SystemID.PS2, SystemDetector.detectSystem("iso", "ps2", { ByteArrayInputStream(header) })?.id)
+    }
 
     @Test
     fun detectsUniqueExtensions() {
@@ -76,7 +86,7 @@ class SystemDetectorTest {
         gcHeader[0x4B] = 1 // disc_type = 1 (GameCube)
         assertEquals(
             SystemID.GAMECUBE,
-            SystemDetector.detectSystem("rvz", null) { ByteArrayInputStream(gcHeader) }?.id
+            SystemDetector.detectSystem("rvz", null) { ByteArrayInputStream(gcHeader) }?.id,
         )
 
         val wiiHeader = ByteArray(0x100)
@@ -84,7 +94,7 @@ class SystemDetectorTest {
         wiiHeader[0x4B] = 2 // disc_type = 2 (Wii)
         assertEquals(
             SystemID.WII,
-            SystemDetector.detectSystem("rvz", null) { ByteArrayInputStream(wiiHeader) }?.id
+            SystemDetector.detectSystem("rvz", null) { ByteArrayInputStream(wiiHeader) }?.id,
         )
     }
 

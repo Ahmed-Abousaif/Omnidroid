@@ -6,4 +6,7 @@ data class GameMetadata(
     val romName: String?,
     val developer: String?,
     val thumbnail: String?,
+    val rawTitle: String? = null,
+    val matchMethod: String = "filename",
+    val thumbnailIndexed: Boolean = false,
 )

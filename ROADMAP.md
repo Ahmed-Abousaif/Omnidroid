@@ -6,6 +6,24 @@ Community requests, feature milestones, and bug reports from the community, orga
 
 ## Completed
 
+### v3.2.0
+
+- Added RetroAchievements integration via a dedicated pure-C `rcheevos` engine (`omni_ra` / `omnidroid-ra`) with token-based login, Hardcore Mode enforcement, Encore/Spectator/Unofficial modes, leaderboards, Rich Presence, customizable unlock overlays with synthesized chimes, offline achievement caching, compact **Game Details -> Achievements** and in-game **Achievements** views, and a dedicated **Retro Achievements** tab in Profile ([#98](https://github.com/Ahmed-Abousaif/Omnidroid/pull/98), [#21](https://github.com/Ahmed-Abousaif/Omnidroid/issues/21)) ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif), [@Deus0](https://github.com/Deus0))
+- Added PlayStation 3 emulation via an integrated ARMSX3 engine (Android 13+, ARM64, Vulkan), supporting ISO and extracted-folder games, firmware/PKG/license imports, 15 graphics settings, manual snapshot slots, quick saves, and native save-folder archiving ([#88](https://github.com/Ahmed-Abousaif/Omnidroid/pull/88), [#83](https://github.com/Ahmed-Abousaif/Omnidroid/issues/83)) ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif), [@Deus0](https://github.com/Deus0))
+- Added Sega 32X emulation via PicoDrive (`.32x`, `.bin`, `.gen`, `.md`, `.smd`, and `.zip`) with two 6-button controller ports, fixed SMD bank checksums, and made PicoDrive selectable alongside Genesis Plus GX for Genesis and Sega CD ([#93](https://github.com/Ahmed-Abousaif/Omnidroid/pull/93), [#89](https://github.com/Ahmed-Abousaif/Omnidroid/issues/89)) ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif), [@102hedgehog](https://github.com/102hedgehog))
+- Automatically installs and verifies required Europe, Japan, and USA Sega CD BIOS files through core support assets so firmware survives rescans and repairs missing or corrupt copies from cache ([#92](https://github.com/Ahmed-Abousaif/Omnidroid/pull/92), [#91](https://github.com/Ahmed-Abousaif/Omnidroid/issues/91)) ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif))
+- Added local-first metadata and artwork enrichment with IGDB fallback via `omnidroid.site` when local databases and Libretro thumbnails have no match, persisting accepted matches and cover art across rescans and restarts ([#90](https://github.com/Ahmed-Abousaif/Omnidroid/pull/90)) ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif))
+- Always fall back to the official `libretro-thumbnails` GitHub repository when `thumbnails.libretro.com` fails or misses before consulting IGDB ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif))
+- Preserved manual and curated game matches across library rescans ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif))
+- Fixed a crash when choosing a custom save folder ([#79](https://github.com/Ahmed-Abousaif/Omnidroid/issues/79)) ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif), [@raycke1234-spec](https://github.com/raycke1234-spec))
+- Organized custom save folder saves (`saves/<Console>/...`), save states (`states/<Console>/<core>/...`), and state previews (`state-previews/<Console>/<core>/...`) into per-console subfolders while keeping existing legacy saves compatible and safely migrated ([#94](https://github.com/Ahmed-Abousaif/Omnidroid/pull/94), [#84](https://github.com/Ahmed-Abousaif/Omnidroid/issues/84)) ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif), [@NinFanBoyFTW](https://github.com/NinFanBoyFTW))
+- Enabled all four controller ports for Nintendo 64 games so multiplayer works with two or more physical controllers ([#86](https://github.com/Ahmed-Abousaif/Omnidroid/issues/86)) ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif), [@raycke1234-spec](https://github.com/raycke1234-spec))
+- Added a "Reinstall app" option in the GitHub updater dialog when already on the latest release ([@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif))
+- Added per-controller and per-orientation virtual pad opacity control in the touch-controls editor with global controller opacity fallback ([#85](https://github.com/Ahmed-Abousaif/Omnidroid/pull/85)) ([@SykikXO](https://github.com/SykikXO), [@Ahmed-Abousaif](https://github.com/Ahmed-Abousaif))
+- Highlighted controller-focused games in Library Grid and List views with the Console view's accent selection glow and outline, drawing above neighboring items ([#81](https://github.com/Ahmed-Abousaif/Omnidroid/pull/81)) ([@mlnchlc](https://github.com/mlnchlc))
+- Moved controller focus into open game and library menus (including touch-opened menus on first D-pad press) and kept D-pad navigation inside until Back or Close ([#82](https://github.com/Ahmed-Abousaif/Omnidroid/pull/82)) ([@mlnchlc](https://github.com/mlnchlc))
+- Prevented Settings slider rows from retaining a focus highlight in touch mode and kept focus on the row instead of the inner slider for clean D-pad navigation ([#80](https://github.com/Ahmed-Abousaif/Omnidroid/pull/80)) ([@mlnchlc](https://github.com/mlnchlc))
+
 ### v3.1.0
 
 - Upgraded on-screen touch controls to Omnidroid PadKit for smoother, more reliable touch gameplay
@@ -184,7 +202,6 @@ Community requests, feature milestones, and bug reports from the community, orga
 - Upscaling / higher resolution with finer control, plus more shader options (upscaling already works for Wii / GameCube / 3DS) (_u/Mr2Sexy_, _u/Abdallah_player1_, _u/bboy_3431_)
 - Custom shaders at a RetroArch-like level (_u/Due-Car-6521_)
 - Cheat codes (_u/madzleng_)
-- RetroAchievements (planned after full release) (_u/Fein_shit_, _u/Abdallah_player1_, _u/Repulsive_Cow_2470_)
 - DOS (DOSBox Pure), Pico-8, and Sega Saturn (_u/milosmisic89_, _u/Kwametoure1_)
 - PSP custom texture support (needed for some English patches) (_u/DragonBane52_)
 - SNES widescreen patches (_u/Le_Sairo_)

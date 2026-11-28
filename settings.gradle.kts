@@ -9,6 +9,7 @@ pluginManagement {
 
 include(
     ":omnidroid-chd",
+    ":omnidroid-ra",
     ":retrograde-util",
     ":retrograde-app-shared",
     ":omnidroid-padkit",
@@ -43,11 +44,21 @@ fun usePlayDynamicFeatures(): Boolean {
 
 if (usePlayDynamicFeatures()) {
     include(
+        ":omnidroid_core_a5200",
+        ":omnidroid_core_atari800",
+        ":omnidroid_core_yabasanshiro",
+        ":omnidroid_core_opera",
+        ":omnidroid_core_gearcoleco",
+        ":omnidroid_core_vice_x64",
+        ":omnidroid_core_fmsx",
+        ":omnidroid_core_applewin",
+        ":omnidroid_core_virtualjaguar",
         ":omnidroid_core_dosbox_pure",
         ":omnidroid_core_fbneo",
         ":omnidroid_core_fceumm",
         ":omnidroid_core_gambatte",
         ":omnidroid_core_genesis_plus_gx",
+        ":omnidroid_core_picodrive",
         ":omnidroid_core_handy",
         ":omnidroid_core_mame2003_plus",
         ":omnidroid_core_mednafen_ngp",
@@ -67,14 +78,25 @@ if (usePlayDynamicFeatures()) {
         ":omnidroid_core_dolphin",
         ":omnidroid_core_flycast",
         ":omnidroid_core_cemu",
-        ":omnidroid_core_switch"
+        ":omnidroid_core_switch",
+        ":omnidroid_core_armsx3"
     )
 
+    project(":omnidroid_core_a5200").projectDir = File("omnidroid-cores/omnidroid_core_a5200")
+    project(":omnidroid_core_atari800").projectDir = File("omnidroid-cores/omnidroid_core_atari800")
+    project(":omnidroid_core_yabasanshiro").projectDir = File("omnidroid-cores/omnidroid_core_yabasanshiro")
+    project(":omnidroid_core_opera").projectDir = File("omnidroid-cores/omnidroid_core_opera")
+    project(":omnidroid_core_gearcoleco").projectDir = File("omnidroid-cores/omnidroid_core_gearcoleco")
+    project(":omnidroid_core_vice_x64").projectDir = File("omnidroid-cores/omnidroid_core_vice_x64")
+    project(":omnidroid_core_fmsx").projectDir = File("omnidroid-cores/omnidroid_core_fmsx")
+    project(":omnidroid_core_applewin").projectDir = File("omnidroid-cores/omnidroid_core_applewin")
+    project(":omnidroid_core_virtualjaguar").projectDir = File("omnidroid-cores/omnidroid_core_virtualjaguar")
     project(":omnidroid_core_gambatte").projectDir = File("omnidroid-cores/omnidroid_core_gambatte")
     project(":omnidroid_core_melondsds").projectDir = File("omnidroid-cores/omnidroid_core_melondsds")
     project(":omnidroid_core_fbneo").projectDir = File("omnidroid-cores/omnidroid_core_fbneo")
     project(":omnidroid_core_fceumm").projectDir = File("omnidroid-cores/omnidroid_core_fceumm")
     project(":omnidroid_core_genesis_plus_gx").projectDir = File("omnidroid-cores/omnidroid_core_genesis_plus_gx")
+    project(":omnidroid_core_picodrive").projectDir = File("omnidroid-cores/omnidroid_core_picodrive")
     project(":omnidroid_core_mame2003_plus").projectDir = File("omnidroid-cores/omnidroid_core_mame2003_plus")
     project(":omnidroid_core_mgba").projectDir = File("omnidroid-cores/omnidroid_core_mgba")
     project(":omnidroid_core_mupen64plus_next_gles3").projectDir = File("omnidroid-cores/omnidroid_core_mupen64plus_next_gles3")
@@ -95,4 +117,5 @@ if (usePlayDynamicFeatures()) {
     project(":omnidroid_core_flycast").projectDir = File("omnidroid-cores/omnidroid_core_flycast")
     project(":omnidroid_core_cemu").projectDir = File("omnidroid-cores/omnidroid_core_cemu")
     project(":omnidroid_core_switch").projectDir = File("omnidroid-cores/omnidroid_core_switch")
+    project(":omnidroid_core_armsx3").projectDir = File("omnidroid-cores/omnidroid_core_armsx3")
 }

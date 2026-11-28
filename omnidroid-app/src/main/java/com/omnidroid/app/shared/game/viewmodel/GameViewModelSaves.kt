@@ -8,6 +8,10 @@ import com.omnidroid.common.graphics.GraphicsUtils
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.ra.HardcoreDecision
+import com.omnidroid.lib.ra.HardcorePolicy
+import com.omnidroid.lib.ra.RaSaveStateProgressCodec
+import com.omnidroid.lib.ra.RetroAchievementsEngine
 import com.omnidroid.lib.saves.IncompatibleStateException
 import com.omnidroid.lib.saves.SaveState
 import com.omnidroid.lib.saves.SavesManager
@@ -32,6 +36,8 @@ class GameViewModelSaves(
     private val statesManager: StatesManager,
     private val statesPreviewManager: StatesPreviewManager,
     private val sideEffects: GameViewModelSideEffects,
+    private val hardcorePolicy: HardcorePolicy,
+    private val raEngine: RetroAchievementsEngine,
 ) {
     private var currentQuickSave: SaveState? = null
 
@@ -44,6 +50,7 @@ class GameViewModelSaves(
     )
 
     suspend fun saveSlot(index: Int) {
+        if (saveNativeSlot(index)) return
         saveManualState {
             statesManager.setSlotSave(game, it, systemCoreConfig.coreID, index)
             index
@@ -51,7 +58,78 @@ class GameViewModelSaves(
     }
 
     suspend fun saveNewSlot() {
+        if (retroGameView.retroGameView is com.omnidroid.lib.backend.NativeStateSession) {
+            try {
+                val index =
+                    withContext(
+                        Dispatchers.IO,
+                    ) {
+                        com.omnidroid.lib.saves.Ps3StateSlots
+                            .forGame(appContext, game)
+                            .nextIndex()
+                    }
+                saveNativeSlot(index)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                showSaveError(e)
+            }
+            return
+        }
         saveManualState { statesManager.setNewSlotSave(game, systemCoreConfig.coreID, it) }
+    }
+
+    private suspend fun saveNativeSlot(index: Int): Boolean {
+        val session = retroGameView.retroGameView as? com.omnidroid.lib.backend.NativeStateSession ?: return false
+        try {
+            val previewSize =
+                GraphicsUtils
+                    .convertDpToPixel(
+                        StatesPreviewManager.PREVIEW_SIZE_DP,
+                        appContext,
+                    ).roundToInt()
+            val preview =
+                try {
+                    if (index ==
+                        com.omnidroid.lib.saves.Ps3StateSlots.QUICK_SLOT
+                    ) {
+                        null
+                    } else {
+                        retroGameView.retroGameView?.takeScreenshot(previewSize, 3)
+                    }
+                } catch (
+                    e: CancellationException,
+                ) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.w(e, "Cannot capture state preview")
+                    null
+                }
+            try {
+                if (!session.saveNativeState(index)) throw IOException("Core rejected state capture")
+                try {
+                    if (preview !=
+                        null
+                    ) {
+                        statesPreviewManager.setPreviewForSlot(game, preview, systemCoreConfig.coreID, index)
+                    }
+                } catch (
+                    e: CancellationException,
+                ) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.w(e, "State saved, but preview failed")
+                }
+            } finally {
+                preview?.recycle()
+            }
+            sideEffects.showToast(appContext.getString(R.string.game_toast_save_state_saved))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            showSaveError(e)
+        }
+        return true
     }
 
     private suspend fun saveManualState(write: suspend (SaveState) -> Int) {
@@ -74,7 +152,16 @@ class GameViewModelSaves(
     }
 
     suspend fun loadSlot(index: Int) {
+        if (hardcorePolicy.canLoadSaveState(isAutoSaveOnLaunch = false) is HardcoreDecision.Blocked) {
+            sideEffects.showToast(appContext.getString(R.string.ra_hardcore_blocked_load))
+            return
+        }
         try {
+            val native = retroGameView.retroGameView as? com.omnidroid.lib.backend.NativeStateSession
+            if (native != null) {
+                if (!native.loadNativeState(index)) throw IOException("Core rejected state")
+                return
+            }
             val state =
                 statesManager.getSlotSave(game, systemCoreConfig.coreID, index)
                     ?: throw IOException("Save slot is missing")
@@ -90,6 +177,10 @@ class GameViewModelSaves(
 
     /** An explicit load remains available even when automatic saving/resuming is disabled. */
     suspend fun loadAutoSave() {
+        if (hardcorePolicy.canLoadSaveState(isAutoSaveOnLaunch = false) is HardcoreDecision.Blocked) {
+            sideEffects.showToast(appContext.getString(R.string.ra_hardcore_blocked_load))
+            return
+        }
         try {
             val state =
                 statesManager.getAutoSave(game, systemCoreConfig.coreID)
@@ -172,6 +263,11 @@ class GameViewModelSaves(
         // PPSSPP and Mupen64 initialize some state while rendering the first frame, so we have to wait before restoring
         // the autosave. Do not change thread here. Stick to the GL one to avoid issues with PPSSPP.
         if (!isAutoSaveEnabled()) return
+        if (hardcorePolicy.canLoadSaveState(isAutoSaveOnLaunch = true) is HardcoreDecision.Blocked) {
+            preserveAutoSave = true
+            sideEffects.showToast(appContext.getString(R.string.ra_hardcore_autosave_skipped))
+            return
+        }
 
         preserveAutoSave = true
         try {
@@ -222,15 +318,20 @@ class GameViewModelSaves(
                 0
             }
         val stateBytes = retroGameView.serializeState(useEmulationThread)?.takeIf { it.isNotEmpty() } ?: return null
+        val encodedBytes =
+            if (!hardcorePolicy.isHardcoreActive && raEngine.isModuleLoaded()) {
+                RaSaveStateProgressCodec.wrap(stateBytes, raEngine.serializeProgress())
+            } else {
+                stateBytes
+            }
         return SaveState(
-            stateBytes,
+            encodedBytes,
             SaveState.Metadata(currentDisk, systemCoreConfig.statesVersion),
         )
     }
 
-    private suspend fun isAutoSaveEnabled(): Boolean {
-        return systemCoreConfig.statesSupported && settingsManager.autoSave()
-    }
+    private suspend fun isAutoSaveEnabled(): Boolean =
+        systemCoreConfig.statesSupported && systemCoreConfig.autoSaveSupported && settingsManager.autoSave()
 
     private suspend fun takeScreenshotPreview(index: Int) {
         val sizeInDp = StatesPreviewManager.PREVIEW_SIZE_DP
@@ -245,8 +346,14 @@ class GameViewModelSaves(
         restoreSaveStateWithRetry { loadSaveState(saveState) }
     }
 
-    private fun loadSaveState(saveState: SaveState): Boolean {
+    private fun loadSaveState(
+        saveState: SaveState,
+        isAutoSaveOnLaunch: Boolean = false,
+    ): Boolean {
         val retroGameView = retroGameView.retroGameView ?: return false
+        if (hardcorePolicy.canLoadSaveState(isAutoSaveOnLaunch) is HardcoreDecision.Blocked) {
+            return false
+        }
 
         if (systemCoreConfig.statesVersion != saveState.metadata.version) {
             throw IncompatibleStateException()
@@ -259,10 +366,17 @@ class GameViewModelSaves(
             retroGameView.changeDisk(saveState.metadata.diskIndex)
         }
 
-        return retroGameView.unserializeState(saveState.state)
+        val unwrapped = RaSaveStateProgressCodec.unwrap(saveState.state)
+        val loaded = retroGameView.unserializeState(unwrapped.coreState)
+        val raProgress = unwrapped.raProgress
+        if (loaded && !hardcorePolicy.isHardcoreActive && raProgress != null && raEngine.isModuleLoaded()) {
+            raEngine.deserializeProgress(raProgress)
+        }
+        return loaded
     }
 
-    fun saveQuickSave() {
+    suspend fun saveQuickSave() {
+        if (saveNativeSlot(com.omnidroid.lib.saves.Ps3StateSlots.QUICK_SLOT)) return
         try {
             val state = getCurrentSaveState() ?: throw IOException("Core did not capture quick save")
             currentQuickSave = state
@@ -274,7 +388,15 @@ class GameViewModelSaves(
         }
     }
 
-    fun loadQuickSave() {
+    suspend fun loadQuickSave() {
+        if (hardcorePolicy.canLoadSaveState(isAutoSaveOnLaunch = false) is HardcoreDecision.Blocked) {
+            sideEffects.showToast(appContext.getString(R.string.ra_hardcore_blocked_load))
+            return
+        }
+        if (retroGameView.retroGameView is com.omnidroid.lib.backend.NativeStateSession) {
+            loadSlot(com.omnidroid.lib.saves.Ps3StateSlots.QUICK_SLOT)
+            return
+        }
         val state = currentQuickSave
         if (state == null) {
             sideEffects.showToast(appContext.getString(R.string.game_toast_quick_save_missing))

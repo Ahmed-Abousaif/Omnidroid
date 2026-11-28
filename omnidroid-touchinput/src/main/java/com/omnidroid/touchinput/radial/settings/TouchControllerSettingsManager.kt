@@ -32,6 +32,7 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
         val allowDiagonals: Boolean = DEFAULT_ALLOW_DIAGONALS,
         val dpadStyle: DpadStyle = DEFAULT_DPAD_STYLE,
         val screenPositionY: Float = DEFAULT_SCREEN_POSITION_Y,
+        val opacity: Float? = null,
     )
 
     private val cachedSettings = mutableMapOf<String, MutableStateFlow<Settings?>>()
@@ -55,9 +56,12 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
         val settingsKey = getPreferenceString(touchControllerID, orientation)
         val cachedStateFlow =
             cachedSettings.getOrPut(settingsKey) {
+                val rawSettings = sharedPreferences.getString(settingsKey, null)
                 val currentSettings =
-                    sharedPreferences.getString(settingsKey, null)
-                        ?.let { Json.decodeFromString(Settings.serializer(), it) }
+                    rawSettings?.let {
+                        runCatching { Json.decodeFromString(Settings.serializer(), it) }
+                            .getOrNull()
+                    }
 
                 MutableStateFlow(currentSettings)
             }
@@ -111,6 +115,7 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
         const val DEFAULT_ALLOW_DIAGONALS = true
         val DEFAULT_DPAD_STYLE = DpadStyle.CROSS
         const val DEFAULT_SCREEN_POSITION_Y = 0.5f
+        const val DEFAULT_OPACITY = 1.0f
 
         const val MAX_ROTATION = 45f
         const val MIN_SCALE = 0.75f
@@ -123,7 +128,5 @@ class TouchControllerSettingsManager(private val sharedPreferences: SharedPrefer
     private fun getPreferenceString(
         controllerID: TouchControllerID,
         orientation: Orientation,
-    ): String {
-        return "touch_controller_settings_${controllerID}_${orientation.ordinal}"
-    }
+    ): String = "touch_controller_settings_${controllerID}_${orientation.ordinal}"
 }

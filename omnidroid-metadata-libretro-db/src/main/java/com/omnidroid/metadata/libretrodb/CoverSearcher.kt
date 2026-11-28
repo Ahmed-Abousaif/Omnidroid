@@ -1,6 +1,7 @@
 package com.omnidroid.metadata.libretrodb
 
 import com.omnidroid.lib.library.GameSystem
+import com.omnidroid.lib.library.metadata.catalog.CatalogGame
 import com.omnidroid.metadata.libretrodb.db.LibretroDBManager
 import java.net.URLEncoder
 
@@ -8,9 +9,12 @@ data class CoverSearchResult(
     val title: String,
     val coverUrl: String,
     val score: Int,
+    val catalogMatch: CatalogGame? = null,
 )
 
-class CoverSearcher(private val dbManager: LibretroDBManager) {
+class CoverSearcher(
+    private val dbManager: LibretroDBManager,
+) {
     suspend fun search(
         systemId: String,
         query: String,
@@ -26,8 +30,7 @@ class CoverSearcher(private val dbManager: LibretroDBManager) {
                 val url = computeCoverUrl(system, rawName, rom.thumbnailPath) ?: return@mapNotNull null
                 val score = TokenMatcher.bestScore(cleaned, rom.normalizedName ?: "")
                 CoverSearchResult(rawName, url, score)
-            }
-            .sortedByDescending { it.score }
+            }.sortedByDescending { it.score }
             .distinctBy { it.coverUrl }
     }
 
@@ -38,6 +41,34 @@ class CoverSearcher(private val dbManager: LibretroDBManager) {
         private const val MAX_TITLE_LENGTH = 200
         private const val BASE_THUMBNAIL_URL = "https://thumbnails.libretro.com"
         private const val IMAGE_TYPE = "Named_Boxarts"
+
+        /** Ordered libretro sources: primary thumbnail host first, then the official GitHub mirror. */
+        fun libretroSources(url: String): List<String> = listOfNotNull(url, libretroMirrorUrl(url))
+
+        /** Exact same indexed file in libretro's official source repository. */
+        fun libretroMirrorUrl(url: String): String? {
+            val uri = runCatching { java.net.URI(url) }.getOrNull() ?: return null
+            if (uri.host != "thumbnails.libretro.com" ||
+                uri.scheme !in setOf("http", "https") ||
+                uri.query != null
+            ) {
+                return null
+            }
+            val parts = uri.rawPath?.trimStart('/')?.split('/') ?: return null
+            if (parts.size !in 3..4) return null
+            val system =
+                java.net.URLDecoder
+                    .decode(parts[0], "UTF-8")
+                    .replace(' ', '_')
+            if (!system.matches(Regex("[A-Za-z0-9_-]+")) ||
+                parts[1] !in setOf("Named_Boxarts", "Named_Titles", "Named_Snaps")
+            ) {
+                return null
+            }
+            if (parts.any { it.contains("..") } || !parts.last().endsWith(".png", ignoreCase = true)) return null
+            return "https://raw.githubusercontent.com/libretro-thumbnails/$system/master/" +
+                parts.drop(1).joinToString("/")
+        }
 
         fun computeCoverUrl(
             system: GameSystem?,
@@ -70,7 +101,6 @@ class CoverSearcher(private val dbManager: LibretroDBManager) {
             return "$BASE_THUMBNAIL_URL/${encode(systemName)}/$IMAGE_TYPE/${encode(cleanName)}.png"
         }
 
-        private fun encode(value: String): String =
-            URLEncoder.encode(value, "UTF-8").replace("+", "%20")
+        private fun encode(value: String): String = URLEncoder.encode(value, "UTF-8").replace("+", "%20")
     }
 }
