@@ -10,6 +10,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.omnidroid.R
 import com.omnidroid.app.mobile.feature.game.GameService
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.app.shared.game.backend.libretro.LibretroBackendSession
@@ -21,6 +22,9 @@ import com.omnidroid.app.shared.game.viewmodel.GameViewModelSideEffects
 import com.omnidroid.app.shared.game.viewmodel.GameViewModelTilt
 import com.omnidroid.app.shared.game.viewmodel.GameViewModelTouchControls
 import com.omnidroid.app.shared.input.InputDeviceManager
+import com.omnidroid.app.shared.ra.PreparedRaContent
+import com.omnidroid.app.shared.ra.RaContentResolverDelegate
+import com.omnidroid.app.shared.ra.RetroAchievementsCoordinator
 import com.omnidroid.app.shared.rumble.RumbleManager
 import com.omnidroid.app.shared.settings.ControllerConfigsManager
 import com.omnidroid.app.shared.settings.HapticFeedbackMode
@@ -35,23 +39,39 @@ import com.omnidroid.lib.game.GameLoader
 import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.ra.HardcoreBlockReason
+import com.omnidroid.lib.ra.HardcoreDecision
+import com.omnidroid.lib.ra.HardcorePolicy
+import com.omnidroid.lib.ra.RaCoreCatalog
+import com.omnidroid.lib.ra.RaCoreResolution
+import com.omnidroid.lib.ra.RaGameInfo
+import com.omnidroid.lib.ra.RaPauseDecision
+import com.omnidroid.lib.ra.RetroAchievementsEngine
+import com.omnidroid.lib.ra.RetroAchievementsEvent
 import com.omnidroid.lib.saves.SavesManager
 import com.omnidroid.lib.saves.StatesManager
 import com.omnidroid.lib.saves.StatesPreviewManager
+import com.omnidroid.lib.savesync.GameFrameSpeedPreferences
+import com.omnidroid.libretrodroid.GLRetroView
 import com.omnidroid.touchinput.radial.sensors.TiltConfiguration
 import com.omnidroid.touchinput.radial.settings.TouchControllerSettingsManager
 import gg.padkit.inputevents.InputEvent
 import gg.padkit.inputstate.InputState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class BaseGameScreenViewModel(
     private val appContext: Context,
     val game: Game,
-    settingsManager: SettingsManager,
+    private val settingsManager: SettingsManager,
     inputDeviceManager: InputDeviceManager,
     controllerConfigsManager: ControllerConfigsManager,
     val system: GameSystem,
@@ -62,6 +82,7 @@ class BaseGameScreenViewModel(
     statesPreviewManager: StatesPreviewManager,
     coreVariablesManager: CoreVariablesManager,
     rumbleManager: RumbleManager,
+    val raCoordinator: RetroAchievementsCoordinator,
 ) : ViewModel(),
     DefaultLifecycleObserver {
     var activeSession: BackendSession? = null
@@ -69,6 +90,26 @@ class BaseGameScreenViewModel(
         private set
 
     val hasTouchScreen: Boolean = system.hasTouchScreen
+
+    val hardcorePolicy: HardcorePolicy
+        get() = raCoordinator.hardcorePolicy
+
+    val raEngine: RetroAchievementsEngine
+        get() = raCoordinator.engine
+
+    private val _raCoreResolution = MutableStateFlow<RaCoreResolution?>(null)
+    val raCoreResolution: StateFlow<RaCoreResolution?> = _raCoreResolution.asStateFlow()
+
+    @Volatile
+    private var preparedRaContent: PreparedRaContent? = null
+
+    private var raLoadJob: Job? = null
+    private var raIdleJob: Job? = null
+    private var wasRaDisconnected: Boolean = false
+
+    init {
+        startRaEventCollector()
+    }
 
     class Factory(
         private val appContext: Context,
@@ -84,6 +125,7 @@ class BaseGameScreenViewModel(
         private val statesPreviewManager: StatesPreviewManager,
         private val coreVariablesManager: CoreVariablesManager,
         private val rumbleManager: RumbleManager,
+        private val raCoordinator: RetroAchievementsCoordinator,
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
             BaseGameScreenViewModel(
@@ -100,6 +142,7 @@ class BaseGameScreenViewModel(
                 statesPreviewManager,
                 coreVariablesManager,
                 rumbleManager,
+                raCoordinator,
             ) as T
     }
 
@@ -164,6 +207,8 @@ class BaseGameScreenViewModel(
             statesManager,
             statesPreviewManager,
             sideEffects,
+            raCoordinator.hardcorePolicy,
+            raCoordinator.engine,
         )
 
     val loadingState = MutableStateFlow(false)
@@ -272,6 +317,7 @@ class BaseGameScreenViewModel(
         } else {
             val retroView = createRetroView(context, playbackOwner)
 
+            val res = _raCoreResolution.value
             val session =
                 LibretroBackendSession(
                     retroGameView = retroView,
@@ -281,9 +327,16 @@ class BaseGameScreenViewModel(
                                 systemCoreConfig.coreID,
                             )?.capabilities(systemCoreConfig)
                             ?: BackendCapabilities(),
+                    hardcorePolicy = raCoordinator.hardcorePolicy,
+                    onHardcoreBlocked = { blocked -> showHardcoreBlockedToast(blocked) },
+                    libraryNameProvider = {
+                        res?.libraryName?.ifBlank { null } ?: raCoordinator.engine.getLoadedLibraryName()
+                    },
+                    consoleId = res?.consoleId ?: 0,
                 )
 
             activeSession = session
+            attachRetroAchievementsIfReady(retroView, playbackOwner)
 
             return retroView.asView()
         }
@@ -315,11 +368,252 @@ class BaseGameScreenViewModel(
     ) {
         Timber.i("Calling load game: $game")
 
+        prepareRetroAchievementsPreLoad(systemCoreConfig)
         retroGameView.initialize(applicationContext, game, systemCoreConfig, gameLoader, requestLoadSave)
     }
 
+    private suspend fun prepareRetroAchievementsPreLoad(systemCoreConfig: SystemCoreConfig) {
+        val raEnabled = settingsManager.raEnabled()
+        val preliminaryResolution =
+            RaCoreCatalog.resolve(
+                coreID = systemCoreConfig.coreID,
+                systemID = system.id,
+                engine = null,
+            )
+        _raCoreResolution.value = preliminaryResolution
+
+        if (!raEnabled || !preliminaryResolution.supported || !raCoordinator.isSignedIn()) {
+            raCoordinator.hardcorePolicy.clearSession()
+            retroGameView.raCoreOptionValidator = null
+            return
+        }
+
+        val moduleResult =
+            raCoordinator.ensureModuleLoaded(
+                coreLabel = "${systemCoreConfig.coreID.coreName}/${systemCoreConfig.coreID.libretroFileName}",
+                downloadIfMissing = com.omnidroid.BuildConfig.GITHUB_UPDATES,
+            )
+        val engine = raCoordinator.engine
+        val moduleLoaded = moduleResult.isSuccess && engine.isModuleLoaded()
+        if (moduleLoaded) {
+            raCoordinator.silentLoginIfNeeded(systemCoreConfig.coreID.coreName)
+            raCoordinator.syncSettingsToEngine()
+        }
+        val resolution =
+            RaCoreCatalog.resolve(
+                coreID = systemCoreConfig.coreID,
+                systemID = system.id,
+                engine = if (moduleLoaded) engine else null,
+            )
+        _raCoreResolution.value = resolution
+
+        val loggedIn = moduleLoaded && engine.getUserInfo() != null
+        val hardcoreRequested = settingsManager.raHardcore()
+        raCoordinator.hardcorePolicy.updateSession(
+            moduleLoaded = moduleLoaded,
+            loggedIn = loggedIn,
+            raEnabled = raEnabled,
+            hardcoreRequested = hardcoreRequested,
+            gameLoaded = false,
+            coreSupported = resolution.supported,
+        )
+        retroGameView.raCoreOptionValidator = { key, value ->
+            raCoordinator.hardcorePolicy.canApplyCoreOption(
+                libraryName = resolution.libraryName.ifBlank { engine.getLoadedLibraryName() },
+                consoleId = resolution.consoleId,
+                key = key,
+                value = value,
+            ) is HardcoreDecision.Allowed
+        }
+    }
+
+    private fun attachRetroAchievementsIfReady(
+        retroView: IRetroGameView,
+        lifecycle: LifecycleOwner,
+    ) {
+        val resolution = _raCoreResolution.value ?: return
+        val sessionState = raCoordinator.hardcorePolicy.sessionState.value
+        val engine = raCoordinator.engine
+        if (!sessionState.moduleLoaded || !sessionState.loggedIn || !resolution.supported) return
+
+        if (raCoordinator.hardcorePolicy.isHardcoreActive && retroView.frameSpeed < 1) {
+            retroView.frameSpeed = 1
+        }
+
+        engine.attachToLibretroSession(resolution.consoleId)
+
+        raLoadJob?.cancel()
+        raLoadJob =
+            viewModelScope.launch(Dispatchers.IO) {
+                val gameData = retroGameView.currentGameData() ?: return@launch
+                val dataFiles = raCoordinator.dataFilesForGame(game.id)
+                val prepared = RaContentResolverDelegate.prepare(appContext, game, gameData, dataFiles) ?: return@launch
+                preparedRaContent = prepared
+
+                val loadResult =
+                    engine.identifyAndLoadGame(
+                        consoleId = resolution.consoleId,
+                        filePath = prepared.primaryPath,
+                        fileOpenDelegate = prepared.openDelegate,
+                    )
+                loadResult
+                    .onSuccess { raGame ->
+                        raCoordinator.hardcorePolicy.updateSession(gameLoaded = true)
+                        raCoordinator.persistGameCache(game.id, raGame)
+                    }.onFailure { err ->
+                        Timber.w(err, "RetroAchievements identify/load failed for %s", game.title)
+                    }
+
+                runCatching {
+                    retroGameView.waitGLEvent<GLRetroView.GLRetroEvents.FrameRendered>()
+                    engine.refreshMemoryMap(resolution.consoleId)
+                }
+            }
+
+        lifecycle.lifecycle.addObserver(
+            object : DefaultLifecycleObserver {
+                override fun onPause(owner: LifecycleOwner) {
+                    if (!engine.isModuleLoaded()) return
+                    raIdleJob?.cancel()
+                    raIdleJob =
+                        viewModelScope.launch {
+                            while (isActive && engine.isModuleLoaded()) {
+                                engine.idle()
+                                delay(450L)
+                            }
+                        }
+                }
+
+                override fun onResume(owner: LifecycleOwner) {
+                    raIdleJob?.cancel()
+                    raIdleJob = null
+                    viewModelScope.launch {
+                        raCoordinator.syncSettingsToEngine()
+                        enforceHardcoreRuntimeLimits(retroView)
+                    }
+                }
+            },
+        )
+    }
+
+    private fun startRaEventCollector() {
+        viewModelScope.launch {
+            raCoordinator.engine.events.collect { event ->
+                when (event) {
+                    is RetroAchievementsEvent.ResetRequired -> {
+                        sideEffects.showToast(appContext.getString(R.string.ra_reset_required_banner))
+                        reset()
+                    }
+                    is RetroAchievementsEvent.AchievementTriggered,
+                    is RetroAchievementsEvent.GameCompleted,
+                    is RetroAchievementsEvent.SubsetCompleted,
+                    -> {
+                        val info: RaGameInfo? = raCoordinator.engine.activeGame.value
+                        if (info != null) {
+                            runCatching { raCoordinator.persistGameCache(game.id, info) }
+                        }
+                    }
+                    is RetroAchievementsEvent.Disconnected -> {
+                        if (!wasRaDisconnected) {
+                            wasRaDisconnected = true
+                            sideEffects.showToast(appContext.getString(R.string.ra_disconnected_warning))
+                        }
+                    }
+                    is RetroAchievementsEvent.Reconnected -> {
+                        if (wasRaDisconnected) {
+                            wasRaDisconnected = false
+                            sideEffects.showToast(appContext.getString(R.string.ra_reconnected_notice))
+                        }
+                    }
+                    else -> Unit
+                }
+            }
+        }
+    }
+
+    private fun enforceHardcoreRuntimeLimits(retroView: IRetroGameView) {
+        if (!raCoordinator.hardcorePolicy.isHardcoreActive) return
+        if (retroView.frameSpeed < 1) {
+            retroView.frameSpeed = 1
+        }
+        retroGameView.refreshCoreVariables()
+    }
+
+    fun canOpenMenu(): Boolean =
+        when (val decision = raCoordinator.hardcorePolicy.canPauseGame()) {
+            is RaPauseDecision.Allowed -> true
+            is RaPauseDecision.Cooldown -> {
+                val secs = ((decision.framesRemaining + 59) / 60).coerceAtLeast(1)
+                sideEffects.showToast(appContext.getString(R.string.ra_pause_cooldown_toast, secs))
+                false
+            }
+        }
+
     fun requestMenu() {
         sideEffects.showMenu(tilt, inputs)
+    }
+
+    fun applyFrameSpeed(requestedSpeed: Int) {
+        val decision = raCoordinator.hardcorePolicy.canSetFrameSpeedMultiplier(requestedSpeed.toFloat())
+        if (decision is HardcoreDecision.Blocked) {
+            showHardcoreBlockedToast(decision)
+            retroGameView.retroGameView?.frameSpeed = 1
+            GameFrameSpeedPreferences(appContext).set(game.id, 1)
+            return
+        }
+        retroGameView.retroGameView?.frameSpeed = requestedSpeed
+        GameFrameSpeedPreferences(appContext).set(game.id, requestedSpeed)
+    }
+
+    fun onDiscChanged(discIndex: Int) {
+        retroGameView.retroGameView?.changeDisk(discIndex, false)
+        val prepared = preparedRaContent ?: return
+        if (!raCoordinator.engine.isModuleLoaded()) return
+        val discPath = RaContentResolverDelegate.resolveDiscPath(appContext, discIndex, game, prepared) ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            raCoordinator.engine
+                .identifyAndChangeMedia(
+                    filePath = discPath,
+                    fileOpenDelegate = prepared.openDelegate,
+                ).onSuccess { raGame ->
+                    raCoordinator.persistGameCache(game.id, raGame)
+                }
+        }
+    }
+
+    fun setHardcoreModeEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            raCoordinator.setHardcorePreference(enabled)
+            raCoordinator.hardcorePolicy.updateSession(hardcoreRequested = enabled)
+            retroGameView.retroGameView?.let { enforceHardcoreRuntimeLimits(it) }
+        }
+    }
+
+    private fun showHardcoreBlockedToast(blocked: HardcoreDecision.Blocked) {
+        val resId =
+            when (blocked.reason) {
+                HardcoreBlockReason.LOAD_AUTO_SAVE_ON_LAUNCH -> R.string.ra_hardcore_autosave_skipped
+                HardcoreBlockReason.LOAD_SAVE_STATE -> R.string.ra_hardcore_blocked_load
+                HardcoreBlockReason.REWIND -> R.string.ra_hardcore_blocked_rewind
+                HardcoreBlockReason.SLOW_MOTION -> R.string.ra_hardcore_blocked_slow_motion
+                HardcoreBlockReason.CHEATS,
+                HardcoreBlockReason.MEMORY_EDIT,
+                -> R.string.ra_hardcore_blocked_cheats
+                HardcoreBlockReason.DISALLOWED_CORE_OPTION -> {
+                    sideEffects.showToast(blocked.detail)
+                    return
+                }
+            }
+        sideEffects.showToast(appContext.getString(resId))
+    }
+
+    override fun onCleared() {
+        raIdleJob?.cancel()
+        raLoadJob?.cancel()
+        runCatching { raCoordinator.engine.detachFromLibretroSession() }
+        runCatching { raCoordinator.engine.unloadGame() }
+        raCoordinator.hardcorePolicy.clearSession()
+        super.onCleared()
     }
 
     fun showEditControls(show: Boolean) {

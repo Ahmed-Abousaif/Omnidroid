@@ -1,5 +1,6 @@
 package com.omnidroid.app.mobile.feature.gamemenu.coreoptions
 
+import android.widget.Toast
 import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
@@ -22,9 +23,14 @@ import com.omnidroid.app.utils.android.settings.booleanPreferenceState
 import com.omnidroid.app.utils.android.settings.stringPreferenceState
 import com.omnidroid.lib.core.CoreVariablesManager
 import com.omnidroid.lib.library.GameSystem
+import com.omnidroid.lib.ra.HardcoreDecision
 
 @Composable
-fun GameMenuCoreOptionsScreen(viewModel: GameMenuCoreOptionsViewModel, gameMenuRequest: GameMenuRequest) {
+fun GameMenuCoreOptionsScreen(
+    viewModel: GameMenuCoreOptionsViewModel,
+    gameMenuRequest: GameMenuRequest,
+    canApplyCoreOption: (key: String, value: String) -> HardcoreDecision = { _, _ -> HardcoreDecision.Allowed },
+) {
     val context = LocalContext.current
     val request = gameMenuRequest
     val options = remember(request) { (request.coreOptions + request.advancedCoreOptions).filter { it.getEntriesValues().isNotEmpty() && it.getEntries(context).isNotEmpty() } }
@@ -63,8 +69,19 @@ fun GameMenuCoreOptionsScreen(viewModel: GameMenuCoreOptionsViewModel, gameMenuR
                     val prefKey = CoreVariablesManager.computeSharedPreferenceKey(option.getKey(), request.game.systemId)
                     if (values.toSet() == CoreOptionsPreferenceHelper.BOOLEAN_SET) {
                         val pref = booleanPreferenceState(prefKey, option.getCurrentValue() == "enabled")
-                        MenuToggle(id = "core-${option.getKey()}", title = { Text(option.getDisplayName(context)) }, value = pref.value) {
-                            pref.value = it
+                        MenuToggle(id = "core-${option.getKey()}", title = { Text(option.getDisplayName(context)) }, value = pref.value) { checked ->
+                            val nextVal = if (checked) "enabled" else "disabled"
+                            if (canApplyCoreOption(option.getKey(), nextVal) is HardcoreDecision.Blocked) {
+                                val message =
+                                    context.getString(
+                                        R.string.ra_hardcore_blocked_core_option,
+                                        option.getKey(),
+                                        nextVal,
+                                    )
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            } else {
+                                pref.value = checked
+                            }
                         }
                     } else {
                         // Default to the value the core is running with, not the first entry.
@@ -74,7 +91,19 @@ fun GameMenuCoreOptionsScreen(viewModel: GameMenuCoreOptionsViewModel, gameMenuR
                             options = values.zip(entries) { value, label -> MenuOption(value, label) }, value = pref.value,
                             // Shown only when the stored value isn't one of the listed entries.
                             subtitle = { Text(stringResource(R.string.core_option_current_value, pref.value)) },
-                        ) { pref.value = it }
+                        ) { nextVal ->
+                            if (canApplyCoreOption(option.getKey(), nextVal) is HardcoreDecision.Blocked) {
+                                val message =
+                                    context.getString(
+                                        R.string.ra_hardcore_blocked_core_option,
+                                        option.getKey(),
+                                        nextVal,
+                                    )
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            } else {
+                                pref.value = nextVal
+                            }
+                        }
                     }
                 }
             }

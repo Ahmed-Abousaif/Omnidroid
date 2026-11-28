@@ -19,19 +19,29 @@ sealed interface InGameMenuCommand {
     data class Disc(val index: Int) : InGameMenuCommand
     data class Tilt(val configuration: TiltConfiguration) : InGameMenuCommand
 
-    fun extras(): Map<String, Any> = when (this) {
-        Restart -> mapOf(Contract.RESULT_RESET to true)
-        Quit -> mapOf(Contract.RESULT_QUIT to true)
-        EditTouchControls -> mapOf(Contract.RESULT_EDIT_TOUCH_CONTROLS to true)
-        is Save -> mapOf(Contract.RESULT_SAVE to slot)
-        is Load -> mapOf(Contract.RESULT_LOAD to slot)
-        LoadAutoSave -> mapOf(Contract.RESULT_LOAD_AUTOSAVE to true)
-        SaveNew -> mapOf(Contract.RESULT_SAVE_NEW to true)
-        is Audio -> mapOf(Contract.RESULT_ENABLE_AUDIO to enabled)
-        is Speed -> mapOf(Contract.RESULT_SET_FRAME_SPEED to multiplier, Contract.RESULT_ENABLE_FAST_FORWARD to (multiplier > 1))
-        is Disc -> mapOf(Contract.RESULT_CHANGE_DISK to index)
-        is Tilt -> mapOf(Contract.RESULT_CHANGE_TILT_CONFIG to configuration)
-    }
+    data class SetHardcore(
+        val enabled: Boolean,
+    ) : InGameMenuCommand
+
+    fun extras(): Map<String, Any> =
+        when (this) {
+            Restart -> mapOf(Contract.RESULT_RESET to true)
+            Quit -> mapOf(Contract.RESULT_QUIT to true)
+            EditTouchControls -> mapOf(Contract.RESULT_EDIT_TOUCH_CONTROLS to true)
+            is Save -> mapOf(Contract.RESULT_SAVE to slot)
+            is Load -> mapOf(Contract.RESULT_LOAD to slot)
+            LoadAutoSave -> mapOf(Contract.RESULT_LOAD_AUTOSAVE to true)
+            SaveNew -> mapOf(Contract.RESULT_SAVE_NEW to true)
+            is Audio -> mapOf(Contract.RESULT_ENABLE_AUDIO to enabled)
+            is Speed ->
+                mapOf(
+                    Contract.RESULT_SET_FRAME_SPEED to multiplier,
+                    Contract.RESULT_ENABLE_FAST_FORWARD to (multiplier > 1),
+                )
+            is Disc -> mapOf(Contract.RESULT_CHANGE_DISK to index)
+            is Tilt -> mapOf(Contract.RESULT_CHANGE_TILT_CONFIG to configuration)
+            is SetHardcore -> mapOf(Contract.RESULT_SET_HARDCORE to enabled)
+        }
 
     fun writeTo(intent: Intent) {
         extras().forEach { (key, value) ->

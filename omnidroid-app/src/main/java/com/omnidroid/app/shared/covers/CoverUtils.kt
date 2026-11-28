@@ -75,6 +75,11 @@ object CoverUtils {
             "images.igdb.com",
         )
 
+    private val ALLOWED_RA_IMAGE_HOSTS =
+        setOf(
+            "media.retroachievements.org",
+        )
+
     fun isAllowedRemoteCoverUrl(url: String?): Boolean {
         if (url.isNullOrBlank()) return false
         val uri = runCatching { android.net.Uri.parse(url) }.getOrNull() ?: return false
@@ -95,6 +100,18 @@ object CoverUtils {
         }
         return ALLOWED_COVER_HOSTS.any { host == it || host.endsWith(".$it") }
     }
+
+    fun isAllowedRetroAchievementsImageUrl(url: String?): Boolean {
+        if (url.isNullOrBlank()) return false
+        val uri = runCatching { android.net.Uri.parse(url) }.getOrNull() ?: return false
+        val scheme = uri.scheme?.lowercase() ?: return false
+        if (scheme != "https") return false
+        val host = uri.host?.lowercase() ?: return false
+        return host in ALLOWED_RA_IMAGE_HOSTS && uri.pathSegments.none { it == "." || it == ".." }
+    }
+
+    fun isAllowedRemoteImageUrl(url: String?): Boolean =
+        isAllowedRemoteCoverUrl(url) || isAllowedRetroAchievementsImageUrl(url)
 
     fun coverData(game: Game): Any? =
         resolvePreferredLocalCover(game)

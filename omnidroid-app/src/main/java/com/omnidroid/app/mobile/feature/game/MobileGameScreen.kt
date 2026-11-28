@@ -75,6 +75,7 @@ import com.omnidroid.app.shared.game.GamepadColor
 import com.omnidroid.app.utils.android.settings.stringPreferenceState
 import com.omnidroid.app.shared.settings.HapticFeedbackMode
 import com.omnidroid.app.shared.game.BaseGameScreenViewModel
+import com.omnidroid.app.shared.ra.RaOverlayHost
 import com.omnidroid.app.shared.game.view.IRetroGameView
 import com.omnidroid.app.shared.game.viewmodel.GameViewModelTouchControls.Companion.MENU_LOADING_ANIMATION_MILLIS
 import com.omnidroid.app.shared.game.viewmodel.TouchScreenRegion
@@ -363,6 +364,7 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
 
         if (!isLoading) {
             LegacyInputPanel(viewModel.system.id, retroViewState.value, Modifier.align(Alignment.TopCenter))
+            RaOverlayHost(viewModel = viewModel)
         }
 
         if (isLoading) {

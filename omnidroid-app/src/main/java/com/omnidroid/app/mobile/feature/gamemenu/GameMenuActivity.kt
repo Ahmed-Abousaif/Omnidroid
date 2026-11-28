@@ -52,10 +52,14 @@ import com.omnidroid.app.shared.coreoptions.OmnidroidCoreOption
 import com.omnidroid.app.shared.input.InputDeviceManager
 import com.omnidroid.app.shared.input.omnidroiddevice.OmnidroidInputDeviceGamePad
 import com.omnidroid.app.shared.input.omnidroiddevice.getOmnidroidInputDevice
+import com.omnidroid.app.shared.ra.RetroAchievementsCoordinator
 import com.omnidroid.common.kotlin.serializable
 import com.omnidroid.lib.android.RetrogradeComponentActivity
+import com.omnidroid.lib.library.GameSystem
 import com.omnidroid.lib.library.SystemCoreConfig
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.ra.HardcorePolicy
+import com.omnidroid.lib.ra.RaCoreCatalog
 import com.omnidroid.lib.saves.StatesManager
 import com.omnidroid.lib.saves.StatesPreviewManager
 import com.omnidroid.lib.savesync.SaveSyncManager
@@ -77,6 +81,12 @@ class GameMenuActivity : RetrogradeComponentActivity() {
 
     @Inject
     lateinit var saveSyncManager: SaveSyncManager
+
+    @Inject
+    lateinit var raCoordinator: RetroAchievementsCoordinator
+
+    @Inject
+    lateinit var hardcorePolicy: HardcorePolicy
 
     private val controllerBridge = ControllerInputBridge()
 
@@ -155,6 +165,33 @@ class GameMenuActivity : RetrogradeComponentActivity() {
             val gamePads = remember { inputDeviceManager.getGamePadsObservable() }
             val gamepadConnected = gamePads.collectAsState(emptyList()).value
                 .any { it.getOmnidroidInputDevice() is OmnidroidInputDeviceGamePad }
+            val raSessionState by hardcorePolicy.sessionState.collectAsState()
+            val raActiveGame by raCoordinator.engine.activeGame.collectAsState()
+            val raSummary by raCoordinator.engine.activeSummary.collectAsState()
+            val hardcoreActive = raSessionState.isHardcoreActive && raCoordinator.engine.isModuleLoaded()
+            val raResolution =
+                remember(gameMenuRequest.game.systemId, gameMenuRequest.coreConfig.coreID) {
+                    val sys = runCatching { GameSystem.findById(gameMenuRequest.game.systemId) }.getOrNull()
+                    if (sys != null) {
+                        RaCoreCatalog.resolve(
+                            coreID = gameMenuRequest.coreConfig.coreID,
+                            systemID = sys.id,
+                            engine = raCoordinator.engine,
+                        )
+                    } else {
+                        null
+                    }
+                }
+            val raSummaryText =
+                remember(raActiveGame, raSummary, hardcoreActive) {
+                    val badge =
+                        getString(
+                            if (hardcoreActive) R.string.ra_menu_hardcore_badge else R.string.ra_menu_softcore_badge,
+                        )
+                    raSummary?.let { s ->
+                        "${s.numUnlockedAchievements}/${s.numCoreAchievements} • $badge"
+                    } ?: raActiveGame?.title?.let { "$it ($badge)" }
+                }
             val hints = ControllerHints.standard(
                 select = stringResource(R.string.controller_hint_select),
                 back = stringResource(R.string.controller_hint_back),
@@ -188,7 +225,13 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                                     gameMenuRequest,
                                     onCommand = { requestClose(it) },
                                     saveSyncSupported = saveSyncManager.isSupported(),
+                                    raVisible = raSessionState.moduleLoaded && raSessionState.loggedIn && raResolution?.supported == true,
+                                    hardcoreActive = hardcoreActive,
+                                    raSummarySubtitle = raSummaryText,
                                 )
+                            }
+                            composable(GameMenuRoute.ACHIEVEMENTS) {
+                                GameMenuAchievementsScreen(coordinator = raCoordinator)
                             }
                             composable(GameMenuRoute.SAVE) {
                                 GameMenuStatesScreen(
@@ -226,6 +269,7 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                                         requestClose(InGameMenuCommand.Load(it))
                                     },
                                     onAutoSaveClicked = { requestClose(InGameMenuCommand.LoadAutoSave) },
+                                    hardcoreActive = hardcoreActive,
                                 )
                             }
                             composable(GameMenuRoute.OPTIONS) {
@@ -237,6 +281,16 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                                             ),
                                     ),
                                     gameMenuRequest,
+                                    canApplyCoreOption = { key, value ->
+                                        hardcorePolicy.canApplyCoreOption(
+                                            libraryName =
+                                                raResolution?.libraryName?.ifBlank { null }
+                                                    ?: raCoordinator.engine.getLoadedLibraryName(),
+                                            consoleId = raResolution?.consoleId ?: 0,
+                                            key = key,
+                                            value = value,
+                                        )
+                                    },
                                 )
                             }
                         }

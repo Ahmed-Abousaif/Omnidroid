@@ -221,6 +221,8 @@ android {
                     "**/libmain_hook.so",
                     // Shipped by both omnidroid-chd and the prebuilt omni-libretrodroid AAR (same NDK).
                     "**/libc++_shared.so",
+                    // Packaged in both play sourceSet and :bundled-cores on playBundle builds.
+                    "**/libomnidroid_ra.so",
                 )
 
             useLegacyPackaging = true
@@ -463,6 +465,8 @@ dependencies {
     implementation(project(":retrograde-util"))
 
     implementation(project(":retrograde-app-shared"))
+
+    implementation(project(":omnidroid-ra"))
 
     implementation(project(":omnidroid-metadata-libretro-db"))
 
@@ -834,6 +838,13 @@ tasks.register("verifyConsoleBackendRatchet") {
 android.defaultConfig.testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
 androidComponents.finalizeDsl { extension ->
+    val raJniLibsDir = rootProject.file("omnidroid-cores/modules/omni_ra/src/main/jniLibs")
+    if (raJniLibsDir.isDirectory) {
+        extension.sourceSets
+            .findByName("play")
+            ?.jniLibs
+            ?.srcDir(raJniLibsDir)
+    }
     listOf("benchmarkRelease", "nonMinifiedRelease").forEach { name ->
         extension.sourceSets.getByName(name).apply {
             java.srcDir("src/benchmark/java")

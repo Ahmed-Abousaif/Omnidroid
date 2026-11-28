@@ -10,6 +10,7 @@ import com.omnidroid.app.shared.covers.CoverUtils
 import com.omnidroid.app.shared.metadata.MetadataRepository
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.Game
+import com.omnidroid.lib.library.db.entity.RaGameCache
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -45,6 +46,7 @@ class GameDetailsViewModel(
         val playTimeMs: Long = 0L,
         val sessionCount: Int = 0,
         val playingTrailer: Boolean = false,
+        val raCache: RaGameCache? = null,
     )
 
     private val playTimeStore = PlayTimeStore(appContext)
@@ -52,13 +54,16 @@ class GameDetailsViewModel(
     private val playingTrailerFlow = MutableStateFlow(false)
 
     val state: StateFlow<UiState> =
-        combine(
+        com.omnidroid.common.coroutines.combine(
             retrogradeDb.gameDao().observeById(gameId).filterNotNull(),
             metadataFlow,
             playTimeStore.observe(gameId),
             retrogradeDb.gameSessionDao().observeStatsForGame(gameId),
             playingTrailerFlow,
-        ) { game, metadata, legacyPlayTimeMs, sessionStats, playingTrailer ->
+            retrogradeDb
+                .raGameCacheDao()
+                .observeByGameId(gameId),
+        ) { game, metadata, legacyPlayTimeMs, sessionStats, playingTrailer, raCache ->
             val totalPlayTimeMs = maxOf(sessionStats.totalDurationMs, legacyPlayTimeMs)
             val sessionCount = maxOf(sessionStats.sessionCount, if (totalPlayTimeMs > 0L) 1 else 0)
             UiState(
@@ -67,6 +72,7 @@ class GameDetailsViewModel(
                 playTimeMs = totalPlayTimeMs,
                 sessionCount = sessionCount,
                 playingTrailer = playingTrailer,
+                raCache = raCache,
             )
         }.stateIn(
             viewModelScope,

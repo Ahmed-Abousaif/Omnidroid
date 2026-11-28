@@ -14,6 +14,8 @@ import com.omnidroid.lib.backend.NormalizedMotionSource
 import com.omnidroid.lib.backend.RewindableSession
 import com.omnidroid.lib.backend.ScreenshotSession
 import com.omnidroid.lib.backend.StateSaveableSession
+import com.omnidroid.lib.ra.HardcoreDecision
+import com.omnidroid.lib.ra.HardcorePolicy
 import com.omnidroid.libretrodroid.Variable
 
 /**
@@ -22,6 +24,10 @@ import com.omnidroid.libretrodroid.Variable
 class LibretroBackendSession(
     private val retroGameView: IRetroGameView,
     override val capabilities: BackendCapabilities,
+    private val hardcorePolicy: HardcorePolicy? = null,
+    private val onHardcoreBlocked: ((HardcoreDecision.Blocked) -> Unit)? = null,
+    private val libraryNameProvider: () -> String? = { null },
+    private val consoleId: Int = 0,
 ) : BackendSession,
     StateSaveableSession,
     DiscSwappableSession,
@@ -64,6 +70,17 @@ class LibretroBackendSession(
     }
 
     override fun applySetting(key: String, value: String) {
+        val decision =
+            hardcorePolicy?.canApplyCoreOption(
+                libraryName = libraryNameProvider(),
+                consoleId = consoleId,
+                key = key,
+                value = value,
+            )
+        if (decision is HardcoreDecision.Blocked) {
+            onHardcoreBlocked?.invoke(decision)
+            return
+        }
         retroGameView.updateVariables(Variable(key, value))
     }
 
@@ -79,6 +96,11 @@ class LibretroBackendSession(
     }
 
     override suspend fun loadState(slot: Int): Boolean {
+        val decision = hardcorePolicy?.canLoadSaveState(isAutoSaveOnLaunch = false)
+        if (decision is HardcoreDecision.Blocked) {
+            onHardcoreBlocked?.invoke(decision)
+            return false
+        }
         return true
     }
 
@@ -87,6 +109,11 @@ class LibretroBackendSession(
     }
 
     override suspend fun restoreAutoSaveState(state: ByteArray): Boolean {
+        val decision = hardcorePolicy?.canLoadSaveState(isAutoSaveOnLaunch = true)
+        if (decision is HardcoreDecision.Blocked) {
+            onHardcoreBlocked?.invoke(decision)
+            return false
+        }
         return retroGameView.unserializeState(state, useEmulationThread = true)
     }
 
@@ -110,12 +137,25 @@ class LibretroBackendSession(
     }
 
     override fun setSpeedMultiplier(multiplier: Float) {
+        val decision = hardcorePolicy?.canSetFrameSpeedMultiplier(multiplier)
+        if (decision is HardcoreDecision.Blocked) {
+            onHardcoreBlocked?.invoke(decision)
+            retroGameView.frameSpeed = 1
+            return
+        }
         retroGameView.frameSpeed = multiplier.toInt().coerceAtLeast(1)
     }
 
     // --- RewindableSession ---
 
     override fun setRewindEnabled(enabled: Boolean) {
+        if (enabled) {
+            val decision = hardcorePolicy?.canEnableRewind()
+            if (decision is HardcoreDecision.Blocked) {
+                onHardcoreBlocked?.invoke(decision)
+                return
+            }
+        }
         // Libretro rewind support
     }
 

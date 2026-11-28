@@ -33,6 +33,7 @@ import com.omnidroid.app.shared.coreoptions.OmnidroidCoreOption
 import com.omnidroid.app.shared.game.viewmodel.GameViewModelRetroGameView
 import com.omnidroid.app.shared.game.viewmodel.GameViewModelSideEffects
 import com.omnidroid.app.shared.input.InputDeviceManager
+import com.omnidroid.app.shared.ra.RetroAchievementsCoordinator
 import com.omnidroid.app.shared.rumble.RumbleManager
 import com.omnidroid.app.shared.settings.ControllerConfigsManager
 import com.omnidroid.app.tv.shared.TVHelper
@@ -117,6 +118,10 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
     lateinit var retrogradeDatabase: RetrogradeDatabase
 
+    @Inject
+
+    lateinit var raCoordinator: RetroAchievementsCoordinator
+
     private lateinit var baseGameScreenViewModel: BaseGameScreenViewModel
 
     private val startGameTime = System.currentTimeMillis()
@@ -185,6 +190,8 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                 coreVariablesManager,
 
                 rumbleManager,
+
+                raCoordinator,
 
             )
 
@@ -543,15 +550,14 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
                 when (it) {
 
-                    is GameViewModelSideEffects.UiEffect.ShowMenu ->
-
-                        displayOptionsDialog(
-
-                            it.currentTiltConfiguration,
-
-                            it.tiltConfigurations,
-
-                        )
+                    is GameViewModelSideEffects.UiEffect.ShowMenu -> {
+                        if (playbackLifecycle.menuRequired || baseGameScreenViewModel.canOpenMenu()) {
+                            displayOptionsDialog(
+                                it.currentTiltConfiguration,
+                                it.tiltConfigurations,
+                            )
+                        }
+                    }
 
                     is GameViewModelSideEffects.UiEffect.ShowToast -> displayToast(it.message)
 
@@ -899,7 +905,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
                 val index = data.getIntExtra(GameMenuContract.RESULT_CHANGE_DISK, 0)
 
-                baseGameScreenViewModel.retroGameView.retroGameView?.changeDisk(index, false)
+                baseGameScreenViewModel.onDiscChanged(index)
 
             }
 
@@ -937,29 +943,23 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
                     )
 
-                baseGameScreenViewModel.retroGameView.retroGameView?.frameSpeed = frameSpeed
-
-                GameFrameSpeedPreferences(applicationContext).set(game.id, frameSpeed)
+                baseGameScreenViewModel.applyFrameSpeed(frameSpeed)
 
             }
 
             if (frameSpeedResult == null && data?.hasExtra(GameMenuContract.RESULT_ENABLE_FAST_FORWARD) == true) {
 
-                baseGameScreenViewModel.retroGameView.retroGameView?.apply {
+                val fastForwardEnabled =
 
-                    val fastForwardEnabled =
+                    data.getBooleanExtra(
 
-                        data.getBooleanExtra(
+                        GameMenuContract.RESULT_ENABLE_FAST_FORWARD,
 
-                            GameMenuContract.RESULT_ENABLE_FAST_FORWARD,
+                        false,
 
-                            false,
+                    )
 
-                        )
-
-                    this.frameSpeed = if (fastForwardEnabled) 2 else 1
-
-                }
+                baseGameScreenViewModel.applyFrameSpeed(if (fastForwardEnabled) 2 else 1)
 
             }
 
@@ -974,6 +974,14 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                 val tiltConfig = data.serializable<TiltConfiguration>(GameMenuContract.RESULT_CHANGE_TILT_CONFIG)
 
                 baseGameScreenViewModel.changeTiltConfiguration(tiltConfig!!)
+
+            }
+
+            if (data?.hasExtra(GameMenuContract.RESULT_SET_HARDCORE) == true) {
+
+                baseGameScreenViewModel.setHardcoreModeEnabled(
+                    data.getBooleanExtra(GameMenuContract.RESULT_SET_HARDCORE, true),
+                )
 
             }
 

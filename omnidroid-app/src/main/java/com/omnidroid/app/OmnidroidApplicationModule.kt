@@ -23,13 +23,16 @@ import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.room.Room
+import com.omnidroid.BuildConfig
 import com.omnidroid.app.mobile.feature.main.MainActivity
 import com.omnidroid.app.mobile.feature.settings.SettingsManager
 import com.omnidroid.app.shared.GameInteractor
 import com.omnidroid.app.shared.game.GameLauncher
+import com.omnidroid.app.shared.game.GameProcessLock
 import com.omnidroid.app.shared.input.InputDeviceManager
 import com.omnidroid.app.shared.library.LibraryIndexScheduler
 import com.omnidroid.app.shared.main.GameLaunchTaskHandler
+import com.omnidroid.app.shared.ra.RetroAchievementsCoordinator
 import com.omnidroid.app.shared.rumble.RumbleManager
 import com.omnidroid.app.shared.settings.ControllerConfigsManager
 import com.omnidroid.app.shared.settings.SettingsInteractor
@@ -54,6 +57,12 @@ import com.omnidroid.lib.library.db.dao.GameSearchDao
 import com.omnidroid.lib.library.db.dao.Migrations
 import com.omnidroid.lib.library.metadata.GameMetadataProvider
 import com.omnidroid.lib.preferences.SharedPreferencesHelper
+import com.omnidroid.lib.ra.HardcorePolicy
+import com.omnidroid.lib.ra.RaCredentialStore
+import com.omnidroid.lib.ra.RaModuleManager
+import com.omnidroid.lib.ra.RaModuleStore
+import com.omnidroid.lib.ra.RetroAchievementsEngine
+import com.omnidroid.ra.NativeRetroAchievementsEngine
 import com.omnidroid.lib.saves.CustomSaveStorage
 import com.omnidroid.lib.saves.SavesCoherencyEngine
 import com.omnidroid.lib.saves.SavesManager
@@ -151,6 +160,7 @@ object OmnidroidApplicationModule {
             Migrations.VERSION_16_17,
             Migrations.VERSION_17_18,
             Migrations.VERSION_18_19,
+            Migrations.VERSION_19_20,
         ).fallbackToDestructiveMigration()
         .build()
 
@@ -426,4 +436,59 @@ object OmnidroidApplicationModule {
         settingsManager: SettingsManager,
         inputDeviceManager: InputDeviceManager,
     ) = RumbleManager(context, settingsManager, inputDeviceManager)
+
+    @Provides
+    @Singleton
+    fun raModuleStore(
+        @ApplicationContext context: Context,
+        sharedPreferences: SharedPreferences,
+    ) = RaModuleStore(context, sharedPreferences)
+
+    @Provides
+    @Singleton
+    fun raModuleManager(
+        @ApplicationContext context: Context,
+        store: RaModuleStore,
+        okHttpClient: OkHttpClient,
+    ) = RaModuleManager(
+        store = store,
+        okHttpClient = okHttpClient,
+        allowRemoteBinaryDownload = BuildConfig.GITHUB_UPDATES,
+        canCleanupOldFiles = { !GameProcessLock.isHeldByAnotherProcess(context) },
+    )
+
+    @Provides
+    @Singleton
+    fun raCredentialStore(sharedPreferences: SharedPreferences) = RaCredentialStore(sharedPreferences)
+
+    @Provides
+    @Singleton
+    fun retroAchievementsEngine(okHttpClient: OkHttpClient): RetroAchievementsEngine =
+        NativeRetroAchievementsEngine(okHttpClient)
+
+    @Provides
+    @Singleton
+    fun hardcorePolicy(engine: RetroAchievementsEngine) = HardcorePolicy(engine)
+
+    @Provides
+    @Singleton
+    fun retroAchievementsCoordinator(
+        @ApplicationContext context: Context,
+        moduleManager: RaModuleManager,
+        credentialStore: RaCredentialStore,
+        engine: RetroAchievementsEngine,
+        hardcorePolicy: HardcorePolicy,
+        settingsManager: SettingsManager,
+        retrogradeDatabase: RetrogradeDatabase,
+        sharedPreferences: SharedPreferences,
+    ) = RetroAchievementsCoordinator(
+        context = context,
+        moduleManager = moduleManager,
+        credentialStore = credentialStore,
+        engine = engine,
+        hardcorePolicy = hardcorePolicy,
+        settingsManager = settingsManager,
+        database = retrogradeDatabase,
+        sharedPreferences = sharedPreferences,
+    )
 }

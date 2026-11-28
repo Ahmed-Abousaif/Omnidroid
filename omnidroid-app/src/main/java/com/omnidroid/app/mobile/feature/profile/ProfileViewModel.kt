@@ -5,9 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.omnidroid.app.mobile.feature.library.RegisteredSystemsStore
+import com.omnidroid.app.shared.ra.RetroAchievementsCoordinator
 import com.omnidroid.lib.library.MetaSystemID
 import com.omnidroid.lib.library.db.RetrogradeDatabase
 import com.omnidroid.lib.library.db.entity.GameSession
+import com.omnidroid.lib.ra.RaUserInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,6 +19,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * ViewModel for the User Profile screen.
@@ -28,6 +34,7 @@ class ProfileViewModel(
     private val userProfileStore: UserProfileStore,
     private val achievementsStore: ConsoleAchievementsStore,
     private val retrogradeDb: RetrogradeDatabase,
+    private val raCoordinator: RetroAchievementsCoordinator? = null,
 ) : ViewModel() {
     data class RecentSessionItem(
         val session: GameSession,
@@ -54,7 +61,14 @@ class ProfileViewModel(
         val milestoneBadge: ConsoleAchievementsStore.MilestoneBadge? = null,
         val recentSessions: List<RecentSessionItem> = emptyList(),
         val sessionsLoading: Boolean = true,
+        val raSignedIn: Boolean = false,
+        val raUsername: String? = null,
+        val raUserInfo: RaUserInfo? = null,
+        val raUserLoading: Boolean = false,
+        val raAggregate: ProfileRaLibraryAggregate = ProfileRaLibraryAggregate(),
     )
+
+    private var raRefreshJob: Job? = null
 
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -133,6 +147,60 @@ class ProfileViewModel(
                 }
             }
             .launchIn(viewModelScope)
+
+        retrogradeDb.raGameCacheDao().observeAll()
+            .onEach { entries ->
+                val aggregate =
+                    withContext(Dispatchers.Default) {
+                        aggregateProfileRetroAchievements(entries)
+                    }
+                _uiState.update { current ->
+                    current.copy(raAggregate = aggregate)
+                }
+            }
+            .launchIn(viewModelScope)
+
+        refreshRetroAchievements()
+    }
+
+    fun refreshRetroAchievements() {
+        val coordinator = raCoordinator ?: return
+        val signedIn = coordinator.isSignedIn()
+        val username = coordinator.savedUsername()
+        val cachedUser = coordinator.engine.getUserInfo()
+        if (!signedIn) {
+            raRefreshJob?.cancel()
+            _uiState.update { current ->
+                current.copy(
+                    raSignedIn = false,
+                    raUsername = null,
+                    raUserInfo = null,
+                    raUserLoading = false,
+                )
+            }
+            return
+        }
+        _uiState.update { current ->
+            current.copy(
+                raSignedIn = true,
+                raUsername = cachedUser?.username ?: username,
+                raUserInfo = cachedUser ?: current.raUserInfo,
+                raUserLoading = cachedUser == null,
+            )
+        }
+        if (cachedUser != null || raRefreshJob?.isActive == true) return
+        raRefreshJob =
+            viewModelScope.launch {
+                val result = runCatching { coordinator.silentLoginIfNeeded() }.getOrNull()
+                val resolved = result?.getOrNull() ?: coordinator.engine.getUserInfo()
+                _uiState.update { current ->
+                    current.copy(
+                        raUserInfo = resolved ?: current.raUserInfo,
+                        raUsername = resolved?.username ?: current.raUsername,
+                        raUserLoading = false,
+                    )
+                }
+            }
     }
 
     fun updateTag(tag: String) {
@@ -151,6 +219,7 @@ class ProfileViewModel(
         private val context: Context,
         private val retrogradeDb: RetrogradeDatabase,
         private val registeredSystemsStore: RegisteredSystemsStore,
+        private val raCoordinator: RetroAchievementsCoordinator? = null,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -159,6 +228,7 @@ class ProfileViewModel(
                 userProfileStore = UserProfileStore(context),
                 achievementsStore = ConsoleAchievementsStore(context, retrogradeDb, registeredSystemsStore),
                 retrogradeDb = retrogradeDb,
+                raCoordinator = raCoordinator,
             ) as T
         }
     }
